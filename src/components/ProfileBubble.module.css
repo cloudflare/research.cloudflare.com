@@ -1,0 +1,12 @@
+
+.firstname {
+/*  margin-left: 10px;
+  width: 100%; */
+  color: black;
+  text-align: center;
+}
+
+.circ {
+  height: 5rem;
+  width: 5rem;
+}

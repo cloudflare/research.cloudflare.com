@@ -1,0 +1,21 @@
+/* stylelint-disable docusaurus/copyright-header */
+
+.features {
+  display: flex;
+  align-items: center;
+  padding: 2rem 0;
+  width: 100%;
+}
+
+.features a {
+  color: #1c1e21;
+}
+
+.features a:hover {
+  text-decoration: none;
+}
+
+.featureSvg {
+  height: 200px;
+  width: 200px;
+}
