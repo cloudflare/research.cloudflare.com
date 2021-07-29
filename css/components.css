@@ -1,0 +1,49 @@
+/* circle image */
+img.bubble {
+  border-radius: 50%;
+  width: 6rem;
+}
+
+span.avatar {
+  text-align: center; 
+  display: inline-block;
+  width: 6rem;
+  margin-top: 1rem;
+}
+
+nav.profiles {
+  display: flex;
+  padding-top: 2rem;
+  justify-content: center;
+  padding-bottom: 2rem;
+}
+
+
+
+/* styles for include files */
+
+.person_header {
+  margin-top: 1rem;
+}
+.person_header.pic {
+  width: 6rem;
+}
+.person_header.title {
+  margin-left: 1rem;
+  margin-top: 2rem;
+}
+
+
+.related_profiles img.bubble {
+  width: 5rem;
+}
+.related_profiles span {
+  width: 6rem;
+}
+.related_profiles a {
+  color: black;
+}
+.related_profiles a:hover {
+  text-decoration: none;
+}
+

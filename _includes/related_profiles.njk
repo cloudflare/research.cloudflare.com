@@ -1,0 +1,16 @@
+{% set profile_slugs = related_profiles.split( ',' ) -%}
+<div class="related_profiles">
+
+{% for slug in profile_slugs -%}
+{% set profile = people[ slug ] -%}
+{% if profile -%}
+  <span class="avatar" style="text-align: center; display: inline-block">
+  <a href="/people/{{ slug }}">
+  {% include 'person_bubble.njk' -%}
+    <small>{{ profile.title.slice( 0, profile.title.indexOf( ' ' ) ) }}</small>
+  </a>
+</span>  
+{% endif -%}
+{% endfor -%}
+
+</div>

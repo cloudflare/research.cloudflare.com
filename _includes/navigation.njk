@@ -1,0 +1,7 @@
+{% if navigation %}
+<ul>
+{% for item in navigation -%}
+<li class="{% if item.path in page.url %}active{% endif %}"><a href="/projects/{{ item.path }}">{{ item.label }}</a></li>
+{% endfor -%}
+</ul>
+{% endif %}

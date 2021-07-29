@@ -1,0 +1,12 @@
+
+{% set profile = people[ person_slug ] %}
+
+<div class="person_header row">
+  <span class="person_header pic">
+    {% include 'person_bubble.njk' %}
+  </span>
+  <span class="person_header title">
+    {{ profile.title }}<br />
+    <small>{{ profile.position }}</small>
+  </span>
+</div>

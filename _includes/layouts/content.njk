@@ -1,0 +1,13 @@
+---
+layout: base
+---
+
+  <nav class="nav" id="nav">
+{% include 'navigation.njk' %}
+  </nav>
+  <article class="content" id="content">
+    {{ content | latex | safe }}
+  </article>
+  <aside class="sidebar" id="sidebar">
+    {{ content | toc | safe }}
+  </aside>

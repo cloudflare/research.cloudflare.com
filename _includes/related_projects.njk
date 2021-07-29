@@ -1,0 +1,13 @@
+
+{% set profile_slug = page.fileSlug %}
+{% set projects = projects[ profile_slug ] %}
+
+<ul class="related_projects">
+
+{% for project in projects -%}
+{% if project -%}
+  <li><a href="/projects/{{ project.path }}">{{ project.name }}</a></li>
+{% endif %}
+{% endfor %}
+
+</ul>

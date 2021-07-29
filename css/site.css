@@ -1,0 +1,217 @@
+/* global */
+body {
+  font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+  margin: 0;
+  scroll-behavior: smooth;
+  color: #1c1e21;
+}
+
+h1 {
+  font-size: 2rem;
+  line-height: normal;
+}
+
+a{
+  color: #f38020;
+  text-decoration: none;
+}
+
+a.button {
+  margin: 1rem;
+  padding: 1rem;
+  color: white;
+  text-align: center;
+  font-weight: 400;
+  background-color: #f38020;
+}
+
+a.button:hover {
+  background-color: #e87515;
+}
+
+
+.header {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  height: 3.8rem;
+  background-color: white;
+  border-bottom: 2px solid #f0f0f0;
+  position: sticky;
+  top: 0;
+}
+
+.header img {
+  height: 2rem;
+  margin-left: 1.1rem;
+  margin-right: 0.5rem;
+}
+.header a {
+  color: black;
+  
+}
+.header a.logo {
+  font-weight: 900;
+}
+.header ul li {
+  display: inline;
+  padding-right: 1.2rem;
+}
+.header ul {
+  padding: 1.6rem;
+}
+.header a:hover, .header a.active {
+  color: #f38020;
+  transition: color 0.5s;
+}
+
+
+.content {
+  grid-area: content;
+  margin-left: 2rem;
+  margin-right: 3rem;
+  line-height: 1.5rem;
+}
+
+/* handle anchor jumps with fixed header size */
+.content [id]::before {
+  content: '';
+  display: block;
+  height: 3.8rem;
+  margin-top: -3.8rem;
+  visibility: hidden;
+}
+.content a:hover {
+  text-decoration: underline;
+}
+
+
+.nav {
+  grid-area: nav;
+  margin-left: -2rem;
+}
+.nav ul li {
+  list-style-type: none;
+  padding: 0.5rem;
+  
+}
+.nav a {
+  color: #636a73;
+}
+
+.nav a:hover {
+  color: #f38020;
+  transition: color 0.5s;
+}
+.nav li.active {
+  background-color: #f2f2f2;
+}
+.nav li.active a {
+  color: #f38020;
+}
+
+
+.sidebar {
+  grid-area: sidebar;
+}
+
+/* keep sidebar in view even as screen scrolls */
+.sidebar nav {
+  border-left: 2px solid #f0f0f0;
+  list-style-type: none;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  position: sticky;
+  top: 4.8rem;
+}
+
+.sidebar ol {
+  list-style-type: none;
+}
+.sidebar li {
+  margin-top: 1rem;
+}
+.sidebar nav a {
+  font-size: 0.8rem;
+  color: #a6aaaf;
+}
+.sidebar nav a:hover, .sidebar nav a.active, .sidebar nav a.current {
+  color: #f38020;
+  transition: color 0.5s;
+}
+
+
+
+
+/* footer */
+.footer {
+  grid-area: footer;
+  color: white;
+  background-color: #003682;
+  height: 4rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+.wrapper {
+  
+  display: grid;
+  grid-template-areas:
+    "header"
+    "nav"
+    "sidebar"
+    "content"
+    "footer";
+  min-height: 100vh;
+}
+
+
+@media (min-width: 500px) {
+  .wrapper {
+    grid-template-columns: 3fr 1fr;
+    grid-template-areas:
+      "header  header"
+      "nav     nav"
+      "content sidebar"
+      "footer  footer";
+  }
+  nav ul {
+    display: flex;
+    justify-content: space-between;
+  }
+}
+
+
+@media (min-width: 700px) {
+  .wrapper {
+    grid-template-columns: 1fr 4fr 1fr;
+    grid-template-areas:
+      "header header  header"
+      "nav    content sidebar"
+      "footer footer  footer";
+    grid-template-rows: 3.8rem 1fr 4rem;
+  }
+   
+   nav ul {
+     flex-direction: column;
+   }
+}
+
+
+
+/* general usage */
+.row {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  flex-basis: 100%;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  flex-basis: 100%;
+  flex: 1;
+}

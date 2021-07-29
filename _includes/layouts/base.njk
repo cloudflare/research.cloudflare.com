@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<head>
+<!-- <meta http-equiv="refresh" content="1;url=index.html">-->
+
+<title>{% if title %}{{ title }} | {% endif %}Cloudflare Research</title>
+<meta name="description" content="research.cloudflare.com">
+
+<meta property="og:title" content="research.cloudflare.com">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://research.cloudflare.com">
+<meta property="og:description" content="research.cloudflare.com">
+
+<link rel="icon" href="/img/favicon.ico">
+<link rel="icon" href="/img/cloud.svg" type="image/svg+xml">
+
+<link rel='shortcut icon' type='image/x-icon' href='/img/favicon.ico' />
+<link rel="stylesheet" type="text/css" href="/css/site.css" />
+<link rel="stylesheet" type="text/css" href="/css/components.css" />
+<link rel="stylesheet" type="text/css" href="/css/katex.min.css" />
+
+</head>
+
+<body><div class="wrapper">
+
+<header class="header">
+{% include 'header.njk' %}
+</header>
+
+{{ content | latex | safe }}
+
+<footer class="footer">
+{% include 'footer.njk' %}
+</footer>
+
+</div></body>
+</html>

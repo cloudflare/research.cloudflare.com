@@ -1,0 +1,16 @@
+<img src="/img/cloud.svg" />
+<a class="logo" href="/">Cloudflare Research</a>
+{% set items = [ 
+  { 'Approach': '/approach' },
+  { 'Projects': '/projects' },
+  { 'People': '/people' },
+  { 'Updates': 'https://blog.cloudflare.com/' }
+] -%}
+    
+<ul>
+{% for item in items -%}
+{% for name, link in item -%}
+<li><a {% if link in page.url -%}class="active" {% endif -%}{% if 'http' in link -%}target="_blank" {% endif -%}href="{{ link }}">{{ name }}</a></li>
+{% endfor -%}
+{% endfor -%}
+</ul>

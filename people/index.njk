@@ -1,0 +1,39 @@
+---
+layout: base
+title: People
+---
+
+<nav class="nav" id="nav">
+</nav>
+
+<article class="content" id="content">
+
+<nav class="profiles">
+  {% set current_profiles = '' -%}
+  {% set other_profiles = '' -%}
+  {% for profile in people.ordered -%}
+    {% if profile.status == 'current' -%}
+      {% set current_profiles = current_profiles + ',' + profile.slug -%}
+    {% else -%}
+      {% set other_profiles = other_profiles + ',' + profile.slug -%}
+    {% endif -%}
+  {% endfor -%}
+  {% set related_profiles = current_profiles -%}
+{% include 'related_profiles.njk' -%}
+
+<hr style="margin-right: 0.5rem; border: 1px solid #f8c471" />
+
+{% set related_profiles = other_profiles -%}
+{% include 'related_profiles.njk' -%}
+
+</nav>
+
+<!-- content -->
+</article>
+
+<aside class="sidebar" id="sidebar" style="margin-right: 2rem; margin-top: 2rem;">
+  <div class="column" style="margin-right: 5rem">
+    <a class="button" target="_blank" href="https://www.cloudflare.com/careers/jobs/?department=Technology%20Research&location=default">Join our team</a>
+    <a class="button" target="_blank" href="https://www.cloudflare.com/careers/jobs/?department=University&location=default">Internships available</a>  
+  </div>
+</aside>
