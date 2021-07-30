@@ -113,14 +113,13 @@ a.button:hover {
 
 .sidebar {
   grid-area: sidebar;
+  z-index: -1;
 }
 
 /* keep sidebar in view even as screen scrolls */
 .sidebar nav {
   border-left: 2px solid #f0f0f0;
   list-style-type: none;
-  margin-top: 1rem;
-  padding-top: 1rem;
   position: sticky;
   top: 4.8rem;
 }
@@ -155,21 +154,49 @@ a.button:hover {
 }
 
 
+@media (-webkit-min-device-pixel-ratio: 1.5) and (orientation: portrait), @media (min-resolution: 1.5dppx)  and (orientation: portrait){
+  html { 
+    font-size: 2rem;
+  }
+}
+
+
+@media (-webkit-min-device-pixel-ratio: 2.5) and (orientation: portrait), @media (min-resolution: 2.5dppx) and (orientation: portrait){
+  html { 
+    font-size: 3rem;
+  }
+}
+
+
 .wrapper {
-  
   display: grid;
   grid-template-areas:
     "header"
+    "burger"
     "nav"
     "sidebar"
     "content"
     "footer";
   min-height: 100vh;
+  
 }
 
+hr {
+display: none;
+}
 
-@media (min-width: 500px) {
+/* default to showing hamburger navigation */
+#hamburger_header_navigation {
+display: block;
+}  
+#inline_header_navigation {
+display: none;
+}
+  
+/*
+@media (min-width: 400px) {
   .wrapper {
+    background-color: yellow;
     grid-template-columns: 3fr 1fr;
     grid-template-areas:
       "header  header"
@@ -181,10 +208,11 @@ a.button:hover {
     display: flex;
     justify-content: space-between;
   }
+  
 }
+*/
 
-
-@media (min-width: 700px) {
+@media (min-width: 700px) and (min-device-width: 700px){
   .wrapper {
     grid-template-columns: 1fr 4fr 1fr;
     grid-template-areas:
@@ -197,8 +225,15 @@ a.button:hover {
    nav ul {
      flex-direction: column;
    }
+   
+/* with more width show inline navigation */
+  #hamburger_header_navigation {
+    display: none;
+  }
+  #inline_header_navigation {
+    display: block;
+  }   
 }
-
 
 
 /* general usage */
