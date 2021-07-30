@@ -1,10 +1,7 @@
 ---
 title: Oblivious DNS over HTTPS
-sidebar_position: 100
 related_profiles: cefan-rubin,nick-sullivan
 ---
-import RelatedProfiles from '@site/src/components/RelatedProfiles';
-
 # Oblivious DNS over HTTPS
 
 ## Introduction
@@ -19,4 +16,4 @@ import RelatedProfiles from '@site/src/components/RelatedProfiles';
 
 ## People
 
-<RelatedProfiles slugs={frontMatter.related_profiles} />
+{% include 'related_profiles.njk' %}
