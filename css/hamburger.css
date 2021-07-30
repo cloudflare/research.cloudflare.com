@@ -1,0 +1,35 @@
+
+.burger-shower {
+  display: none;
+}
+  
+.burger-shower:checked ~ .burger-menu {
+  display: block;
+}
+    
+.hamburger {
+  display:block;
+  width: 1.6rem;
+  height: 2.1rem;
+  padding-left: 1rem;
+}
+           
+.burger-menu {
+  display: none;
+  position: absolute;
+  z-index: 10;
+  top: 3.8rem;
+}
+
+ul.burger-menu {
+  background-color: white;
+  margin: 0;
+  padding: 1rem;
+  border-bottom: 2px solid #f0f0f0;
+  border-right: 2px solid #f0f0f0;
+}
+
+ul.burger-menu li {
+  display: block;
+  margin: 0 0 1rem 0;
+}
