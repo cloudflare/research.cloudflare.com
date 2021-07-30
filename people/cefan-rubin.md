@@ -9,7 +9,7 @@ Hey there $$e = mc^2$$
 
 $$I = \int_0^{2\pi} \sin(x) dx$$
 
-<h3>{{ title }}</h3>
+<h3> {{ title }} </h3>
 
 Cefan is an full stack engineer for the Research Team at Cloudflare. He brings his experience from working with large and small companies on the other side of Cloudflare's services to his work bringing the Research Team's work to light.
 
