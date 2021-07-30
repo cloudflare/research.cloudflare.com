@@ -71,6 +71,7 @@ a.button:hover {
   margin-left: 2rem;
   margin-right: 3rem;
   line-height: 1.5rem;
+  z-index: -5;
 }
 
 /* handle anchor jumps with fixed header size */
@@ -179,6 +180,9 @@ a.button:hover {
     "footer";
   min-height: 100vh;
   
+  /* not certain why wrapper places itself above sidebar, but this helps... */
+  position: absolute;
+  z-index: -10;
 }
 
 hr {
