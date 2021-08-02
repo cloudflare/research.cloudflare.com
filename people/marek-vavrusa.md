@@ -1,14 +1,9 @@
 ---
 title: Marek Vavruša
 position: System Engineer
-slug: marek-vavrusa
 status: current
 image: https://www.gravatar.com/avatar/f949112c52dca922df70459ea0c4e400?s=250&d=mm&r=x
 ---
-import ProfileHeader from '@site/src/components/ProfileHeader';
-
-<ProfileHeader slug={frontMatter.slug} />
-
 Marek is
 
 ## Research Areas 
