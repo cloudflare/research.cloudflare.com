@@ -32,6 +32,10 @@ nav.profiles {
   margin-left: 1rem;
   margin-top: 2rem;
 }
+.person_header img.twitter {
+  margin-top: 0.4rem;
+  width: 1.4rem;
+}
 
 
 .related_profiles img.bubble {
