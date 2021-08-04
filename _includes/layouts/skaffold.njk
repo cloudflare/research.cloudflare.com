@@ -1,0 +1,16 @@
+---
+layout: base
+---
+<div class="wrapper">
+
+<header class="header">
+{% include 'header.njk' %}
+</header>
+
+{{ content | latex | safe }}
+
+<footer class="footer">
+{% include 'footer.njk' %}
+</footer>
+
+</div>

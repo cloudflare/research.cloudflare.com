@@ -2,23 +2,26 @@
 layout: base
 ---
 
-<nav class="nav column" style="padding-left: 3rem;">
-<h1>Cloudflare Research</h1>
-<h3 style="width: 5rem;">Building a better Internet through <span style="color: #f6821f">experimentation</span> and fundamental Computer Science</h3>
-</nav>
+<div class="wrapper" id="wide">
 
-<!--
-style="background-color: #f6821f; padding-left: 2rem; display: flex; justify-content: left; align-items: center">
-<span style="font-size: 15vh; writing-mode: vertical-rl; color: #d6720f">Cloudflare</span>
--->
+<header class="header">
+{% include 'header.njk' %}
+</header>
 
-<article class="content" style="">
+<article class="content" style="margin-left: 0; margin-right: 0">
+  
+  <div class="column homepage_header">
+    <h1>Cloudflare Research</h1>
+    <p>Building a better Internet through experimentation and fundamental Computer Science</p>
+  </div>
+  
+  {% include 'homepage_features.njk' %}
+  
 </article>
 
-<aside class="sidebar">
-</aside>
+<footer class="footer">
+{% include 'footer.njk' %}
+</footer>
 
-<!--
-style="background-color: #f6821f; display: flex; justify-content: right; align-items: center">
-<span style="font-size: 15vh; writing-mode: vertical-rl; color: #d6720f; transform: rotate(180deg)">Research</span>
--->
+</div>
+

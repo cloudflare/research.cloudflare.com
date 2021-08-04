@@ -22,17 +22,9 @@
 
 </head>
 
-<body><div class="wrapper">
-
-<header class="header">
-{% include 'header.njk' %}
-</header>
+<body>
 
 {{ content | latex | safe }}
 
-<footer class="footer">
-{% include 'footer.njk' %}
-</footer>
-
-</div></body>
+</body>
 </html>

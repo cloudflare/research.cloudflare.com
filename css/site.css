@@ -142,7 +142,6 @@ a.button:hover {
 
 
 
-
 /* footer */
 .footer {
   grid-area: footer;
@@ -152,6 +151,7 @@ a.button:hover {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: 100vw;
 }
 
 
@@ -225,10 +225,17 @@ display: none;
       "footer footer  footer";
     grid-template-rows: 3.8rem 1fr 4rem;
   }
-   
-   nav ul {
-     flex-direction: column;
-   }
+  #wide.wrapper {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "content"
+      "footer";
+  }
+  
+  nav ul {
+    flex-direction: column;
+  }
    
 /* with more width show inline navigation */
   #hamburger_header_navigation {
