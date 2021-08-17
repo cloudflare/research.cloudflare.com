@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "start": "npx @11ty/eleventy@v1.0.0-canary.39 --serve",
+    "prebuild": "_util/people_images.sh",
     "build": "npx @11ty/eleventy@v1.0.0-canary.39"
   },
   "dependencies": {
