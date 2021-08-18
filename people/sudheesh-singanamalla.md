@@ -2,12 +2,11 @@
 title: Sudheesh Singanamalla
 position: Research Engineer Intern
 twitter: sudheesh001
-image: https://cdn.filestackcontent.com/AchUBPpbtR12UdA8r3ilwz/security=policy:eyJleHBpcnkiOjIyMjM0MDE1MzYsImNhbGwiOlsicmVhZCIsImNvbnZlcnQiXSwiaGFuZGxlIjoiR2M4dTNDS1R2V3hma3ZMM0VHeDYifQ==,signature:cbf2fb80a75972497c3e8c31d187e0d36f1ac90f1805417a0c45fe1c0c6d514e/cache=expiry:max/resize=w:600,h:600,fit:crop,align:faces/rotate=d:exif/Gc8u3CKTvWxfkvL3EGx6
 ---
-Sudheesh
+Sudheesh is a PhD student at the University of Washington, Seattle advised by Prof. Kurtis Heimerl and Prof. Richard Anderson working at the intersection of systems, networking and security aimed at decentralizing cellular network architectures. Sudheesh's work is focused on building usable systems and exploring how the adoption of these systems can improve the lives of underserved populations by providing more secure, and private access to the Internet. At Cloudflare, in 2020, Sudheesh primarily worked on Oblivious DNS over HTTPS, and Improvements to web performance through connection coalescing.
 
 ## Research Areas 
-Privacy, Security
+Systems, Networking, Security, Privacy, Cryptography
 
 ## Projects
 
