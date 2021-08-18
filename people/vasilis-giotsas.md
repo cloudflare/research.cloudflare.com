@@ -1,6 +1,7 @@
 ---
 title: Vasilis Giotsas
 position: Research Engineer
+status: current
 image: https://cdn.filestackcontent.com/AchUBPpbtR12UdA8r3ilwz/security=policy:eyJleHBpcnkiOjIyMzgwNjQ1OTcsImNhbGwiOlsicmVhZCIsImNvbnZlcnQiXSwiaGFuZGxlIjoiTzE1UllleFJ0MmF5aDdOd2RtV3cifQ==,signature:455f29ec5340375b0408a3272c85b4a14a3a37afe09efb42218af5e19a3fa7b0/cache=expiry:max/resize=w:600,h:600,fit:crop,align:faces/rotate=d:exif/O15RYexRt2ayh7NwdmWw
 ---
 Vasileios (Vasilis) Giotsas is a research engineer focusing on network measurements and telemetry, mapping of the Internet topology, and Internet routing. 
