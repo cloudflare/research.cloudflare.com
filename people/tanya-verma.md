@@ -1,6 +1,7 @@
 ---
 title: Tanya Verma
 position: Research Engineer
+status: current
 image: https://cdn.filestackcontent.com/AchUBPpbtR12UdA8r3ilwz/security=policy:eyJleHBpcnkiOjIyMzA3NDg3NjAsImNhbGwiOlsicmVhZCIsImNvbnZlcnQiXSwiaGFuZGxlIjoiZzdsNjc1TjJUZzJjMUFhZWpqRVIifQ==,signature:1cec70853f5b24c7772d2b24c8e05bf10fc50dfb6f41980a883781b455f5baf5/cache=expiry:max/resize=w:600,h:600,fit:crop,align:faces/rotate=d:exif/g7l675N2Tg2c1AaejjER
 ---
 Tanya is a research engineer working on cryptography and networking software and protocols.
