@@ -1,7 +1,6 @@
 ---
 title: Marek Vavruša
 position: System Engineer
-status: current
 image: https://www.gravatar.com/avatar/f949112c52dca922df70459ea0c4e400?s=250&d=mm&r=x
 ---
 Marek is
