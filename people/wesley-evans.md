@@ -1,6 +1,7 @@
 ---
 title: Wesley Evans 
-position: Product Manager - Research
+position: Product Manager
+status: current
 twitter: whywevans
 image: https://www.cloudflare.com/static/49492c8c26bdb7001a046edb025ec2a6/2qiXzNiPRgeBht7HYFzj.jpg
 ---
