@@ -1,6 +1,7 @@
 ---
 title: Tara Whalen
 position: Research Lead
+status: current
 twitter: drtarabyte
 image: https://cdn.filestackcontent.com/AchUBPpbtR12UdA8r3ilwz/security=policy:eyJleHBpcnkiOjIyMzA3NDc2MTksImNhbGwiOlsicmVhZCIsImNvbnZlcnQiXSwiaGFuZGxlIjoiaThFNE5IZDBTWWp5bmpqY1VUaVoifQ==,signature:516075a95014fb57b8da5943a0eeb0a41ad9d5bcf321165219086c69f11cbbf5/cache=expiry:max/resize=w:600,h:600,fit:crop,align:faces/rotate=d:exif/i8E4NHd0SYjynjjcUTiZ
 ---
