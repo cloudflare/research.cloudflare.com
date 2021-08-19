@@ -3,6 +3,7 @@ const path = require( 'path' )
 
 const markdownIt = require( 'markdown-it' )
 const markdownItAnchor = require( 'markdown-it-anchor' )
+const markdownItLinkAttributes = require( 'markdown-it-link-attributes' )
 
 const syntaxHighlight = require( '@11ty/eleventy-plugin-syntaxhighlight' )
 const tableOfContents = require( 'eleventy-plugin-toc' )
@@ -36,8 +37,15 @@ module.exports = function( eleventyConfig ) {
         linkify: true
     } )
     .use( markdownItAnchor )
+    .use( markdownItLinkAttributes, [ {
+      pattern: /^(?!(\/|#)).*$/gm,
+      attrs: {
+        target: '_blank',
+        rel: 'noopener'
+      }
+    } ] )
 
-    eleventyConfig.setLibrary( 'md', markdown );
+  eleventyConfig.setLibrary( 'md', markdown );
   
   // enable plugins
   eleventyConfig.addPlugin( syntaxHighlight )
