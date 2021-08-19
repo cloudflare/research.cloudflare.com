@@ -18,7 +18,7 @@ for path in ../people/*.md; do
      url=${item#image: }
      echo "Trying $url"
      curl $url -o ${image_path}.original
-     convert ${image_path}.original -resize 400x400\> ${image_path}
+     convert ${image_path}.original -resize '400x400^' -gravity center -extent '400x400' ${image_path}
   fi
   
 done
