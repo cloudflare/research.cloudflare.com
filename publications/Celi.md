@@ -1,7 +1,7 @@
 ---
 title: Implementing and measuring KEMTLS
 year: 
-location: Under submission and presented an Latincrypt 2021, 2021.
+location: Under submission and presented at Latincrypt 2021, 2021.
 authors:
   - sofia-celi
   - armando-hernandez
