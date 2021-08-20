@@ -1,6 +1,7 @@
 ---
 title: Tripwire
-related_profiles: cefan-rubin
+related_profiles: 
+  - cefan-rubin
 ---
 # Tripwire
 

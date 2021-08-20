@@ -1,6 +1,14 @@
 ---
 title: Privacy Pass
-related_profiles: sofia-celi,nick-sullivan,armando-hernandez,pop-chunhapanya,christopher-wood,thibault-meunier
+related_profiles: 
+  - sofia-celi
+  - nick-sullivan
+  - armando-hernandez
+  - pop-chunhapanya
+  - christopher-wood
+  - thibault-meunier
+related_publications:
+  - Another
 ---
 
 # Privacy Pass

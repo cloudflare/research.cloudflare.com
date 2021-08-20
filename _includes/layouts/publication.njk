@@ -1,0 +1,30 @@
+---
+layout: content
+---
+
+<h1 style="margin-bottom: 0">{{ title }}</h1>
+<div class="publication_location">{{ location }}</div>
+{% if url %}
+<a href="{{ url }}" target="_blank">read this publication &#x2197;</a>
+{% endif %}
+
+<h2>Abstract</h2>
+{{ content | safe }}
+
+<h2>Authors</h2>
+
+{% for author in authors %}
+{% if people[ author ] -%}
+<span class="nobreak"><a href="/people/{{ people[ author ].slug }}">{{ people[ author ].title }}</a></span>{% if not loop.last %},{% endif %}
+{% else -%}
+<span class="nobreak">{{ author }}</span>{% if not loop.last %},{% endif %}
+{% endif -%}
+{% endfor %}
+
+<br />
+<br />
+{% set related_profiles = authors %}
+{% include 'related_profiles.njk' %}
+
+
+

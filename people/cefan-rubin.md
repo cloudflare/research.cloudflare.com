@@ -18,6 +18,9 @@ When Cefan is not working on the future of the Internet, he is a dad, husband an
 ## Research Areas
 Distributed Web, Privacy, Security, Emerging Network Paradigms
 
+## Publications
+{% include 'related_publications.njk' %}
+
 ## Projects
 {% include 'related_projects.njk' %}
 

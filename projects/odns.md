@@ -1,6 +1,8 @@
 ---
 title: Oblivious DNS over HTTPS
-related_profiles: cefan-rubin,nick-sullivan
+related_profiles:
+  - cefan-rubin
+  - nick-sullivan
 ---
 # Oblivious DNS over HTTPS
 

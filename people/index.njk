@@ -9,13 +9,13 @@ title: People
 <article class="content" id="content">
 
 <nav class="profiles">
-  {% set current_profiles = '' -%}
-  {% set other_profiles = '' -%}
+  {% set current_profiles = [] -%}
+  {% set other_profiles = [] -%}
   {% for profile in people.ordered -%}
     {% if profile.status == 'current' -%}
-      {% set current_profiles = current_profiles + ',' + profile.slug -%}
+      {% set current_profiles = ( current_profiles.push( profile.slug ), current_profiles ) -%}
     {% else -%}
-      {% set other_profiles = other_profiles + ',' + profile.slug -%}
+      {% set other_profiles = ( other_profiles.push( profile.slug ), other_profiles ) -%}
     {% endif -%}
   {% endfor -%}
   {% set related_profiles = current_profiles -%}

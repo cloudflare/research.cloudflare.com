@@ -69,6 +69,40 @@ div.homepage_feature a:hover {
 }
 
 
+cite.publication_item {
+  font-style: normal; 
+  position: relative;
+}
+cite.publication_item h3 {
+  margin:0; 
+  font-weight: 300;
+}
+cite.publication_item h3 a {
+  color: black
+}
+div.publication_year {
+  position: absolute;
+  top: -0.5rem; 
+  left: -5rem; 
+  background-color: lightgrey; 
+  padding: 0.5rem; 
+  border-radius: 0.2rem; 
+  font-style: italics
+}
+div.publication_location {
+  color: #777;
+  font-size: 0.8rem; 
+  font-weight: 300;
+}
+cite.publication_item span {
+  font-size: 0.9rem; 
+  font-weight: 300; 
+  display: inline; 
+  padding: 0.1rem; 
+  white-space:nowrap;
+}
+
+
 
 /* styles targetting unique key features not in includes */
 
@@ -84,4 +118,8 @@ div.homepage_header h1 {
   font-size: 3rem;
   margin-top: 0;
   margin-bottom: 0;
+}
+
+span.nobreak {
+  white-space:nowrap;  
 }

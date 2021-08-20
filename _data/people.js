@@ -51,6 +51,8 @@ for ( profile of profiles ) {
   module.exports[ profile.slug ] = profile
 }
 
+//console.log( module.exports )
+
 /*
 
   people.ordered

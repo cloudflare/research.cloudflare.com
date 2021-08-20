@@ -1,0 +1,17 @@
+<cite class="publication_item">
+{% if publication.year != year and showYear -%}
+<div class="publication_year">{{ publication.year }}</div>
+{% endif -%}
+{% set year = publication.year -%}
+<h3><a href="/publications/{{ publication.slug }}">{{ publication.title }}</a></h3>
+<div class="publication_location">
+{{ publication.location }}
+</div>
+  {% for author in publication.authors -%}
+  {% if people[ author ] -%}
+  <span><a href="/people/{{ people[ author ].slug }}">{{ people[ author ].title }}</a></span>{% if not loop.last %},{% endif %}
+  {% else -%}
+  <span>{{ author }}</span>{% if not loop.last %},{% endif %}
+  {% endif -%}
+  {% endfor -%}
+</cite>

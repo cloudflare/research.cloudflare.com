@@ -26,10 +26,9 @@ function generateProjectsData() {
         
         frontMatter = yaml.load( front );
         //console.log( frontMatter )
-        //frontMatter.slug = 
         
-        let personSlugsString = frontMatter.related_profiles;
-        let personSlugs = personSlugsString.split( ',' )
+        let personSlugs = frontMatter.related_profiles;
+        //let personSlugs = personSlugsString.split( ',' )
         
         for ( personSlug of personSlugs ) {
           if ( typeof projects[ personSlug ] !== 'undefined' ) {
