@@ -79,7 +79,7 @@ for ( author in author_publications ) {
   module.exports[ author ] = author_publications[ author ]
 }
 
-console.log( module.exports )
+//console.log( module.exports )
 
 /*
 
