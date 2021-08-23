@@ -13,6 +13,7 @@ Applied Cryptography, Privacy, Technology Policy
 
 
 ## Publications (incomplete)
-* [Hall-Andersen, Mathias, David Wong, **Nick Sullivan**, and **Alishah Chator**. "nQUIC: Noise-based QUIC packet protection." In Proceedings of the Workshop on the Evolution, Performance, and Interoperability of QUIC, pp. 22-28. 2018.](https://eprint.iacr.org/2019/028.pdf)
+
+{% include 'related_publications.njk' %}
 
 
