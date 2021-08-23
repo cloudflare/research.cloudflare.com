@@ -8,10 +8,7 @@ layout: content
 <a href="{{ url }}" target="_blank">read this publication &#x2197;</a>
 {% endif %}
 
-<h2>Abstract</h2>
-{{ content | safe }}
-
-<h2>Authors</h2>
+<br />
 
 {% for author in authors %}
 {% if people[ author ] -%}
@@ -23,6 +20,11 @@ layout: content
 
 <br />
 <br />
+
+<h2>Abstract</h2>
+{{ content | safe }}
+
+
 {% set related_profiles = authors %}
 {% include 'related_profiles.njk' %}
 

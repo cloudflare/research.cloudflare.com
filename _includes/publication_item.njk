@@ -1,8 +1,7 @@
 <cite class="publication_item">
-{% if publication.year != year and showYear -%}
+{% if showYear -%}
 <div class="publication_year">{{ publication.year }}</div>
 {% endif -%}
-{% set year = publication.year -%}
 <h3><a href="/publications/{{ publication.slug }}">{{ publication.title }}</a></h3>
 <div class="publication_location">
 {{ publication.location }}

@@ -11,31 +11,21 @@ title: Publications
 <h1>Publications</h1>
 
 <div class="publications">
-<hr style="display: block; solid black; margin-bottom: 1rem;" />
+<hr />
+
+{% set year = null -%}
+
 {% for publication in publications.ordered -%}
 
-  {% set showYear = 'display' %}
+  {% if year != publication.year %}
+    {% set showYear = 'display' %}
+  {% else %}
+    {% set showYear = false %}
+  {% endif %}
   {% include 'publication_item.njk' %}
+    {% set year = publication.year -%}
 
-  <!-- <cite style="font-style: normal; position: relative">
-    {% if publication.year != year %}
-    <div class="publication_year" style="position: absolute; top: -0.5rem; left: -5rem; background-color: lightgrey; padding: 0.5rem; border-radius: 0.2rem; font-style: italics">{{ publication.year }}</div>
-    {% endif %}
-    {% set year = publication.year %}
-    <h3 style="margin:0; font-weight: 300;">{{ publication.title }}</h3>
-    <div style="color: #777; font-size: 0.8rem; font-weight: 300">
-    {{ publication.location }}
-    </div>
-      {% for author in publication.authors -%}
-      {% if people[ author ] -%}
-      <span style="font-size: 0.9rem; font-weight: 300; display: inline; padding: 0.1rem; white-space:nowrap;"><a href="/people/{{ people[ author ].slug }}">{{ people[ author ].title }}</a></span>{% if not loop.last %},{% endif %}
-      {% else %}
-      <span style="font-size: 0.9rem; font-weight: 300; display: inline; padding: 0.1rem; white-space:nowrap;">{{ author }}</span>{% if not loop.last %},{% endif %}
-      {% endif -%}
-      {% endfor -%}
-  </cite> -->
-  
-<hr style="display: block; margin-top: 1rem; margin-bottom: 1rem; width: border: 1rem solid black;" />
+<hr />
 {% endfor %}
 </div>
 

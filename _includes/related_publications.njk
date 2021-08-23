@@ -2,15 +2,15 @@
 {% set profile_slug = page.fileSlug %}
 {% set author_publications = publications[ profile_slug ] %}
 
-<div class="related_publications">
+<div class="publications">
 
-  <hr style="display: block">
+  <hr />
 {% for publication_slug in author_publications -%}
 {% set publication = publications[ publication_slug ] %}
 {% if publication -%}
   
   {% include 'publication_item.njk' %}
-  <hr style="display: block">
+  <hr />
 {% endif %}
 {% endfor %}
 

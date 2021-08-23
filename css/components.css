@@ -82,7 +82,6 @@ cite.publication_item h3 a {
 }
 div.publication_year {
   position: absolute;
-  top: -0.5rem; 
   left: -5rem; 
   background-color: lightgrey; 
   padding: 0.5rem; 
@@ -101,7 +100,10 @@ cite.publication_item span {
   padding: 0.1rem; 
   white-space:nowrap;
 }
-
+div.publications hr {
+  display: block;
+  /* margin-top: 0.8rem; margin-bottom: 0.8rem; */
+}
 
 
 /* styles targetting unique key features not in includes */
