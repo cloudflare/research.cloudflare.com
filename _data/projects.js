@@ -27,15 +27,18 @@ function generateProjectsData() {
         frontMatter = yaml.load( front );
         //console.log( frontMatter )
         
+        // add an item for this slug
+        projects[ slug ] = { "name": frontMatter.title, "path": slug }
+        
         let personSlugs = frontMatter.related_profiles;
         //let personSlugs = personSlugsString.split( ',' )
         
         for ( personSlug of personSlugs ) {
           if ( typeof projects[ personSlug ] !== 'undefined' ) {
-            projects[ personSlug ].push( { name: frontMatter.title, path: slug } )
+            projects[ personSlug ].push( projects[ slug ] )
           }
           else {
-            projects[ personSlug ] = [ { name: frontMatter.title, path: slug } ]
+            projects[ personSlug ] = [ projects[ slug ] ]
           }
         }
       }
@@ -50,16 +53,16 @@ function generateProjectsData() {
 }
 // parse the front matter and add to 'profiles'
 let projects = generateProjectsData();
-//console.log( projects );
 
-module.exports = {}
-for ( personSlug in projects ) {
-  module.exports[ personSlug ] = projects[ personSlug ]
-}
+module.exports = projects
+
+//console.log( module.exports )
 
 /*
   
-  projects[ 'cefan-rubin' ] 
+  projects[ 'cefan-rubin' ]
     [ ... array of { name: 'Project Name from title frontmatter', path: 'file slug' } ... ]
-
+    
+  projects[ 'odns' ]
+    { name: "Oblivious DNS" }
 */

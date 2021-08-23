@@ -12,6 +12,12 @@ authors:
   - bas-westerbaan
   - christopher-wood
 url:
+related_areas:
+  - cryptography
+  - measurement
+related_projects:
+  - odns
+  - tripwire
 ---
 
 ABSTRACT HERE
