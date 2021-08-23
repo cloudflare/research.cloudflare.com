@@ -12,7 +12,7 @@ Applied Cryptography, Privacy, Technology Policy
 ## Projects
 
 
-## Publications (incomplete)
+## Publications
 
 {% include 'related_publications.njk' %}
 
