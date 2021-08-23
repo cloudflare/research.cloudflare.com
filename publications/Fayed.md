@@ -1,5 +1,5 @@
 ---
-title: The Ties that un-Bind: Decoupling IP from web services and sockets for robust addressing agility at CDN-scale
+title: "The Ties that un-Bind: Decoupling IP from web services and sockets for robust addressing agility at CDN-scale"
 year: 2021
 location: Proceedings of the 2021 ACM SIGCOMM 2021 Conference, pp. 433–446. 2021.
 authors:
