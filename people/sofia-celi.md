@@ -17,6 +17,9 @@ Post-Quantum Cryptography, Privacy, Security
 * Privacy Pass
 
 ## Publications 
+{% include 'related_publications.njk' %}
+
+
 * **Celi, Sofía**, **Armando Faz-Hernández**, **Nick Sullivan**, Goutam Tamvada, **Luke Valenta**, Thom Wiggers, Bas Westerbaan, **Christopher Wood**. "Implementing and measuring KEMTLS." Under submission and presented an Latincrypt 2021, 2021.
 * [Tyagi, Nirvan, **Sofía Celi**, Thomas Ristenpart, **Nick Sullivan**, Stefano Tessaro, and **Christopher A. Wood**. "A Fast and Simple Partially Oblivious PRF, with Applications.", Under submission, 2021](https://eprint.iacr.org/2021/864.pdf)
 * [**Singanamalla, Sudheesh**, **Suphanat Chunhapanya**, **Jonathan Hoyland**, **Marek Vavruša**, **Tanya Verma**, **Peter Wu**, **Marwan Fayed**, Kurtis Heimerl, **Nick Sullivan**, and **Christopher Wood**. "Oblivious DNS over HTTPS (ODoH): A Practical Privacy Enhancement to DNS." In Proceedings on Privacy Enhancing Technologies 2021, (4):pp. 575–592. 2021](https://www.petsymposium.org/2021/files/papers/issue4/popets-2021-0085.pdf)
