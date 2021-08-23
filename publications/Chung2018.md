@@ -1,7 +1,7 @@
 ---
 title: Is the web ready for OSCP must-staple?
 year: 2018
-location: In Proceedings of the Internet Measurement Conference 2018, pp. 105-118. 2018.
+location: Proceedings of the Internet Measurement Conference 2018, pp. 105-118. 2018.
 authors:
   - Taejoong Chung
   - Jay Lok
@@ -14,6 +14,10 @@ authors:
   - nick-sullivan
   - Christo Wilson
 url: https://dl.acm.org/doi/abs/10.1145/3278532.3278543
+related_areas:
+  - measurements
+  - network security
+related_projects:
 ---
 
 TLS, the de facto standard protocol for securing communications over the Internet, relies on a hierarchy of certificates that bind names to public keys. Naturally, ensuring that the communicating parties are using only valid certificates is a necessary first step in order to benefit from the security of TLS. To this end, most certificates and clients support OCSP, a protocol for querying a certificate's revocation status and confirming that it is still valid. Unfortunately, however, OCSP has been criticized for its slow performance, unreliability, soft-failures, and privacy issues. To address these issues, the OCSP Must-Staple certificate extension was introduced, which requires web servers to provide OCSP responses to clients during the TLS handshake, making revocation checks low-cost for clients. Whether all of the players in the web's PKI are ready to support OCSP Must-Staple, however, remains still an open question.
