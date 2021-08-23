@@ -1,7 +1,7 @@
 ---
 title: Implementing and measuring KEMTLS
-year: 
-location: Under submission and presented at Latincrypt 2021, 2021.
+year: 2021
+location: Latincrypt 2021 (to appear).
 authors:
   - sofia-celi
   - armando-hernandez
@@ -11,13 +11,11 @@ authors:
   - Thom Wiggers
   - bas-westerbaan
   - christopher-wood
-url:
+url: https://eprint.iacr.org/2021/1019.pdf
 related_areas:
   - cryptography
   - measurement
 related_projects:
-  - odns
-  - tripwire
+  - 
 ---
-
-ABSTRACT HERE
+KEMTLS is a novel alternative to the Transport Layer Security (TLS) handshake that integrates post-quantum algorithms. It uses key encapsulation mechanisms (KEMs) for both confidentiality and authentication, achieving post-quantum security while obviating the need for expensive post-quantum signatures. The original KEMTLS paper presents a security analysis, Rust implementation, and benchmarks over emulated networks. In this work, we provide full Go implementations of KEMTLS and other post-quantum handshake alternatives, describe their integration into a distributed system, and provide performance evaluations over real network conditions. We compare the standard (nonquantum-resistant) TLS 1.3 handshake with three alternatives: one that uses post-quantum signatures in combination with post-quantum KEMs (PQTLS), one that uses KEMTLS, and one that is a reduced round trip version of KEMTLS (KEMTLS-PDK). In addition to the performance evaluations, we discuss how the design of these protocols impacts TLS from an implementation and configuration perspective.
