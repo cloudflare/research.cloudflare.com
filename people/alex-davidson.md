@@ -15,6 +15,6 @@ Privacy-Preserving Internet Protocols, Anonymous Credentials, Post-Quantum Crypt
 ## Projects
 
 
-## Publications (incomplete)
-
+## Publications
+{% include 'related_publications.njk' %}
 
