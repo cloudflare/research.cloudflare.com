@@ -26,7 +26,7 @@ layout: content
 <br />
 
 {% if related_areas %}
-<h2>Releated Research Areas</h2>
+<h2>Research Areas</h2>
   {% for related_area in related_areas %}
   {{ areas[ related_area ].name }}{% if not loop.last %}, {% endif %}
   {% endfor %}
