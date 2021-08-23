@@ -1,5 +1,5 @@
 ---
-title: Privacy Pass: Bypassing Internet Challenges Anonymously
+title: "Privacy Pass: Bypassing Internet Challenges Anonymously"
 year: 2018
 location: Proceedings on Privacy Enhancing Technologies, no. 3 (2018), pp. 164-180. 2018.
 authors:
