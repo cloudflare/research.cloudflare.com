@@ -17,7 +17,8 @@ authors:
   - nick-sullivan
 url: https://dl.acm.org/doi/10.1145/3452296.3472922
 related_areas:
-  - security, measurement
+  - security
+  - measurement
 related_projects:
   - 
 ---
