@@ -18,6 +18,7 @@ related_areas:
   - measurement
   - security
 related_projects:
+  - 
 ---
 
 TLS, the de facto standard protocol for securing communications over the Internet, relies on a hierarchy of certificates that bind names to public keys. Naturally, ensuring that the communicating parties are using only valid certificates is a necessary first step in order to benefit from the security of TLS. To this end, most certificates and clients support OCSP, a protocol for querying a certificate's revocation status and confirming that it is still valid. Unfortunately, however, OCSP has been criticized for its slow performance, unreliability, soft-failures, and privacy issues. To address these issues, the OCSP Must-Staple certificate extension was introduced, which requires web servers to provide OCSP responses to clients during the TLS handshake, making revocation checks low-cost for clients. Whether all of the players in the web's PKI are ready to support OCSP Must-Staple, however, remains still an open question.
