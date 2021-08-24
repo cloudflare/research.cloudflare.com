@@ -17,4 +17,4 @@ Cryptography, Distributed Systems
 * ECH
 
 ## Publications 
-* [Singanamalla, Sudheesh, Suphanat Chunhapanya, Marek Vavruša, **Tanya Verma**, **Peter Wu**, **Marwan Fayed**, Kurtis Heimerl, **Nick Sullivan**, and **Christopher Wood**. "Oblivious DNS over HTTPS (ODoH): A Practical Privacy Enhancement to DNS." Under submission and Presented at IETF 109 MAPRG, 2020.](https://arxiv.org/pdf/2011.10121)
+{% include 'related_publications.njk' %}
