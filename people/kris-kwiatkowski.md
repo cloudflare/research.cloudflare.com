@@ -14,7 +14,7 @@ Cryptographic Implementations, Post-Quantum cryptography, High performance compu
 
 
 ## Publications (incomplete)
-* [Kwiatkowski, Krzysztof, **Nick Sullivan**, Adam Langley, Dave Levin, and Alan Mislove. "Measuring TLS key exchange with post-quantum KEM." In Workshop Record of the Second PQC Standardization Conference. 2019.](https://www.cs.umd.edu/~dml/papers/pqc_nist19.pdf)
+{% include 'related_publications.njk' %}
 
 
 
