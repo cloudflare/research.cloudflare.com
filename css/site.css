@@ -191,10 +191,11 @@ display: none;
 
 /* default to showing hamburger navigation */
 #hamburger_header_navigation {
-display: block;
+  display: block;
+  padding-top: 1rem;
 }  
 #inline_header_navigation {
-display: none;
+  display: none;
 }
   
 /*
@@ -243,7 +244,7 @@ display: none;
   }
   #inline_header_navigation {
     display: block;
-  }   
+  }
 }
 
 
