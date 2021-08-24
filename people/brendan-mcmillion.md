@@ -15,4 +15,4 @@ Cryptography, Systems Engineering, Highly Reliable Software
 * ECH
 
 ## Publications (incomplete)
-* [**McMillion, Brendan**, and **Nick Sullivan**. "Attacking White-Box AES Constructions." In Proceedings of the 2016 ACM Workshop on Software PROtection, pp. 85-90. 2016.](http://library.usc.edu.ph/ACM/SIGSAC%202017/spro/p85.pdf)
+{% include 'related_publications.njk' %}
