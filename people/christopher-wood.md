@@ -14,7 +14,4 @@ Cryptography, Privacy, Security
 
 
 ## Publications 
-* **Fayed, Marwan**, Lorenz Bauer, **Vasileios Giotsas**, Sami Kerola, Marek Ma- jkowski, Pavel Odinstov, Jakub Sitnicki, Taejoong Chung, Dave Levin, Alan Mislove, **Christopher A. Wood**, **Nick Sullivan**. "The Ties that un-Bind: Decoupling IP from web services and sockets for robust addressing agility at CDN-scale." In ACM SIGCOMM 2021 Conference (SIGCOMM ’21), August 23–28, 2021, Virtual Event, USA. ACM, New York, NY, USA, 14 pages. 2021. To appear.
-* **Celi, Sofía**, **Armando Faz-Hernández**, **Nick Sullivan**, Goutam Tamvada, **Luke Valenta**, Thom Wiggers, Bas Westerbaan, **Christopher Wood**. "Implementing and measuring KEMTLS." Under submission and presented an Latincrypt 2021, 2021.
-* [**Singanamalla, Sudheesh**, **Suphanat Chunhapanya**, **Jonathan Hoyland**, **Marek Vavruša**, **Tanya Verma**, **Peter Wu**, **Marwan Fayed**, Kurtis Heimerl, **Nick Sullivan**, and **Christopher Wood**. "Oblivious DNS over HTTPS (ODoH): A Practical Privacy Enhancement to DNS." In Proceedings on Privacy Enhancing Technologies 2021, (4):pp. 575–592. 2021](https://www.petsymposium.org/2021/files/papers/issue4/popets-2021-0085.pdf)
-* [Tyagi, Nirvan, **Sofıa Celi**, Thomas Ristenpart, **Nick Sullivan**, Stefano Tessaro, and **Christopher A. Wood**. "A Fast and Simple Partially Oblivious PRF, with Applications.", Under submission, 2021](https://eprint.iacr.org/2021/864.pdf)
+{% include 'related_publications.njk' %}
