@@ -13,5 +13,5 @@ Systems, Networking, Security, Privacy, Cryptography
 
 
 ## Publications (incomplete)
-* [**Singanamalla, Sudheesh**, **Suphanat Chunhapanya**, **Jonathan Hoyland**, **Marek Vavruša**, **Tanya Verma**, **Peter Wu**, **Marwan Fayed**, Kurtis Heimerl, **Nick Sullivan**, and **Christopher Wood**. "Oblivious DNS over HTTPS (ODoH): A Practical Privacy Enhancement to DNS." In Proceedings on Privacy Enhancing Technologies 2021, (4):pp. 575–592. 2021](https://www.petsymposium.org/2021/files/papers/issue4/popets-2021-0085.pdf)
+{% include 'related_publications.njk' %}
 
