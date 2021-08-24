@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<!-- <meta http-equiv="refresh" content="1;url=index.html">-->
+<meta name="viewport" content="width=device-width, initial-scale=1">
 
 <title>{% if title %}{{ title }} | {% endif %}Cloudflare Research</title>
 <meta name="description" content="research.cloudflare.com">
@@ -17,7 +17,10 @@
 <link rel='shortcut icon' type='image/x-icon' href='/img/favicon.ico' />
 <link rel="stylesheet" type="text/css" href="/css/site.css" />
 <link rel="stylesheet" type="text/css" href="/css/components.css" />
-<link rel="stylesheet" type="text/css" href="/css/katex.min.css" />
+
+<link rel="preload" href="/css/katex.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+<noscript><link rel="stylesheet" href="/css/katex.min.css"></noscript>
+
 <link rel="stylesheet" type="text/css" href="/css/hamburger.css" />
 
 </head>

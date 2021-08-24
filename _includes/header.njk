@@ -10,7 +10,7 @@
 <nav id="hamburger_header_navigation">
 <input type="checkbox" id="burger-shower" class="burger-shower">
 <label for="burger-shower" class="hamburger">
-<svg viewBox="0 0 100 80" width="2.4rem" height="2.4rem">
+<svg viewBox="0 0 100 80">
 <rect y="10" width="80" height="5"></rect>
 <rect y="30" width="80" height="5"></rect>
 <rect y="50" width="80" height="5"></rect>
@@ -20,19 +20,19 @@
 <ul class="burger-menu">
 {% for item in items -%}
 {% for name, link in item -%}
-<li><a {% if link in page.url -%}class="active" {% endif -%}{% if 'http' in link -%}target="_blank" {% endif -%}href="{{ link }}">{{ name }}</a></li>
+<li><a {% if link in page.url -%}class="active" {% endif -%}{% if 'http' in link -%}target="_blank" rel="noopener" {% endif -%}href="{{ link }}">{{ name }}</a></li>
 {% endfor -%}
 {% endfor -%}
 </ul>
 </nav>
 
-<img src="/img/cloud.svg" alt="Cloudflare orange cloud logo" width="" height="2rem" />
+<img src="/img/cloud.svg" alt="Cloudflare orange cloud logo" width="30rem" height="2rem" />
 <a class="logo" href="/">Cloudflare Research</a>
 
 <ul id="inline_header_navigation">
 {% for item in items -%}
 {% for name, link in item -%}
-<li><a {% if link in page.url -%}class="active" {% endif -%}{% if 'http' in link -%}target="_blank" {% endif -%}href="{{ link }}">{{ name }}</a></li>
+<li><a {% if link in page.url -%}class="active" {% endif -%}{% if 'http' in link -%}target="_blank" rel="noopener" {% endif -%}href="{{ link }}">{{ name }}</a></li>
 {% endfor -%}
 {% endfor -%}
 </ul>

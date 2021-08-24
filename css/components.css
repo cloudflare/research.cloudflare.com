@@ -58,7 +58,11 @@ div.homepage_feature div.column {
   text-align: center;
 }
 div.homepage_feature img {
-  width: 16rem
+  width: 16rem;
+  height: auto;
+}
+div.homepage_feature section {
+  font-weight: 600;
 }
 div.homepage_feature a {
   text-decoration: none;
