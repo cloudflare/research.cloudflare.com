@@ -26,14 +26,13 @@ layout: content
 
 <h2>Abstract</h2>
 {{ content | safe }}
-<br />
 
 {% if related_areas %}
 <h2>Research Areas</h2>
   {% for related_area in related_areas %}
   {{ areas[ related_area ].name }}{% if not loop.last %}, {% endif %}
   {% endfor %}
-<br /><br />
+<br />
 {% endif %}
 
 {% if related_projects %}
@@ -41,5 +40,5 @@ layout: content
   {% for related_project in related_projects %}
   <a href="/projects/{{ projects[ related_project ].path }}">{{ projects[ related_project ].name }}</a>{% if not loop.last %}, {% endif %}
   {% endfor %}
-<br /><br />
+<br />
 {% endif %}
