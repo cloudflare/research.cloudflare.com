@@ -3,22 +3,25 @@ layout: content
 ---
 
 <h1 style="margin-bottom: 0">{{ title }}</h1>
-<div class="publication_location">{{ location }}</div>
-{% if url %}
-<a href="{{ url }}" target="_blank">read this publication &#x2197;</a><br />
-{% endif %}
-
-<br />
 
 {% for author in authors %}
 {% if people[ author ] -%}
-<span class="nobreak"><a href="/people/{{ people[ author ].slug }}">{{ people[ author ].title }}</a></span>{% if not loop.last %},{% endif %}
+  {% if people[ author ][ 'author_name' ] -%}
+    {% set name = people[ author ][ 'author_name' ] -%}
+  {% else -%}
+    {% set name = people[ author ][ 'title' ] -%}
+  {% endif -%}
+<span class="nobreak"><a href="/people/{{ people[ author ].slug }}">{{ name }}</a></span>{% if not loop.last %},{% endif %}
 {% else -%}
 <span class="nobreak">{{ author }}</span>{% if not loop.last %},{% endif %}
 {% endif -%}
 {% endfor %}
 
-<br />
+<div class="publication_location">{{ location }}</div>
+{% if url %}
+<a href="{{ url }}" target="_blank">read this publication &#x2197;</a><br />
+{% endif %}
+
 <br />
 
 <h2>Abstract</h2>
@@ -40,7 +43,3 @@ layout: content
   {% endfor %}
 <br /><br />
 {% endif %}
-
-
-{% set related_profiles = authors %}
-{% include 'related_profiles.njk' %}

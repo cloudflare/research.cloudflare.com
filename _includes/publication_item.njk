@@ -8,7 +8,12 @@
 </div>
   {% for author in publication.authors -%}
   {% if people[ author ] -%}
-  <span><a href="/people/{{ people[ author ].slug }}">{{ people[ author ].title }}</a></span>{% if not loop.last %},{% endif %}
+    {% if people[ author ][ 'author_name' ] -%}
+      {% set name = people[ author ][ 'author_name' ] -%}
+    {% else -%}
+      {% set name = people[ author ][ 'title' ] -%}
+    {% endif -%}
+  <span><a href="/people/{{ people[ author ].slug }}">{{ name }}</a></span>{% if not loop.last %},{% endif %}
   {% else -%}
   <span>{{ author }}</span>{% if not loop.last %},{% endif %}
   {% endif -%}

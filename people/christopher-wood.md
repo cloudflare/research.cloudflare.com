@@ -1,5 +1,6 @@
 ---
 title: Christopher Wood
+author_name: Christopher A. Wood
 position: Research Lead
 status: current
 image: https://cdn.filestackcontent.com/AchUBPpbtR12UdA8r3ilwz/security=policy:eyJleHBpcnkiOjIyMzA3NDc0OTcsImNhbGwiOlsicmVhZCIsImNvbnZlcnQiXSwiaGFuZGxlIjoiMWtGYThjdVRRYWlBTnZHcDkxM20ifQ==,signature:af6b97d9a057a3048613d726ee67dbffe61f72da2d5fc6de00b5a990e5c7df9b/cache=expiry:max/resize=w:600,h:600,fit:crop,align:faces/rotate=d:exif/1kFa8cuTQaiANvGp913m
