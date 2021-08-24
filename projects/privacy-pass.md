@@ -3,7 +3,7 @@ title: Privacy Pass
 related_profiles:
   - sofia-celi
   - nick-sullivan
-  - armando-hernandez
+  - armando-faz
   - pop-chunhapanya
   - christopher-wood
   - thibault-meunier
