@@ -19,6 +19,4 @@ Cryptography, Internet Measurement, Privacy, Security, Distributed Systems
 * ECH
 
 ## Publications
-* **Celi, Sofía**, **Armando Faz-Hernández**, **Nick Sullivan**, Goutam Tamvada, **Luke Valenta**, Thom Wiggers, Bas Westerbaan, **Christopher Wood**. "Implementing and measuring KEMTLS." Under submission and presented an Latincrypt 2021, 2021.
-* [**Valenta, Luke**, **Nick Sullivan**, Antonio Sanso, and Nadia Heninger. "In search of CurveSwap: Measuring elliptic curve implementations in the wild." In 2018 IEEE European Symposium on Security and Privacy (EuroS&P), pp. 384-398. IEEE, 2018.](https://eprint.iacr.org/2018/298.pdf)
-* [McDonald, Allison, Matthew Bernhard, **Luke Valenta**, Benjamin VanderSloot, Will Scott, **Nick Sullivan**, J. Alex Halderman, and Roya Ensafi. "403 forbidden: A global view of cdn geoblocking." In Proceedings of the Internet Measurement Conference 2018, pp. 218-230. 2018.](https://conferences.sigcomm.org/imc/2018/papers/imc18-final127.pdf)
+{% include 'related_publications.njk' %}
