@@ -17,4 +17,6 @@ Cryptography Engineering, Elliptic Curve Cryptography, Post-Quantum Cryptography
 * ECH
 
 ## Publications
-* **Celi, Sofía**, **Armando Faz-Hernández**, **Nick Sullivan**, Goutam Tamvada, **Luke Valenta**, Thom Wiggers, Bas Westerbaan, **Christopher Wood**. "Implementing and measuring KEMTLS." Under submission and presented an Latincrypt 2021, 2021.
+
+{% include 'related_publications.njk' %}
+
