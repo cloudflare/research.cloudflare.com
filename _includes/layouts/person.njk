@@ -6,3 +6,13 @@ layout: content
 {% include 'person_header.njk' %}
 
 {{ content | safe }}
+
+{% if projects[ person_slug ] -%}
+<h2>Projects</h2>
+{% include 'related_projects.njk' %}
+{% endif -%}
+
+{% if publications[ person_slug ] %}
+<h2>Publications</h2>
+{% include 'related_publications.njk' %}
+{% endif %}

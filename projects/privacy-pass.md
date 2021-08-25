@@ -1,6 +1,6 @@
 ---
 title: Privacy Pass
-related_profiles: 
+related_profiles:
   - sofia-celi
   - nick-sullivan
   - armando-hernandez
@@ -8,7 +8,12 @@ related_profiles:
   - christopher-wood
   - thibault-meunier
 related_publications:
-  - Another
+  - Tyagi
+  - Davidson2018
+related_areas:
+  - measurement
+  - cryptography
+  - privacy
 ---
 
 # Privacy Pass
@@ -25,12 +30,14 @@ Privacy Pass is now in use by over a hundred thousand monthly active users in th
 * [GitHub](https://github.com/privacypass)
 * [Privacy Pass Home](https://privacypass.github.io/)
 
+
+## Research Areas
+{% include 'related_areas.njk' %}
+
 ## Publications
-* [Tyagi, Nirvan, **Sofıa Celi**, Thomas Ristenpart, **Nick Sullivan**, Stefano Tessaro, and **Christopher A. Wood**. "A Fast and Simple Partially Oblivious PRF, with Applications.", Under submission, 2021](https://eprint.iacr.org/2021/864.pdf)
-* [**Davidson, Alex**, Ian Goldberg, **Nick Sullivan**, George Tankersley, and Filippo Valsorda. "Privacy Pass: Bypassing Internet Challenges Anonymously." Proc. Priv. Enhancing Technol. 2018, no. 3 (2018): 164-180.](https://www.petsymposium.org/2018/files/papers/issue3/popets-2018-0026.pdf)
+{% include 'related_publications.njk' %}
 
 ## People
-
 {% include 'related_profiles.njk' %}
 
 ## Explore More
