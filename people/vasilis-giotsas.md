@@ -10,10 +10,3 @@ His work has been distinguished with the CoNEXT 2015 best paper award and the IE
 
 ## Research Areas (incomplete)
 Internet Measurement, Network Privacy
-
-## Projects
-
-
-## Publications
-{% include 'related_publications.njk' %}
-

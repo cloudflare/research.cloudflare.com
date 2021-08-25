@@ -10,5 +10,3 @@ Jack Wampler is a research intern focused on the development of secure and priva
 
 ## Research Areas 
 Internet Measurement, Privacy, Security
-
-## Projects

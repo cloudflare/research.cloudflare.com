@@ -16,7 +16,3 @@ Post-Quantum Cryptography, Privacy, Security
 * OPAQUE
 * Privacy Pass
 
-## Publications 
-{% include 'related_publications.njk' %}
-
-

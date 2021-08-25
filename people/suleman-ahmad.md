@@ -9,5 +9,3 @@ He was previously enrolled in a fully-funded Masters program in Computer Science
 
 ## Research Areas 
 Internet Measurement, Privacy, Security
-
-## Projects

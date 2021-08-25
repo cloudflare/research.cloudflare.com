@@ -10,10 +10,3 @@ His interests also includes anonymity systems, secure messaging, cryptographic i
 
 ## Research Areas 
 Distributed Systems, Privacy, Cryptography
-
-## Projects 
-
-
-## Publications
-{% include 'related_publications.njk' %}
-

@@ -16,7 +16,3 @@ Cryptography Engineering, Elliptic Curve Cryptography, Post-Quantum Cryptography
 * CAP
 * ECH
 
-## Publications
-
-{% include 'related_publications.njk' %}
-

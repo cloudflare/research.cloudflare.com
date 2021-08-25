@@ -11,10 +11,3 @@ Since leaving Cloudflare in September 2020, Alex worked as a post-doctoral resea
 
 ## Research Areas 
 Privacy-Preserving Internet Protocols, Anonymous Credentials, Post-Quantum Cryptography
-
-## Projects
-
-
-## Publications
-{% include 'related_publications.njk' %}
-

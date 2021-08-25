@@ -8,10 +8,3 @@ Sudheesh is a PhD student at the University of Washington, Seattle advised by Pr
 
 ## Research Areas 
 Systems, Networking, Security, Privacy, Cryptography
-
-## Projects
-
-
-## Publications (incomplete)
-{% include 'related_publications.njk' %}
-

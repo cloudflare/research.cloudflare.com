@@ -9,12 +9,3 @@ Kris Kwiatkowski is a Cryptography Engineer who focuses on problems at the inter
 
 ## Research Areas 
 Cryptographic Implementations, Post-Quantum cryptography, High performance computing
-
-## Projects
-
-
-## Publications (incomplete)
-{% include 'related_publications.njk' %}
-
-
-

@@ -9,9 +9,3 @@ Peter Wu is a Research Engineer working on various TLS and cryptography-related 
 
 ## Research Areas (incomplete)
 Cryptography, Internet Measurement, Privacy, Security
-
-## Projects
-{% include 'related_projects.njk' %}
-
-## Publications
-{% include 'related_publications.njk' %}

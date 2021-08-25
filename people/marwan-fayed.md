@@ -16,6 +16,3 @@ Internet Measurement, Network Security, Network Privacy
 * [Oblivious DNS over HTTPS](/docs/odns)
 * CAP
 * ECH
-
-## Publications
-{% include 'related_publications.njk' %}

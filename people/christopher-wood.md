@@ -11,8 +11,3 @@ At Cloudflare, he leads projects focused on security and privacy enhancements to
 ## Research Areas 
 Cryptography, Privacy, Security
 
-## Projects
-
-
-## Publications 
-{% include 'related_publications.njk' %}

@@ -10,10 +10,3 @@ Nick Sullivan is Head of Research at Cloudflare. Nick leads research efforts in 
 
 ## Research Areas 
 Cryptography, Internet Measurement, Privacy, Security
-
-## Projects 
-{% include 'related_projects.njk' %}
-
-## Publications 
-{% include 'related_publications.njk' %}
-

@@ -9,7 +9,4 @@ Joshua is a PhD student from the University of Illinois at Urbana-Champaign's Ne
 ## Research Areas 
 Human Factors in Network Security
 
-## Projects
-
-
 

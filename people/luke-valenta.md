@@ -17,6 +17,3 @@ Cryptography, Internet Measurement, Privacy, Security, Distributed Systems
 * [Oblivious DNS over HTTPS](/docs/odns)
 * CAP
 * ECH
-
-## Publications
-{% include 'related_publications.njk' %}

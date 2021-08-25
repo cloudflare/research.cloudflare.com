@@ -9,10 +9,3 @@ Bas is a mathematician with an interest in cryptography and quantum computing. H
 
 ## Research Areas 
 Post-Quantum Cryptography, Quantum Computing, Cryptography Engineering
-
-## Projects (incomplete)
-* todo
-
-## Publications
-{% include 'related_publications.njk' %}
-
