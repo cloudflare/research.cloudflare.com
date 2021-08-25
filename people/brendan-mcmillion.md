@@ -13,6 +13,3 @@ Cryptography, Systems Engineering, Highly Reliable Software
 * [Oblivious DNS over HTTPS](/docs/odns)
 * CAP
 * ECH
-
-## Publications (incomplete)
-{% include 'related_publications.njk' %}

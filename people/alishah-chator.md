@@ -8,12 +8,3 @@ Alishah is an Applied Cryptography researcher from Johns Hopkins University, adv
 
 ## Research Areas 
 Applied Cryptography, Privacy, Technology Policy
-
-## Projects
-
-
-## Publications
-
-{% include 'related_publications.njk' %}
-
-

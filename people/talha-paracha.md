@@ -9,6 +9,3 @@ Talha Paracha is a PhD student at Northeastern University, with his research foc
 
 ## Research Areas 
 Privacy, Security
-
-## Projects 
-

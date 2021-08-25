@@ -8,5 +8,3 @@ Marina Sanusi is a research intern working on detecting and preventing password 
 
 ## Research Areas 
 Privacy, Security
-
-## Projects 

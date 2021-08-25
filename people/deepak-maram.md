@@ -9,8 +9,3 @@ Deepak is a PhD candidate at Cornell Tech, New York City. His research lies in s
 
 ## Research Areas 
 Applied Cryptography, Blockchain
-
-## Projects
-
-
-
