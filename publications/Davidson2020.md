@@ -1,7 +1,7 @@
 ---
 title: Adaptively secure constrained pseudorandom functions in the standard model
 year: 2019
-location: Annual International Cryptology Conference, pp. 559-589. Springer, Cham, 2020.
+location: Advances in Cryptology - CRYPTO 2020 - 40th Annual International Cryptology Conference, pp. 559-589. Springer, Cham, 2020.
 authors:
   - alex-davidson
   - Shuichi Katsumata
