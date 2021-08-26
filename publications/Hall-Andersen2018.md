@@ -10,6 +10,7 @@ authors:
 url: https://eprint.iacr.org/2019/028.pdf
 related_areas:
   - security
+  - cryptography
 related_projects:
   -
 ---
