@@ -11,6 +11,8 @@ authors:
 url: https://www.cs.umd.edu/~dml/papers/pqc_nist19.pdf
 related_areas:
   - crytography
+  - security
+  - measurement
 related_projects:
   - 
 ---
