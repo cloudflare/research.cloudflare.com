@@ -43,3 +43,4 @@ Privacy Pass is now in use by over a hundred thousand monthly active users in th
 * [Privacy Pass - “The Math”](https://blog.cloudflare.com/privacy-pass-the-math/)
 * [Supporting the latest version of the Privacy Pass Protocol](https://blog.cloudflare.com/supporting-the-latest-version-of-the-privacy-pass-protocol/)
 * [Cloudflare supports Privacy Pass](https://blog.cloudflare.com/cloudflare-supports-privacy-pass/)
+* [Privacy Pass: A Lightweight Zero Knowledge Protocol Designed for the Web](https://www.youtube.com/watch?v=HIqBJKnnHVk)
