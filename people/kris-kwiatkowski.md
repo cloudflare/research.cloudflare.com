@@ -1,5 +1,6 @@
 ---
 title: Kris Kwiatkowski
+author_name: Krzysztof Kwiatkowski
 position: Research Engineer
 image: https://media-exp1.licdn.com/dms/image/C4D03AQHke9o0-k8J0Q/profile-displayphoto-shrink_200_200/0/1558826548574?e=1634774400&v=beta&t=uN8iAjot-lJVCnHgwlMtV7gDUVPQ2P5kUOiZM-NkaXg
 twitter: _henrycase
