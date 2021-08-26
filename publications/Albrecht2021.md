@@ -1,6 +1,5 @@
-
 ---
-title: Round-optimal verifiable oblivious pseudorandom functions from ideal lattices
+title: "Round-optimal verifiable oblivious pseudorandom functions from ideal lattices"
 year: 2021
 location: IACR International Conference on Public-Key Cryptography, pp. 261-289. Springer, Cham, 2021.
 authors:
