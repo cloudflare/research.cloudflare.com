@@ -11,7 +11,6 @@ related_publications:
   - Tyagi
   - Davidson2018
 related_areas:
-  - measurement
   - cryptography
   - privacy
 ---
