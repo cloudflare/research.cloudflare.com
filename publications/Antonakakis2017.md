@@ -25,6 +25,7 @@ authors:
 url: https://www.usenix.org/system/files/conference/usenixsecurity17/sec17-antonakakis.pdf
 related_areas:
   - malware
+  - measurement
 related_projects:
 ---
 
