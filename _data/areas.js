@@ -1,6 +1,6 @@
 let areas = {
   "measurement": {
-    "name": "Internet Measurements",
+    "name": "Internet Measurement",
     "area": "measurement"
   },
   "cryptography": {
