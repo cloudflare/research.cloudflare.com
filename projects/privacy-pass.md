@@ -45,4 +45,5 @@ Launched in 2017, Privacy Pass is available in the form of a browser extension, 
 * [Privacy Pass: A Lightweight Zero Knowledge Protocol Designed for the Web](https://www.youtube.com/watch?v=HIqBJKnnHVk)
 * [Privacy Pass IETF's working group](https://datatracker.ietf.org/wg/privacypass/about)
 
+<iframe width="560" height="315" src="https://www.youtube.com/embed/HIqBJKnnHVk" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 <iframe src="https://www.youtube.com/watch?v=HIqBJKnnHVk" width="700" height="510" alt="Privacy Pass: A Lightweight Zero Knowledge Protocol Designed for the Web" allowFullScreen={true}></iframe>
