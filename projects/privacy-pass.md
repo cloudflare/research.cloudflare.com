@@ -44,3 +44,5 @@ Launched in 2017, Privacy Pass is available in the form of a browser extension, 
 * [Cloudflare supports Privacy Pass](https://blog.cloudflare.com/cloudflare-supports-privacy-pass/)
 * [Privacy Pass: A Lightweight Zero Knowledge Protocol Designed for the Web](https://www.youtube.com/watch?v=HIqBJKnnHVk)
 * [Privacy Pass IETF's working group](https://datatracker.ietf.org/wg/privacypass/about)
+
+<iframe src="https://www.youtube.com/watch?v=HIqBJKnnHVk" width="400" height="310" alt="Privacy Pass: A Lightweight Zero Knowledge Protocol Designed for the Web" allowFullScreen={true}></iframe>
