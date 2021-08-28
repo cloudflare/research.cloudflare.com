@@ -7,7 +7,7 @@ authors:
   - Tommy Pauly
   - Colin Perkins
   - Kyle Rose
-  - chris-wood
+  - christopher-wood
 url: https://datatracker.ietf.org/doc/rfc8922/
 related_areas:
   - security

@@ -7,7 +7,7 @@ authors:
   - Luke Garratt
   - Stanislav Smyshlyaev
   - nick-sullivan
-  - chris-wood
+  - christopher-wood
 url: https://datatracker.ietf.org/doc/rfc8937/
 related_areas:
   - cryptography, security
