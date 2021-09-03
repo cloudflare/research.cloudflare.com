@@ -1,0 +1,33 @@
+---
+layout: content
+---
+
+<h1>Join the Cloudflare Research mailing list</h1>
+
+<form id="mailinglist" method="POST" action="https://website-worker.research.cloudflare.com/mailinglist" enctype="application/x-www-form-urlencoded">
+
+  <label for="firstname">First Name</label><input name="firstname" required><br />
+  <label for="lastname">Last Name</label><input name="lastname" required><br />
+  <label for="email">Email</label><input name="email" type="email" required><br />
+  <label for="organization">Organization</label><input name="organization" /><br />
+  <label for="country">Country</label><input name="country" /><br />
+  
+  <br />
+  <fieldset>
+    <legend>Research Areas you are interested in:</legend>
+
+    <input type="checkbox" name="[measurement]" id="[measurement]" /><label for="[measurement]">Measurement</label><br />
+    <input type="checkbox" name="[cryptography]" id="[cryptography]" /><label for="[cryptography]">Cryptography</label><br />
+    <input type="checkbox" name="[distributed_systems]" id="[distributed_systems]" /><label for="[distributed_systems]">Distributed Systems</label><br />
+    <input type="checkbox" name="[privacy]" id="[privacy]" /><label for="[privacy]">Privacy</label><br />
+    <input type="checkbox" name="[authentication]" id="[authentication]" /><label for="[authentication]">Authentication</label><br />
+    <input type="checkbox" name="[malware]" id="[malware]" /><label for="[malware]">Malware</label><br />
+    <input type="checkbox" name="[security]" id="[security]" /><label for="[security]">Security</label><br />
+
+  </fieldset>
+  
+  <br />
+  <input type="submit" /><br />
+  <br />
+  
+</form>
