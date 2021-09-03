@@ -130,3 +130,14 @@ div.homepage_header h1 {
 span.nobreak {
   white-space:nowrap;  
 }
+
+form > label {
+  display: inline-block;
+  padding-right: 1rem;
+  width: 6rem;
+}
+
+form fieldset {
+  padding: 1rem;
+  /* margin-right: 1rem; */
+}

@@ -1,0 +1,28 @@
+---
+layout: content
+---
+
+<h1>Connect with Cloudflare Research</h1>
+
+<form id="contact" method="POST" action="https://website-worker.research.cloudflare.com/contact" enctype="application/x-www-form-urlencoded">
+
+  <label for="firstname">First Name</label><input name="firstname" required><br />
+  <label for="lastname">Last Name</label><input name="lastname" required><br />
+  <label for="email">Email</label><input name="email" type="email" required><br />
+  <label for="organization">Organization</label><input name="organization" /><br />
+  <label for="country">Country</label><input name="country" /><br />
+  
+  <br />
+  <fieldset>
+    <legend>What is on your mind?</legend>
+
+    <textarea name="message" style="width: 80%">
+    </textarea>
+    
+  </fieldset>
+  
+  <br />
+  <input type="submit" /><br />
+  <br />
+  
+</form>
