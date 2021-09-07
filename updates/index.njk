@@ -8,13 +8,14 @@ title: Updates
 
 <article class="content" id="content">
 
-<h1>Updates</h1>
-
-<h2>From the <a href="https://blog.cloudflare.com/">Cloudflare Blog</a></h2>
+<h1>Research Updates from the <a href="https://blog.cloudflare.com/">Cloudflare Blog</a></h2>
 <div class="updates">
-  <li>One</li>
-  <li>Two</li>
-  <li>Three</li>
+  {% for blogpost in blogposts %}
+  <div>
+  <h3><small style="position: relative; left: -11rem"><i>{{ blogpost.date }}</i></small> <a href="{{ blogpost.link }}" target="_blank">{{ blogpost.heading }}</a></h3>
+  <p>{{ blogpost.text }}</p>
+  </div>
+  {% endfor %}
 </div>
 
 <br />
