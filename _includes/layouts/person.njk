@@ -8,11 +8,11 @@ layout: content
 {{ content | safe }}
 
 {% if projects[ person_slug ] -%}
-<h2>Projects</h2>
+<h2 id="projects">Projects</h2>
 {% include 'related_projects.njk' %}
 {% endif -%}
 
 {% if publications[ person_slug ] %}
-<h2>Publications</h2>
+<h2 id="publications">Publications</h2>
 {% include 'related_publications.njk' %}
 {% endif %}

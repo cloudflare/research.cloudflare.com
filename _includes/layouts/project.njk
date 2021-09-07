@@ -7,22 +7,22 @@ layout: content
 {{ content | safe }}
 
 {% if related_areas %}
-<h2>Research Areas</h2>
+<h2 id="areas">Research Areas</h2>
 {% include 'related_areas.njk' %}
 {% endif %}
 
 {% if related_publications %}
-<h2>Publications</h2>
+<h2 id="publications">Publications</h2>
 {% include 'related_publications.njk' %}
 {% endif %}
 
 {% if related_profiles %}
-<h2>People</h2>
+<h2 id="people">People</h2>
 {% include 'related_profiles.njk' %}
 {% endif %}
 
 {% if resources %}
-<h2>Resources</h2>
+<h2 id="resources">Resources</h2>
 <ul>
 {% for res in resources %}
   {% if res[ 'link' ] %}
