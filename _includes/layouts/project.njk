@@ -1,0 +1,42 @@
+---
+layout: content
+---
+
+<h1>{{ title }}</h1>
+
+{{ content | safe }}
+
+{% if related_areas %}
+<h2>Research Areas</h2>
+{% include 'related_areas.njk' %}
+{% endif %}
+
+{% if related_publications %}
+<h2>Publications</h2>
+{% include 'related_publications.njk' %}
+{% endif %}
+
+{% if related_profiles %}
+<h2>People</h2>
+{% include 'related_profiles.njk' %}
+{% endif %}
+
+{% if resources %}
+<h2>Resources</h2>
+<ul>
+{% for res in resources %}
+  {% if res[ 'link' ] %}
+  <li><a href="{{ res[ 'link' ] }}">{{ res[ 'text' ] }}</a></li>
+  {% endif %}
+{% endfor %}
+</ul>
+
+{% for res in resources %}
+  {% if res[ 'youtube' ] %}
+  <iframe width="560" height="315" src="{{ res[ 'youtube' ] }}" title="{{ res[ 'text' ] }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  {% endif %}
+{% endfor %}
+
+{% endif %}
+
+<br />

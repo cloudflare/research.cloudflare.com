@@ -2,4 +2,6 @@
 title: Projects
 ---
 
-# Introduction to the projects (but not displayed in navigation)
+### Introductory text needed here
+
+### (page not displayed in navigation)

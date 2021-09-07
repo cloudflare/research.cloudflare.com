@@ -37,7 +37,7 @@ let navigation = generateNavigation();
 //console.log( navigation );
 
 module.exports = {
-  layout: 'content',
+  layout: 'project',
   navigation: navigation,
 }
 
