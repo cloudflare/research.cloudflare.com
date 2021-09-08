@@ -1,8 +1,15 @@
-<cite class="publication_item">
-{% if showYear -%}
-<div class="publication_year">{{ publication.year }}</div>
+{% set area_classes = '' %}
+
+{% if publication.related_areas != undefined -%}
+{% for area in publication.related_areas -%}
+  {% set area_class = [ 'a', area ] | join -%}
+  {% set area_classes = [ area_classes, area_class ] | join( ' ' ) -%}
+{% endfor -%}
 {% endif -%}
-<h3><a href="/publications/{{ publication.slug }}">{{ publication.title }}</a></h3>
+
+<cite class="publication_item y{{ publication.year }} {{ area_classes }}">
+
+<h3>{% if publication.year %}<small>{{ publication.year }}</small>{% endif %}<a href="/publications/{{ publication.slug }}">{{ publication.title }}</a></h3>
 <div class="publication_location">
 {{ publication.location }}
 </div>
@@ -18,4 +25,5 @@
   <span>{{ author }}</span>{% if not loop.last %},{% endif %}
   {% endif -%}
   {% endfor -%}
+<hr />
 </cite>

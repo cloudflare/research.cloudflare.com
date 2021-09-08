@@ -1,19 +1,18 @@
 
-{% if not related_publications %}
-  {% set profile_slug = page.fileSlug %}
-  {% set related_publications = publications[ profile_slug ] %}
+{% if not related_publications -%}
+  {% set profile_slug = page.fileSlug -%}
+  {% set related_publications = publications[ profile_slug ] -%}
 {% endif %}
 
 <div class="publications">
 
-  <hr />
 {% for publication_slug in related_publications -%}
-{% set publication = publications[ publication_slug ] %}
+{% set publication = publications[ publication_slug ] -%}
 {% if publication -%}
   
   {% include 'publication_item.njk' %}
-  <hr />
-{% endif %}
-{% endfor %}
+
+{% endif -%}
+{% endfor -%}
 
 </div>

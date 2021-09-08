@@ -28,6 +28,9 @@ function generatePublications() {
         //console.log( frontMatter )
         frontMatter.slug = slug
         
+        if ( frontMatter.year == undefined || frontMatter.year == '' )
+          frontMatter.year = 'pending'
+        
         publications.push( frontMatter )
       }
     }
@@ -47,11 +50,11 @@ let publications = generatePublications();
 let ordered = publications.sort( ( a, b ) => { 
   if ( typeof( a.year ) == 'number' && typeof( b.year ) == 'number' )
     return b.year - a.year
-  else if ( a.year == null && b.year == null )
+  else if ( a.year == 'pending' && b.year == null )
     return 0
-  else if ( a.year == null )
+  else if ( a.year == 'pending' )
     return -1
-  else if ( b.year == null )
+  else if ( b.year == 'pending' )
     return 1
 } )
 
@@ -71,19 +74,37 @@ module.exports = {
   'ordered': ordered
 }
 
+let publication_years = []
+let publication_areas = []
+
 for ( publication of publications ) {
+  
   module.exports[ publication.slug ] = publication
+  
+  if ( ! publication_years.includes( publication.year ) )
+    publication_years.push( publication.year )
+  
+  
+  if ( publication.related_areas != undefined ) {
+    for ( area of publication.related_areas ) {
+      if ( ! publication_areas.includes( area ) && area.trim() != '' )
+        publication_areas.push( area )
+    }
+  }
 }
 
 for ( author in author_publications ) {
   module.exports[ author ] = author_publications[ author ]
 }
 
+module.exports.years = publication_years
+module.exports.areas = publication_areas
+
 //console.log( module.exports )
 
 /*
 
-  publicatioins.ordered
+  publications.ordered
     [ ... publications ordered by year (most recent first) ... ]
   
   publications[ 'McMillion2016' ]
@@ -92,5 +113,10 @@ for ( author in author_publications ) {
   publications[ 'cefan-rubin' ] 
     { ... ordered list of publications where cefan-rubin is listed as an author (most recent first) ... }
 
+  publications[ 'years' ]
+    [ 'pending', '2021', '2020', '2017', ... ]
+    
+  publications[ 'areas' ]
+    [ 'privacy', 'malware', ... ]
 
 */

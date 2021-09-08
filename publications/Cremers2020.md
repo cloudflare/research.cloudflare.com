@@ -10,7 +10,8 @@ authors:
   - christopher-wood
 url: https://datatracker.ietf.org/doc/rfc8937/
 related_areas:
-  - cryptography, security
+  - cryptography
+  - security
 related_projects:
 ---
 

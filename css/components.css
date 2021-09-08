@@ -85,14 +85,6 @@ cite.publication_item h3 {
 cite.publication_item h3 a {
   color: black
 }
-div.publication_year {
-  position: absolute;
-  left: -5rem; 
-  background-color: lightgrey; 
-  padding: 0.5rem; 
-  border-radius: 0.2rem; 
-  font-style: italics
-}
 div.publication_location {
   color: #555;
   font-size: 0.8rem; 
@@ -109,6 +101,16 @@ div.publications hr {
   display: block;
   /* margin-top: 0.8rem; margin-bottom: 0.8rem; */
 }
+cite.publication_item small {
+  background-color: lightgrey;
+  font-size: 0.7rem;
+  padding: 0.2rem;
+  margin-right: 0.1rem;
+  border-radius: 0.2rem;
+  position: relative;
+  bottom: 0.15rem;
+}
+
 
 
 /* styles targetting unique key features not in includes */

@@ -10,7 +10,7 @@ authors:
   - Alan Mislove
 url: https://www.cs.umd.edu/~dml/papers/pqc_nist19.pdf
 related_areas:
-  - crytography
+  - cryptography
   - security
   - measurement
 related_projects:

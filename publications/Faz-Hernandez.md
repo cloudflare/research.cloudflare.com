@@ -8,7 +8,7 @@ authors:
   - deepak-maram
 url: 
 related_areas:
-  - criptography
+  - cryptography
 related_projects:
   - 
 ---

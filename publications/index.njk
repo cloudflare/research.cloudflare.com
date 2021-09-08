@@ -3,6 +3,37 @@ layout: skaffold
 title: Publications
 ---
 
+<style>
+  {% for year in publications.years -%}
+  #y{{ year }}:not(:checked) ~ cite.y{{ year }}{% if not loop.last -%},{% endif %}
+  {% endfor -%} {
+    display: none;
+  }
+
+  {% for area in publications.areas -%}
+  #a{{ area }}:not(:checked) ~ cite.a{{ area }}{% if not loop.last -%},{% endif %}
+  {% endfor -%} {
+    display: none;
+  }
+  
+  input.state {
+    display: none;
+  }
+  input:not(:checked) + label {
+    text-decoration: line-through;
+    background-color: white;
+  }
+  input ~ label {
+    background-color: lightgrey;
+    padding: 0.2rem;
+    border-radius: 0.2rem;
+    border: 1px solid black;
+    margin: 0.1rem;
+    line-height: 2rem;
+    user-select: none;
+  }
+</style>
+
 <nav class="nav" id="nav">
 </nav>
 
@@ -10,23 +41,27 @@ title: Publications
 
 <h1>Publications</h1>
 
-<div class="publications">
-<hr />
+{% set showYear = 'display' %}
 
-{% set year = null -%}
+<div class="publications">
+
+years:
+{% for year in publications.years -%}
+<input type="checkbox" id="y{{year}}" class="state" checked><label for="y{{ year }}">{{ year }}</label>
+{% endfor -%}
+
+<br />
+
+research areas:
+{% for area in publications.areas -%}
+<input type="checkbox" id="a{{ area }}" class="state" checked><label for="a{{ area }}">{{ areas[ area ].name }}</label>
+{% endfor -%}
+
+<br /><br />
 
 {% for publication in publications.ordered -%}
-
-  {% if year != publication.year %}
-    {% set showYear = 'display' %}
-  {% else %}
-    {% set showYear = false %}
-  {% endif %}
-  {% include 'publication_item.njk' %}
-    {% set year = publication.year -%}
-
-<hr />
-{% endfor %}
+  {% include 'publication_item.njk' -%}
+{% endfor -%}
 </div>
 
 </article>
