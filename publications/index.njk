@@ -4,18 +4,19 @@ title: Publications
 ---
 
 <style>
-  {% for year in publications.years -%}
-  #y{{ year }}:not(:checked) ~ cite.y{{ year }}{% if not loop.last -%},{% endif %}
-  {% endfor -%} {
+
+  div.publications cite {
     display: none;
   }
 
   {% for area in publications.areas -%}
-  #a{{ area }}:not(:checked) ~ cite.a{{ area }}{% if not loop.last -%},{% endif %}
+  #a{{ area }}:checked ~ cite.a{{ area }}{% if not loop.last -%},{% endif %}
   {% endfor -%} {
-    display: none;
+    display: block;
   }
-  
+
+
+
   input.state {
     display: none;
   }
@@ -44,13 +45,6 @@ title: Publications
 {% set showYear = 'display' %}
 
 <div class="publications">
-
-years:
-{% for year in publications.years -%}
-<input type="checkbox" id="y{{year}}" class="state" checked><label for="y{{ year }}">{{ year }}</label>
-{% endfor -%}
-
-<br />
 
 research areas:
 {% for area in publications.areas -%}
