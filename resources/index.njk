@@ -52,7 +52,7 @@ quick_references:
   border: 1px solid #c2bdf3;
   border-radius: 0.5rem;
 }
-.box a h2 {
+.box a h3 {
   color: #170f58;
   display: block;
   margin-top: 0;
@@ -68,7 +68,7 @@ quick_references:
   background-color: #dfdcf9;
   text-decoration: none;
 }
-.box a:hover h2 {
+.box a:hover h3 {
   text-decoration: underline;
 }
 
@@ -83,7 +83,7 @@ quick_references:
 <div class="box">
   {% for card in experiments %}
   <a href="{{ card.url }}">
-    <h2>{{ card.title }}</h2>
+    <h3>{{ card.title }}</h2>
     <p>
       {{ card.description }}
     </p>
@@ -96,7 +96,7 @@ quick_references:
 <div class="box">
   {% for card in quick_references %}
   <a href="{{ card.url }}" target="_blank" nofollow>
-    <h2>{{ card.title }}</h2>
+    <h3>{{ card.title }}</h2>
     <p>
       {{ card.description }}
     </p>
