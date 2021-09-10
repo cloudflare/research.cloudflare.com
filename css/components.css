@@ -97,6 +97,10 @@ cite.publication_item span {
   padding: 0.1rem; 
   white-space:nowrap;
 }
+cite.publication_item span a {
+  color: #170f58;
+  text-decoration: underline;
+}
 div.publications hr {
   display: block;
   /* margin-top: 0.8rem; margin-bottom: 0.8rem; */
@@ -130,6 +134,7 @@ div.homepage_header h1 {
   margin-bottom: 0;
   text-shadow:1px 0 0 #170f58,0 1px 0 #170f58,-1px 0 0 #170f58,0 -1px 0 #170f58;
   color: #7366e4;
+  color: white;
 }
 
 span.nobreak {

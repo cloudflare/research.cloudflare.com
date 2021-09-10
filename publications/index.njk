@@ -16,24 +16,24 @@ title: Publications
   }
 
 
-
   input.state {
     display: none;
   }
-  input:not(:checked) + label {
+ .publications input:not(:checked) + label {
     text-decoration: line-through;
     background-color: white;
   }
-  input ~ label {
-    background-color: lightgrey;
+  .publications input ~ label {
     padding: 0.2rem;
     border-radius: 0.2rem;
     border: 1px solid black;
     margin: 0.1rem;
     line-height: 2rem;
     user-select: none;
-  }
+    background-color: lightgrey;
+  }i
 </style>
+
 
 <nav class="nav" id="nav">
 </nav>
@@ -48,7 +48,7 @@ title: Publications
 
 research areas:
 {% for area in publications.areas -%}
-<input type="checkbox" id="a{{ area }}" class="state" checked><label for="a{{ area }}">{{ areas[ area ].name }}</label>
+<input type="checkbox" id="a{{ area }}" class="state" checked><label tabindex=0 for="a{{ area }}">{{ areas[ area ].name }}</label>
 {% endfor -%}
 
 <br /><br />

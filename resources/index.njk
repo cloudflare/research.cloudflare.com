@@ -1,0 +1,110 @@
+---
+layout: content
+title: Resources
+experiments:
+  - title: OPAQUE demonstration
+    url: https://opaque.research.cloudflare.com/
+    description: Try out a user registration and login system that doesn't allow your plain-text password to leave the browser!
+  - title: CAPTCHA without the puzzle
+    url: https://cloudflarechallenge.com
+    description: Try your local biometric or hardware key device to pass a humanity test!
+quick_references:
+  - title: Browsing Experience Security Check
+    url: https://www.cloudflare.com/ssl/encrypted-sni/
+    description: Determine how vulnerable your current browsing experience is!
+  - title: Speed Test
+    url: https://speed.cloudflare.com/
+    description: Cloudflare's much more interesting Internet connection speed test!
+  - title: Measuring Active Listeners, Connection Observers, and Legitimate Monitors
+    url: https://malcolm.cloudflare.com/
+    description: Statistics on the number of https connections that can be listened to by actors "in the middle"!
+  - title: Explore the certificate transparency ecosystem
+    url: https://ct.cloudflare.com/
+    description: What proportion of certificates are signed with deprecated algorithms?
+  - title: League of Entropy
+    url: https://www.cloudflare.com/leagueofentropy/
+    description: The first unbiased cryptographically verified randomness beacon!
+  - title: Is BGP Safe Yet?
+    url: https://isbgpsafeyet.com/
+    description: Is your ISP doing its part to keep Internet route selection secure?
+  - title: What does Cloudflare's Edge say about my connection?
+    url: https://cloudflare.com/cdn-cgi/trace
+    description: Ask the Cloudflare Edge for a JSON report of our connection properties!
+---
+
+<style>
+.box {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+.box > * {
+  flex: 1 1 auto;
+}
+.box a {
+  color: black;
+  max-width: 17rem;
+  min-width: 17rem;
+  max-height: 20rem;
+  background-color: #f1f0fc;
+  overflow: hidden;
+  padding: 1rem;
+  border: 1px solid #c2bdf3;
+  border-radius: 0.5rem;
+}
+.box a h2 {
+  color: #170f58;
+  display: block;
+  margin-top: 0;
+  /* background-color: lightgrey; */
+}
+
+.box a:hover {
+  box-shadow:
+   -2px -2px 2px #f7ac6d,
+   2px -2px 2px #f7ac6d,
+   -2px 2px 2px #f7ac6d,
+    2px 2px 2px #f7ac6d;
+  background-color: #dfdcf9;
+  text-decoration: none;
+}
+.box a:hover h2 {
+  text-decoration: underline;
+}
+
+
+
+</style>
+
+<h1>Resources</h1>
+
+<h2>Active experiments</h2>
+
+<div class="box">
+  {% for card in experiments %}
+  <a href="{{ card.url }}">
+    <h2>{{ card.title }}</h2>
+    <p>
+      {{ card.description }}
+    </p>
+  </a>
+  {% endfor %}
+</div>
+
+<h2>Quick references</h2>
+
+<div class="box">
+  {% for card in quick_references %}
+  <a href="{{ card.url }}" target="_blank" nofollow>
+    <h2>{{ card.title }}</h2>
+    <p>
+      {{ card.description }}
+    </p>
+  </a>
+  {% endfor %}
+
+</div>
+
+<br/ >
+
+

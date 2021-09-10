@@ -22,11 +22,11 @@ a.button {
   color: white;
   text-align: center;
   font-weight: 400;
-  background-color: #f38020;
+  background-color: #2c1ea9;
 }
 
 a.button:hover {
-  background-color: #e87515;
+  background-color: #221785;
 }
 
 
@@ -48,7 +48,6 @@ a.button:hover {
 }
 .header a {
   color: black;
-  
 }
 .header a.logo {
   font-weight: 600;
@@ -166,14 +165,14 @@ a.button:hover {
 }
 
 @media (-webkit-min-device-pixel-ratio: 1.5) and (orientation: portrait), @media (min-resolution: 1.5dppx)  and (orientation: portrait){
-  html { 
+  html {
     font-size: 2rem;
   }
 }
 
 
 @media (-webkit-min-device-pixel-ratio: 2.5) and (orientation: portrait), @media (min-resolution: 2.5dppx) and (orientation: portrait){
-  html { 
+  html {
     font-size: 3rem;
   }
 }
@@ -189,7 +188,7 @@ a.button:hover {
     "content"
     "footer";
   min-height: 100vh;
-  
+
   /* not certain why wrapper places itself above sidebar, but this helps... */
   position: absolute;
   z-index: -10;
@@ -203,11 +202,11 @@ display: none;
 #hamburger_header_navigation {
   display: block;
   padding-top: 1rem;
-}  
+}
 #inline_header_navigation {
   display: none;
 }
-  
+
 /*
 @media (min-width: 400px) {
   .wrapper {
@@ -223,13 +222,13 @@ display: none;
     display: flex;
     justify-content: space-between;
   }
-  
+
 }
 */
 
-@media (min-width: 700px) and (min-device-width: 700px){
+@media (min-width: 950px) and (min-device-width: 950px){
   .wrapper {
-    grid-template-columns: 1fr 4fr 1fr;
+    grid-template-columns: 1fr 6fr 1fr;
     grid-template-areas:
       "header header  header"
       "nav    content sidebar"
@@ -243,11 +242,11 @@ display: none;
       "content"
       "footer";
   }
-  
+
   nav ul {
     flex-direction: column;
   }
-   
+
 /* with more width show inline navigation */
   #hamburger_header_navigation {
     display: none;
