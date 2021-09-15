@@ -7,36 +7,39 @@ const yaml = require( 'js-yaml' )
 function generateProfiles() {
 
   let profiles = [];
-  
+
   try {
     const files = fs.readdirSync( 'people/' );
-        
+
     let content = ''
     for ( const file of files ) {
-      
+
       //console.log( file )
       //console.log( path.parse( file ) )
-      
+
       if ( typeof file !== 'undefined' && path.parse( file ).ext == '.md' ) {
         let slug = path.parse( file ).name
         content = fs.readFileSync( 'people/' + file, 'utf8' )
-        
+
         let front= content.substr( 4, content.indexOf( '---', 4 ) - 4 )
         //console.log( front )
-        
+
         frontMatter = yaml.load( front );
         //console.log( frontMatter )
-        frontMatter.slug = slug
-        
-        profiles.push( frontMatter )
+
+        if ( frontMatter.position ) {
+          frontMatter.slug = slug
+          profiles.push( frontMatter )
+        }
+
       }
     }
-     
+
   }
   catch (err) {
     console.error(err);
   }
-  
+
   return profiles;
 }
 // parse the front matter and add to 'profiles'
@@ -57,8 +60,8 @@ for ( profile of profiles ) {
 
   people.ordered
     [ ... alphabetical array of all profiles ... ]
-  
-  people[ 'cefan-rubin' ] 
+
+  people[ 'cefan-rubin' ]
     { ... frontmatter from people/cefan-rubin.md ... }
 
 */

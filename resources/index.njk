@@ -26,6 +26,19 @@ quick_references:
 ---
 
 <style>
+
+:root {
+  --indigo-0: #170f58;
+  --indigo-7: #c2bdf3;
+  --indigo-8: #dfdcf9;
+  --indigo-9: #f1f0fc;
+
+  --violet-0: #350b42;
+  --violet-7: #dfa8f1;
+  --violet-8: #ebcaf6;
+  --violet-9: #f7eafb;
+}
+
 .box {
   display: flex;
   flex-wrap: wrap;
@@ -39,17 +52,24 @@ quick_references:
   max-width: 17rem;
   min-width: 17rem;
   max-height: 20rem;
-  background-color: #f1f0fc;
+  background-color: var(--indigo-9);
   overflow: hidden;
   padding: 1rem;
-  border: 1px solid #c2bdf3;
+  border: 0.2rem dashed var(--indigo-7);
   border-radius: 0.5rem;
 }
+.box a.reference {
+  background-color: var(--violet-9);
+  border: 0.2rem solid var(--violet-7);
+}
 .box a h3 {
-  color: #170f58;
+  color: var(--indigo-0);
   display: block;
   margin-top: 0;
   /* background-color: lightgrey; */
+}
+.box a.reference h3 {
+  color: var(--violet-0);
 }
 
 .box a:hover {
@@ -60,6 +80,9 @@ quick_references:
     2px 2px 2px #f7ac6d;
   background-color: #dfdcf9;
   text-decoration: none;
+}
+.box a.reference:hover {
+  background-color: #ebcaf6;
 }
 .box a:hover h3 {
   text-decoration: underline;
@@ -88,7 +111,7 @@ quick_references:
 
 <div class="box">
   {% for card in quick_references %}
-  <a href="{{ card.url }}" target="_blank" nofollow>
+  <a class="reference" href="{{ card.url }}" target="_blank" nofollow>
     <h3>{{ card.title }}</h2>
     <p>
       {{ card.description }}
