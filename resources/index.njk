@@ -74,8 +74,8 @@ quick_references:
 <h2>Active experiments</h2>
 
 <div class="box">
-  {% for experiment in collections.experiment %}
-  <a href="{{ experiment.data.url }}" target="_blank" nofollow>
+  {% for experiment in collections.experiment | reverse %}
+  <a href="{{ experiment.data.url }}" {% if 'http' in experiment.data.url %}target="_blank" nofollow{% endif %}>
     <h3>{{ experiment.data.title }}</h2>
     <p>
       {{ experiment.data.description }}
