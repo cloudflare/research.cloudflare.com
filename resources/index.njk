@@ -1,13 +1,6 @@
 ---
 layout: content
 title: Resources
-experiments:
-  - title: OPAQUE demonstration
-    url: https://opaque.research.cloudflare.com/
-    description: Try out a user registration and login system that doesn't allow your plain-text password to leave the browser!
-  - title: CAPTCHA without the puzzle
-    url: https://cloudflarechallenge.com
-    description: Try your local biometric or hardware key device to pass a humanity test!
 quick_references:
   - title: Browsing Experience Security Check
     url: https://www.cloudflare.com/ssl/encrypted-sni/
@@ -81,11 +74,11 @@ quick_references:
 <h2>Active experiments</h2>
 
 <div class="box">
-  {% for card in experiments %}
-  <a href="{{ card.url }}">
-    <h3>{{ card.title }}</h2>
+  {% for experiment in collections.experiment %}
+  <a href="{{ experiment.data.url }}" target="_blank" nofollow>
+    <h3>{{ experiment.data.title }}</h2>
     <p>
-      {{ card.description }}
+      {{ experiment.data.description }}
     </p>
   </a>
   {% endfor %}
