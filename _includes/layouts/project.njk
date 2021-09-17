@@ -16,6 +16,30 @@ layout: content
 {% include 'related_publications.njk' %}
 {% endif %}
 
+<h2>Blog posts</h2>
+<ul>
+{% for res in resources %}
+  {% if res[ 'blog' ] %}
+  <li><a href="{{ res[ 'link' ] }}">{{ res[ 'text' ] }}</a></li>
+  {% endif %}
+{% endfor %}
+</ul>
+
+
+<h2>Videos</h2>
+
+{% for res in resources %}
+  {% if res[ 'cfstream' ] %}
+  <iframe src="https://iframe.videodelivery.net/{{ res[ 'cfstream' ] }}" style="border: none;" height="315" width="560" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen="true" id="stream-player"></iframe>
+  {% endif %}
+{% endfor %}
+
+{% for res in resources %}
+  {% if res[ 'youtube' ] %}
+  <iframe width="560" height="315" src="{{ res[ 'youtube' ] }}" title="{{ res[ 'text' ] }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+  {% endif %}
+{% endfor %}
+
 {% if related_profiles %}
 <h2 id="people">People</h2>
 {% include 'related_profiles.njk' %}
@@ -30,12 +54,6 @@ layout: content
   {% endif %}
 {% endfor %}
 </ul>
-
-{% for res in resources %}
-  {% if res[ 'youtube' ] %}
-  <iframe width="560" height="315" src="{{ res[ 'youtube' ] }}" title="{{ res[ 'text' ] }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-  {% endif %}
-{% endfor %}
 
 {% endif %}
 

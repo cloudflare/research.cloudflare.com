@@ -14,20 +14,22 @@ related_areas:
   - cryptography
   - privacy
 resources:
+  - text: Privacy Pass - “The Math”
+    blog: https://blog.cloudflare.com/privacy-pass-the-math/
+  - text: Supporting the latest version of the Privacy Pass Protocol
+    blog: https://blog.cloudflare.com/supporting-the-latest-version-of-the-privacy-pass-protocol/
+  - text: Cloudflare supports Privacy Pass
+    blog: https://blog.cloudflare.com/cloudflare-supports-privacy-pass/
+  - text: "Privacy Pass: A Lightweight Zero Knowledge Protocol Designed for the Web"
+    youtube: https://www.youtube.com/embed/HIqBJKnnHVk
+  - text: "Zero-Knowledge Proofs for Private Web Attestation"
+    cfstream: 3c38fd90e525b02115c0e02342b2f363
   - text: Privacy Pass Home
     link: https://privacypass.github.io/
   - text: GitHub Organization
     link: https://github.com/privacypass
-  - text: Privacy Pass - “The Math”
-    link: https://blog.cloudflare.com/privacy-pass-the-math/
-  - text: Supporting the latest version of the Privacy Pass Protocol
-    link: https://blog.cloudflare.com/supporting-the-latest-version-of-the-privacy-pass-protocol/
-  - text: Cloudflare supports Privacy Pass
-    link: https://blog.cloudflare.com/cloudflare-supports-privacy-pass/
   - text: Privacy Pass IETF's working group
     link: https://datatracker.ietf.org/wg/privacypass/about
-  - text: "Privacy Pass: A Lightweight Zero Knowledge Protocol Designed for the Web"
-    youtube: https://www.youtube.com/embed/HIqBJKnnHVk
 ---
 
 <img src="https://blog.cloudflare.com/content/images/2017/11/DONF9cRWsAE3OZf-1-2.jpg" alt="Privacy Pass" align="right" />
