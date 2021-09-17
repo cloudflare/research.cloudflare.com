@@ -1,21 +1,24 @@
 ---
 title: Oblivious DNS over HTTPS
 related_profiles:
-  - cefan-rubin
   - nick-sullivan
+  - tanya-verma
+  - peter-wu
+  - christopher-wood
+  - sudheesh-singanamalla
+related_publications:
+  - Singanamalla2021
+related_areas:
+  - cryptography
+resources:
+  - text: "Improving DNS Privacy with Oblivious DoH in 1.1.1.1"
+    blog: https://blog.cloudflare.com/oblivious-dns/
+  - text: GitHub Organization
+    link: https://github.com/cloudflare?q=odoh
+  - text: Tamarin Model of Oblivious DNS over HTTP
+    link: https://github.com/cloudflare/odoh-analysis
+  - text: Oblivious DoH Deep Dive 
+    cfstream: 651f1568f1611fad7fccf7e90c9f46b8
 ---
-# Oblivious DNS over HTTPS
 
-## Introduction
-
-<img src="https://blog.cloudflare.com/content/images/2020/12/image2-4.png" width="400" alt="1.1.1.1 DoH depiction" />
-
-## Video
-
-<iframe src="https://iframe.videodelivery.net/98835feb4ca00342d6f424059561e3a1" width="900" height="510" allowFullScreen={true}></iframe>
-
-## Papers
-
-## People
-
-{% include 'related_profiles.njk' %}
+Description here
