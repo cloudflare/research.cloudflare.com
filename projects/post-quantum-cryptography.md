@@ -27,8 +27,6 @@ resources:
     cfstream: 4cb614ad73cfda96b517c9fe42778ba4
   - text: Master of (Computer) Science with Professor Michele Mosca
     cfstream: 3f129fc1a077d9ec37ea7ec48d74849c
-[//]: #   - text: "KEMTLS: securing TLS connections from quantum adversaries"
-[//]: #     cfstream: 2Mh0Mwr8QXtZ5tla9qSIbk
   - text: GitHub Organization
     link: https://github.com/cloudflare/circl
 ---
