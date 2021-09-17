@@ -22,8 +22,10 @@ resources:
     blog: https://blog.cloudflare.com/cloudflare-supports-privacy-pass/
   - text: "Privacy Pass: A Lightweight Zero Knowledge Protocol Designed for the Web"
     youtube: https://www.youtube.com/embed/HIqBJKnnHVk
-  - text: "Zero-Knowledge Proofs for Private Web Attestation"
-    cfstream: 3c38fd90e525b02115c0e02342b2f363
+  - text: The Future of Privacy-Preserving Technology Roundtable
+    cfstream: 98835feb4ca00342d6f424059561e3a1
+  - text: The Future of Passwords
+    cfstream: 7fad6abe6c72be6cbf1d9a433140d5f2
   - text: Privacy Pass Home
     link: https://privacypass.github.io/
   - text: GitHub Organization
