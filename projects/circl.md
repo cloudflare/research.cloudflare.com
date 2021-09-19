@@ -5,9 +5,6 @@ related_profiles:
   - kris-kwiatkowski
   - watson-ladd
   - bas-westerbaan
-related_publications:
-  - Tyagi
-  - Davidson2018
 related_areas:
   - cryptography
   - privacy

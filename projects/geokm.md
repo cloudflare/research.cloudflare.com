@@ -1,5 +1,5 @@
 ---
-title: Privacy Pass
+title: Geo Key Manager
 related_profiles:
   - nick-sullivan
   - brendan-mcmillion
