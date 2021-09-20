@@ -10,10 +10,3 @@ Her research interests include usable security and privacy, as well as technolog
 
 ## Research Areas 
 Privacy, Security
-
-## Projects (incomplete)
-* Addressing Agility (public in August)
-* [Oblivious DNS over HTTPS](/docs/odns)
-* CAP
-* ECH
-

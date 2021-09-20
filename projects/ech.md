@@ -7,6 +7,7 @@ related_profiles:
   - peter-wu
   - marwan-fayed
   - jack-wampler
+  - wesley-evans
 related_areas:
   - cryptography
   - privacy

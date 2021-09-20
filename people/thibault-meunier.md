@@ -9,11 +9,3 @@ Thibault is a research engineer working on distributed systems. He is focused on
 
 ## Research Areas 
 Distributed Systems, Application Privacy
-
-## Projects (incomplete)
-* Addressing Agility (public in August)
-* [Oblivious DNS over HTTPS](/docs/odns)
-* CAP
-* ECH
-
-

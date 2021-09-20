@@ -10,11 +10,3 @@ Chris is a research engineer working on cryptography and protocol design. He ear
 
 ## Research Areas 
 Cryptography
-
-## Projects (incomplete)
-* Addressing Agility (public in August)
-* [Oblivious DNS over HTTPS](/docs/odns)
-* CAP
-* ECH
-
-

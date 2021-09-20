@@ -10,9 +10,3 @@ Sofía is a cryptographic researcher and implementer working on secure communica
 ## Research Areas (incomplete)
 Post-Quantum Cryptography, Privacy, Security
 
-## Projects (incomplete)
-* CF-Go
-* KEMTLS
-* OPAQUE
-* Privacy Pass
-

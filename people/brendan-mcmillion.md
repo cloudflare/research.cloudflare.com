@@ -8,8 +8,3 @@ Brendan is a systems engineer that formerly worked on the Research Team advancin
 
 ## Research Areas 
 Cryptography, Systems Engineering, Highly Reliable Software
-
-## Projects (incomplete)
-* [Oblivious DNS over HTTPS](/docs/odns)
-* CAP
-* ECH

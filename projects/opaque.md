@@ -7,6 +7,7 @@ related_profiles:
   - thibault-meunier
   - christopher-wood
   - nick-sullivan
+  - wesley-evans
 related_areas:
   - cryptography
   - privacy

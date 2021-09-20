@@ -11,9 +11,3 @@ Armando Faz is a research engineer working on secure software for cryptographic 
 ## Research Areas 
 Cryptography Engineering, Elliptic Curve Cryptography, Post-Quantum Cryptography
 
-## Projects (incomplete)
-* Addressing Agility (public in August)
-* [Oblivious DNS over HTTPS](/docs/odns)
-* CAP
-* ECH
-

@@ -11,9 +11,3 @@ Prior to joining Cloudflare, he completed his PhD at the University of Pennsylva
 
 ## Research Areas 
 Cryptography, Internet Measurement, Privacy, Security, Distributed Systems
-
-## Projects (incomplete)
-* Addressing Agility (public in August)
-* [Oblivious DNS over HTTPS](/docs/odns)
-* CAP
-* ECH

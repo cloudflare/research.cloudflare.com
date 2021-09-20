@@ -10,12 +10,4 @@ Jonathan Hoyland is a cryptography researcher, with a focus on provable and veri
 ## Research Areas 
 Cryptography, Security
 
-## Projects (incomplete)
-* Addressing Agility (public in August)
-* [Oblivious DNS over HTTPS](/docs/odns)
-* CAP
-* ECH
-
-## Publications
-{% include 'related_publications.njk' %}
 

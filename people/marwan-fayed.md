@@ -11,8 +11,3 @@ He is an author on numerous peer-review publications, the recipient of an IEEE b
 
 ## Research Areas
 Internet Measurement, Network Security, Network Privacy
-
-## Projects (incomplete)
-* [Oblivious DNS over HTTPS](/docs/odns)
-* CAP
-* ECH

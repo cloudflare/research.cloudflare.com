@@ -5,6 +5,7 @@ related_profiles:
   - jonathan-hoyland
   - peter-wu
   - thibault-meunier
+  - wesley-evans
 related_areas:
   - cryptography
   - privacy

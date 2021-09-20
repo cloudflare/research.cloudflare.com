@@ -8,6 +8,3 @@ Nate Sales is a research intern focused on networking and systems infrastructure
 
 ## Research Areas 
 Distributed Systems, Privacy, Security
-
-## Projects (incomplete)
-* [Oblivious DNS over HTTPS](/docs/odns)

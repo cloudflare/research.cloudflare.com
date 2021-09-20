@@ -10,10 +10,3 @@ Watson joined Cloudflare in 2018. Before Cloudflare, Watson studied number theor
 ## Research Areas (incomplete)
 Cryptography
 
-## Projects (incomplete)
-* Addressing Agility (public in August)
-* [Oblivious DNS over HTTPS](/docs/odns)
-* CAP
-* ECH
-
-

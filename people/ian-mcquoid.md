@@ -9,9 +9,4 @@ Ian McQuoid is a Research Intern working on secure and private authentication pr
 ## Research Areas 
 Cryptography
 
-## Projects (review projects)
-* [Oblivious DNS over HTTPS](/docs/odns)
-* OPAQUE
-* MIGP
-
 

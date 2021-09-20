@@ -9,8 +9,3 @@ Arian is a 4th year Ph.D. candidate at the University of Massachusetts, Amherst.
 ## Research Areas 
 Internet Measurement
 
-## Projects (incomplete)
-* [Oblivious DNS over HTTPS](/docs/odns)
-* CAP
-* ECH
-

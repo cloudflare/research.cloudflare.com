@@ -5,6 +5,7 @@ related_profiles:
   - watson-ladd
   - tanya-verma
   - aanchal-malhotra
+  - wesley-evans
 related_areas:
   - cryptography
   - privacy

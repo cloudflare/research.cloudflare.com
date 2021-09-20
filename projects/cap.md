@@ -8,6 +8,7 @@ related_profiles:
   - nick-sullivan
   - peter-wu
   - armando-faz
+  - wesley-evans
 related_publications:
   - Faz-Hernandez
 related_areas:
