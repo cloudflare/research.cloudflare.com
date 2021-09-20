@@ -10,7 +10,6 @@ related_profiles:
   - wesley-evans
 related_areas:
   - cryptography
-  - privacy
 resources:
   - text: "OPAQUE: The Best Passwords Never Leave your Device"
     blog: https://blog.cloudflare.com/opaque-oblivious-passwords/

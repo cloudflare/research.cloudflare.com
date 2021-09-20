@@ -7,8 +7,7 @@ related_profiles:
   - thibault-meunier
   - wesley-evans
 related_areas:
-  - cryptography
-  - privacy
+  - distributed_systems
 resources:
   - text: A Name Resolver for the Distributed Web
     blog: https://blog.cloudflare.com/cloudflare-distributed-web-resolver/
@@ -22,6 +21,6 @@ resources:
     link: https://cloudflare-ipfs.com
   - text: League of Entropy
     link: https://www.cloudflare.com/en-gb/leagueofentropy/
- --
+---
 
 Description here.

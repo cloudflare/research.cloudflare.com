@@ -8,7 +8,6 @@ related_profiles:
   - wesley-evans
 related_areas:
   - cryptography
-  - privacy
 resources:
   - text: "Roughtime: Securing Time with Digital Signatures"
     blog: https://blog.cloudflare.com/roughtime/

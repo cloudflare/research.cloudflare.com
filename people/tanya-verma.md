@@ -10,8 +10,3 @@ She is also interested in design and implementation of distributed systems, oper
 ## Research Areas 
 Cryptography, Distributed Systems
 
-## Projects (incomplete)
-* Addressing Agility (public in August)
-* [Oblivious DNS over HTTPS](/docs/odns)
-* CAP
-* ECH

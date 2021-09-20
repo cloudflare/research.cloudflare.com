@@ -6,7 +6,7 @@ related_profiles:
   - watson-ladd
   - bas-westerbaan
 related_areas:
-  - cryptography
+  - authentication
   - privacy
 resources:
   - text: "Introducing CIRCL: An Advanced Cryptographic Library"

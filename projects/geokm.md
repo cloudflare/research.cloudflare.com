@@ -9,7 +9,6 @@ related_publications:
   - Stebila2015
 related_areas:
   - cryptography
-  - privacy
 resources:
   - text: "Geo Key Manager: How It Works"
     blog: https://blog.cloudflare.com/geo-key-manager-how-it-works/

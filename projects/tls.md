@@ -11,7 +11,6 @@ related_profiles:
 related_publications:
   - Valenta2018
 related_areas:
-  - cryptography
   - security
 resources:
   - text: Delegated Credentials for TLS

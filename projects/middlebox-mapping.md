@@ -7,7 +7,8 @@ related_publications:
   - Celi2021
   - Kwiatkowski2019
 related_areas:
-  - cryptography
+  - distributed_systems
+  - measurement
 resources:
   - text: "Monsters in the Middleboxes: Introducing Two New Tools for Detecting HTTPS Interception"
     blog: https://blog.cloudflare.com/monsters-in-the-middleboxes/
