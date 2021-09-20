@@ -8,4 +8,4 @@ Suleman is a Research Engineer at Cloudflare working at the intersection of prod
 He was previously enrolled in a fully-funded Masters program in Computer Science at University of Wisconsin-Madison. He served as a Graduate Assistant, working both as a Teaching and a Research Assistant, for the Computer Science department. His thesis focus was on detecting and analyzing real-world authentication attacks, and engineering measurement systems.
 
 ## Research Areas 
-Internet Measurement, Privacy, Security
+Internet Measurement, Network Privacy

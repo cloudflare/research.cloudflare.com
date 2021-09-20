@@ -21,6 +21,8 @@ resources:
     link: https://cloudflare-ipfs.com
   - text: League of Entropy
     link: https://www.cloudflare.com/en-gb/leagueofentropy/
+  - text: "Building on Decentralised Web at Cloudflare, IFIP 2021"
+    youtube: https://www.youtube.com/embed/CjyQWVEnRUY
 ---
 
 Description here.

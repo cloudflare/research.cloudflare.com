@@ -27,8 +27,10 @@ resources:
     cfstream: 4cb614ad73cfda96b517c9fe42778ba4
   - text: Master of (Computer) Science with Professor Michele Mosca
     cfstream: 3f129fc1a077d9ec37ea7ec48d74849c
-  - text: GitHub Organization
+  - text: GitHub CIRCL Repository
     link: https://github.com/cloudflare/circl
+  - text: GitHub KEMTLS Repository
+    link: https://github.com/cloudflare/go/tree/cf-pq-kemtls
 ---
 
 Description here

@@ -6,6 +6,7 @@ related_profiles:
   - peter-wu
   - christopher-wood
   - sudheesh-singanamalla
+  - marwan-fayed
 related_publications:
   - Singanamalla2021
 related_areas:

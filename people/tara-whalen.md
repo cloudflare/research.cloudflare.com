@@ -9,4 +9,4 @@ Tara Whalen is Privacy Research Engineering Lead at Cloudflare. She previously w
 Her research interests include usable security and privacy, as well as technology policy. She also contributes to Internet standards, as a member of ICANN’s Security and Stability Advisory Committee (SSAC) and having chaired the W3C’s Privacy Interest Group (PING).
 
 ## Research Areas 
-Privacy, Security
+Privacy, Usable security and privacy, Authentication

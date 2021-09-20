@@ -9,6 +9,7 @@ related_profiles:
   - peter-wu
   - armando-faz
   - wesley-evans
+  - marwan-fayed
 related_publications:
   - Faz-Hernandez
 related_areas:
