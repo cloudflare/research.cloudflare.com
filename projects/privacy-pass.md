@@ -7,6 +7,7 @@ related_profiles:
   - pop-chunhapanya
   - christopher-wood
   - thibault-meunier
+  - alex-davidson
 related_publications:
   - Tyagi
   - Davidson2018

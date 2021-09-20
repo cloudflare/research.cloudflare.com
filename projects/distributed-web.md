@@ -12,7 +12,7 @@ related_areas:
 resources:
   - text: A Name Resolver for the Distributed Web
     blog: https://blog.cloudflare.com/cloudflare-distributed-web-resolver/
-  - text: Cloudflare goes InterPlanetary - Introducing Cloudflare’s IPFS Gateway
+  - text: "Cloudflare goes InterPlanetary - Introducing Cloudflare’s IPFS Gateway"
     blog: https://blog.cloudflare.com/distributed-web-gateway/
   - text: Cloudflare's Ethereum Gateway
     blog: https://blog.cloudflare.com/cloudflare-ethereum-gateway/

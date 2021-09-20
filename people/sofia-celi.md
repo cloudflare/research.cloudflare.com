@@ -7,6 +7,6 @@ image: https://cdn.filestackcontent.com/AchUBPpbtR12UdA8r3ilwz/security=policy:e
 ---
 Sofía is a cryptographic researcher and implementer working on secure communication, implementation of cryptographic algorithms, and more.
 
-## Research Areas (incomplete)
+## Research Areas
 Post-Quantum Cryptography, Privacy, Security
 

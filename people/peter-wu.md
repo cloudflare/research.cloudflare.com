@@ -7,5 +7,5 @@ image: https://cdn.filestackcontent.com/AchUBPpbtR12UdA8r3ilwz/security=policy:e
 ---
 Peter Wu is a Research Engineer working on various TLS and cryptography-related projects. He is a contributor to many open source projects, including Wireshark, where he started in 2013 with TLS decryption improvements in order to assist in analyzing encrypted application traffic. Peter added TLS 1.3, QUIC, and WireGuard decryption support to Wireshark and aims to help people understand what is going on under the hood.
 
-## Research Areas (incomplete)
+## Research Areas
 Cryptography, Internet Measurement, Privacy, Security
