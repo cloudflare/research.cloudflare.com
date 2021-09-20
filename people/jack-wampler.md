@@ -2,7 +2,6 @@
 title: Jack Wampler
 position: Research Intern
 slug: jack-wampler
-status: current
 twitter: jmwample
 image: https://cdn.filestackcontent.com/AchUBPpbtR12UdA8r3ilwz/security=policy:eyJleHBpcnkiOjIyNTQyNjE1OTIsImNhbGwiOlsicmVhZCIsImNvbnZlcnQiXSwiaGFuZGxlIjoiVXlRYTM1OVFPYVJDMkw2V0ZVd3kifQ==,signature:c272d1493e469792c7db632b5f4dfd1d9931c6d3db791d11ccbab79fc351ab23/cache=expiry:max/resize=w:600,h:600,fit:crop,align:faces/rotate=d:exif/UyQa359QOaRC2L6WFUwy
 ---

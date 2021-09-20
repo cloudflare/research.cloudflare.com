@@ -10,4 +10,4 @@ Before joining Cloudflare, Marwan was a member of faculty at the University of S
 He is an author on numerous peer-review publications, the recipient of an IEEE best paper award, and a Senior Member of both the IEEE and the ACM.
 
 ## Research Areas
-Internet Measurement, Network Security, Network Privacy
+Internet Measurement, Network Security, Network Architecture and Systems

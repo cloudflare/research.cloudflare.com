@@ -1,7 +1,6 @@
 ---
 title: Talha Paracha
 position: Research Intern
-status: current
 twitter: paraacha
 image: https://cdn.filestackcontent.com/AchUBPpbtR12UdA8r3ilwz/security=policy:eyJleHBpcnkiOjIyNTQxNzU1NDEsImNhbGwiOlsicmVhZCIsImNvbnZlcnQiXSwiaGFuZGxlIjoicUtCYTdzSFRGMjR2ek1XSFdiQTEifQ==,signature:507ae36ee2e318b925b66ee51ed8a74cbe5e0f25e15c91a6ee57a66f311e10fa/cache=expiry:max/resize=w:600,h:600,fit:crop,align:faces/rotate=d:exif/qKBa7sHTF24vzMWHWbA1
 ---
