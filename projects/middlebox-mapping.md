@@ -3,6 +3,7 @@ title: Middlebox Mapping
 related_profiles:
   - nick-sullivan
   - luke-valenta
+  - arian-niaki
 related_publications:
   - Celi2021
   - Kwiatkowski2019

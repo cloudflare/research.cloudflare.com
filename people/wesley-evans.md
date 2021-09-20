@@ -11,15 +11,3 @@ When he is not working on the future of the Internet, Wesley is deeply passionat
 
 ## Research Areas 
 Distributed Web, Privacy, Security, Emerging Network Paradigms
-
-## Projects
-* Ethereum Gateway
-* IPFS Gateway
-* Time Services
-* Addressing Agility (public in August)
-* [Oblivious DNS over HTTPS](/docs/odns)
-* Cryptographic Attestation of Personhood
-* Encrypted Client Hello
-* OPAQUE
-* Project Pangea 
-* Prio

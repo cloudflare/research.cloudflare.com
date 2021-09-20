@@ -5,6 +5,8 @@ related_profiles:
   - luke-valenta
   - christopher-wood
   - thomas-ristenpart
+  - marina-sanusi
+  - ian-mcquoid
 related_publications:
   - Li2019
 related_areas:
