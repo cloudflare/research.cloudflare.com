@@ -123,7 +123,7 @@ let result = {}
 async function main() {
 
 
-  // download feeds per person
+  // process feeds per person
   const files = fs.readdirSync( 'people/' );
 
   let content = ''
@@ -149,7 +149,8 @@ async function main() {
     }
   }
 
-
+  // process feed for the tag 'research'
+  downloadIfNotFound( 'https://blog.cloudflare.com/tag/research/rss/', 'rss.xml' )
   let ordered_posts = await parseRSS( 'rss.xml' )
   result.ordered = ordered_posts
 
