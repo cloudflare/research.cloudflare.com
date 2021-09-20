@@ -12,7 +12,12 @@ layout: content
 {% include 'related_projects.njk' %}
 {% endif -%}
 
-{% if publications[ person_slug ] %}
+{% if publications[ person_slug ] -%}
 <h2 id="publications">Publications</h2>
 {% include 'related_publications.njk' %}
-{% endif %}
+{% endif -%}
+
+{% if blogposts[ person_slug ] %}
+<h2 id="blogposts">Blog posts</h2>
+{% include 'related_blogposts.njk' %}
+{% endif -%}

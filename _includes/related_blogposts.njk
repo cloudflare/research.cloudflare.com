@@ -1,0 +1,11 @@
+
+{% if not related_blogposts -%}
+  {% set profile_slug = page.fileSlug -%}
+  {% set related_blogposts = blogposts[ profile_slug ] -%}
+{% endif %}
+
+<ul>
+{% for post in related_blogposts -%}
+  <li><a href="{{ post.link }}" target="_blank" nofollow>{{ post.heading }}</a></li>
+{% endfor -%}
+</ul>

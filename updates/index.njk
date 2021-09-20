@@ -10,7 +10,7 @@ title: Updates
 
 <h1>Research Updates from the <a href="https://blog.cloudflare.com/">Cloudflare Blog</a></h1>
 <div class="updates">
-  {% for blogpost in blogposts %}
+  {% for blogpost in blogposts.ordered %}
   <div>
   <h3><small style="position: relative; left: -1rem"><i>{{ blogpost.date.slice( 0, 10 ) }}</i></small> <a href="{{ blogpost.link }}" target="_blank">{{ blogpost.heading }}</a></h3>
   <p>{{ blogpost.text }}</p>

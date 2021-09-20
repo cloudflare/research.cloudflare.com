@@ -1,6 +1,6 @@
 {% set features = [] %}
 
-{% for blogpost in blogposts %}
+{% for blogpost in blogposts.ordered %}
   {% if loop.index <= 3 %}
     {% set features = ( features.push( blogpost ), features ) %}
   {% endif %}

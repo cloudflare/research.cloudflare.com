@@ -16,43 +16,59 @@ layout: content
 {% include 'related_publications.njk' %}
 {% endif %}
 
+
+
+{% set related_blogposts = [] -%}
+{% for res in resources -%}
+  {% if res[ 'blog'] -%}
+    {% set related_blogposts = ( related_blogposts.push( { heading: res['text'], link: res['blog'] } ), related_blogposts ) -%}
+  {% endif -%}
+{% endfor -%}
+
+{% if related_blogposts | length -%}
 <h2>Blog posts</h2>
-<ul>
-{% for res in resources %}
-  {% if res[ 'blog' ] %}
-  <li><a href="{{ res[ 'link' ] }}">{{ res[ 'text' ] }}</a></li>
-  {% endif %}
-{% endfor %}
-</ul>
+{% include 'related_blogposts.njk' -%}
+{% endif -%}
 
 
+
+{% set related_videos = [] -%}
+{% for res in resources -%}
+  {% if res[ 'cfstream' ] or res[ 'youtube' ] -%}
+    {% set related_videos = ( related_videos.push( res ), related_videos ) -%}
+  {% endif -%}
+{% endfor -%}
+
+{% if related_videos | length -%}
 <h2>Videos</h2>
+{% for res in related_videos -%}
 
-{% for res in resources %}
-  {% if res[ 'cfstream' ] %}
-  <iframe src="https://iframe.videodelivery.net/{{ res[ 'cfstream' ] }}" style="border: none;" height="315" width="560" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen="true" id="stream-player"></iframe>
-  {% endif %}
-{% endfor %}
+  {% if res[ 'cfstream' ] -%}
+  {% set poster = [ "https://videodelivery.net/", res[ 'cfstream' ], "/thumbnails/thumbnail.jpg?time=5s&height=315&width=560" ] | join %}
+  <iframe src="https://iframe.videodelivery.net/{{ res[ 'cfstream' ] }}?poster={{ poster | urlencode }}" style="border: none;" height="315" width="560" allow="accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;" allowfullscreen="true" id="stream-player"></iframe>
+  {% endif -%}
 
-{% for res in resources %}
-  {% if res[ 'youtube' ] %}
+  {% if res[ 'youtube' ] -%}
   <iframe width="560" height="315" src="{{ res[ 'youtube' ] }}" title="{{ res[ 'text' ] }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-  {% endif %}
-{% endfor %}
+  {% endif -%}
+
+{% endfor -%}
+{% endif -%}
+
 
 {% if related_profiles %}
 <h2 id="people">People</h2>
 {% include 'related_profiles.njk' %}
 {% endif %}
 
-{% if resources %}
+{% if resources -%}
 <h2 id="resources">Resources</h2>
 <ul>
-{% for res in resources %}
-  {% if res[ 'link' ] %}
+{% for res in resources -%}
+  {% if res[ 'link' ] -%}
   <li><a href="{{ res[ 'link' ] }}">{{ res[ 'text' ] }}</a></li>
-  {% endif %}
-{% endfor %}
+  {% endif -%}
+{% endfor -%}
 </ul>
 
 {% endif %}

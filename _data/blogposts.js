@@ -28,78 +28,140 @@ let blogposts = [
 
 
 let Parser = require( 'node-xml-stream' )
+const https = require( 'https' )
 const fs = require( 'fs' )
+const path = require( 'path' )
 const stream = require( 'stream' )
 const util = require( 'util' )
 
+const { execSync } = require("child_process");
+
+const yaml = require( 'js-yaml' )
+
 const finished = util.promisify( stream.finished )
 
-let parser = new Parser()
 
-let blogposts = []
-let blogpost = {}
-let attribute = ''
 
-parser.on( 'opentag', ( name, attrs ) => {
-  if ( name == 'item' ) {
-    blogpost = { category: [] }
+async function parseRSS( filename ) {
+
+  let blogposts = []
+  let blogpost = {}
+  let attribute = ''
+
+  let parser = new Parser()
+  console.log( "parsing '" + filename + "'" )
+
+  parser.on( 'opentag', ( name, attrs ) => {
+    if ( name == 'item' ) {
+      blogpost = { category: [] }
+    }
+    else {
+      switch ( name ) {
+        case 'title':
+          attribute = 'heading'; break
+        case 'description':
+        	attribute = 'text'; break
+        case 'pubDate':
+          attribute = 'date'; break
+        case 'media:content':
+          blogpost.image = attrs[ 'url' ]; break
+        case 'category':
+        case 'link':
+          attribute = name
+          break
+        default:
+          attribute = ''
+      }
+    }
+
+  } );
+
+
+  parser.on( 'closetag', name => {
+    if ( name == 'item' ) {
+      blogposts.push( blogpost )
+    }
+  } );
+
+  parser.on( 'text', text => {
+    if ( attribute == 'link' ) {
+    	blogpost[ attribute ] = text
+    }
+    else if ( attribute == 'date' ) {
+      blogpost[ attribute ] = new Date( text ).toISOString()
+    }
+  } );
+
+  parser.on( 'cdata', cdata => {
+    if ( attribute == 'category' ) {
+    	blogpost[ attribute ].push( cdata )
+    }
+    else if ( [ 'heading', 'text' ].includes( attribute ) ) {
+      blogpost[ attribute ] = cdata
+    }
+  } );
+
+  let fstream = fs.createReadStream( filename )
+  fstream.pipe( parser )
+
+  let done = await finished( fstream )
+
+  return blogposts
+}
+
+
+function downloadIfNotFound( url, destination ) {
+  if ( ! fs.existsSync( destination ) ) {
+    console.log( "downloading url '" + url + "' to '" + destination + "'" )
+    execSync( "curl '" + url + "' -o " + destination )
   }
-  else {
-    switch ( name ) {
-      case 'title':
-        attribute = 'heading'; break
-      case 'description':
-      	attribute = 'text'; break
-      case 'pubDate':
-        attribute = 'date'; break
-      case 'media:content':
-        blogpost.image = attrs[ 'url' ]; break
-      case 'category':
-      case 'link':
-        attribute = name
-        break
-      default:
-        attribute = ''
+}
+
+
+let result = {}
+
+async function main() {
+
+
+  // download feeds per person
+  const files = fs.readdirSync( 'people/' );
+
+  let content = ''
+  for ( const file of files ) {
+
+    if ( typeof file !== 'undefined' && path.parse( file ).ext == '.md' ) {
+      content = fs.readFileSync( 'people/' + file, 'utf8' )
+      let slug = path.parse( file ).name
+      let front = content.substr( 4, content.indexOf( '---', 4 ) - 4 )
+      frontMatter = yaml.load( front );
+      if ( frontMatter.position ) {
+        let blog_author = frontMatter.blog_author
+        if ( blog_author == undefined )
+          blog_author = slug
+
+        downloadIfNotFound( 'https://blog.cloudflare.com/author/' + blog_author + '/rss/', slug + '.rss' )
+
+        let person_posts = await parseRSS( slug + '.rss' )
+
+        if ( person_posts.length > 0 )
+          result[ slug ] = person_posts
+      }
     }
   }
 
-} );
 
+  let ordered_posts = await parseRSS( 'rss.xml' )
+  result.ordered = ordered_posts
 
-parser.on( 'closetag', name => {
-  if ( name == 'item' ) {
-    blogposts.push( blogpost )
-  }
-} );
+}
 
-parser.on( 'text', text => {
-  if ( attribute == 'link' ) {
-  	blogpost[ attribute ] = text
-  }
-  else if ( attribute == 'date' ) {
-    blogpost[ attribute ] = new Date( text ).toISOString()
-  }
-} );
-
-parser.on( 'cdata', cdata => {
-  if ( attribute == 'category' ) {
-  	blogpost[ attribute ].push( cdata )
-  }
-  else if ( [ 'heading', 'text' ].includes( attribute ) ) {
-    blogpost[ attribute ] = cdata
-  }
-} );
-
-
-
-let fstream = fs.createReadStream( 'rss.xml' )
-fstream.pipe( parser )
 
 
 module.exports = async function() {
-  let done = await finished( fstream )
+  let done = await main().catch( console.log )
 
-  //console.log( blogposts )
-  return blogposts
+  //console.log( result )
+
+  return result
 }
 
