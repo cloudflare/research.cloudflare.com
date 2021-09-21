@@ -14,8 +14,6 @@ authors:
 url: https://conferences.sigcomm.org/imc/2018/papers/imc18-final127.pdf
 related_areas:
   - measurement
-related_projects:
-  - 
 ---
 
 We report the first wide-scale measurement study of server-side geographic restriction, or geoblocking, a phenomenon in which server operators intentionally deny access to users from particular countries or regions. Many sites practice geoblocking due to legal requirements or other business reasons, but excessive blocking can needlessly deny valuable content and services to entire national populations.

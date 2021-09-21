@@ -11,7 +11,6 @@ authors:
 url: https://eprint.iacr.org/2020/111.pdf
 related_areas:
   - cryptography
-related_projects:
 ---
 
 Constrained pseudorandom functions (CPRFs) allow learning “constrained” PRF keys that can evaluate the PRF on a subset of the input space, or based on some predicate. First introduced by Boneh and Waters [AC’13], Kiayias et al. [CCS’13] and Boyle et al. [PKC’14], they have shown to be a useful cryptographic primitive with many applications. These applications often require CPRFs to be adaptively secure, which allows the adversary to learn PRF values and constrained keys in an arbitrary order. However, there is no known construction of adaptively secure CPRFs based on a standard assumption in the standard model for any non-trivial class of predicates. Moreover, even if we rely on strong tools such as indistinguishability obfuscation (IO), the state-of-the-art construction of adaptively secure CPRFs in the standard model only supports the limited class of NC1 predicates.

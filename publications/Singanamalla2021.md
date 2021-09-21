@@ -18,7 +18,7 @@ related_areas:
   - privacy
   - measurement
 related_projects:
-  - 
+  - odns
 ---
 
 The Internet’s Domain Name System (DNS) responds to client hostname queries with corresponding IP addresses and records. Traditional DNS is unencrypted and leaks user information to on-lookers. Recent efforts to secure DNS using DNS over TLS (DoT) and DNS over HTTPS (DoH) have been gaining traction, ostensibly protecting DNS messages from third parties. However, the small number of available public largescale DoT and DoH resolvers has reinforced DNS privacy concerns, specifically that DNS operators could use query contents and client IP addresses to link activities with identities. Oblivious DNS over HTTPS (ODoH) safeguards against these problems. In this paper we implement and deploy interoperable instantiations of the protocol, construct a corresponding formal model and analysis, and evaluate the protocols’ performance with wide-scale measurements. Results suggest that ODoH is a practical privacy-enhancing replacement for DNS.

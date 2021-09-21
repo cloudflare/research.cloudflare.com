@@ -19,8 +19,6 @@ url: https://dl.acm.org/doi/10.1145/3452296.3472922
 related_areas:
   - security
   - measurement
-related_projects:
-  - 
 ---
 
 The couplings between IP addresses, names of content or services, and socket interfaces, are too tight. This impedes system manageability, growth, and overall provisioning. In turn, large-scale content providers are forced to use staggering numbers of addresses, ultimately leading to address exhaustion (IPv4) and inefficiency (IPv6).

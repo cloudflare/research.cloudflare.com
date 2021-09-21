@@ -6,5 +6,5 @@ status: current
 Bio here.
 
 ## Research Areas 
-Post-Quantum Criptography
+Post-Quantum Cryptography
 
