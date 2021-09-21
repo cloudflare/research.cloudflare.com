@@ -61,16 +61,22 @@ layout: content
 {% include 'related_profiles.njk' %}
 {% endif %}
 
-{% if resources -%}
-<h2 id="resources">Resources</h2>
-<ul>
+
+
+{% set other_resources = [] -%}
 {% for res in resources -%}
   {% if res[ 'link' ] -%}
-  <li><a href="{{ res[ 'link' ] }}">{{ res[ 'text' ] }}</a></li>
+    {% set other_resources = ( other_resources.push( res ), other_resources ) -%}
   {% endif -%}
 {% endfor -%}
-</ul>
 
-{% endif %}
+{% if other_resources | length -%}
+<h2 id="resources">Resources</h2>
+<ul>
+{% for res in other_resources -%}
+  <li><a href="{{ res[ 'link' ] }}">{{ res[ 'text' ] }}</a></li>
+{% endfor -%}
+</ul>
+{% endif -%}
 
 <br />

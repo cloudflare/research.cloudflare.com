@@ -30,17 +30,32 @@ function generateProjectsData() {
         // add an item for this slug
         projects[ slug ] = { "name": frontMatter.title, "path": slug }
 
+        // add a way to list all projects by related_profiles
         let personSlugs = frontMatter.related_profiles;
-        //let personSlugs = personSlugsString.split( ',' )
-
-        for ( personSlug of personSlugs ) {
-          if ( typeof projects[ personSlug ] !== 'undefined' ) {
-            projects[ personSlug ].push( projects[ slug ] )
-          }
-          else {
-            projects[ personSlug ] = [ projects[ slug ] ]
+        if ( personSlugs != undefined ) {
+          for ( personSlug of personSlugs ) {
+            if ( typeof projects[ personSlug ] !== 'undefined' ) {
+              projects[ personSlug ].push( projects[ slug ] )
+            }
+            else {
+              projects[ personSlug ] = [ projects[ slug ] ]
+            }
           }
         }
+
+        // add a way to list all projects by related_publications
+        let publicationSlugs = frontMatter.related_publications;
+        if ( publicationSlugs != undefined ) {
+  				for ( publicationSlug of publicationSlugs ) {
+            if ( typeof projects[ publicationSlug ] !== 'undefined' ) {
+  					  projects[ publicationSlug ].push( projects[ slug ] )
+            }
+            else {
+  						projects[ publicationSlug ] = [ projects[ slug ] ]
+            }
+  				}
+        }
+
       }
     }
 
@@ -59,10 +74,13 @@ module.exports = projects
 //console.log( module.exports )
 
 /*
-  
+
   projects[ 'cefan-rubin' ]
     [ ... array of { name: 'Project Name from title frontmatter', path: 'file slug' } ... ]
-    
+
+  projects[ 'Singanamalla2021' ]
+    [ ... array of { name: 'Project Name from title frontmatter', path: 'file slug' } ... ]
+
   projects[ 'odns' ]
     { name: "Oblivious DNS" }
 */

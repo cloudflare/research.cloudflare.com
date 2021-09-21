@@ -30,13 +30,13 @@ layout: content
 {% if related_areas %}
 <h2>Research Areas</h2>
   {% include 'related_areas.njk' %}
-<br />
+<br /><br />
 {% endif %}
 
-{% if related_projects %}
+{% if projects[ page.fileSlug ] %}
 <h2>Related Projects</h2>
-  {% for related_project in related_projects %}
-  <a href="/projects/{{ projects[ related_project ].path }}">{{ projects[ related_project ].name }}</a>{% if not loop.last %}, {% endif %}
+  {% for related_project in projects[ page.fileSlug ] %}
+  <a href="/projects/{{ related_project.path }}">{{ related_project.name }}</a>{% if not loop.last %}, {% endif %}
   {% endfor %}
-<br />
+<br /><br />
 {% endif %}

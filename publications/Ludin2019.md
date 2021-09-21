@@ -5,7 +5,7 @@ location: Internet Engineering Task Force (IETF). 2019.
 authors:
   - Stephen Ludin
   - Mark Nottingham
-  - nick-sullivan 
+  - nick-sullivan
 url: https://datatracker.ietf.org/doc/rfc8586/
 ---
 

@@ -13,8 +13,6 @@ related_areas:
   - cryptography
   - security
   - measurement
-related_projects:
-  - 
 ---
 
 NIST is in the process of selecting new post-quantum cryptographic algorithms that are secure against both quantum (PQ) and classical computers. NIST has selected a few candidates from among all submissions for further consideration and study.

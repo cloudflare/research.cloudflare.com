@@ -13,8 +13,6 @@ related_areas:
   - privacy
   - authentication
   - cryptography
-related_projects:
-  - privacy-pass
 ---
 
 The growth of content delivery networks (CDNs) has engendered centralized control over the serving of internet content. An unwanted by-product of this growth is that CDNs are fast becoming global arbiters for which content requests are allowed and which are blocked in an attempt to stanch malicious traffic. In particular, in some cases honest users — especially those behind shared IP addresses, including users of privacy tools such as Tor, VPNs, and I2P — can be unfairly targeted by attempted ‘catch-all solutions’ that assume these users are acting maliciously. In this work, we provide a solution to prevent users from being exposed to a disproportionate amount of internet challenges such as CAPTCHAs. These challenges are at the very least annoying and at their worst — when coupled with bad implementations — can completely block access from web resources. We detail a 1-RTT cryptographic protocol (based on an implementation of an oblivious pseudorandom function) that allows users to receive a significant amount of anonymous tokens for each challenge solution that they provide. These tokens can be exchanged in the future for access without having to interact with a challenge. 
