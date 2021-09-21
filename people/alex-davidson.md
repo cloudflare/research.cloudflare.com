@@ -1,7 +1,6 @@
 ---
 title: Alex Davidson
 position: Research Engineer
-image: https://scholar.googleusercontent.com/citations?view_op=medium_photo&user=HKAfgQUAAAAJ&citpid=5
 twitter: alxdavids
 ---
 

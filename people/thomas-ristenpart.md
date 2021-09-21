@@ -1,7 +1,6 @@
 ---
 title: Thomas Ristenpart
 position: Visiting Researcher
-image: https://rist.tech.cornell.edu/images/headshot-small-low.jpg
 twitter: TomRistenpart
 ---
 

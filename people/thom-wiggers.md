@@ -2,7 +2,6 @@
 title: Thom Wiggers
 position: Research Intern
 status: current
-image: https://nextcloud.rded.nl/s/Qwza3jLb46csAXk
 twitter: thomwiggers
 ---
 

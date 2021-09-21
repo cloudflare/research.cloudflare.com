@@ -2,7 +2,6 @@
 title: Cefan Rubin
 position: Systems Engineer
 status: current
-image: https://cdn.filestackcontent.com/AchUBPpbtR12UdA8r3ilwz/security=policy:eyJleHBpcnkiOjIyNTYwNjAwOTIsImNhbGwiOlsicmVhZCIsImNvbnZlcnQiXSwiaGFuZGxlIjoib2VZSDNobFNpZUZZMWUwbEM0eDcifQ==,signature:95572ebfc434fb516904c3b3a46381b5283cdf6469151beb8cac61a2a5eed132/cache=expiry:max/resize=w:600,h:600,fit:crop,align:faces/rotate=d:exif/oeYH3hlSieFY1e0lC4x7
 ---
 
 Hey there $$e = mc^2$$

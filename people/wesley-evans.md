@@ -3,7 +3,6 @@ title: Wesley Evans
 position: Product Manager
 status: current
 twitter: whywevans
-image: https://www.cloudflare.com/static/49492c8c26bdb7001a046edb025ec2a6/2qiXzNiPRgeBht7HYFzj.jpg
 ---
 Wesley is the product manager for the Research Team at Cloudflare. Wesley leads the process of integrating product, engineering, and design with research to drive research innovations into our products. His primary focus areas include the distributed web, security and privacy, and emerging network paradigms. Before Cloudflare, he led product at Atrium and Snap Inc. 
 

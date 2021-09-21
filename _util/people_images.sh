@@ -14,13 +14,19 @@ for path in ../people/*.md; do
 
   # if the image does not exist and this .md file contains a 'position' (is a profile)
   if [ ! -f "${image_path}" ] && grep -q 'position' "$path"; then
-     echo "No image found for $person. Trying to download using 'image' frontmatter in ${path}"
-     item=$(grep 'image' "$path")
-     url=${item#image: }
-     echo "Trying $url"
-     curl $url -o ${image_path}.original
-     convert ${image_path}.original -resize '400X400^' -gravity center -extent '400x400' ${image_path}
-  fi
+    echo "No image found for: $person"
+    echo "Looking for an original image at: ${image_path}.original"
+
+    if [ -f "${image_path}.original" ]; then
+      echo "Converting '${image_path}.jpg.original'"
+      convert ${image_path}.original -resize '400X400^' -gravity center -extent '400x400' ${image_path}
+    else
+      echo "'${image_path}.original not found. Please add and retry."
+      echo
+      exit 1
+    fi
+
+ fi
 
 done
 

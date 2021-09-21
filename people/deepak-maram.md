@@ -1,7 +1,6 @@
 ---
 title: Deepak Maram
 position: Research Engineer Intern
-image: https://lh6.googleusercontent.com/y_kXlPyRg4vQ3x5MNoyyj6OxB4JRUktN5yA591YH7cRBbkJ7V9Ia2YfifKkV0smPXy-q-5IZQeprIVCKTjdomSWqPApsue3vtlhB8Rz8v6Idnlzo=w1280
 twitter: mskd96
 ---
 
