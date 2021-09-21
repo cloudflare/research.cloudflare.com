@@ -5,8 +5,7 @@ related_profiles:
   - luke-valenta
   - arian-niaki
 related_publications:
-  - Celi2021
-  - Kwiatkowski2019
+  - Durumeric2017
 related_areas:
   - distributed_systems
   - measurement
