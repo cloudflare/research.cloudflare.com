@@ -2,6 +2,7 @@
 title: Vânia Gonçalves
 position: Research Program Manager
 status: current
+blog_author: vania
 ---
 Vânia is the Program Manager for Cloudflare Research. She leads the processes of tracking and delivering research work to both internal teams and external colaborations. She oversees engagement and outreach activities with academia and industry collaborations. 
 

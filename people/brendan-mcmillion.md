@@ -2,6 +2,7 @@
 title: Brendan McMillion
 position: Systems Engineer
 twitter: BrenTwentyTen
+blog_author: brendan
 ---
 Brendan is a systems engineer that formerly worked on the Research Team advancing new Internet standards like TLS 1.3, Certificate Transparency, and MLS. He now works on the WARP client team making the Internet safer and faster.
 
