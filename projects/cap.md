@@ -10,6 +10,7 @@ related_profiles:
   - armando-faz
   - wesley-evans
   - marwan-fayed
+  - cefan-rubin
 related_publications:
   - Faz-Hernandez
 related_areas:

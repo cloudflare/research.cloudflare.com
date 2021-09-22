@@ -8,6 +8,7 @@ related_profiles:
   - christopher-wood
   - nick-sullivan
   - wesley-evans
+  - cefan-rubin
 related_areas:
   - cryptography
 resources:

@@ -8,6 +8,7 @@ related_profiles:
   - christopher-wood
   - thibault-meunier
   - alex-davidson
+  - cefan-rubin
 related_publications:
   - Tyagi
   - Davidson2018
