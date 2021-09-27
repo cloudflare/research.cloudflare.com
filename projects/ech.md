@@ -16,6 +16,8 @@ resources:
     blog: https://blog.cloudflare.com/encrypted-client-hello/
   - text: IETF TLS Working Group Internet-Draft TLS Encrypted Client Hello
     blog: https://github.com/tlswg/draft-ietf-tls-esni
+  - text: "DNS Privacy at Scale: Lessons and Challenges @ Scale 2019"
+    link: https://www.facebook.com/atscaleevents/videos/413379969326369/
 ---
 
 Description here.
