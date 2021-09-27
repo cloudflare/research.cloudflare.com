@@ -41,7 +41,7 @@ const yaml = require( 'js-yaml' )
 const finished = util.promisify( stream.finished )
 
 
-
+/*
 async function parseRSS( filename ) {
 
   let blogposts = []
@@ -108,7 +108,7 @@ async function parseRSS( filename ) {
 
   return blogposts
 }
-
+*/
 
 function downloadIfNotFound( url, destination ) {
   if ( ! fs.existsSync( destination ) ) {
@@ -139,9 +139,13 @@ async function main() {
         if ( blog_author == undefined )
           blog_author = slug
 
-        downloadIfNotFound( 'https://blog.cloudflare.com/author/' + blog_author + '/rss/', slug + '.rss' )
+				// RSS from blog
+        //downloadIfNotFound( 'https://blog.cloudflare.com/author/' + blog_author + '/rss/', blog_author + '.rss' )
+        //let person_posts = await parseRSS( blog_author + '.rss' )
 
-        let person_posts = await parseRSS( slug + '.rss' )
+				// JSON from https://research-cloudflare-com.crypto-team.workers.dev
+				downloadIfNotFound( 'https://research-cloudflare-com.crypto-team.workers.dev/blog/author?name=' + blog_author, blog_author + '.json' )
+				let person_posts = JSON.parse( fs.readFileSync( blog_author + '.json' ) )
 
         if ( person_posts.length > 0 )
           result[ slug ] = person_posts
@@ -150,8 +154,13 @@ async function main() {
   }
 
   // process feed for the tag 'research'
-  downloadIfNotFound( 'https://blog.cloudflare.com/tag/research/rss/', 'rss.xml' )
-  let ordered_posts = await parseRSS( 'rss.xml' )
+
+
+  //downloadIfNotFound( 'https://blog.cloudflare.com/tag/research/rss/', 'rss.xml' )
+  //let ordered_posts = await parseRSS( 'rss.xml' )
+  downloadIfNotFound( 'https://research-cloudflare-com.crypto-team.workers.dev/blog/all', 'bytag.json' )
+  let ordered_posts = JSON.parse( fs.readFileSync( 'bytag.json' ) )
+
   result.ordered = ordered_posts
 
 }
