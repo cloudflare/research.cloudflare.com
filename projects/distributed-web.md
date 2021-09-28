@@ -6,6 +6,7 @@ related_profiles:
   - peter-wu
   - thibault-meunier
   - wesley-evans
+  - brendan-mcmillion
 related_areas:
   - distributed_systems
 resources:
