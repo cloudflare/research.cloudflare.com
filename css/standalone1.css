@@ -1,0 +1,189 @@
+:root {
+  --green-0: #0a2614;
+  --green-1: #0e381d;
+  --green-2: #104122;
+  --green-3: #15562d;
+  --green-4: #196535;
+  --green-6: #2db35e;
+  --green-7: #55d584;
+  --green-8: #a8e9c0;
+  --green-9: #e3f8eb;
+
+  --indigo-0: #170f58;
+  --indigo-1: #221785;
+  --indigo-2: #2c1ea9;
+  --indigo-3: #3524cd;
+  --indigo-4: #4b3bdc;
+  --indigo-6: #9d94ec;
+  --indigo-7: #c2bdf3;
+  --indigo-8: #dfdcf9;
+  --indigo-9: #f1f0fc;
+
+  --orange-0: #361a02;
+  --orange-1: #482303;
+  --orange-2: #592b04;
+  --orange-3: #763905;
+  --orange-4: #8d4406;
+  --orange-6: #ee730a;
+  --orange-7: #f8a054;
+  --orange-8: #fbcda5;
+  --orange-9: #fef1e6;
+
+  --violet-0: #350b42;
+  --violet-1: #490f5c;
+  --violet-2: #5f1477;
+  --violet-3: #741892;
+  --violet-4: #8d1eb1;
+  --violet-6: #cf7ee9;
+  --violet-7: #dfa8f1;
+  --violet-8: #ebcaf6;
+  --violet-9: #f7eafb;
+}
+
+
+@media (-webkit-min-device-pixel-ratio: 1.5) and (orientation: portrait), @media (min-resolution: 1.5dppx)  and (orientation: portrait){
+  html {
+    font-size: 2rem;
+  }
+}
+
+@media (-webkit-min-device-pixel-ratio: 2.5) and (orientation: portrait), @media (min-resolution: 2.5dppx) and (orientation: portrait){
+  html {
+    font-size: 3rem;
+  }
+}
+
+body {
+  font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+  margin: 0;
+  color: #1c1e21;
+}
+
+a {
+  color: var(--orange-3);
+}
+a:hover {
+  text-decoration-thickness: 0.15rem;
+}
+a.plain {
+  color: black;
+  text-decoration: none;
+}
+
+.wrapper {
+  display: grid;
+  max-width: 1080px;
+  min-height: 100vh;
+  margin: 0 auto;
+  grid-template-columns: 1fr;
+  grid-template-areas:
+    "header"
+    "main"
+    "description"
+    "footer";
+  grid-auto-rows: 3.8rem min-content min-content 4rem;
+}
+@media (min-width: 950px) and (min-device-width: 950px){
+  .wrapper {
+    grid-template-columns: 1fr 1fr;
+    grid-template-areas:
+      "header header"
+      "main  description"
+      "footer footer";
+    grid-template-rows: 3.8rem 1fr 4rem;
+  }
+}
+.wrapper div, .wrapper footer {
+  padding: 1rem;
+}
+
+.header {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  background-color: white;
+  position: sticky;
+  top: 0;
+  border-bottom: 2px solid #f0f0f0;
+  overflow: clip;
+}
+.header .logo {
+  font-weight: 600;
+  margin-right: 3rem;
+}
+.header img.logo {
+  height: 2rem;
+  margin-left: 1.1rem;
+  margin-right: 0.5rem;
+}
+.header .flare {
+  margin-right: -0.2rem;
+  padding: 0.2rem 0.6rem 0.2rem 0.4rem;
+  display: inline-block;
+  margin-left: auto;
+  transform: skewX(-15deg);
+  font-weight: 600;
+}
+
+.description {
+  grid-area: description;
+  background-color: var(--orange-9);
+}
+
+main{
+  grid-area: main;
+}
+main fieldset {
+  border-radius: 0.75rem;
+  padding: 1rem;
+  margin: 0 0 0.2rem 0;
+}
+main label, .input input[type=submit] {
+  font-weight: 400;
+  margin-top: 0.4rem;
+  min-width: 8rem;
+  display: inline-block;
+}
+main legend {
+  background-color: black;
+  color: white;
+  padding: 0.2rem 0.8rem;
+}
+
+.footer {
+  grid-area: footer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-top: 1px solid #f0f0f0;
+}
+.footer a {
+  padding: 0.7rem;
+}
+
+details {
+  border: 1px solid #aaa;
+  word-break: break-all;
+  border-radius: 0.75rem;
+  padding: .5rem .5rem 0;
+  margin-bottom: 0.2rem;
+}
+summary {
+  margin: -.5rem -.5rem 0;
+  padding: .5rem;
+}
+details[open] {
+  padding: .5rem;
+}
+details[open] summary {
+  border-bottom: 1px solid #aaa;
+  margin-bottom: .5rem;
+}
+
+b.bad {
+  color: red;
+}
+b.good {
+  color: green;
+}
+
