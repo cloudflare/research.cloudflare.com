@@ -209,7 +209,6 @@ a.button:hover {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 100vw;
 }
 
 .footer span {
@@ -240,8 +239,7 @@ a.button:hover {
     "content"
     "footer";
   min-height: 100vh;
-
-  /* not certain why wrapper places itself above sidebar, but this helps... */
+ /* not certain why wrapper places itself above sidebar, but this helps... */
   position: absolute;
   z-index: -10;
 }
