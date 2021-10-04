@@ -1,10 +1,17 @@
 {% set profile_slugs = related_profiles -%}
 <div class="related_profiles">
 
+{% if show_cloud == true %}
+{% if people[ profile_slugs[0] ].status != 'current' %}
+  {% set extra_style = 'filter: brightness(0%) invert(65%) sepia(0%) saturate(2344%) hue-rotate(333deg) brightness(114%) contrast(95%);' %}
+{% endif %}
+<span style="display: inline-block; color: #bbb;"><img style="padding-bottom: 1rem; {{ extra_style }}" src="/img/cloud.svg"></span>
+{% endif %}
+
 {% for slug in profile_slugs -%}
 {% set profile = people[ slug ] -%}
 {% if profile -%}
-  <span class="avatar" style="text-align: center; display: inline-block">
+ <span class="avatar" style="text-align: center; display: inline-block">
   <a href="/people/{{ slug }}">
   {% include 'person_bubble.njk' -%}
     <small>{{ profile.title.slice( 0, profile.title.indexOf( ' ' ) ) }}</small>

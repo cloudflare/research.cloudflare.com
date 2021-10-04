@@ -6,9 +6,8 @@
 -%}
 
 <span>
-  Copyright &copy; {{ site.copyright }} Cloudflare</span> |
+  Copyright &copy; {{ site.copyright }} Cloudflare, Inc.</span>
   {% for name, link in items %}
-  <span><a href="{{ link }}" {% if 'http' in link %} target="_blank" nofollow{% endif %}>{{ name }}</a></span> {% if not loop.last %} | {% endif %}
+  <span><a href="{{ link }}" {% if 'http' in link -%} target="_blank" nofollow{% endif -%}>{{ name }}</a></span> {% if not loop.last -%}{% endif -%}
   {% endfor %}
-
 </span>

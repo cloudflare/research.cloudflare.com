@@ -1,10 +1,10 @@
-{% set features = [] %}
+{% set features = [] -%}
 
-{% for blogpost in blogposts.ordered %}
-  {% if loop.index <= 3 %}
-    {% set features = ( features.push( blogpost ), features ) %}
-  {% endif %}
-{% endfor %}
+{% for blogpost in blogposts.ordered -%}
+  {% if loop.index <= 3 -%}
+    {% set features = ( features.push( blogpost ), features ) -%}
+  {% endif -%}
+{% endfor -%}
 
 <div class="homepage_feature row">
 {% for feature in features -%}

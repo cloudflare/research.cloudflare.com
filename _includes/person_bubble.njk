@@ -1,1 +1,1 @@
-<img class="bubble" loading="lazy" src="/img/people/{{ profile.slug }}.jpg" alt="{{ profile.title }}" />
+<img class="bubble {% if profile.status != 'current' %}past{% endif %}" loading="lazy" src="/img/people/{{ profile.slug }}.jpg" alt="{{ profile.title }}" />
