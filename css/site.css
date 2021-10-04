@@ -238,7 +238,8 @@ a.button:hover {
     "sidebar"
     "content"
     "footer";
-  min-height: 100vh;
+  width: 100%;
+  height: 100%;
  /* not certain why wrapper places itself above sidebar, but this helps... */
   position: absolute;
   z-index: -10;
