@@ -9,9 +9,17 @@
 <div class="homepage_feature row" style="justify-content: center">
 {% for feature in features -%}
 
+{% if loop.index % 3 == 0 %}
+  {% set border_css = 'var(--orange-6)' %}
+{% elseif loop.index % 2 == 0 %}
+  {% set border_css = 'var(--indigo-6)' %}
+{% else %}
+  {% set border_css = 'var(--green-6)' %}
+{% endif %}
+
   <div class="column">
     <a href="{{ feature.link }}">
-      <img src="{{ feature.image }}" alt="{{ feature.heading }}" />
+      <img src="{{ feature.image }}" alt="{{ feature.heading }}" style="border: 0.5rem solid {{ border_css }}; border-radius: 0.5rem" />
       <section>{{ feature.heading }}</section>
       <p>{{ feature.text }}</p>
     </a>
