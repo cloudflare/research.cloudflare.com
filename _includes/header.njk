@@ -1,4 +1,4 @@
-{% set items = [ 
+{% set items = [
   { 'Approach': '/approach/' },
   { 'Projects': '/projects/' },
   { 'Publications': '/publications/' },
@@ -6,7 +6,7 @@
   { 'Resources': '/resources/' },
   { 'Updates': '/updates/' }
 ] -%}
-    
+
 
 <nav id="hamburger_header_navigation">
 <input type="checkbox" id="burger-shower" class="burger-shower">
@@ -38,4 +38,9 @@
 {% endfor -%}
 </ul>
 
-
+<!-- border bottom -->
+{% if page.url == '/' %}
+<div style="position: absolute; display: block; border: 0; padding: 0; margin: 0; width: 100%; height: 0.2rem; top: 3.6rem; background-color: #f0f0f0;">&nbsp;</div>
+{% else %}
+<div style="position: absolute; display: block; border: 0; padding: 0; margin: 0; width: 100%; height: 0.2rem; top: 3.6rem; background: linear-gradient(70deg, var(--green-8) 30%, rgba(0,0,0,0) 30%), linear-gradient(30deg, var(--indigo-8) 60%, var(--orange-8) 60%);">&nbsp;</div>
+{% endif %}
