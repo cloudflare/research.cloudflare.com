@@ -16,7 +16,7 @@ related_publications:
   - Li2019
 related_areas:
   - cryptography
-  - security
+  - authentication
 resources:
   - text: "OPAQUE: The Best Passwords Never Leave your Device"
     blog: https://blog.cloudflare.com/opaque-oblivious-passwords/
@@ -30,6 +30,6 @@ resources:
     link: opaque.research.cloudflare.com
 ---
 
-Passwords are an age-old method of authentication and are used on millions of websites and web services for user accounts. Passwords are a brittle security mechanism because people often reuse passwords and password breaches happen regularly, which in combination exposes users to account compromise. 
+The password is an age-old authentication method used by millions of websites and web services for user accounts. Passwords are a brittle security mechanism because password breaches happen regularly, and people often reuse passwords, which exposes users to account compromise.
 
 In this project, we explore ways to help make password systems safer.

@@ -16,6 +16,7 @@ related_publications:
 related_areas:
   - cryptography
   - privacy
+  - authentication
 resources:
   - text: Humanity wastes about 500 years per day on CAPTCHAs. It’s time to end this madness
     blog: https://blog.cloudflare.com/introducing-cryptographic-attestation-of-personhood/
