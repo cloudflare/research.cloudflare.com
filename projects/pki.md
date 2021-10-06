@@ -19,4 +19,6 @@ resources:
     blog: https://blog.cloudflare.com/high-reliability-ocsp-stapling/
 ---
 
-Description here.
+Trust on the Internet is underpinned by the Public Key Infrastructure (PKI). PKI grants online parties the ability to authenticate themselves by issuing digital certificates, providing the foundation for encrypted and authentic communication. 
+
+The security and resilience of the PKIs used to secure the Internet is a complex and fruitful area of study.
