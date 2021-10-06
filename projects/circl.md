@@ -12,6 +12,7 @@ related_profiles:
 related_areas:
   - authentication
   - privacy
+  - cryptography
 resources:
   - text: "Introducing CIRCL: An Advanced Cryptographic Library"
     blog: https://blog.cloudflare.com/introducing-circl/
