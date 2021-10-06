@@ -1,12 +1,12 @@
 ---
 title: "ZKAttest: Ring and Group Signatures for existing ECDSA keys"
-year: 
+year: 2021
 location: Selected Areas in Cryptography (SAC 2021). To appear (2021).
 authors:
   - armando-faz
   - watson-ladd
   - deepak-maram
-url: 
+url: https://eprint.iacr.org/2021/1183
 related_areas:
   - cryptography
 ---
