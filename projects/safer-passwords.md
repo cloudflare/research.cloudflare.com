@@ -22,6 +22,8 @@ resources:
     blog: https://blog.cloudflare.com/opaque-oblivious-passwords/
   - text: Account Takeover Protection and WAF mitigations to help stop Global Brute Force Campaigns
     blog: https://blog.cloudflare.com/patching-the-internet-against-global-brute-force-campaigns/
+  - text: The Future of Passwords
+    cfstream: 7fad6abe6c72be6cbf1d9a433140d5f2
   - text: Automated exposed credentials check
     link: https://developers.cloudflare.com/waf/exposed-credentials-check
   - text: GitHub Repositories
