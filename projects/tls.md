@@ -21,4 +21,4 @@ resources:
     blog: https://blog.cloudflare.com/rfc-8446-aka-tls-1-3/
 ---
 
-Description here.
+This project is about new Transport Layer Security (TLS) features developed in collaboration with IETF and industry partners, including Facebook and Mozilla.

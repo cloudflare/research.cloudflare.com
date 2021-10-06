@@ -20,4 +20,6 @@ resources:
     link: https://www.facebook.com/atscaleevents/videos/413379969326369/
 ---
 
-Description here.
+This project is about Cloudflare's contributions to Encrypted Client Hello (ECH), a new extension for Transport Layer Security (TLS) that promises to significantly enhance the privacy of this critical Internet protocol.
+
+ECH is the product of close collaboration, facilitated by the IETF, between academics and the tech industry leaders, including Cloudflare, Fastly, Mozilla, and many others.
