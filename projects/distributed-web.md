@@ -34,7 +34,7 @@ resources:
     youtube: https://www.youtube.com/embed/CjyQWVEnRUY
 ---
 
-<img src="https://blog.cloudflare.com/content/images/2021/01/image4-2.png" alt="Distributed Web" witdth="200" align="right" />
+<img src="https://blog.cloudflare.com/content/images/2021/01/image4-2.png" alt="Distributed Web" witdth="80" align="right" />
 
 At Cloudflare, we believe that decentralization is going to be the next major step for content networks. In this project we are experimenting with distributed web gateways that provide an HTTP interface to emerging protocols: Ethereum and IPFS (InterPlanetary FileSystem).
 
