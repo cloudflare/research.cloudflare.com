@@ -6,7 +6,6 @@ related_profiles:
   - christopher-patton
   - peter-wu
   - marwan-fayed
-  - jack-wampler
   - wesley-evans
 related_areas:
   - cryptography

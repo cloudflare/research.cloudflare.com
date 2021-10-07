@@ -6,7 +6,6 @@ related_profiles:
   - armando-faz
   - bas-westerbaan
   - luke-valenta
-  - kris-kwiatkowski
   - goutam-tamvada
   - thom-wiggers
 related_publications:
@@ -33,4 +32,6 @@ resources:
     link: https://github.com/cloudflare/go/tree/cf-pq-kemtls
 ---
 
-Description here
+With the imminent arrival of quantum computers, these will break classical cryptography algorithms and allow to retroactively decrypt any encrypted traffic recorded now.
+
+This project is focused on migrating classical algorithms to post-quantum ones and setting up large scale Post-quantum cryptography experiments in real settings.

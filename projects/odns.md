@@ -5,7 +5,6 @@ related_profiles:
   - tanya-verma
   - peter-wu
   - christopher-wood
-  - sudheesh-singanamalla
   - marwan-fayed
 related_publications:
   - Singanamalla2021

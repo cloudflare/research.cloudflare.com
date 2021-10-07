@@ -3,7 +3,6 @@ title: Middlebox Mapping
 related_profiles:
   - nick-sullivan
   - luke-valenta
-  - arian-niaki
 related_publications:
   - Durumeric2017
 related_areas:
@@ -20,4 +19,8 @@ resources:
     youtube: https://www.youtube.com/embed/EpGewXz7tLw
 ---
 
-Description here
+This project addresses HTTPS interception and middleboxes, which can often degrade the security of Internet connections.
+
+We have made available two tools:
+- MITMEngine: an open-source library for HTTPS interception detection, and
+- MALCOLM: a dashboard displaying metrics about HTTPS interception we observe on Cloudflare’s network.

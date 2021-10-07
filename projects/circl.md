@@ -2,7 +2,6 @@
 title: CIRCL
 related_profiles:
   - armando-faz
-  - kris-kwiatkowski
   - watson-ladd
   - bas-westerbaan
   - brendan-mcmillion

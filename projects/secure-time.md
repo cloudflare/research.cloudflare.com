@@ -4,7 +4,6 @@ related_profiles:
   - christopher-patton
   - watson-ladd
   - tanya-verma
-  - aanchal-malhotra
   - wesley-evans
   - pop-chunhapanya
 related_areas:

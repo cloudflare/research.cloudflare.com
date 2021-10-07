@@ -3,14 +3,12 @@ title: Safer Password Systems
 related_profiles:
   - sofia-celi
   - armando-faz
-  - ian-mcquoid
   - thibault-meunier
   - christopher-wood
   - nick-sullivan
   - wesley-evans
   - cefan-rubin
   - luke-valenta
-  - thomas-ristenpart
   - marina-sanusi
 related_publications:
   - Li2019

@@ -7,7 +7,6 @@ related_profiles:
   - pop-chunhapanya
   - christopher-wood
   - thibault-meunier
-  - alex-davidson
   - cefan-rubin
 related_publications:
   - Tyagi
