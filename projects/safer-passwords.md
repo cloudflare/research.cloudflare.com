@@ -32,7 +32,7 @@ resources:
     link: opaque.research.cloudflare.com
 ---
 
-<img src="https://blog.cloudflare.com/content/images/2020/12/Opaque-Header-1.png" alt="Safer Passwords Systems" width="100" align="right" />
+<img src="https://blog.cloudflare.com/content/images/2020/12/Opaque-Header-1.png" alt="Safer Passwords Systems" width="200" align="right" />
 
 The password is an age-old authentication method used by millions of websites and web services for user accounts. Passwords are a brittle security mechanism because password breaches happen regularly, and people often reuse passwords, which exposes users to account compromise.
 

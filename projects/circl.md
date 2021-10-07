@@ -21,7 +21,7 @@ resources:
 
 ---
 
-<img src="https://raw.githubusercontent.com/cloudflare/circl/master/.etc/icon.png" alt="CIRCL" width="100" align="right" />
+<img src="https://raw.githubusercontent.com/cloudflare/circl/master/.etc/icon.png" alt="CIRCL" width="200" align="right" />
 
 Released in 2019, *CIRCL* (Cloudflare Interoperable Reusable Cryptographic Library) is an open-source collection of cryptographic algorithms written in Go providing optimized implementations of several primitives for key exchange and digital signatures.
 
