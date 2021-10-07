@@ -1,7 +1,6 @@
 ---
 title: Thom Wiggers
 position: Research Intern
-status: current
 twitter: thomwiggers
 blog_author: thom
 ---
