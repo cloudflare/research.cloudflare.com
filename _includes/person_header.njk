@@ -6,10 +6,12 @@
     {% include 'person_bubble.njk' %}
   </span>
   <span class="person_header title">
-    {{ profile.title }}<br />
+    {{ profile.title }}
+    <br />
     <small>{{ profile.position }}</small><br />
     {% if profile.twitter %}
     <a href="https://twitter.com/{{ profile.twitter }}" target="_blank"><img class="twitter" src="https://blog.cloudflare.com/assets/images/twitter.svg?v=af74676765" /></a>
     {% endif %}
-  </span>
+    <!-- <img style="height: 1.5rem; position: relative;" src="/img/cloud.svg" alt="orange cloud">-->
+    </span>
 </div>

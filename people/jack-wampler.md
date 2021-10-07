@@ -4,7 +4,10 @@ position: Research Intern
 slug: jack-wampler
 twitter: jmwample
 ---
-Jack Wampler is a research intern focused on the development of secure and private communications protocols. He is broadly interested interested in computer privacy, protocol development, measuring network interference, and hardware side-channels. Jack is working to complete his PhD at the University of Colorado Boulder in computer security and network measurement in support of open internet access.
+Jack is working to complete his PhD at the University of Colorado Boulder as a member of the Network Security Research group studying computer security and network measurement alongside professor Eric Wustrow. His work centers around quantifying network interference and proxy protocol design in support of open internet access.
+
+Jack was an intern with the Cloudflare Research team in the summer of 2021 where he worked to extend observability into network errors relating to TLS protocol development and rollout.
+
 
 ## Research Areas 
 Internet Measurement, Privacy, Security

@@ -3,6 +3,11 @@ img.bubble {
   border-radius: 50%;
   width: 6rem;
   height: auto;
+  border: 0.3rem solid var(--orange-7);
+}
+
+img.bubble.past {
+  border: 0.3rem solid #bbb;
 }
 
 span.avatar {
@@ -45,18 +50,24 @@ nav.profiles {
 }
 .related_profiles a {
   color: black;
+  text-decoration: none;
 }
 .related_profiles a:hover {
-  text-decoration: none;
+  text-decoration: underline;
 }
 
 div.homepage_feature.row {
   margin: 3rem;
 }
 div.homepage_feature div.column {
-  padding: 3rem 3rem 3rem 3rem;
+  padding: 2rem 3rem;
   align-items: center;
   text-align: center;
+  justify-items: center;
+  max-width: 25rem;
+}
+div.homepage_feature div.column section, div.homepage_feature div.column p {
+  max-width: 20rem;
 }
 div.homepage_feature img {
   width: 16rem;
@@ -97,13 +108,8 @@ cite.publication_item span {
   padding: 0.1rem; 
   white-space:nowrap;
 }
-cite.publication_item span a {
-  color: #170f58;
-  text-decoration: underline;
-}
 div.publications hr {
   display: block;
-  /* margin-top: 0.8rem; margin-bottom: 0.8rem; */
 }
 cite.publication_item small {
   background-color: lightgrey;
@@ -119,21 +125,22 @@ cite.publication_item small {
 
 /* styles targetting unique key features not in includes */
 
+ 
+
+
 div.homepage_header {
   align-items: center;
   padding: 1rem;
-  color: white;
-  /* background-color: #f38020; */
-  background-color: #2c1ea9;
-  padding-top: 3rem;
-  padding-bottom: 3rem;
+  text-align: center;
+  background: linear-gradient(70deg, var(--green-8) 30%, rgba(0,0,0,0) 30%), linear-gradient(30deg, var(--indigo-8) 60%, var(--orange-8) 60%);
+  padding: 1.5rem 3rem;
+  text-shadow: 0.05rem 0.05rem white;
 }
 div.homepage_header h1 {
   font-size: 3rem;
   margin-top: 0;
   margin-bottom: 0;
-  text-shadow:1px 0 0 #170f58,0 1px 0 #170f58,-1px 0 0 #170f58,0 -1px 0 #170f58;
-  color: #7366e4;
+  text-shadow: 1px 0 0 black,0 1px 0 black,-1px 0 0 black,0 -1px 0 black;
   color: white;
 }
 
@@ -150,4 +157,13 @@ form > label {
 form fieldset {
   padding: 1rem;
   /* margin-right: 1rem; */
+}
+
+.updates h3 small {
+  position: relative;
+  left: -1rem;
+  background-color: var(--indigo-9);
+  display: inline-block;
+  padding: 0 0.2rem;
+  transform: skewX(-15deg);
 }
