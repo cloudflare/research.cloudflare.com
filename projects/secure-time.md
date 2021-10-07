@@ -24,4 +24,6 @@ resources:
     link: https://www.cloudflare.com/en-gb/time/
 ---
 
-Description here.
+NTP is the most commonly used protocol for time synchronization on the Internet. If an attacker can leverage vulnerabilities in NTP to manipulate time on computer clocks, they can undermine the security guarantees provided by these systems. 
+
+We are exploring ways to add security guarantees to the time infrastructure of the Internet.
