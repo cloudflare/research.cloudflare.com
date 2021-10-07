@@ -34,6 +34,6 @@ resources:
     youtube: https://www.youtube.com/embed/CjyQWVEnRUY
 ---
 
-At Cloudflare, we believe that decentralization is going to be the next major step for content networks. In this project we are experimenting with distributed web gateways that provide an HTTP interface to Web3 protocols: Ethereum and IPFS (InterPlanetary FileSystem).
+At Cloudflare, we believe that decentralization is going to be the next major step for content networks. In this project we are experimenting with distributed web gateways that provide an HTTP interface to emerging protocols: Ethereum and IPFS (InterPlanetary FileSystem).
 
 Below, you can read more about our vision for a decentralized Web and Ethereum and IPFS gateway improvements. 
