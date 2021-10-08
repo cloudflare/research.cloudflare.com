@@ -84,9 +84,8 @@ a.button:hover {
   align-items: center;
   height: 3.8rem;
   background-color: white;
- position: sticky;
+  position: sticky;
   top: 0;
- 
 }
 
 .header img {
@@ -216,19 +215,21 @@ a.button:hover {
   padding: 1rem;
 }
 
-@media (-webkit-min-device-pixel-ratio: 1.5) and (orientation: portrait), @media (min-resolution: 1.5dppx)  and (orientation: portrait){
+/*
+@media (-webkit-min-device-pixel-ratio: 1.5) and (orientation: portrait), @media (min-resolution: 1.5dppx) and (orientation: portrait){
   html {
     font-size: 2rem;
   }
 }
+*/
 
-
+/*
 @media (-webkit-min-device-pixel-ratio: 2.5) and (orientation: portrait), @media (min-resolution: 2.5dppx) and (orientation: portrait){
   html {
     font-size: 3rem;
   }
 }
-
+*/
 
 .wrapper {
   display: grid;
@@ -236,11 +237,12 @@ a.button:hover {
     "header"
     "burger"
     "nav"
-    "sidebar"
+    /* "sidebar" */
     "content"
     "footer";
   width: 100%;
-  height: auto;
+  height: 99.9vh;
+  /*overflow: clip;*/
  /* not certain why wrapper places itself above sidebar, but this helps... */
   position: absolute;
   z-index: -10;
@@ -250,12 +252,15 @@ hr {
 display: none;
 }
 
-/* default to showing hamburger navigation */
+/* default to showing hamburger navigation and hiding sidebar */
 #hamburger_header_navigation {
   display: block;
   padding-top: 1rem;
 }
 #inline_header_navigation {
+  display: none;
+}
+aside.sidebar {
   display: none;
 }
 
@@ -286,6 +291,9 @@ display: none;
   }
   #inline_header_navigation {
     display: block;
+  }
+  aside.sidebar {
+    display: inline;
   }
 }
 

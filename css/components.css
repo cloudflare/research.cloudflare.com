@@ -11,7 +11,7 @@ img.bubble.past {
 }
 
 span.avatar {
-  text-align: center; 
+  text-align: center;
   display: inline-block;
   width: 6rem;
   margin-top: 1rem;
@@ -57,10 +57,11 @@ nav.profiles {
 }
 
 div.homepage_feature.row {
-  margin: 3rem;
+  margin: 1rem 0;
 }
 div.homepage_feature div.column {
-  padding: 2rem 3rem;
+  margin-top: 2rem;
+  padding: 0rem 2rem;
   align-items: center;
   text-align: center;
   justify-items: center;
@@ -86,11 +87,11 @@ div.homepage_feature a:hover {
 
 
 cite.publication_item {
-  font-style: normal; 
+  font-style: normal;
   position: relative;
 }
 cite.publication_item h3 {
-  margin:0; 
+  margin:0;
   font-weight: 400;
 }
 cite.publication_item h3 a {
@@ -98,14 +99,14 @@ cite.publication_item h3 a {
 }
 div.publication_location {
   color: #555;
-  font-size: 0.8rem; 
+  font-size: 0.8rem;
   font-weight: 300;
 }
 cite.publication_item span {
-  font-size: 0.9rem; 
+  font-size: 0.9rem;
   font-weight: 370;
-  display: inline; 
-  padding: 0.1rem; 
+  display: inline;
+  padding: 0.1rem;
   white-space:nowrap;
 }
 div.publications hr {
@@ -125,7 +126,7 @@ cite.publication_item small {
 
 /* styles targetting unique key features not in includes */
 
- 
+
 
 
 div.homepage_header {
@@ -145,18 +146,22 @@ div.homepage_header h1 {
 }
 
 span.nobreak {
-  white-space:nowrap;  
+  white-space:nowrap;
 }
 
 form > label {
   display: inline-block;
   padding-right: 1rem;
-  width: 6rem;
+  width: 11rem;
+  line-height: 2rem;
+  background-color: linear-gradient( red, white );
 }
-
 form fieldset {
   padding: 1rem;
   /* margin-right: 1rem; */
+}
+form input {
+  /*padding: 0.2rem 0; */
 }
 
 .updates h3 small {

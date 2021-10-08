@@ -18,7 +18,7 @@ The Visiting Researcher Program is available to both Post-docs and full-time fac
 
 ### Selection criteria
 Expressions of interest will be evaluated based on the following criteria:
-- Address one of the research areas that Cloudflare Research focuses on
+- Address one of the research areas that Cloudflare Research focusses on
 - Have the potential to have a significant impact on the identified domain and contribute to the Internet community at large
 - Expected value for real world and Cloudflare applications and services
 - Potential for wide dissemination and open and shared use of knowledge, including plans for peer-review scholarly publications, public presentations, blogposts and contributions to standards
@@ -27,5 +27,6 @@ Expressions of interest will be evaluated based on the following criteria:
 ### Expression of interest
 As we expect a high amount of interest in this program and all expressions of interest will be reviewed manually, please fill in the form carefully addressing the objectives and timeline of your collaboration. Do not send any confidential or proprietary information. Any information you send us as part of your expression of interest will be considered not confidential.
 
-<button name="researcher" onClick="visitingresearcher/">Express Interest</button> 
+<br>
 
+<a class="button" style="margin-left: 0" href="interested/">Express interest</a>
