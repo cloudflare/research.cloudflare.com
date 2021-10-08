@@ -182,7 +182,7 @@ async function main() {
 module.exports = async function() {
   let done = await main().catch( console.log )
 
-  //console.log( result )
+  console.log( result )
 
   return result
 }

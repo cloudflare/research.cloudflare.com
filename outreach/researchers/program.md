@@ -29,4 +29,4 @@ As we expect a high amount of interest in this program and all expressions of in
 
 <br>
 
-<a class="button" style="margin-left: 0" href="interested/">Express interest</a>
+<a class="button" style="margin-left: 0" href="../interested/">Express interest</a>
