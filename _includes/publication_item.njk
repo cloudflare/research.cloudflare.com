@@ -20,7 +20,7 @@
     {% else -%}
       {% set name = people[ author ][ 'title' ] -%}
     {% endif -%}
-  <span><a href="/people/{{ people[ author ].slug }}">{{ name }}</a></span>{% if not loop.last %},{% endif %}
+  <span><a href="/{{ people[ author ].path }}">{{ name }}</a></span>{% if not loop.last %},{% endif %}
   {% else -%}
   <span>{{ author }}</span>{% if not loop.last %},{% endif %}
   {% endif -%}

@@ -3,13 +3,12 @@ const path = require( 'path' )
 
 const yaml = require( 'js-yaml' )
 
+function processProfileDir( dir ) {
 
-function generateProfiles() {
-
-  let profiles = [];
+  let profiles = []
 
   try {
-    const files = fs.readdirSync( 'people/' );
+    const files = fs.readdirSync( dir );
 
     let content = ''
     for ( const file of files ) {
@@ -19,7 +18,7 @@ function generateProfiles() {
 
       if ( typeof file !== 'undefined' && path.parse( file ).ext == '.md' ) {
         let slug = path.parse( file ).name
-        content = fs.readFileSync( 'people/' + file, 'utf8' )
+        content = fs.readFileSync( dir + '/' + file, 'utf8' )
 
         let front= content.substr( 4, content.indexOf( '---', 4 ) - 4 )
         //console.log( front )
@@ -27,39 +26,56 @@ function generateProfiles() {
         frontMatter = yaml.load( front );
         //console.log( frontMatter )
 
+        // try to avoid duplicates
+        if ( profiles[ slug ] ) {
+					throw( "profile for '" + slug + "' already processed. Duplicate profile at '" + dir + '/' + slug + ".md'" )
+        }
+
         if ( frontMatter.position ) {
           frontMatter.slug = slug
+          frontMatter.path = dir + '/' + slug
           profiles.push( frontMatter )
         }
 
       }
     }
 
+    return profiles
+
   }
   catch (err) {
     console.error(err);
   }
 
-  return profiles;
 }
-// parse the front matter and add to 'profiles'
-let profiles = generateProfiles();
-//console.log( profiles );
+
+// handle employee, researcher and intern profiles
+let employees = processProfileDir( 'people' )
+let researchers = processProfileDir( 'outreach/researchers' )
+let interns = processProfileDir( 'outreach/interns' )
 
 module.exports = {
-  'ordered': profiles
+  employees : employees.map( (element) => element.slug ),
+  researchers : researchers.map( (element) => element.slug ),
+  interns : interns.map( (element) => element.slug )
 }
 
-for ( profile of profiles ) {
+let all_profiles = []
+all_profiles = all_profiles.concat( employees ).concat( researchers ).concat( interns )
+
+for ( profile of all_profiles ) {
   module.exports[ profile.slug ] = profile
 }
 
-//console.log( module.exports )
+// console.log( module.exports )
 
 /*
 
-  people.ordered
-    [ ... alphabetical array of all profiles ... ]
+  people.employees
+    [ ... alphabetical array of employee profiles ... ]
+
+  people.interns
+    [ ... alphabetical array of intern profiles ... ]
 
   people[ 'cefan-rubin' ]
     { ... frontmatter from people/cefan-rubin.md ... }

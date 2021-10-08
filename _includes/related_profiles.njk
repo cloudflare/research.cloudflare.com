@@ -12,7 +12,7 @@
 {% set profile = people[ slug ] -%}
 {% if profile -%}
  <span class="avatar" style="text-align: center; display: inline-block">
-  <a href="/people/{{ slug }}">
+  <a href="/{{ people[ slug ].path }}">
   {% include 'person_bubble.njk' -%}
     <small>{{ profile.title.slice( 0, profile.title.indexOf( ' ' ) ) }}</small>
   </a>
