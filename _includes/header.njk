@@ -27,10 +27,11 @@
 </ul>
 </nav>
 
-<img src="/img/cloud.svg" alt="Cloudflare orange cloud logo" width="30rem" height="2rem" />
-<a class="logo" href="/">Cloudflare Research</a>
+<!-- <img src="/img/cloud.svg" alt="Cloudflare orange cloud logo" width="30rem" height="2rem" />
+<a class="logo" href="/">Cloudflare Research</a>-->
+<a href="/"><img src="/img/logo.svg" alt="Cloudflare Research logo"></a>
 
-<ul id="inline_header_navigation">
+<ul id="inline_header_navigation" style="font-size: 0.8rem; margin-top: 1.9rem;">
 {% for item in items -%}
 {% for name, link in item -%}
 <li><a {% if link in page.url -%}class="active" {% endif -%}{% if 'http' in link -%}target="_blank" rel="noopener" {% endif -%}href="{{ link }}">{{ name }}</a></li>
