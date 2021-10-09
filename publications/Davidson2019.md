@@ -3,7 +3,7 @@ title: Strong post-compromise secure proxy re-encryption
 year: 2019
 location: Australasian Conference on Information Security and Privacy, pp. 58-77. Springer, Cham, 2019.
 authors:
-  - alex-davidson
+  - Alex Davidson
   - Amit Deo
   - Ela Lee
   - Keith Martin

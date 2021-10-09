@@ -3,7 +3,7 @@ title: Measuring TLS key exchange with post-quantum KEM
 year: 2019
 location: Workshop Record of the Second PQC Standardization Conference. 2019.
 authors:
-  - kris-kwiatkowski
+  - Krzysztof Kwiatkowski
   - nick-sullivan
   - Adam Langley
   - Dave Levin
