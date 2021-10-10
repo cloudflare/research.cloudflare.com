@@ -11,11 +11,11 @@ layout: content
   <label for="email">Email</label><input name="email" type="email" required><br>
   <label for="publications_profile">Publications Profile</label><input name="publications_profile" size="35" placeholder="Google Scholar/ORCID/personal profile" type="url"><br>
   <label for="interest">Area of interest</label><select name="interest">{% for option, value in areas %}<option>{{ value.name }}</option>{% endfor %}</select><br>
-  <label for="timeframe">Proposed Timeframe</label><input name="timeframe" size="55" placeholder="preferred start/end date and time commitment (hours per day or week)"><br>
+  <label for="timeframe">Proposed Timeframe</label><input name="timeframe" size="60" placeholder="Preferred start/end date and time commitment (hours per day or week)"><br>
 
-  <br>
+  <br />
   <fieldset>
-    <legend>What are your intended goals or outcomes?</legend>
+    <legend>Share your interest in joining Cloudflare as a Visiting Researcher</legend>
 
     <textarea name="goals" style="width: 80%" placeholder="Please describe the goals and outcomes (e.g. demo, measurement study, publication, blog post, etc.) you are hoping to achieve during your visit."></textarea>
 
