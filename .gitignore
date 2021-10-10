@@ -2,7 +2,3 @@ _site
 _build
 node_modules
 package-lock.json
-rss.xml
-*.rss
-*.json
-!package.json
