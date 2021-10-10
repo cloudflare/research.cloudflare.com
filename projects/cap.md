@@ -24,6 +24,8 @@ resources:
     blog: https://blog.cloudflare.com/introducing-zero-knowledge-proofs-for-private-web-attestation-with-cross-multi-vendor-hardware/
   - text: Zero-Knowledge Proofs for Private Web Attestation
     cfstream: 3c38fd90e525b02115c0e02342b2f363
+  - text: "ZKAttest: Ring and Group Signatures for Existing ECDSA Keys"
+    youtube: https://www.youtube.com/embed/47ZRZDJR1BA
   - text: GitHub Organization
     link: https://github.com/cloudflare/zkp-ecdsa
 ---
