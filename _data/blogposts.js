@@ -164,12 +164,14 @@ async function main() {
 
   // process feeds for /people/*
   processProfileDirectory( 'people' )
+  processProfileDirectory( 'outreach/interns' )
+  processProfileDirectory( 'outreach/researchers' )
 
   // process feed for the tag 'research'
 
   //downloadIfNotFound( 'https://blog.cloudflare.com/tag/research/rss/', 'rss.xml' )
   //let ordered_posts = await parseRSS( 'rss.xml' )
-  
+
   downloadIfNotFound( 'https://research-cloudflare-com.crypto-team.workers.dev/blog/all', '_build/blogposts_bytag.json' )
   let ordered_posts = JSON.parse( fs.readFileSync( '_build/blogposts_bytag.json' ) )
 
@@ -182,7 +184,7 @@ async function main() {
 module.exports = async function() {
   let done = await main().catch( console.log )
 
-  console.log( result )
+  //console.log( result )
 
   return result
 }
