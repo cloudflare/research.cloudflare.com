@@ -27,7 +27,9 @@ resources:
   - text: GitHub Repositories
     link: https://github.com/search?q=org%3Acloudflare+opaque
   - text: OPAQUE Demo
-    link: opaque.research.cloudflare.com
+    link: https://opaque.research.cloudflare.com
+  - text: MIGP Demo
+    link: https://migp.cloudflare.com
 ---
 
 <img src="https://blog.cloudflare.com/content/images/2020/12/Opaque-Header-1.png" alt="Safer Passwords Systems" width="200" align="right" />
