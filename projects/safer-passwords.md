@@ -10,12 +10,17 @@ related_profiles:
   - cefan-rubin
   - luke-valenta
   - marina-sanusi
+  - tara-whalen
 related_publications:
   - Li2019
 related_areas:
   - cryptography
   - authentication
 resources:
+  - text: "Privacy-Preserving Compromised Credential Checking"
+    blog: https://blog.cloudflare.com/privacy-preserving-compromised-credential-checking/
+  - text: Research Directions in Password Security
+    blog: https://blog.cloudflare.com/research-directions-in-password-security/
   - text: "OPAQUE: The Best Passwords Never Leave your Device"
     blog: https://blog.cloudflare.com/opaque-oblivious-passwords/
   - text: Account Takeover Protection and WAF mitigations to help stop Global Brute Force Campaigns
