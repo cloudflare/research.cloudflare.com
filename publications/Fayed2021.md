@@ -15,7 +15,7 @@ authors:
   - Alan Mislove
   - christopher-wood
   - nick-sullivan
-url: https://dl.acm.org/doi/10.1145/3452296.3472922
+url: https://doi.org/10.1145/3452296.3472922
 related_areas:
   - security
   - measurement
