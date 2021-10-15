@@ -15,14 +15,14 @@ related_areas:
   - cryptography
   - privacy
 resources:
-  - text: Privacy Pass - “The Math”
-    blog: https://blog.cloudflare.com/privacy-pass-the-math/
-  - text: Supporting the latest version of the Privacy Pass Protocol
-    blog: https://blog.cloudflare.com/supporting-the-latest-version-of-the-privacy-pass-protocol/
-  - text: Cloudflare supports Privacy Pass
-    blog: https://blog.cloudflare.com/cloudflare-supports-privacy-pass/
   - text: "Privacy Pass v3: the new privacy bits"
     blog: https://blog.cloudflare.com/privacy-pass-v3/
+  - text: Supporting the latest version of the Privacy Pass Protocol
+    blog: https://blog.cloudflare.com/supporting-the-latest-version-of-the-privacy-pass-protocol/
+  - text: Privacy Pass - “The Math”
+    blog: https://blog.cloudflare.com/privacy-pass-the-math/
+  - text: Cloudflare supports Privacy Pass
+    blog: https://blog.cloudflare.com/cloudflare-supports-privacy-pass/
   - text: "Privacy Pass: A Lightweight Zero Knowledge Protocol Designed for the Web"
     youtube: https://www.youtube.com/embed/HIqBJKnnHVk
   - text: The Future of Privacy-Preserving Technology Roundtable

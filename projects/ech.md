@@ -11,6 +11,8 @@ related_areas:
   - cryptography
   - privacy
 resources:
+  - text: "Handshake Encryption: Endgame (an ECH update)"
+    blog: https://blog.cloudflare.com/handshake-encryption-endgame-an-ech-update/
   - text: "Good-bye ESNI, hello ECH!"
     blog: https://blog.cloudflare.com/encrypted-client-hello/
   - text: IETF TLS Working Group Internet-Draft TLS Encrypted Client Hello
