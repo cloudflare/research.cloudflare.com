@@ -32,7 +32,7 @@ const path = require( 'path' )
 const stream = require( 'stream' )
 const util = require( 'util' )
 
-const { execSync } = require("child_process");
+const { execSync } = require( 'child_process' )
 
 const yaml = require( 'js-yaml' )
 
