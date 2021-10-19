@@ -13,10 +13,10 @@ related_areas:
   - privacy
   - cryptography
 resources:
-  - text: "Introducing CIRCL: An Advanced Cryptographic Library"
-    blog: https://blog.cloudflare.com/introducing-circl/
   - text: "Pairings in CIRCL"
     blog: https://blog.cloudflare.com/circl-pairings-update/
+  - text: "Introducing CIRCL: An Advanced Cryptographic Library"
+    blog: https://blog.cloudflare.com/introducing-circl/
   - text: GitHub Repository
     link: https://github.com/cloudflare/circl
 

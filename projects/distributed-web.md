@@ -18,18 +18,22 @@ resources:
     blog: https://blog.cloudflare.com/cloudflare-ipfs-safe-mode/
   - text: A Name Resolver for the Distributed Web
     blog: https://blog.cloudflare.com/cloudflare-distributed-web-resolver/
-  - text: "Cloudflare goes InterPlanetary - Introducing Cloudflare’s IPFS Gateway"
-    blog: https://blog.cloudflare.com/distributed-web-gateway/
   - text: Cloudflare's Ethereum Gateway
     blog: https://blog.cloudflare.com/cloudflare-ethereum-gateway/
   - text: Continuing to Improve our IPFS Gateway
     blog: https://blog.cloudflare.com/continuing-to-improve-our-ipfs-gateway/
+  - text: "Cloudflare goes InterPlanetary - Introducing Cloudflare’s IPFS Gateway"
+    blog: https://blog.cloudflare.com/distributed-web-gateway/
   - text: Cloudflare Distributed Web Gateway
     link: https://cloudflare-ipfs.com
   - text: League of Entropy
     link: https://www.cloudflare.com/en-gb/leagueofentropy/
   - text: GitHub Repository of Cloudflare's IPFS implementation in Go
     link: https://github.com/cloudflare/go-ipfs
+  - text: What is Web3?
+    cfstream: 4437a10078f1b8eef2998290bbfd02a9
+  - text: The Future of Web3
+    cfstream: 29e4b15e49cc9a0ee977f0ed44f0acd3
   - text: "Building on Decentralised Web at Cloudflare, IFIP 2021"
     youtube: https://www.youtube.com/embed/CjyQWVEnRUY
 ---

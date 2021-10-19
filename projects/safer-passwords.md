@@ -21,10 +21,12 @@ resources:
     blog: https://blog.cloudflare.com/privacy-preserving-compromised-credential-checking/
   - text: Research Directions in Password Security
     blog: https://blog.cloudflare.com/research-directions-in-password-security/
-  - text: "OPAQUE: The Best Passwords Never Leave your Device"
-    blog: https://blog.cloudflare.com/opaque-oblivious-passwords/
   - text: Account Takeover Protection and WAF mitigations to help stop Global Brute Force Campaigns
     blog: https://blog.cloudflare.com/patching-the-internet-against-global-brute-force-campaigns/
+  - text: "OPAQUE: The Best Passwords Never Leave your Device"
+    blog: https://blog.cloudflare.com/opaque-oblivious-passwords/
+  - text: MIGP and Password Study
+    cfstream: 9fb83be48307780762eab50672db25bc
   - text: The Future of Passwords
     cfstream: 7fad6abe6c72be6cbf1d9a433140d5f2
   - text: Automated exposed credentials check

@@ -10,6 +10,8 @@ related_publications:
 related_areas:
   - cryptography
 resources:
+  - text: "Geo Key Manager: Setting up a service for scale"
+    blog: https://blog.cloudflare.com/scaling-geo-key-manager/
   - text: "Geo Key Manager: How It Works"
     blog: https://blog.cloudflare.com/geo-key-manager-how-it-works/
   - text: "Geo manager | Nick Sullivan (Cloudflare) | RWC 2018"
