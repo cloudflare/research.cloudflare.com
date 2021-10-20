@@ -6,6 +6,7 @@ authors:
   - brendan-mcmillion
   - nick-sullivan
 url: http://library.usc.edu.ph/ACM/SIGSAC%202017/spro/p85.pdf
+doi: 10.1145/2995306.2995314
 related_areas:
   - cryptography
 ---

@@ -8,7 +8,8 @@ authors:
   - nick-sullivan
   - George Tankersley
   - Filippo Valsorda
-url: https://doi.org/10.1515/popets-2018-0026
+url: https://www.petsymposium.org/2018/files/papers/issue3/popets-2018-0026.pdf
+doi: 10.1515/popets-2018-0026
 related_areas:
   - privacy
   - authentication

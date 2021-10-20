@@ -13,7 +13,8 @@ authors:
   - Kurtis Heimerl
   - nick-sullivan
   - christopher-wood
-url: https://doi.org/10.2478/popets-2021-0085
+url: https://www.petsymposium.org/2021/files/papers/issue4/popets-2021-0085.pdf
+doi: 10.2478/popets-2021-0085
 related_areas:
   - privacy
   - measurement

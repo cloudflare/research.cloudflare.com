@@ -6,6 +6,7 @@ authors:
   - Douglas Stebila
   - nick-sullivan
 url: https://ieeexplore.ieee.org/abstract/document/7345293/
+doi: 10.1109/Trustcom.2015.385
 related_areas:
   - cryptography
   - authentication
