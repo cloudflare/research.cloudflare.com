@@ -19,7 +19,8 @@ resources:
     blog: https://blog.cloudflare.com/introducing-circl/
   - text: GitHub Repository
     link: https://github.com/cloudflare/circl
-
+  - text: "CIRCL: our Go library now includes pairings and quantum-resistant cryptography"
+    cfstream: 37628368997bfcc18fe430d58a5c8833
 ---
 
 <img src="https://raw.githubusercontent.com/cloudflare/circl/master/.etc/icon.png" alt="CIRCL" width="200" align="right" />
