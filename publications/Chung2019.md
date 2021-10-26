@@ -15,6 +15,7 @@ authors:
   - John Rula
   - nick-sullivan
 url: https://dl.acm.org/doi/pdf/10.1145/3355369.3355596
+doi: 10.1145/3355369.3355596
 related_areas:
   - measurement
   - security

@@ -9,6 +9,7 @@ authors:
   - nick-sullivan
   - christopher-wood
 url: https://datatracker.ietf.org/doc/rfc8937/
+doi: 10.17487/RFC8937
 related_areas:
   - cryptography
   - security
