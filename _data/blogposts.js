@@ -111,7 +111,7 @@ async function parseRSS( filename ) {
 function downloadIfNotFound( url, destination ) {
   if ( ! fs.existsSync( destination ) ) {
     console.log( "downloading url '" + url + "' to '" + destination + "'" )
-    execSync( "curl '" + url + "' -o " + destination )
+    execSync( "curl '" + url + "' -o " + destination + ' 2> /dev/null' )
   }
 }
 

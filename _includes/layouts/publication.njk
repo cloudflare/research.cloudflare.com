@@ -19,13 +19,13 @@ layout: content
 
 <div class="publication_location">{{ location }}</div>
 {% if doi %}
-<a href="https://doi.org/{{ doi }}" target="_blank">view &#x2197;</a><br />
+<a href="https://doi.org/{{ doi }}" target="_blank">view &#x2197;</a>
 {% else %}
-<a href="{{ url }}" target="_blank">view &#x2197;</a><br />
+<a href="{{ url }}" target="_blank">view &#x2197;</a>
 {% endif %}
 
-{% if publications[ page.fileSlug ].cached %}
-<a href="https://files.research.cloudflare.com/publication/{{ page.fileSlug }}.pdf" target="_blank">download </a><br />
+{% if publications[ page.fileSlug ].local %}
+&nbsp; &nbsp;<a href="https://files.research.cloudflare.com/publication/{{ page.fileSlug }}.pdf" target="_blank">download </a><br />
 {% endif %}
 
 <br />
