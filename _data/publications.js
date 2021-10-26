@@ -1,13 +1,22 @@
 const fs = require( 'fs' )
 const path = require( 'path' )
 
+const { execSync } = require( 'child_process' )
+
 const yaml = require( 'js-yaml' )
+
+
+function download( url, destination ) {
+  console.log( "downloading url '" + url + "' to '" + destination + "'" )
+  execSync( "curl '" + url + "' -o " + destination )
+}
 
 
 function generatePublications() {
 
   let publications = [];
-  
+
+
   try {
     const files = fs.readdirSync( 'publications/' );
         
@@ -69,6 +78,10 @@ for ( const publication of ordered ) {
 }
 
 
+// get list of cached publications for which we can offer a 'read' link
+download( 'https://files.research.cloudflare.com/list/publication/', '_build/publications_cached.json' )
+let cached_list = JSON.parse( fs.readFileSync( '_build/publications_cached.json' ) )
+
 
 module.exports = {
   'ordered': ordered
@@ -78,7 +91,15 @@ let publication_years = []
 let publication_areas = []
 
 for ( publication of publications ) {
-  
+
+  //console.log( cached_list )
+
+  // add a local property to indicate whether we have a 
+  publication.local = cached_list.includes( '/publication/' + publication.slug + '.pdf' )
+  if ( !publication.local ) {
+    console.log( ' - ' + publication.slug + " is missing a cached copy. Add '_build/" + publication.slug + ".pdf.original'" )
+  }
+
   module.exports[ publication.slug ] = publication
   
   if ( ! publication_years.includes( publication.year ) )
