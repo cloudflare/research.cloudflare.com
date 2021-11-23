@@ -9,7 +9,7 @@ authors:
   - Devon O'Brien
   - Eran Messeri
   - Adrienne Porter Felt
-  - brendan-mcmillion
+  - Brendan Mcmillion
   - Parisa Tabriz
 url: https://ieeexplore.ieee.org/abstract/document/8835212
 doi: 10.1109/SP.2019.00027
