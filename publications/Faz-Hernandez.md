@@ -4,7 +4,7 @@ year: 2021
 location: Selected Areas in Cryptography (SAC 2021). To appear (2021).
 authors:
   - armando-faz
-  - watson-ladd
+  - Watson Ladd
   - deepak-maram
 url: https://eprint.iacr.org/2021/1183
 related_areas:

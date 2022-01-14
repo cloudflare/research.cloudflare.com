@@ -4,7 +4,6 @@ related_profiles:
   - nick-sullivan
   - brendan-mcmillion
   - tanya-verma
-  - watson-ladd
 related_publications:
   - Stebila2015
 related_areas:

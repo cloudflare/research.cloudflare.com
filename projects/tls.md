@@ -7,7 +7,6 @@ related_profiles:
   - jonathan-hoyland
   - luke-valenta
   - peter-wu
-  - watson-ladd
 related_publications:
   - Valenta2018
 related_areas:

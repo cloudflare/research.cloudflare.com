@@ -2,7 +2,6 @@
 title: Secure Time
 related_profiles:
   - christopher-patton
-  - watson-ladd
   - tanya-verma
   - wesley-evans
   - pop-chunhapanya
