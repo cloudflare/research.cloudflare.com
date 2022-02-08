@@ -14,12 +14,14 @@ related_publications:
 related_areas:
   - cryptography
 resources:
-  - text: The TLS Post-Quantum Experiment
-    blog: https://blog.cloudflare.com/the-tls-post-quantum-experiment/
-  - text: Securing the post-quantum world
-    blog: https://blog.cloudflare.com/securing-the-post-quantum-world/
+  - text: Sizing Up Post-Quantum Signatures
+    blog: https://blog.cloudflare.com/sizing-up-post-quantum-signatures/
   - text: "KEMTLS: Post-quantum TLS without signatures"
     blog: https://blog.cloudflare.com/kemtls-post-quantum-tls-without-signatures/
+  - text: Securing the post-quantum world
+    blog: https://blog.cloudflare.com/securing-the-post-quantum-world/
+  - text: The TLS Post-Quantum Experiment
+    blog: https://blog.cloudflare.com/the-tls-post-quantum-experiment/
   - text: The Quantum Menace
     blog: https://blog.cloudflare.com/the-quantum-menace/
   - text: Master of (Computer) Science with Professor Scott Aaronson
