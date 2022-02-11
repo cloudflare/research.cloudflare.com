@@ -11,7 +11,7 @@ layout: content
   {% else -%}
     {% set name = people[ author ][ 'title' ] -%}
   {% endif -%}
-<span class="nobreak"><a href="/people/{{ people[ author ].slug }}">{{ name }}</a></span>{% if not loop.last %},{% endif %}
+<span class="nobreak"><a href="/{{ people[ author ].path }}">{{ name }}</a></span>{% if not loop.last %},{% endif %}
 {% else -%}
 <span class="nobreak">{{ author }}</span>{% if not loop.last %},{% endif %}
 {% endif -%}
