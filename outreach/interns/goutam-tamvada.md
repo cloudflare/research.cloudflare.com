@@ -1,7 +1,7 @@
 ---
 title: Goutam Tamvada
 position: Research Intern
-blog_author: goutam
+blog_author: goutam-tamvada
 year: 2021
 ---
 
