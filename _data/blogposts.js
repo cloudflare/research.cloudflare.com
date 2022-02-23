@@ -164,8 +164,8 @@ async function main() {
 
   // process feeds for /people/*
   processProfileDirectory( 'people' )
-  processProfileDirectory( 'outreach/interns' )
-  processProfileDirectory( 'outreach/researchers' )
+  processProfileDirectory( 'outreach/academic-programs/interns' )
+  processProfileDirectory( 'outreach/academic-programs/researchers' )
 
   // process feed for the tag 'research'
 

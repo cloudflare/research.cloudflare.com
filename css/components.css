@@ -164,7 +164,7 @@ form input {
   /*padding: 0.2rem 0; */
 }
 
-article h3 small {
+article div :not(cite) h3 small {
   position: relative;
   left: -1rem;
   display: inline-block;
