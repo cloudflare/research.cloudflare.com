@@ -1,0 +1,6 @@
+{ 
+  "navigation": [
+    { "path": "updates", "label": "Latest Updates" },
+    { "path": "events", "label": " Upcoming Events" }
+  ]
+}

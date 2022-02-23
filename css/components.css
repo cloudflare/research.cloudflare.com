@@ -164,11 +164,18 @@ form input {
   /*padding: 0.2rem 0; */
 }
 
-.updates h3 small {
+article h3 small {
   position: relative;
   left: -1rem;
-  background-color: var(--indigo-9);
   display: inline-block;
   padding: 0 0.2rem;
   transform: skewX(-15deg);
 }
+
+article .updates h3 small {
+  background-color: var(--indigo-9);	
+}
+
+article .events h3 small {
+  background-color: var(--orange-9);	
+} 

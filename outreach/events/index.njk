@@ -1,0 +1,52 @@
+---
+layout: skaffold
+title: Events
+---
+
+<nav class="nav" id="nav">
+  {% if navigation %}
+  <ul>
+    {% for item in navigation -%}
+    <li class="{% if item.path in page.url %}active{% endif %}"><a href="/outreach/{{ item.path }}">{{ item.label }}</a></li>
+    {% endfor -%}
+  </ul>
+  {% endif %}
+</nav>
+
+<article class="content" id="content">
+
+<h1>
+  Upcoming Events
+</h1>
+<div class="events">
+  {% for event in collections.event %}
+  {% if event.data.end %}
+    {% set endtime = event.data.end %}
+  {% else %}
+    {% set endtime = event.date.getTime() %}
+  {% endif %}
+  {% if endtime >= site.now %}
+  <div>
+  <h3><small>{{ event.date.getFullYear() + "-" + ( "0" + ( event.date.getMonth() + 1 ) ).slice( -2 ) + "-" + ( "0" + event.date.getDate() ).slice( -2 ) }}</small> 
+    {% if event.data.link %}
+    <a href="{{ event.data.link }}">{{ event.data.title }}</a>
+    {% else %}
+    <a href="{{ event.url }}">{{ event.data.title }}</a>    
+    {% endif %}
+  </h3>
+  <p>{{ event.data.description }}</p>
+  </div>
+  
+  {% endif %}
+  {% endfor %}
+</div>
+
+<br />
+
+</article>
+
+<aside class="sidebar" id="sidebar">
+  <div class="column" style="margin-top: 2rem">
+    <a class="button" href="./mailinglist/">Sign up for updates</a>
+  </div>
+</aside>
