@@ -1,7 +1,8 @@
 {% if navigation %}
 <ul>
 {% for item in navigation -%}
-<li class="{% if item.path in page.url %}active{% endif %}"><a href="/projects/{{ item.path }}">{{ item.label }}</a></li>
+{% set prefix = page.url.split( '/' )[1] %}
+<li class="{% if item.path in page.url %}active{% endif %}"><a href="/{{ prefix + '/' + item.path }}">{{ item.label }}</a></li>
 {% endfor -%}
 </ul>
 {% endif %}

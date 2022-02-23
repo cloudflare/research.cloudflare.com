@@ -1,0 +1,7 @@
+{ 
+  "navigation": [
+    { "path": "academic-programs", "label": "Academic Programs" },
+    { "path": "updates", "label": "Latest Updates" },
+    { "path": "events", "label": " Upcoming Events" }
+  ]
+}

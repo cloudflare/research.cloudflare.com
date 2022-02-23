@@ -4,6 +4,13 @@ title: Updates
 ---
 
 <nav class="nav" id="nav">
+  {% if navigation %}
+  <ul>
+    {% for item in navigation -%}
+    <li class="{% if item.path in page.url %}active{% endif %}"><a href="/outreach/{{ item.path }}">{{ item.label }}</a></li>
+    {% endfor -%}
+  </ul>
+  {% endif %}
 </nav>
 
 <article class="content" id="content">
@@ -43,6 +50,6 @@ title: Updates
 
 <aside class="sidebar" id="sidebar">
   <div class="column" style="margin-top: 2rem">
-    <a class="button" href="/updates/mailinglist/">Sign up for updates</a>
+    <a class="button" href="./mailinglist/">Sign up for updates</a>
   </div>
 </aside>

@@ -51,8 +51,8 @@ function processProfileDir( dir ) {
 
 // handle employee, researcher and intern profiles
 let employees = processProfileDir( 'people' )
-let researchers = processProfileDir( 'outreach/researchers' )
-let interns = processProfileDir( 'outreach/interns' )
+let researchers = processProfileDir( 'outreach/academic-programs/researchers' )
+let interns = processProfileDir( 'outreach/academic-programs/interns' )
 
 module.exports = {
   employees : employees.map( (element) => element.slug ),
@@ -67,7 +67,7 @@ for ( profile of all_profiles ) {
   module.exports[ profile.slug ] = profile
 }
 
-// console.log( module.exports )
+//console.log( module.exports )
 
 /*
 
