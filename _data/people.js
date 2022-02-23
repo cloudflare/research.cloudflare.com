@@ -67,7 +67,7 @@ for ( profile of all_profiles ) {
   module.exports[ profile.slug ] = profile
 }
 
-console.log( module.exports )
+//console.log( module.exports )
 
 /*
 

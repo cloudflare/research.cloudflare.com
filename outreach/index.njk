@@ -7,7 +7,7 @@ title: Outreach
   {% if navigation %}
   <ul>
     {% for item in navigation -%}
-    <li class="{% if item.path in page.url %}active{% endif %}"><a href="/outreach/{{ item.path }}">{{ item.label }}</a></li>
+    <li class="{% if item.path in page.url %}active{% endif %}"><a href="{{ item.path }}">{{ item.label }}</a></li>
     {% endfor -%}
   </ul>
   {% endif %}
