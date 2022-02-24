@@ -7,6 +7,5 @@ end: 2022-02-28
 # Post Quantum blog post series
 ##### February 2022
 
-For the next week the Research Team will be posting on the implications of Post Quantum computers 
-on Cryptopgraphy and the security of data in this new age. Join us for the wide variety of topics 
-and discussion! 
+For the next week, the Research Team will be posting on the implications of Post Quantum computers
+on Cryptography and on the security of data. Join us for the wide variety of topics and discussion!
