@@ -14,6 +14,16 @@ related_publications:
 related_areas:
   - cryptography
 resources:
+  - text: Making protocols post-quantum
+    blog: https://blog.cloudflare.com/making-protocols-post-quantum/
+  - text: Deep dive into a post-quantum signature scheme
+    blog: https://blog.cloudflare.com/post-quantum-signatures/
+  - text: Deep dive into a post-quantum key encapsulation algorithm
+    blog: https://blog.cloudflare.com/post-quantum-key-encapsulation/
+  - text: The quantum solace and spectre
+    blog: https://blog.cloudflare.com/quantum-solace-and-spectre/
+  - text: "The post-quantum state: a taxonomy of challenges"
+    blog: https://blog.cloudflare.com/post-quantum-taxonomy/
   - text: Sizing Up Post-Quantum Signatures
     blog: https://blog.cloudflare.com/sizing-up-post-quantum-signatures/
   - text: "KEMTLS: Post-quantum TLS without signatures"
