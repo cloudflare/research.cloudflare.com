@@ -85,6 +85,12 @@ div.homepage_feature a:hover {
   text-decoration:none;
 }
 
+div.homepage_feature span.date {
+  color: white;
+  font-weight: 600;
+  background-color: #555;
+  padding: 0 0.4rem;
+}
 
 cite.publication_item {
   font-style: normal;
