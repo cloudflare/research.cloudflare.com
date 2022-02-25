@@ -1,0 +1,35 @@
+{% set upcoming = [] -%}
+
+{% for event in collections.event -%}
+
+  {% if event.data.end -%}
+    {% set endtime = event.data.end -%}
+  {% else -%}
+    {% set endtime = event.date.getTime() -%}
+  {% endif -%}
+
+  {% if endtime >= site.now and upcoming | length < 3 %}
+  {% set upcoming = ( upcoming.push( event ), upcoming ) -%}
+  {% endif -%}
+  
+{% endfor -%}
+
+{% if upcoming | length > 1 %}
+<h2 style="text-align: center; margin-bottom: -1rem;">Upcoming Events <a style="text-decoration: none; background-color: var(--orange-9); padding: 0 1rem;" href="/outreach/events/">&rarr;</a></h2>
+{% endif %}
+
+<div class="homepage_feature row" style="justify-content: center">
+{% for event in upcoming -%}
+
+  <div class="column" title="{{ event.data.description }}">
+  <span class="date">{{ event.date.getDate() + ' ' + event.date.toLocaleString('default', { month: 'short' }) + ' ' + event.date.getFullYear() }}</span>
+  {% if event.data.link %}
+    <a href="{{ event.data.link }}">{{ event.data.title }}</a>
+  {% else %}
+    <a href="{{ event.url }}">{{ event.data.title }}</a>
+  {% endif %}
+  </div>
+
+{% endfor -%}
+</div>
+
