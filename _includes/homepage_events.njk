@@ -20,10 +20,16 @@
 
 <div class="homepage_feature row" style="justify-content: center">
 {% for event in upcoming -%}
+
   <div class="column" title="{{ event.data.description }}">
   <span class="date">{{ event.date.getDate() + ' ' + event.date.toLocaleString('default', { month: 'short' }) + ' ' + event.date.getFullYear() }}</span>
-  {{ event.data.title }}
+  {% if event.data.link %}
+    <a href="{{ event.data.link }}">{{ event.data.title }}</a>
+  {% else %}
+    <a href="{{ event.url }}">{{ event.data.title }}</a>
+  {% endif %}
   </div>
+
 {% endfor -%}
 </div>
 
