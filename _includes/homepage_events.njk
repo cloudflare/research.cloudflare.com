@@ -2,11 +2,11 @@
 
 {% for event in collections.event -%}
 
-  {% if event.data.end %}
-    {% set endtime = event.data.end %}
-  {% else %}
-    {% set endtime = event.date.getTime() %}
-  {% endif %}
+  {% if event.data.end -%}
+    {% set endtime = event.data.end -%}
+  {% else -%}
+    {% set endtime = event.date.getTime() -%}
+  {% endif -%}
 
   {% if endtime >= site.now and upcoming | length < 3 %}
   {% set upcoming = ( upcoming.push( event ), upcoming ) -%}
