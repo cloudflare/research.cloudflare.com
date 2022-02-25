@@ -18,6 +18,7 @@ module.exports = function( eleventyConfig ) {
   eleventyConfig.addPassthroughCopy( 'js' )
   eleventyConfig.addPassthroughCopy( 'img' )
   eleventyConfig.addPassthroughCopy( 'css' )
+  eleventyConfig.addPassthroughCopy( '_redirects' )
   
   // handle LaTeX
   eleventyConfig.addFilter( 'latex', content => {
