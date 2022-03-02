@@ -112,6 +112,11 @@ for ( publication of publications ) {
         publication_areas.push( area )
     }
   }
+  else {
+  	console.log( ' ! ' + publication.slug + " is missing 'related_areas' in the front matter and so cannot be displayed correctly." )
+  	process.exit( 1 )
+  }
+  
 }
 
 for ( author in author_publications ) {
