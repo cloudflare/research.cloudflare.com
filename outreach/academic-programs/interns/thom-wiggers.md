@@ -3,7 +3,6 @@ title: Thom Wiggers
 position: Research Intern
 twitter: thomwiggers
 blog_author: thom
-status: current
 year: 2021
 ---
 
