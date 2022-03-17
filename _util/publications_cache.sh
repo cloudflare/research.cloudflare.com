@@ -3,6 +3,9 @@
 SCRIPT_DIR=$(dirname $(pwd -P $0)/${0#\.\/})
 pushd $SCRIPT_DIR > /dev/null
 
+# create the build directory if it does not already exist
+mkdir -p ../_build
+
 # try to upload all pdf.original files in _build as publications
 for pdf in ../_build/*.pdf.original; do
 
