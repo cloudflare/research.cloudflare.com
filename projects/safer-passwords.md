@@ -12,10 +12,13 @@ related_profiles:
   - marina-sanusi
   - tara-whalen
 related_publications:
+  - Pal2022
   - Li2019
 related_areas:
   - cryptography
   - authentication
+  - security
+  - privacy
 resources:
   - text: "Privacy-Preserving Compromised Credential Checking"
     blog: https://blog.cloudflare.com/privacy-preserving-compromised-credential-checking/
