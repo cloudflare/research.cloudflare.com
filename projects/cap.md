@@ -26,7 +26,7 @@ resources:
     cfstream: 3c38fd90e525b02115c0e02342b2f363
   - text: "ZKAttest: Ring and Group Signatures for Existing ECDSA Keys"
     youtube: https://www.youtube.com/embed/47ZRZDJR1BA
-  - text: GitHub Organization
+  - text: ZKAttest Source Code
     link: https://github.com/cloudflare/zkp-ecdsa
 ---
 
