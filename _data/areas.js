@@ -26,6 +26,10 @@ let areas = {
   "security": {
     "name": "Network Security",
     "area": "security"
+  },
+  "protocols": {
+    "name": "Protocol Design",
+    "area": "protocols"
   }
 }
 
