@@ -1,0 +1,26 @@
+---
+layout: skaffold
+---
+<div class="wrapper">
+
+<header class="header">
+{% include 'header.njk' %}
+</header>
+
+<nav class="nav" id="nav">
+  {% if navigation %}
+  <ul>
+    {% for item in navigation -%}
+    <li class="{% if item.path in page.url %}active{% endif %}"><a href="{{ item.path }}">{{ item.label }}</a></li>
+    {% endfor -%}
+  </ul>
+  {% endif %}
+</nav>
+
+{{ content | latex | safe }}
+
+<footer class="footer">
+{% include 'footer.njk' %}
+</footer>
+
+</div>
