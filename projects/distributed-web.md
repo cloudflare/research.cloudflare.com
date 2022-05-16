@@ -10,6 +10,12 @@ related_profiles:
 related_areas:
   - distributed_systems
 resources:
+  - text: "Proof of Stake and our next experiments in web3"
+    blog: https://blog.cloudflare.com/next-gen-web3-network/
+  - text: "Serving Cloudflare Pages sites to the IPFS network"
+    blog: https://blog.cloudflare.com/cloudflare-pages-on-ipfs/
+  - text: "Gaining visibility in IPFS systems"
+    blog: https://blog.cloudflare.com/ipfs-measurements/
   - text: "Announcing The Cloudflare Distributed Web Gateways Private Beta: Unlocking the Web3 Metaverse and Decentralized Finance for Everyone"
     blog: https://blog.cloudflare.com/announcing-web3-gateways/
   - text: Web3 — A vision for a decentralized web
