@@ -108,6 +108,14 @@ a.button:hover {
   padding: 0.5rem;
 
 }
+.nav .subnav {
+  font-size: 0.8rem;
+  margin-bottom: -0.5rem;
+}
+.nav li.subnav.active {
+  background-color: var(--green-9);	
+  border-radius: 0 0 0.6rem 0;
+}
 .nav a {
   color: var(--green-2);
   text-decoration: none;
@@ -119,8 +127,9 @@ a.button:hover {
   text-decoration: underline;
 }
 .nav li.active {
-  background-color: var(--green-9);
+  background-color: var(--green-8);
   border-left: 0.1rem solid var(--green-2);
+  border-radius: 0 0.6rem 0 0;
 }
 .nav li.active a {
   color: var(--green-1);

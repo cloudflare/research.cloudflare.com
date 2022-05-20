@@ -60,7 +60,7 @@ function generateNavigationFromDirectories( root, paths = [], lookup = {} ) {
 
 
 let { paths, lookup } = generateNavigationFromDirectories( 'projects/' )
-console.log( JSON.stringify( paths ) )
+//console.log( JSON.stringify( paths ) )
 //console.log( JSON.stringify( lookup ) )
 
 

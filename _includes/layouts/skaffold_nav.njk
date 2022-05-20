@@ -8,8 +8,9 @@ layout: skaffold
     {% for item in navigation -%}
     {% if item.path in page.url -%}
     <li class="active"><a href="{{ item.path }}">{{ item.label }}</a></li>
-    <ul>  {% for subitem in lookup[ item.path ] %}
-      <li>{{ subitem.label }}</li><br>
+    <ul class="subnav">  
+      {% for subitem in lookup[ item.path ] %}
+      <li class="subnav {% if subitem.path in page.url %}active{% endif %}"><a href="{{ subitem.path }}">{{ subitem.label }}</a></li><br>
       {% endfor %}
     </ul>
     {% else %}
