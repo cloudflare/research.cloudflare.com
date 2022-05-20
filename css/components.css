@@ -3,7 +3,7 @@ img.bubble {
   border-radius: 50%;
   width: 6rem;
   height: auto;
-  border: 0.3rem solid var(--orange-7);
+  border: 0.3rem solid var(--orange-8);
 }
 
 img.bubble.past {
@@ -139,7 +139,9 @@ div.homepage_header {
   align-items: center;
   padding: 1rem;
   text-align: center;
-  background: linear-gradient(70deg, var(--green-8) 30%, rgba(0,0,0,0) 30%), linear-gradient(30deg, var(--indigo-8) 60%, var(--orange-8) 60%);
+  /* background: linear-gradient(70deg, var(--indigo-9) 30%, rgba(0,0,0,0) 30%), linear-gradient(30deg, var(--indigo-8) 60%, var(--indigo-7) 60%); */
+  /* background: linear-gradient(70deg, var(--gold-9) 30%, rgba(0,0,0,0) 30%), linear-gradient(30deg, var(--indigo-8) 60%, var(--blue-8) 60%); */
+  background: linear-gradient(70deg, var(--gold-9) 30%, rgba(0,0,0,0) 30%), linear-gradient(30deg, var(--indigo-8) 60%, var(--blue-8) 60%);
   padding: 1.5rem 3rem;
   text-shadow: 0.05rem 0.05rem white;
 }

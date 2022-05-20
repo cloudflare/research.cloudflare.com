@@ -7,17 +7,14 @@ title: Application Privacy
 
 <h1>Application Privacy</h1>
 
+
 Some text
 <br />
 <br />
 <br />
-<h3 style="margin-bottom: -1rem;">Projects</h3>
-<br />
-<a href="./cap">Cryptographic Attestation of Personhood</a>
-<br />
-<a href="./privacy-pass">Privacy Pass</a>
-<br />
-<a href="./safer-passwords">Safer Password Systems</a>
-<br />
-<a href="./">Privacy Preserving Measurement</a>
-</article>
+
+<ul>
+{% for item in lookup[ page.url ] %}
+  <li><a href="{{ item.path }}">{{ item.label }}</a></li>
+{% endfor -%}
+</ul>

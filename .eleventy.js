@@ -51,6 +51,7 @@ module.exports = function( eleventyConfig ) {
   // enable plugins
   eleventyConfig.addPlugin( syntaxHighlight )
   eleventyConfig.addPlugin( tableOfContents )
+
     
   return {
     markdownTemplateEngine: "njk",

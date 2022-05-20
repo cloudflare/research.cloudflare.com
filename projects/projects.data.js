@@ -4,49 +4,70 @@ const path = require( 'path' )
 const yaml = require( 'js-yaml' )
 
 
-function generateNavigationFromDirectories() {
-  let navigation = []; 
+function getFrontMatter( path ) {
 
-  const base_path = 'projects/'
+  const content = fs.readFileSync( path, 'utf8' )
+  const front= content.substr( 4, content.indexOf( '---', 4 ) - 4 )
+  frontMatter = yaml.load( front )
   
-  try {
-    console.log( process.cwd() )
-    const dirents = fs.readdirSync( './' + base_path, { withFileTypes: true } )
-    //console.log( dirents )
-        
-    let content = ''
-    for ( const dirent of dirents ) {
-            
-      if ( dirent.isDirectory() ) {
-
-        let directory = dirent.name
-        //console.log( directory)
-        
-        content = fs.readFileSync( base_path + directory + '/index.njk', 'utf8' )
-        
-        let front= content.substr( 4, content.indexOf( '---', 4 ) - 4 )
-        //console.log( front )
-        
-        frontMatter = yaml.load( front );
-        
-        navigation.push( { path: '/' + base_path + directory + '/', label: frontMatter.title } )
-      }
-    }
-
-  }
-  catch (err) {
-    console.error(err);
-  }
-  
-  return navigation;
+  return frontMatter	
 }
 
-let navigation = generateNavigationFromDirectories();
-//console.log( navigation );
+
+
+function generateNavigationFromDirectories( root, paths = [], lookup = {} ) {
+
+  const dirents = fs.readdirSync( './' + root, { withFileTypes: true } )
+      
+  for ( const dirent of dirents ) {
+
+    //console.log( dirent )
+
+    // skip non-structural pages
+    if ( dirent.name.includes( '.js' ) || dirent.name.includes( '.json' ) 
+      || dirent.name == 'index.njk' || dirent.name[0] == '_' ) {
+      continue
+    }
+          
+    if ( dirent.isDirectory() ) {
+
+      const directory = dirent.name
+      const frontMatter = getFrontMatter( root + directory + '/index.njk' )
+      const children = generateNavigationFromDirectories( root + directory + '/' )
+      paths.push( { 
+        path: '/' + root + directory + '/', 
+        label: frontMatter.title, 
+        children: children.paths
+      } )
+      lookup[ '/' + root + directory + '/' ] = children.paths
+
+    }  
+    else {
+
+      const file = dirent.name
+      const frontMatter = getFrontMatter( root + file )
+      paths.push( {
+        path: '/' + root + path.parse( file ).name + '/', 
+    	label: frontMatter.title,
+        children: []
+      } )
+      lookup[ '/' + root + file ] = frontMatter.title
+    }
+  }
+        
+  return { paths, lookup }
+}
+
+
+let { paths, lookup } = generateNavigationFromDirectories( 'projects/' )
+console.log( JSON.stringify( paths ) )
+//console.log( JSON.stringify( lookup ) )
+
 
 module.exports = {
   layout: 'project',
-  navigation: navigation,
+  navigation: paths,
+  lookup: lookup
 }
 
 
@@ -60,5 +81,13 @@ module.exports = {
       },
       ...
     ]
-  
+
+  projects.lookup
+    [ '/projects/application-privacy/' ] = [
+      { 
+        path:
+        label:
+      },
+      ...	
+    ]
 */
