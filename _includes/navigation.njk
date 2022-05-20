@@ -4,11 +4,13 @@
   {% for item in navigation -%}
   {% if item.path in page.url -%}
   <li class="active"><a href="{{ item.path }}">{{ item.label }}</a></li>
+  {% if item.children | length -%}
   <ul class="subnav">  
-    {% for subitem in lookup[ item.path ] %}
+    {% for subitem in lookup[ item.path ] -%}
     <li class="subnav {% if subitem.path in page.url %}active{% endif %}"><a href="{{ subitem.path }}">{{ subitem.label }}</a></li><br>
-    {% endfor %}
+    {% endfor -%}
   </ul>
+  {% endif -%}  
   {% else %}
   <li><a href="{{ item.path }}">{{ item.label }}</a></li>
   {% endif -%}

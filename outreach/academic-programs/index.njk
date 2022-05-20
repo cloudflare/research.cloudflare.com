@@ -3,16 +3,6 @@ layout: skaffold
 title: Outreach
 ---
 
-<nav class="nav" id="nav">
-  {% if navigation %}
-  <ul>
-    {% for item in navigation -%}
-    <li class="{% if item.path in page.url %}active{% endif %}"><a href="/outreach/{{ item.path }}">{{ item.label }}</a></li>
-    {% endfor -%}
-  </ul>
-  {% endif %}
-</nav>
-
 <article class="content" id="content">
 
 <h1>Academic Programs</h1>

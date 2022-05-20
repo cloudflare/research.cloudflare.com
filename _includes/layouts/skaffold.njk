@@ -7,6 +7,10 @@ layout: base
 {% include 'header.njk' %}
 </header>
 
+<nav class="nav" id="nav">
+{% include 'navigation.njk' %}
+</nav>
+
 {{ content | latex | safe }}
 
 <footer class="footer">

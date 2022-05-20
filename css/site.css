@@ -158,10 +158,10 @@ a.button:hover {
 }
 .sidebar nav a {
   font-size: 0.8rem;
-  color: var(--blue-7);
+  color: var(--blue-3);
 }
 .sidebar nav a:hover, .sidebar nav a.active, .sidebar nav a.current {
-  color: var(--blue-3);
+  color: var(--blue-1);
   transition: color 0.5s;
 }
 
