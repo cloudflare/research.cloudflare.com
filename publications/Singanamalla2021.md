@@ -4,7 +4,7 @@ year: 2021
 location: Proceedings on Privacy Enhancing Technologies 2021, Volume 4, pp. 575–592. 2021.
 authors:
   - sudheesh-singanamalla
-  - pop-chunhapanya
+  - Pop Chunhapanya
   - jonathan-hoyland
   - Marek Vavruša
   - tanya-verma

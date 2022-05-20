@@ -4,7 +4,7 @@ year:
 location: Under submission, 2021
 authors:
   - Nirvan Tyagi
-  - sofia-celi
+  - Sofía Celi
   - thomas-ristenpart
   - nick-sullivan
   - Stefano Tessaro

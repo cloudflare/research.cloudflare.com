@@ -5,7 +5,7 @@ location: Proceedings of the 2021 ACM SIGCOMM 2021 Conference, pp. 433–446. 20
 authors:
   - marwan-fayed
   - Lorenz Bauer
-  - vasilis-giotsas
+  - Vasilis Giotsas
   - Sami Kerola
   - Marek Majkowski
   - Pavel Odinstov
