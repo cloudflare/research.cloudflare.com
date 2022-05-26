@@ -8,4 +8,4 @@ Tim Alberdingk Thijm is a research intern and [PhD candidate at Princeton Univer
 At Cloudflare, he is dipping his toes in new domains and exploring use-cases for formal verification for policy-based DNS.
 
 ## Research Areas
-Formal verification, compositional reasoning, network privacy
+Formal verification, Compositional reasoning, Network privacy
