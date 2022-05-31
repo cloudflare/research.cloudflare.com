@@ -3,8 +3,14 @@
 SCRIPT_DIR=$(dirname $(pwd -P $0)/${0#\.\/})
 pushd $SCRIPT_DIR > /dev/null
 
+PEOPLE_PATHS=../people/*.md
+INTERN_PATHS=../outreach/academic-programs/interns/*.md
+
+# all profile paths
+PROFILE_PATHS="$PEOPLE_PATHS $INTERN_PATHS"
+
 # make sure that we have a picture for all people
-for path in ../people/*.md; do
+for path in $PROFILE_PATHS; do
 
   #echo $path
   person=$(basename "$path" .md)
