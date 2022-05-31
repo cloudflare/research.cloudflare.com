@@ -5,18 +5,19 @@ pushd $SCRIPT_DIR > /dev/null
 
 PEOPLE_PATHS=../people/*.md
 INTERN_PATHS=../outreach/academic-programs/interns/*.md
+RESEARCHER_PATHS=../outreach/academic-programs/researchers/*.md
 
 # all profile paths
-PROFILE_PATHS="$PEOPLE_PATHS $INTERN_PATHS"
+PROFILE_PATHS="$PEOPLE_PATHS $INTERN_PATHS $RESEARCHER_PATHS"
 
 # make sure that we have a picture for all people
 for path in $PROFILE_PATHS; do
 
-  #echo $path
+  echo $path
   person=$(basename "$path" .md)
-  #echo $person
+  echo $person
   image_path="../img/people/${person}.jpg"
-  #echo $image_path
+  echo $image_path
 
   # if the image does not exist and this .md file contains a 'position' (is a profile)
   if [ ! -f "${image_path}" ] && grep -q 'position' "$path"; then
