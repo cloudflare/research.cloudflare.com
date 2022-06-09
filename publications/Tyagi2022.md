@@ -1,7 +1,7 @@
 ---
 title: A Fast and Simple Partially Oblivious PRF, with Applications
-year:
-location: Under submission, 2021
+year: 2022
+location: "Advances in Cryptology – EUROCRYPT 2022: 41st Annual International Conference on the Theory and Applications of Cryptographic Techniques, Trondheim, Norway, May 30 – June 3, pp. 674–705, 2022."
 authors:
   - Nirvan Tyagi
   - Sofía Celi
@@ -10,6 +10,7 @@ authors:
   - Stefano Tessaro
   - christopher-wood
 url: https://eprint.iacr.org/2021/864.pdf
+doi: 10.1007/978-3-031-07085-3_23
 related_areas:
   - cryptography
 ---
