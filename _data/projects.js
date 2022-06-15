@@ -16,7 +16,7 @@ function generateProjectsData() {
 
       // add a way to list all projects by related_profiles
       let personSlugs = frontmatter.related_profiles;
-      console.log( personSlugs )
+      //console.log( personSlugs )
       if ( personSlugs != undefined ) {
         for ( personSlug of personSlugs ) {
           if ( typeof projects[ personSlug ] !== 'undefined' ) {
