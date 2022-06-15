@@ -52,7 +52,7 @@ function generateNavigationFromDirectories( root, paths = [], lookup = {}, flat 
         children: []
       } )
       lookup[ '/' + root + file ] = frontMatter.title
-      flat[ slug ] = { "name": frontMatter.title, "path": root + file, "frontmatter": frontMatter }
+      flat[ slug ] = { "name": frontMatter.title, "path": root + slug, "frontmatter": frontMatter }
     }
   }
         

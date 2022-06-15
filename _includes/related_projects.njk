@@ -6,7 +6,7 @@
 
 {% for project in projects -%}
 {% if project -%}
-  <li><a href="/projects/{{ project.path }}">{{ project.name }}</a></li>
+  <li><a href="/{{ project.path }}">{{ project.name }}</a></li>
 {% endif %}
 {% endfor %}
 
