@@ -53,7 +53,7 @@ function generateProjectsData() {
 
 
 let projects = generateProjectsData()
-console.log( projects )
+//console.log( projects )
 
 module.exports = projects
 
