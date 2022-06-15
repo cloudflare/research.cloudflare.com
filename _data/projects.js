@@ -1,15 +1,43 @@
+const { getFrontMatter, generateNavigationFromDirectories } = require( '../_data/functions.js' )
+
+let { paths, lookup, flat } = generateNavigationFromDirectories( 'projects/' )
+
+
 const fs = require( 'fs' )
 const path = require( 'path' )
 
 const yaml = require( 'js-yaml' )
 
 
-function generateProjectsData() {
+const readdirRecursive = async ( filePath ) => {
+  const dir = await fs.promises.readdir( filePath )
+  const files = await Promise.all( dir.map( async relativePath => {
+    const absolutePath = path.join( filePath, relativePath )
+    const stat = await fs.promises.lstat( absolutePath )
+
+    return stat.isDirectory() ? readdirRecursive(absolutePath) : absolutePath
+  } ) )
+
+  return files.flat();
+}
+
+
+async function generateProjectsData() {
 
   let projects = {};
 
   try {
-    const files = fs.readdirSync( 'projects/' );
+    //const files = fs.readdirSync( 'projects/' );
+    const files = await readdirRecursive( 'projects/' )
+
+    console.log( files )
+
+    console.log( paths )
+
+    console.log( lookup )
+
+    console.log( '---' )
+    console.log( flat )
 
     let content = ''
     for ( const file of files ) {
@@ -71,7 +99,9 @@ let projects = generateProjectsData();
 
 module.exports = projects
 
-//console.log( module.exports )
+console.log( 'moo' )
+console.log( module.exports )
+console.log( 'shoe' )
 
 /*
 

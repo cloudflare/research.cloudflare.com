@@ -15,7 +15,7 @@ function getFrontMatter( path ) {
 
 
 
-function generateNavigationFromDirectories( root, paths = [], lookup = {} ) {
+function generateNavigationFromDirectories( root, paths = [], lookup = {}, flat = {} ) {
 
   const dirents = fs.readdirSync( './' + root, { withFileTypes: true } )
       
@@ -33,7 +33,7 @@ function generateNavigationFromDirectories( root, paths = [], lookup = {} ) {
 
       const directory = dirent.name
       const frontMatter = getFrontMatter( root + directory + '/index.njk' )
-      const children = generateNavigationFromDirectories( root + directory + '/' )
+      const children = generateNavigationFromDirectories( root + directory + '/', [], lookup, flat )
       paths.push( { 
         path: '/' + root + directory + '/', 
         label: frontMatter.title, 
@@ -43,19 +43,20 @@ function generateNavigationFromDirectories( root, paths = [], lookup = {} ) {
 
     }  
     else {
-
       const file = dirent.name
+      const slug = path.parse( file ).name
       const frontMatter = getFrontMatter( root + file )
       paths.push( {
-        path: '/' + root + path.parse( file ).name + '/', 
+        path: '/' + root + slug + '/', 
     	label: frontMatter.title,
         children: []
       } )
       lookup[ '/' + root + file ] = frontMatter.title
+      flat[ slug ] = { "name": frontMatter.title, "path": root + file, "frontmatter": frontMatter }
     }
   }
         
-  return { paths, lookup }
+  return { paths, lookup, flat }
 }
 
 
