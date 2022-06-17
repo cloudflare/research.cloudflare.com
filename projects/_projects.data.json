@@ -4,6 +4,7 @@
     { "path": "internet-infrastructure", "label": "Internet Infrastructure" },
     { "path": "network-privacy", "label": "Network Privacy" },
     { "path": "application-privacy", "label": "Application Privacy" },
+    { "path": "internet-measurement", "label": "Internet Measurement" },
     { "path": "future-networks", "label": "Future Networks and Applications" }
   ]
 }
