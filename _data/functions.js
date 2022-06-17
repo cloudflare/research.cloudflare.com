@@ -46,13 +46,18 @@ function generateNavigationFromDirectories( root, paths = [], lookup = {}, flat 
       const file = dirent.name
       const slug = path.parse( file ).name
       const frontMatter = getFrontMatter( root + file )
-      paths.push( {
-        path: '/' + root + slug + '/', 
-    	label: frontMatter.title,
-        children: []
-      } )
-      lookup[ '/' + root + file ] = frontMatter.title
-      flat[ slug ] = { "name": frontMatter.title, "path": root + slug, "frontmatter": frontMatter }
+      if ( frontMatter ) {
+        paths.push( {
+          path: '/' + root + slug + '/', 
+    	  label: frontMatter.title,
+          children: []
+        } )
+        lookup[ '/' + root + file ] = frontMatter.title
+        flat[ slug ] = { "name": frontMatter.title, "path": root + slug, "frontmatter": frontMatter }
+      }
+      else {
+      	throw new Error( `${root}${file} has no front matter?` )
+      }
     }
   }
         
