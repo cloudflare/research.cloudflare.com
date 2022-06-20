@@ -7,13 +7,14 @@ title: Internet Infrastructure
 
 <h1>Internet Infrastructure</h1>
 
-Some text
+This area is focused on improving the stability, security, and reliability of the fundamental building blocks of the Internet. This includes building high-reliability services for basic functions like time and digital certificates as well as advancing standards.
+
 <br />
 <br />
-<br />
-<h3 style="margin-bottom: -1rem;">Projects</h3>
-<br />
-<a href="./pki">Public Key Infrastructure</a>
-<br />
-<a href="./secure-time">Secure Time</a>
+<h2>Projects</h2>
+<ul>
+{% for item in lookup[ page.url ] %}
+  <li><a href="{{ item.path }}">{{ item.label }}</a></li>
+{% endfor -%}
+</ul>
 </article>

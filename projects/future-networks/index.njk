@@ -12,11 +12,10 @@ The primary focus of this research area is on building technologies and tools to
 
 <br />
 <br />
-<h3 style="margin-bottom: -1rem;">Projects</h3>
-<br />
-<a href="./distributed-web">Distributed Web</a>
-<br />
-<a href="./geokm">Geo Key Manager</a>
-<br />
-<a href="./post-quantum-cryptography">Post-quantum Cryptography</a>
+<h2>Projects</h2>
+<ul>
+{% for item in lookup[ page.url ] %}
+  <li><a href="{{ item.path }}">{{ item.label }}</a></li>
+{% endfor -%}
+</ul>
 </article>

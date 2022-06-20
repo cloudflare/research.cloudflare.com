@@ -2,12 +2,11 @@
 title: Geo Key Manager
 related_profiles:
   - nick-sullivan
-  - brendan-mcmillion
   - tanya-verma
 related_publications:
   - Stebila2015
-related_areas:
-  - cryptography
+#related_areas:
+#  - cryptography
 resources:
   - text: "Geo Key Manager: Setting up a service for scale"
     blog: https://blog.cloudflare.com/scaling-geo-key-manager/

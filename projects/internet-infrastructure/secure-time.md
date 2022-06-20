@@ -4,9 +4,8 @@ related_profiles:
   - christopher-patton
   - tanya-verma
   - wesley-evans
-  - pop-chunhapanya
-related_areas:
-  - cryptography
+#related_areas:
+#  - cryptography
 resources:
   - text: "Roughtime: Securing Time with Digital Signatures"
     blog: https://blog.cloudflare.com/roughtime/

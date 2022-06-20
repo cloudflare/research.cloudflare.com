@@ -6,9 +6,8 @@ related_profiles:
   - peter-wu
   - thibault-meunier
   - wesley-evans
-  - brendan-mcmillion
-related_areas:
-  - distributed_systems
+# related_areas:
+#  - distributed_systems
 resources:
   - text: "Announcing The Cloudflare Distributed Web Gateways Private Beta: Unlocking the Web3 Metaverse and Decentralized Finance for Everyone"
     blog: https://blog.cloudflare.com/announcing-web3-gateways/

@@ -7,9 +7,9 @@ related_profiles:
   - peter-wu
   - marwan-fayed
   - wesley-evans
-related_areas:
-  - cryptography
-  - privacy
+#related_areas:
+#  - cryptography
+#  - privacy
 resources:
   - text: "Handshake Encryption: Endgame (an ECH update)"
     blog: https://blog.cloudflare.com/handshake-encryption-endgame-an-ech-update/

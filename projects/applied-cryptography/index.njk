@@ -7,12 +7,14 @@ title: Applied Cryptography
 
 <h1>Applied Cryptography</h1>
 
-Some text
+This research area is focused on taking advanced cryptographic concepts and algorithms and applying them to help solve real-world problems. Topics include cross-platform implementation of primitives, security analysis, and standardization.
+
 <br />
 <br />
-<br />
-<h3 style="margin-bottom: -1rem;">Projects</h3>
-<br />
-<a href="./circl">CIRCL</a>
-<br />
+<h2>Projects</h2>
+<ul>
+{% for item in lookup[ page.url ] %}
+  <li><a href="{{ item.path }}">{{ item.label }}</a></li>
+{% endfor -%}
+</ul>
 </article>

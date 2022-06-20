@@ -9,8 +9,8 @@ related_profiles:
   - peter-wu
 related_publications:
   - Valenta2018
-related_areas:
-  - security
+#related_areas:
+#  - security
 resources:
   - text: "Introducing SSL/TLS Recommender"
     blog: https://blog.cloudflare.com/ssl-tls-recommender/
