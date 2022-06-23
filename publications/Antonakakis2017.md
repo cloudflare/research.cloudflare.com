@@ -24,7 +24,7 @@ authors:
   - Yi Zhou
 url: https://www.usenix.org/system/files/conference/usenixsecurity17/sec17-antonakakis.pdf
 doi: 10.5555/3241189.3241275
-related_areas:
+related_interests:
   - malware
   - measurement
 ---

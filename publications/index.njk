@@ -9,8 +9,8 @@ title: Publications
     display: none;
   }
 
-  {% for area in publications.areas -%}
-  #a{{ area }}:checked ~ cite.a{{ area }}{% if not loop.last -%},{% endif %}
+  {% for interest in publications.interests -%}
+  #a{{ interest }}:checked ~ cite.a{{ interest }}{% if not loop.last -%},{% endif %}
   {% endfor -%} {
     display: block;
   }
@@ -31,7 +31,7 @@ title: Publications
     line-height: 2rem;
     user-select: none;
     background-color: lightgrey;
-  }i
+  }
 </style>
 
 
@@ -46,9 +46,9 @@ title: Publications
 
 <div class="publications">
 
-research areas:
-{% for area in publications.areas -%}
-<input type="checkbox" id="a{{ area }}" class="state" checked><label tabindex=0 for="a{{ area }}">{{ areas[ area ].name }}</label>
+interests:
+{% for interest in publications.interests -%}
+<input type="checkbox" id="a{{ interest }}" class="state" checked><label tabindex=0 for="a{{ interest }}">{{ interests[ interest ].name }}</label>
 {% endfor -%}
 
 <br /><br />

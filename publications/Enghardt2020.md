@@ -10,7 +10,7 @@ authors:
   - christopher-wood
 url: https://datatracker.ietf.org/doc/rfc8922/
 doi: 10.17487/RFC8922
-related_areas:
+related_interests:
   - security
 ---
 

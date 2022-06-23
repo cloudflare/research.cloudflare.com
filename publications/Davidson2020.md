@@ -10,7 +10,7 @@ authors:
   - Takashi Yamakawa
 url: https://eprint.iacr.org/2020/111.pdf
 doi: 10.1007/978-3-030-56784-2_19
-related_areas:
+related_interests:
   - cryptography
 ---
 

@@ -15,7 +15,7 @@ authors:
   - christopher-wood
 url: https://www.petsymposium.org/2021/files/papers/issue4/popets-2021-0085.pdf
 doi: 10.2478/popets-2021-0085
-related_areas:
+related_interests:
   - privacy
   - measurement
 ---

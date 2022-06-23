@@ -9,7 +9,7 @@ authors:
   - Nadia Heninger
 url: https://ieeexplore.ieee.org/abstract/document/8406612
 doi: 10.1109/EuroSP.2018.00034
-related_areas:
+related_interests:
   - cryptography
   - measurement
   - security

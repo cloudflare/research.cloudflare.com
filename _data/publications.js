@@ -88,7 +88,7 @@ module.exports = {
 }
 
 let publication_years = []
-let publication_areas = []
+let publication_interests = []
 
 for ( publication of publications ) {
 
@@ -106,14 +106,14 @@ for ( publication of publications ) {
     publication_years.push( publication.year )
   
   
-  if ( publication.related_areas != undefined ) {
-    for ( area of publication.related_areas ) {
-      if ( ! publication_areas.includes( area ) && area.trim() != '' )
-        publication_areas.push( area )
+  if ( publication.related_interests != undefined ) {
+    for ( interest of publication.related_interests ) {
+      if ( ! publication_interests.includes( interest ) && interest.trim() != '' )
+        publication_interests.push( interest )
     }
   }
   else {
-  	console.log( ' ! ' + publication.slug + " is missing 'related_areas' in the front matter and so cannot be displayed correctly." )
+  	console.log( ' ! ' + publication.slug + " is missing 'related_interests' in the front matter and so cannot be displayed correctly." )
   	process.exit( 1 )
   }
   
@@ -124,7 +124,7 @@ for ( author in author_publications ) {
 }
 
 module.exports.years = publication_years
-module.exports.areas = publication_areas
+module.exports.interests = publication_interests
 
 //console.log( module.exports )
 
@@ -142,7 +142,7 @@ module.exports.areas = publication_areas
   publications[ 'years' ]
     [ 'pending', '2021', '2020', '2017', ... ]
     
-  publications[ 'areas' ]
+  publications[ 'interests' ]
     [ 'privacy', 'malware', ... ]
 
 */

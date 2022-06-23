@@ -7,7 +7,7 @@ authors:
   - Mark Nottingham
   - nick-sullivan
 url: https://datatracker.ietf.org/doc/rfc8586/
-related_areas:
+related_interests:
   - measurement
 ---
 

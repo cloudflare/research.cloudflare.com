@@ -7,7 +7,7 @@ authors:
   - David Schinazi
   - christopher-wood
 url: https://datatracker.ietf.org/doc/rfc9149/
-related_areas:
+related_interests:
   - security
   - protocols
 ---

@@ -10,7 +10,7 @@ authors:
   - Stefano Tessaro
   - christopher-wood
 url: https://eprint.iacr.org/2021/864.pdf
-related_areas:
+related_interests:
   - cryptography
 ---
 

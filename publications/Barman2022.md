@@ -11,7 +11,7 @@ authors:
   - Carmela Troncoso
 url: https://arxiv.org/abs/2203.07806
 doi: 10.48550/arXiv.2203.07806
-related_areas:
+related_interests:
   - cryptography
   - security
 ---

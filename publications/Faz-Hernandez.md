@@ -8,7 +8,7 @@ authors:
   - deepak-maram
 url: https://eprint.iacr.org/2021/1183
 doi: 10.1007/978-3-030-99277-4_4
-related_areas:
+related_interests:
   - cryptography
 ---
 

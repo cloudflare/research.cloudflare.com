@@ -1,13 +1,13 @@
-{% set area_classes = '' %}
+{% set interest_classes = '' %}
 
-{% if publication.related_areas != undefined -%}
-{% for area in publication.related_areas -%}
-  {% set area_class = [ 'a', area ] | join -%}
-  {% set area_classes = [ area_classes, area_class ] | join( ' ' ) -%}
+{% if publication.related_interests != undefined -%}
+{% for interest in publication.related_interests -%}
+  {% set interest_class = [ 'a', interest ] | join -%}
+  {% set interest_classes = [ interest_classes, interest_class ] | join( ' ' ) -%}
 {% endfor -%}
 {% endif -%}
 
-<cite class="publication_item y{{ publication.year }} {{ area_classes }}">
+<cite class="publication_item y{{ publication.year }} {{ interest_classes }}">
 
 <h3>{% if publication.year %}<small>{{ publication.year }}</small>{% endif %}<a href="/publications/{{ publication.slug }}">{{ publication.title }}</a></h3>
 <div class="publication_location">

@@ -9,7 +9,7 @@ authors:
   - Dave Levin
   - Alan Mislove
 url: https://www.cs.umd.edu/~dml/papers/pqc_nist19.pdf
-related_areas:
+related_interests:
   - cryptography
   - security
   - measurement
