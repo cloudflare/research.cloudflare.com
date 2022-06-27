@@ -7,7 +7,7 @@ related_profiles:
   - thibault-meunier
   - cefan-rubin
 related_publications:
-  - Tyagi
+  - Tyagi2022
   - Davidson2018
 #related_areas:
 #  - cryptography

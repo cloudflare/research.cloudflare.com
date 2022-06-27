@@ -10,7 +10,7 @@ related_profiles:
   - marwan-fayed
   - cefan-rubin
 related_publications:
-  - Faz-Hernandez
+  - Faz-Hernandez2021
 # related_areas:
 #  - cryptography
 #  - privacy

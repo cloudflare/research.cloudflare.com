@@ -8,6 +8,7 @@ related_profiles:
   - marwan-fayed
 related_publications:
   - Singanamalla2021
+  - Kinnear2022
 #related_areas:
 #  - security
 #  - privacy
