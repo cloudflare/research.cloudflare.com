@@ -9,7 +9,7 @@ authors:
   - Keith Martin
 url: https://eprint.iacr.org/2019/368.pdf
 doi: 10.1007/978-3-030-21548-4_4
-related_areas:
+related_interests:
   - cryptography
 ---
 

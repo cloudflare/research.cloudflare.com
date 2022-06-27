@@ -1,62 +1,46 @@
-const fs = require( 'fs' )
-const path = require( 'path' )
+const { getFrontMatter, generateNavigationFromDirectories } = require( '../_data/functions.js' )
 
-const yaml = require( 'js-yaml' )
-
+let { paths, lookup, flat } = generateNavigationFromDirectories( 'projects/' )
 
 function generateProjectsData() {
 
-  let projects = {};
+  let projects = flat
 
   try {
-    const files = fs.readdirSync( 'projects/' );
 
-    let content = ''
-    for ( const file of files ) {
+    for ( const slug in flat ) {
 
-      //console.log( file )
-      //console.log( path.parse( file ) )
+      const file = flat[ slug ]
 
-      if ( typeof file !== 'undefined' && path.parse( file ).ext == '.md' && path.parse( file ).name != 'index' ) {
-        let slug = path.parse( file ).name
-        content = fs.readFileSync( 'projects/' + file, 'utf8' )
+      const frontmatter = file.frontmatter
 
-        let front= content.substr( 4, content.indexOf( '---', 4 ) - 4 )
-        //console.log( front )
-
-        frontMatter = yaml.load( front );
-        //console.log( frontMatter )
-
-        // add an item for this slug
-        projects[ slug ] = { "name": frontMatter.title, "path": slug }
-
-        // add a way to list all projects by related_profiles
-        let personSlugs = frontMatter.related_profiles;
-        if ( personSlugs != undefined ) {
-          for ( personSlug of personSlugs ) {
-            if ( typeof projects[ personSlug ] !== 'undefined' ) {
-              projects[ personSlug ].push( projects[ slug ] )
-            }
-            else {
-              projects[ personSlug ] = [ projects[ slug ] ]
-            }
+      // add a way to list all projects by related_profiles
+      let personSlugs = frontmatter.related_profiles;
+      //console.log( personSlugs )
+      if ( personSlugs != undefined ) {
+        for ( personSlug of personSlugs ) {
+          if ( typeof projects[ personSlug ] !== 'undefined' ) {
+            projects[ personSlug ].push( projects[ slug ] )
+          }
+          else {
+            projects[ personSlug ] = [ projects[ slug ] ]
           }
         }
-
-        // add a way to list all projects by related_publications
-        let publicationSlugs = frontMatter.related_publications;
-        if ( publicationSlugs != undefined ) {
-  				for ( publicationSlug of publicationSlugs ) {
-            if ( typeof projects[ publicationSlug ] !== 'undefined' ) {
-  					  projects[ publicationSlug ].push( projects[ slug ] )
-            }
-            else {
-  						projects[ publicationSlug ] = [ projects[ slug ] ]
-            }
-  				}
-        }
-
       }
+
+      // add a way to list all projects by related_publications
+      let publicationSlugs = frontmatter.related_publications;
+      if ( publicationSlugs != undefined ) {
+  		for ( publicationSlug of publicationSlugs ) {
+          if ( typeof projects[ publicationSlug ] !== 'undefined' ) {
+  		    projects[ publicationSlug ].push( projects[ slug ] )
+          }
+          else {
+  		    projects[ publicationSlug ] = [ projects[ slug ] ]
+          }
+  		}
+      }
+
     }
 
   }
@@ -66,12 +50,13 @@ function generateProjectsData() {
 
   return projects;
 }
-// parse the front matter and add to 'profiles'
-let projects = generateProjectsData();
+
+
+let projects = generateProjectsData()
+//console.log( projects )
 
 module.exports = projects
 
-//console.log( module.exports )
 
 /*
 
@@ -83,4 +68,5 @@ module.exports = projects
 
   projects[ 'odns' ]
     { name: "Oblivious DNS" }
+    
 */

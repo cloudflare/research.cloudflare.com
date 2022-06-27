@@ -1,46 +1,4 @@
-:root {
-  --green-0: #0a2614;
-  --green-1: #0e381d;
-  --green-2: #104122;
-  --green-3: #15562d;
-  --green-4: #196535;
-  --green-6: #2db35e;
-  --green-7: #55d584;
-  --green-8: #a8e9c0;
-  --green-9: #e3f8eb;
-
-  --indigo-0: #170f58;
-  --indigo-1: #221785;
-  --indigo-2: #2c1ea9;
-  --indigo-3: #3524cd;
-  --indigo-4: #4b3bdc;
-  --indigo-6: #9d94ec;
-  --indigo-7: #c2bdf3;
-  --indigo-8: #dfdcf9;
-  --indigo-9: #f1f0fc;
-
-  --orange-0: #361a02;
-  --orange-1: #482303;
-  --orange-2: #592b04;
-  --orange-3: #763905;
-  --orange-4: #8d4406;
-  --orange-6: #ee730a;
-  --orange-7: #f8a054;
-  --orange-8: #fbcda5;
-  --orange-9: #fef1e6;
-
-  --violet-0: #350b42;
-  --violet-1: #490f5c;
-  --violet-2: #5f1477;
-  --violet-3: #741892;
-  --violet-4: #8d1eb1;
-  --violet-6: #cf7ee9;
-  --violet-7: #dfa8f1;
-  --violet-8: #ebcaf6;
-  --violet-9: #f7eafb;
-}
-
-
+@import "vars.css";
 
 /* global */
 body {
@@ -89,13 +47,13 @@ a.button:hover {
 }
 
 .header img {
-  height: 2rem;
-  margin-left: 1.1rem;
+  height: 2.4rem;
+  margin-left: 0.7rem;
   margin-right: 0.2rem;
 }
 .header a {
   padding: 0.4rem;
-  color: var(--orange-1);
+  color: var(--green-1);
   text-decoration: none;
 }
 .header a.logo {
@@ -114,7 +72,7 @@ a.button:hover {
 }
 .header a.active {
   color: var(--orange-9);
-  background-color: var(--orange-2);
+  background-color: var(--green-2);
   padding: 0.1rem 0.4rem;
   border-radius: 0.2rem;
   transition: color 0.5s;
@@ -150,6 +108,14 @@ a.button:hover {
   padding: 0.5rem;
 
 }
+.nav .subnav {
+  font-size: 0.8rem;
+  margin-bottom: -0.5rem;
+}
+.nav li.subnav.active {
+  background-color: var(--green-9);	
+  border-radius: 0 0 0.6rem 0;
+}
 .nav a {
   color: var(--green-2);
   text-decoration: none;
@@ -161,8 +127,9 @@ a.button:hover {
   text-decoration: underline;
 }
 .nav li.active {
-  background-color: var(--green-9);
+  background-color: var(--green-8);
   border-left: 0.1rem solid var(--green-2);
+  border-radius: 0 0.6rem 0 0;
 }
 .nav li.active a {
   color: var(--green-1);
@@ -191,10 +158,10 @@ a.button:hover {
 }
 .sidebar nav a {
   font-size: 0.8rem;
-  color: var(--blue-7);
+  color: var(--blue-3);
 }
 .sidebar nav a:hover, .sidebar nav a.active, .sidebar nav a.current {
-  color: var(--blue-3);
+  color: var(--blue-1);
   transition: color 0.5s;
 }
 

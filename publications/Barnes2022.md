@@ -8,7 +8,7 @@ authors:
   - Benjamin Lipp
   - christopher-wood
 url: https://datatracker.ietf.org/doc/rfc9180/
-related_areas:
+related_interests:
   - cryptography
 ---
 

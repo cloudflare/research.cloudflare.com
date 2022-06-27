@@ -6,9 +6,8 @@ related_profiles:
   - peter-wu
   - thibault-meunier
   - wesley-evans
-  - brendan-mcmillion
-related_areas:
-  - distributed_systems
+# related_areas:
+#  - distributed_systems
 resources:
   - text: "Proof of Stake and our next experiments in web3"
     blog: https://blog.cloudflare.com/next-gen-web3-network/

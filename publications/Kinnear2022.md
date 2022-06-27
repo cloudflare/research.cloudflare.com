@@ -9,7 +9,7 @@ authors:
   - tanya-verma
   - christopher-wood
 url: https://datatracker.ietf.org/doc/rfc9230/
-related_areas:
+related_interests:
   - security
   - privacy
   - protocols

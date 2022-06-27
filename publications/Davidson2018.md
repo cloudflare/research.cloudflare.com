@@ -10,7 +10,7 @@ authors:
   - Filippo Valsorda
 url: https://www.petsymposium.org/2018/files/papers/issue3/popets-2018-0026.pdf
 doi: 10.1515/popets-2018-0026
-related_areas:
+related_interests:
   - privacy
   - authentication
   - cryptography

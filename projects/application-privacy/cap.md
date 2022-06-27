@@ -11,10 +11,10 @@ related_profiles:
   - cefan-rubin
 related_publications:
   - Faz-Hernandez2021
-related_areas:
-  - cryptography
-  - privacy
-  - authentication
+# related_areas:
+#  - cryptography
+#  - privacy
+#  - authentication 
 resources:
   - text: More devices, fewer CAPTCHAs, happier users
     blog: https://blog.cloudflare.com/cap-expands-support/

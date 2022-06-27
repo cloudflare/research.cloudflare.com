@@ -9,7 +9,7 @@ authors:
   - alishah-chator
 url: https://eprint.iacr.org/2019/028.pdf
 doi: 10.1145/3284850.3284854
-related_areas:
+related_interests:
   - security
   - cryptography
 ---

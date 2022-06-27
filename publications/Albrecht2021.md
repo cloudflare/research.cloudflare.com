@@ -9,7 +9,7 @@ authors:
   - Nigel P. Smart
 url: https://eprint.iacr.org/2019/1271.pdf
 doi: 10.1007/978-3-030-75248-4_10
-related_areas:
+related_interests:
   - cryptography
 ---
 

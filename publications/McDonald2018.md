@@ -13,7 +13,7 @@ authors:
   - Roya Ensafi
 url: https://conferences.sigcomm.org/imc/2018/papers/imc18-final127.pdf
 doi: 10.1145/3278532.3278552
-related_areas:
+related_interests:
   - measurement
 ---
 

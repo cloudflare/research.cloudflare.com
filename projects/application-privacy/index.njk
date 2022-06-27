@@ -1,0 +1,25 @@
+---
+layout: skaffold
+title: Application Privacy
+---
+
+<article class="content" id="content">
+
+<h1>Application Privacy</h1>
+
+
+Primary focus is on improving privacy and user authentication, while reducing or eliminating personal data at the application layer.
+<br />
+We work in evaluating and applying novel techniques to help protect user information, to carefully analyse user data to improve online experiences (including security), and to create systems that don’t rely on overcollection of personal information. Through standardization contributions we also aim to impact the Internet-wide ecosystem.
+
+
+<br />
+<br />
+
+<h2>Projects</h2>
+<ul>
+{% for item in lookup[ page.url ] %}
+  <li><a href="{{ item.path }}">{{ item.label }}</a></li>
+{% endfor -%}
+</ul>
+</article>

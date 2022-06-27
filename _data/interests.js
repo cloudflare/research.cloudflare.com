@@ -1,4 +1,4 @@
-let areas = {
+let interests = {
   "measurement": {
     "name": "Internet Measurement",
     "area": "measurement"
@@ -33,5 +33,4 @@ let areas = {
   }
 }
 
-
-module.exports = areas
+module.exports = interests

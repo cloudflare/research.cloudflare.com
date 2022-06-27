@@ -1,19 +1,17 @@
 ---
 title: Privacy Pass
 related_profiles:
-  - sofia-celi
   - nick-sullivan
   - armando-faz
-  - pop-chunhapanya
   - christopher-wood
   - thibault-meunier
   - cefan-rubin
 related_publications:
   - Tyagi2022
   - Davidson2018
-related_areas:
-  - cryptography
-  - privacy
+#related_areas:
+#  - cryptography
+#  - privacy
 resources:
   - text: "Privacy Pass v3: the new privacy bits"
     blog: https://blog.cloudflare.com/privacy-pass-v3/

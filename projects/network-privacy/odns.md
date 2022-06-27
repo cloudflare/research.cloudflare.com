@@ -9,9 +9,9 @@ related_profiles:
 related_publications:
   - Singanamalla2021
   - Kinnear2022
-related_areas:
-  - security
-  - privacy
+#related_areas:
+#  - security
+#  - privacy
 resources:
   - text: "Improving DNS Privacy with Oblivious DoH in 1.1.1.1"
     blog: https://blog.cloudflare.com/oblivious-dns/

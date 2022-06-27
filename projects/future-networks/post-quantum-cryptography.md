@@ -1,7 +1,6 @@
 ---
 title: Post-quantum Cryptography
 related_profiles:
-  - sofia-celi
   - nick-sullivan
   - armando-faz
   - bas-westerbaan
@@ -11,8 +10,8 @@ related_profiles:
 related_publications:
   - Celi2021
   - Kwiatkowski2019
-related_areas:
-  - cryptography
+#related_areas:
+#  - cryptography
 resources:
   - text: Making protocols post-quantum
     blog: https://blog.cloudflare.com/making-protocols-post-quantum/

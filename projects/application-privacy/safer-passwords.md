@@ -11,9 +11,9 @@ related_profiles:
   - luke-valenta
   - marina-sanusi
   - tara-whalen
-related_publications:
-  - Pal2022
-  - Li2019
+#related_publications:
+#  - Pal2022
+#  - Li2019
 related_areas:
   - cryptography
   - authentication

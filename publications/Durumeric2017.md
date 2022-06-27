@@ -14,7 +14,7 @@ authors:
   - Vern Paxson
 url: https://www.ndss-symposium.org/wp-content/uploads/2017/09/ndss2017_04A-4_Durumeric_paper_0.pdf
 doi: 10.14722/ndss.2017.23456
-related_areas:
+related_interests:
   - security
   - measurement
 ---

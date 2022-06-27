@@ -10,16 +10,16 @@
 {% for feature in features -%}
 
 {% if loop.index % 3 == 0 %}
-  {% set border_css = 'var(--orange-6)' %}
+  {% set border_css = 'var(--cyan-7)' %}
 {% elseif loop.index % 2 == 0 %}
-  {% set border_css = 'var(--indigo-6)' %}
+  {% set border_css = 'var(--orange-7)' %}
 {% else %}
-  {% set border_css = 'var(--green-6)' %}
+  {% set border_css = 'var(--gold-8)' %}
 {% endif %}
 
   <div class="column">
-   <a href="{{ feature.link }}">
-      <img src="{{ feature.image }}" alt="{{ feature.heading | safe }}" style="border: 0.5rem solid {{ border_css }}; border-radius: 0.5rem" />
+   <a href="{{ feature.link | replace( 'http:', 'https:' ) }}">
+      <img src="{{ feature.image | replace( 'http:', 'https:' ) }}" alt="{{ feature.heading | safe }}" style="border: 0.5rem solid {{ border_css }}; border-radius: 0.5rem" />
       <section>{{ feature.heading | safe }}</section>
       <p>{{ feature.text | safe }}</p>
     </a>

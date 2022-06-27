@@ -3,14 +3,12 @@ title: CIRCL
 related_profiles:
   - armando-faz
   - bas-westerbaan
-  - brendan-mcmillion
   - christopher-wood
-  - sofia-celi
   - christopher-patton
-related_areas:
-  - authentication
-  - privacy
-  - cryptography
+#related_areas:
+#  - authentication
+#  - privacy
+#  - cryptography
 resources:
   - text: "Pairings in CIRCL"
     blog: https://blog.cloudflare.com/circl-pairings-update/
