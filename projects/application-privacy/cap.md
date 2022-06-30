@@ -11,6 +11,7 @@ related_profiles:
   - cefan-rubin
 related_publications:
   - Faz-Hernandez2021
+  - Whalen2022
 # related_areas:
 #  - cryptography
 #  - privacy

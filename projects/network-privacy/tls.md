@@ -9,6 +9,7 @@ related_profiles:
   - peter-wu
 related_publications:
   - Valenta2018
+  - Pauly2022
 #related_areas:
 #  - security
 resources:

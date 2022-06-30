@@ -8,6 +8,7 @@ related_publications:
   - Chung2018
   - Chung2019
   - Stark2019
+  - Barnes2022
 #related_areas:
 #  - measurement
 #  - security
