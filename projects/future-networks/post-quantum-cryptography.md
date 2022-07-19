@@ -13,6 +13,8 @@ related_publications:
 #related_areas:
 #  - cryptography
 resources:
+  - text: NIST’s pleasant post-quantum surprise
+    blog: https://blog.cloudflare.com/nist-post-quantum-surprise/
   - text: Making protocols post-quantum
     blog: https://blog.cloudflare.com/making-protocols-post-quantum/
   - text: Deep dive into a post-quantum signature scheme
@@ -33,6 +35,8 @@ resources:
     blog: https://blog.cloudflare.com/the-tls-post-quantum-experiment/
   - text: The Quantum Menace
     blog: https://blog.cloudflare.com/the-quantum-menace/
+  - text: Post-quantum standards for the Future of the Internet
+    cfstream: 2386e5712753504c4306cf41de1633fb
   - text: Master of (Computer) Science with Professor Scott Aaronson
     cfstream: 4cb614ad73cfda96b517c9fe42778ba4
   - text: Master of (Computer) Science with Professor Michele Mosca
