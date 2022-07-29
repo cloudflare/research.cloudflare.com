@@ -14,4 +14,4 @@ related_interests:
   - protocols
 ---
 
-This document provides usage guidance for external Pre-Shared Keys (PSKs) in Transport Layer Security (TLS) 1.3 as defined in RFC 8446. It lists TLS security properties provided by PSKs under certain assumptions, then it demonstrates how violations of these assumptions lead to attacks.  Advice for applications to help meet these assumptions is provided.  This document also discusses PSK use cases and provisioning processes.  Finally, it lists the privacy and security properties that are not provided by TLS 1.3 when external PSKs are used.
+This document provides usage guidance for external Pre-Shared Keys (PSKs) in Transport Layer Security (TLS) 1.3 as defined in RFC 8446. It lists TLS security properties provided by PSKs under certain assumptions, then it demonstrates how violations of these assumptions lead to attacks. Advice for applications to help meet these assumptions is provided. This document also discusses PSK use cases and provisioning processes. Finally, it lists the privacy and security properties that are not provided by TLS 1.3 when external PSKs are used.
