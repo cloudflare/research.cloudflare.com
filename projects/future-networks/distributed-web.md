@@ -41,6 +41,8 @@ resources:
     cfstream: 29e4b15e49cc9a0ee977f0ed44f0acd3
   - text: "Building on Decentralised Web at Cloudflare, IFIP 2021"
     youtube: https://www.youtube.com/embed/CjyQWVEnRUY
+  - text: "How to use IPFS to securely serve your content, EthCC 2022"
+    youtube: https://www.youtube.com/embed/tbvDMkpmaY4 
 ---
 
 <img src="https://blog.cloudflare.com/content/images/2021/01/image4-2.png" alt="Distributed Web" width="200" align="right" />

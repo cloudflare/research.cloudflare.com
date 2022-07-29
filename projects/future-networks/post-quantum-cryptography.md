@@ -5,9 +5,11 @@ related_profiles:
   - armando-faz
   - bas-westerbaan
   - luke-valenta
+  - jonathan-hoyland
   - goutam-tamvada
   - thom-wiggers
 related_publications:
+  - Celi2022
   - Celi2021
   - Kwiatkowski2019
 #related_areas:
