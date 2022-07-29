@@ -12,4 +12,4 @@ related_interests:
   - protocols
 ---
 
-This document describes an interface for importing external Pre- Shared Keys (PSKs) into TLS 1.3.
+This document describes an interface for importing external Pre-Shared Keys (PSKs) into TLS 1.3.
