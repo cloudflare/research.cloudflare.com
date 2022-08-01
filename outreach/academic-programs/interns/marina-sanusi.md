@@ -1,5 +1,5 @@
 ---
-title: Marina Sanusi
+title: Marina Sanusi Bohuk
 position: Research Intern
 year: 2021
 blog_author: marina

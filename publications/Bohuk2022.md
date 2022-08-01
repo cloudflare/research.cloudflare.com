@@ -1,0 +1,21 @@
+---
+title: "Gossamer: Securely Measuring Password-based Logins"
+year: 2022
+location: "31st USENIX Security Symposium (USENIX Security 22), Boston, MA. 2022."
+authors:
+  - marina-sanusi
+  - Mazharul Islam
+  - suleman-ahmad
+  - Michael Swift
+  - thomas-ristenpart
+  - Rahul Chatterjee
+url: https://www.usenix.org/conference/usenixsecurity22/presentation/sanusi-bohuk
+### doi: 10.1007/978-3-031-07085-3_23
+related_interests:
+  - authentication
+  - security
+  - privacy
+---
+
+Passwords remain the primary way to authenticate users online. Yet little is known about the characteristics of login requests submitted to login systems due to the sensitivity of monitoring submitted passwords. This means we don't have answers to basic questions, such as how often users submit a password similar to their actual password, whether users often resubmit the same incorrect password, how many users utilize passwords known to be in a public breach, and more. Whether we can build and deploy measurement infrastructure to safely answer such questions is, itself, an open question.
+We offer a system, called Gossamer, that enables securely logging information about login attempts, including carefully chosen statistics about submitted passwords. We provide a simulation-based approach for tuning the security-utility trade-offs for storing different password-derived statistics. This enables us to gather useful measurements while reducing risk even in the unlikely case of complete compromise of the measurement system. We worked closely with two large universities and deployed Gossamer to perform a measurement study that observed 34 million login requests over a seven month period. The measurements we gather provide insight into the use of breached credentials, password usability, and other characteristics of the submitted login requests.
