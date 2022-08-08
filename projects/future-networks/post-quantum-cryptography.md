@@ -8,6 +8,8 @@ related_profiles:
   - jonathan-hoyland
   - goutam-tamvada
   - thom-wiggers
+  - yingchen-wang
+  - josh-brown
 related_publications:
   - Celi2022
   - Celi2021
@@ -15,6 +17,8 @@ related_publications:
 #related_areas:
 #  - cryptography
 resources:
+  - text: Hertzbleed explained
+    blog: https://blog.cloudflare.com/hertzbleed-explained/
   - text: NIST’s pleasant post-quantum surprise
     blog: https://blog.cloudflare.com/nist-post-quantum-surprise/
   - text: Making protocols post-quantum
@@ -37,6 +41,8 @@ resources:
     blog: https://blog.cloudflare.com/the-tls-post-quantum-experiment/
   - text: The Quantum Menace
     blog: https://blog.cloudflare.com/the-quantum-menace/
+  - text: Hertzbleed in simple terms
+    cfstream: 803802d76afc258a95cbfe75146e8155
   - text: Post-quantum standards for the Future of the Internet
     cfstream: 2386e5712753504c4306cf41de1633fb
   - text: Master of (Computer) Science with Professor Scott Aaronson
