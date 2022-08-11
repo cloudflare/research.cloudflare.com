@@ -1,21 +1,21 @@
 ---
 layout: skaffold
-title: Upcoming Events
+title: Past Events
 ---
 
 <article class="content" id="content">
 
 <h1>
-  Upcoming Events
+  Past Events
 </h1>
 <div class="events">
-  {% for event in collections.event %}
+  {% for event in collections.event | reverse %}
   {% if event.data.end %}
     {% set endtime = event.data.end %}
   {% else %}
     {% set endtime = event.date.getTime() %}
   {% endif %}
-  {% if endtime >= site.now %}
+  {% if endtime < site.now %}
   <div>
   <h3><small>{{ event.date.getFullYear() + "-" + ( "0" + ( event.date.getMonth() + 1 ) ).slice( -2 ) + "-" + ( "0" + event.date.getDate() ).slice( -2 ) }}</small> 
     {% if event.data.link %}

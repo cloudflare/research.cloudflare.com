@@ -5,7 +5,8 @@
       { "path": "/outreach/academic-programs/researchers/", "label": "Visiting Researcher Program" }  
     ] },
     { "path": "/outreach/updates/", "label": "Latest Updates" },
-    { "path": "/outreach/events/", "label": " Upcoming Events" }
+    { "path": "/outreach/events/upcoming/", "label": " Upcoming Events" },
+    { "path": "/outreach/events/past/", "label": " Past Events" }
   ],
   "lookup": {
   	"/outreach/academic-programs/": [
