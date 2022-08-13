@@ -17,6 +17,6 @@
     "markdown-it-anchor": "8.1.2",
     "markdown-it-link-attributes": "3.0.0",
     "node-xml-stream": "1.0.2",
-    "npm": "7.20.1"
+    "npm": "8.11.0"
   }
 }
