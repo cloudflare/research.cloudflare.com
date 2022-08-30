@@ -24,7 +24,11 @@ title: Past Events
     <a href="{{ event.url }}">{{ event.data.title }}</a>    
     {% endif %}
   </h3>
+  {% if event.data.description %}
   <p>{{ event.data.description }}</p>
+  {% else %}
+  <p>{{ event.templateContent | safe }}</p>
+  {% endif %}
   </div>
   
   {% endif %}
