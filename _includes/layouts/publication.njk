@@ -20,7 +20,7 @@ layout: content
 <div class="publication_location">{{ location }}</div>
 {% if doi %}
 <a href="https://doi.org/{{ doi }}" target="_blank">view &#x2197;</a>
-{% else %}
+{% elif url %}
 <a href="{{ url }}" target="_blank">view &#x2197;</a>
 {% endif %}
 
