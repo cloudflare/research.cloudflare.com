@@ -7,7 +7,7 @@
     "prebuild": "_util/people_images.sh && _util/publications_cache.sh",
     "build": "npx @11ty/eleventy@0.11.1"
   },
-  "dependencies": {
+  "devDependencies": {
     "@11ty/eleventy": "1.0.1",
     "@11ty/eleventy-plugin-syntaxhighlight": "3.1.2",
     "eleventy-plugin-toc": "1.1.0",
@@ -16,7 +16,6 @@
     "markdown-it": "^12.1.0",
     "markdown-it-anchor": "8.1.2",
     "markdown-it-link-attributes": "3.0.0",
-    "node-xml-stream": "1.0.2",
-    "npm": "7.20.1"
+    "node-xml-stream": "1.0.2"  
   }
 }
