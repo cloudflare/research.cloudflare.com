@@ -30,6 +30,10 @@ let interests = {
   "protocols": {
     "name": "Protocol Design",
     "area": "protocols"
+  },
+  "applications": {
+    "name": "Applications",
+    "area": "applications"
   }
 }
 
