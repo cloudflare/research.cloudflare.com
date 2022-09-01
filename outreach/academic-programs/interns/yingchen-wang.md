@@ -1,7 +1,6 @@
 ---
 title: Yingchen Wang
 position: Research Intern
-status: current
 year: 2022
 ---
 
