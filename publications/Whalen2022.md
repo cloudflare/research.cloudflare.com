@@ -15,8 +15,8 @@ authors:
   - Benedikt Christoph Wolters
   - Maxime Guerreiro
   - Andrew Galloni
-### url: https://
-### doi: 10.1007/978-3-031-07085-3_23
+url: https://www.usenix.org/system/files/soups2022-whalen.pdf
+### doi: 
 related_interests:
   - privacy
 ---

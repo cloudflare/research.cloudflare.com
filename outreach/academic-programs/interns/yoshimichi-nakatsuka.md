@@ -2,7 +2,6 @@
 title: Yoshimichi Nakatsuka
 position: Research Intern
 twitter: __nyoshi__
-status: current
 year: 2022
 ---
 

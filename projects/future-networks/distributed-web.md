@@ -39,10 +39,12 @@ resources:
     cfstream: 4437a10078f1b8eef2998290bbfd02a9
   - text: The Future of Web3
     cfstream: 29e4b15e49cc9a0ee977f0ed44f0acd3
-  - text: "Building on Decentralised Web at Cloudflare, IFIP 2021"
-    youtube: https://www.youtube.com/embed/CjyQWVEnRUY
+  - text: "Policy Based Content Providing for IPFS, IPFS þing 2022"
+    youtube: https://www.youtube.com/embed/1Y2OYcCLJgQ
   - text: "How to use IPFS to securely serve your content, EthCC 2022"
     youtube: https://www.youtube.com/embed/tbvDMkpmaY4 
+  - text: "Building on Decentralised Web at Cloudflare, IFIP 2021"
+    youtube: https://www.youtube.com/embed/CjyQWVEnRUY
 ---
 
 <img src="https://blog.cloudflare.com/content/images/2021/01/image4-2.png" alt="Distributed Web" width="200" align="right" />
