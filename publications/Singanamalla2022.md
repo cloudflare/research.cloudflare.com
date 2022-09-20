@@ -11,11 +11,11 @@ authors:
   - Yevgen Safronov
   - peter-wu
   - Andrew Galloni
-  - Vasileios Giotsas
   - Kurtis Heimerl
   - nick-sullivan
   - christopher-wood
   - marwan-fayed
+doi: 10.1145/3517745.3561453
 related_interests:
   - privacy
   - measurement
