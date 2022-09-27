@@ -33,6 +33,15 @@ layout: content
 <h2>Abstract</h2>
 {{ content | safe }}
 
+{% if artifacts -%}
+<h2>Artifacts</h2>
+  <ul>
+  {% for artifact in artifacts -%}
+    <li><a href="{{ artifact.url }}">{{ artifact.text }}</a></li>
+  {% endfor -%}
+  </ul>
+{% endif -%}
+
 {% if related_areas %}
 <h2>Research Areas</h2>
   {% include 'related_areas.njk' %}

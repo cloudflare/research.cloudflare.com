@@ -16,6 +16,13 @@ authors:
   - christopher-wood
   - marwan-fayed
 doi: 10.1145/3517745.3561453
+artifacts:
+  - text: "Experimental data"
+    url: https://github.com/cloudflare/connection-coalescing-imc22
+  - text: "Go code: net-originframe"
+    url: https://github.com/cloudflare/net-originframe
+  - text: "Go code: go-originframe"
+    url: https://github.com/cloudflare/go-originframe
 related_interests:
   - privacy
   - measurement
