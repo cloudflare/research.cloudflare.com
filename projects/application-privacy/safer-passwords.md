@@ -9,6 +9,7 @@ related_profiles:
   - wesley-evans
   - cefan-rubin
   - luke-valenta
+  - suleman-ahmad
   - marina-sanusi
   - tara-whalen
 related_publications:
