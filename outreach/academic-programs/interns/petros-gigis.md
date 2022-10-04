@@ -2,7 +2,6 @@
 title: Petros Gigis
 position: Research Intern
 twitter: gigispetros
-status: current
 year: 2022
 ---
 

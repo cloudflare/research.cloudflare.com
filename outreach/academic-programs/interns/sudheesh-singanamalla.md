@@ -3,7 +3,6 @@ title: Sudheesh Singanamalla
 position: Research Engineer Intern
 twitter: sudheesh001
 blog_author: sudheesh
-status: current
 year: 2022
 ---
 

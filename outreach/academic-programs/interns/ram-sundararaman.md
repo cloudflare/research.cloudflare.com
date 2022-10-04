@@ -2,7 +2,6 @@
 title: Ram Sundara Raman
 position: Research Intern
 twitter: ramakrishnan13s
-status: current
 year: 2022
 ---
 
