@@ -5,6 +5,7 @@ related_profiles:
   - nick-sullivan
   - christopher-patton
   - peter-wu
+  - suleman-ahmad
   - marwan-fayed
   - wesley-evans
 #related_areas:

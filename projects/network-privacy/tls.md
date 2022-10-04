@@ -7,12 +7,15 @@ related_profiles:
   - jonathan-hoyland
   - luke-valenta
   - peter-wu
+  - suleman-ahmad
 related_publications:
   - Valenta2018
   - Pauly2022
 #related_areas:
 #  - security
 resources:
+  - text: "Automatic (secure) transmission: taking the pain out of origin connection security"
+    blog: https://blog.cloudflare.com/securing-origin-connectivity/
   - text: "Introducing SSL/TLS Recommender"
     blog: https://blog.cloudflare.com/ssl-tls-recommender/
   - text: Delegated Credentials for TLS
