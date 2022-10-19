@@ -2,12 +2,12 @@
   'Updates': '/outreach/updates/',
   'Contact us': '/contact/',
   'Privacy policy': 'https://www.cloudflare.com/privacypolicy/',
-  'Terms of service': 'https://www.cloudflare.com/website-terms/'
+  'Terms': 'https://www.cloudflare.com/website-terms/'
 }
 -%}
 
 <span>
-  Copyright &copy; {{ site.copyright }} Cloudflare, Inc.</span>
+  &copy; {{ site.copyright }} Cloudflare, Inc.</span>
   {% for name, link in items %}
   <span><a href="{{ link }}" {% if 'http' in link -%} target="_blank" rel="noopener" {% endif -%}>{{ name }}</a></span> {% if not loop.last -%}{% endif -%}
   {% endfor %}
