@@ -1,7 +1,6 @@
 ---
 title: Hannah Davis
 position: Research Intern
-status: current
 year: 2022
 ---
 
