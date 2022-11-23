@@ -6,7 +6,7 @@
 -%}
 
 <span>
-  &copy; {{ site.copyright }} Cloudflare, Inc.</span>
+  &copy; {{ site.copyright }} <a href="https://cloudflare.com" style="text-decoration: none">Cloudflare, Inc.</a></span>
   {% for name, link in items %}
   <span><a href="{{ link }}" {% if 'http' in link -%} target="_blank" rel="noopener" {% endif -%}>{{ name }}</a></span> {% if not loop.last -%}{% endif -%}
   {% endfor %}
