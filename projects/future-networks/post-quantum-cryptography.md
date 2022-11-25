@@ -17,6 +17,10 @@ related_publications:
 #related_areas:
 #  - cryptography
 resources:
+  - text: 'Defending against future threats: Cloudflare goes post-quantum'
+    blog: https://blog.cloudflare.com/post-quantum-for-all/
+  - text: Introducing post-quantum Cloudflare Tunnel
+    blog: https://blog.cloudflare.com/post-quantum-tunnel/
   - text: Hertzbleed explained
     blog: https://blog.cloudflare.com/hertzbleed-explained/
   - text: NIST’s pleasant post-quantum surprise
