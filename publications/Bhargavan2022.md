@@ -6,6 +6,7 @@ authors:
   - Karthikeyan Bhargavan
   - Vincent Cheval
   - christopher-wood
+doi: 10.1145/3548606.3559360
 related_interests:
   - cryptography
   - security
