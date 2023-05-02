@@ -42,7 +42,7 @@ resources:
   - text: "Policy Based Content Providing for IPFS, IPFS þing 2022"
     youtube: https://www.youtube.com/embed/1Y2OYcCLJgQ
   - text: "How to use IPFS to securely serve your content, EthCC 2022"
-    youtube: https://www.youtube.com/embed/tbvDMkpmaY4 
+    youtube: https://www.youtube.com/embed/tbvDMkpmaY4
   - text: "Building on Decentralised Web at Cloudflare, IFIP 2021"
     youtube: https://www.youtube.com/embed/CjyQWVEnRUY
 ---
@@ -51,4 +51,4 @@ resources:
 
 At Cloudflare, we believe that decentralization is going to be the next major step for content networks. In this project we are experimenting with distributed web gateways that provide an HTTP interface to emerging protocols: Ethereum and IPFS (InterPlanetary FileSystem).
 
-Below, you can read more about our vision for a decentralized Web and Ethereum and IPFS gateway improvements. 
+Below, you can read more about our vision for a decentralized Web and Ethereum and IPFS gateway improvements.

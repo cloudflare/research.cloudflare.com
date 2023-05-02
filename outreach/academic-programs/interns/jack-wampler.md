@@ -10,5 +10,5 @@ Jack is working to complete his PhD at the University of Colorado Boulder as a m
 Jack was an intern with the Cloudflare Research team in the summer of 2021 where he worked to extend observability into network errors relating to TLS protocol development and rollout.
 
 
-## Research Areas 
+## Research Areas
 Internet Measurement, Privacy, Security

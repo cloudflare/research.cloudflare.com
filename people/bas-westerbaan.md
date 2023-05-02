@@ -7,5 +7,5 @@ blog_author: bas
 ---
 Bas is a mathematician with an interest in cryptography and quantum computing. He is a member of the [SPHINCS⁺ team](https://sphincs.org/).
 
-## Research Areas 
+## Research Areas
 Post-Quantum Cryptography, Quantum Computing, Cryptography Engineering

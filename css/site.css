@@ -113,7 +113,7 @@ a.button:hover {
   margin-bottom: -0.5rem;
 }
 .nav li.subnav.active {
-  background-color: var(--green-9);	
+  background-color: var(--green-9);
   border-radius: 0 0 0.6rem 0;
 }
 .nav a {

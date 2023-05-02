@@ -6,7 +6,7 @@ twitter: kjberdan
 blog_author: kristin
 
 ---
-Kristin Berdan is a lawyer and researcher with a focus on Internet infrastructure and security. 
+Kristin Berdan is a lawyer and researcher with a focus on Internet infrastructure and security.
 
-## Research Areas 
+## Research Areas
 Internet infrastructure, security, targeted digital threats

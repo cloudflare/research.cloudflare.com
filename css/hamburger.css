@@ -2,18 +2,18 @@
 .burger-shower {
   display: none;
 }
-  
+
 .burger-shower:checked ~ .burger-menu {
   display: block;
 }
-    
+
 .hamburger {
   display:block;
   width: 1.6rem;
   height: 2.1rem;
   padding-left: 1rem;
 }
-           
+
 .burger-menu {
   display: none;
   position: absolute;

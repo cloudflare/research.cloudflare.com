@@ -2,7 +2,7 @@
 title: An analysis of TLS handshake proxying
 year: 2015
 location: 2015 IEEE Trustcom/BigDataSE/ISPA, volume 1, pp. 279-286. 2015.
-authors: 
+authors:
   - Douglas Stebila
   - nick-sullivan
 url: https://ieeexplore.ieee.org/abstract/document/7345293/

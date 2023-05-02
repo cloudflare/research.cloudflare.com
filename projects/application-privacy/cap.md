@@ -15,7 +15,7 @@ related_publications:
 # related_areas:
 #  - cryptography
 #  - privacy
-#  - authentication 
+#  - authentication
 resources:
   - text: More devices, fewer CAPTCHAs, happier users
     blog: https://blog.cloudflare.com/cap-expands-support/
@@ -33,7 +33,7 @@ resources:
 
 <img src="https://blog.cloudflare.com/content/images/2021/04/image2-36.png" alt="Cryptographic Attestation of Personhood" width="300" align="right" />
 
-Cryptographic Attestation of Personhood provides two of alternatives to CAPTCHAs to prove you are not a robot: 
+Cryptographic Attestation of Personhood provides two of alternatives to CAPTCHAs to prove you are not a robot:
 - security keys (USB and NFC keys that are certified by the [FIDO alliance](https://fidoalliance.org/metadata/?cf_target_id=BDD605A30995AB513BD1D490FD5530EE]) and
 - biometric authenticators (like Apple's Face ID, Microsoft Hello, and Android Biometric Authentication).
 

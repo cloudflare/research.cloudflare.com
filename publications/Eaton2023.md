@@ -1,8 +1,8 @@
 ---
 title: "Security Analysis of Signature Schemes with Key Blinding"
 year: 2023
-authors: 
-  - Edward Eaton 
+authors:
+  - Edward Eaton
   - Tancrède Lepoint
   - christopher-wood
 url: https://eprint.iacr.org/2023/380

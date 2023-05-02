@@ -10,5 +10,5 @@ Kris Kwiatkowski is a Cryptography Engineer who focuses on problems at the inter
 
 Currently, he is a Senior Cryptography Engineer at PQShield, where he works on the development of quantum-safe systems and helps businesses in migration towards them.
 
-## Research Areas 
+## Research Areas
 Cryptographic Implementations, Post-Quantum cryptography, High performance computing

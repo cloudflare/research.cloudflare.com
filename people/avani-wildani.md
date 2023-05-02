@@ -11,5 +11,5 @@ Avani's research interests lie in understanding the relationships between inform
 
 She also is the creator of [Project Hypatia](https://sites.google.com/view/projecthypatia/home), a forum to collect and disseminate research driven by female or non-binary presenting scientists, as well as a fellow of and frequent speaker at [Odd Salon San Francisco](https://oddsalon.com/), a speaker series with the tag line "expert talks on odd topics; odd talks on everything else".
 
-## Research Areas 
+## Research Areas
 Storage Systems, Caching, Workload Modeling, Data Mining, Neural Computability
