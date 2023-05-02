@@ -41,7 +41,6 @@ nav.profiles {
   width: 1.4rem;
 }
 
-
 .related_profiles img.bubble {
   width: 5rem;
 }
@@ -67,7 +66,8 @@ div.homepage_feature div.column {
   justify-items: center;
   max-width: 25rem;
 }
-div.homepage_feature div.column section, div.homepage_feature div.column p {
+div.homepage_feature div.column section,
+div.homepage_feature div.column p {
   max-width: 20rem;
 }
 div.homepage_feature img {
@@ -82,7 +82,7 @@ div.homepage_feature a {
   color: black;
 }
 div.homepage_feature a:hover {
-  text-decoration:none;
+  text-decoration: none;
 }
 
 div.homepage_feature span.date {
@@ -97,11 +97,11 @@ cite.publication_item {
   position: relative;
 }
 cite.publication_item h3 {
-  margin:0;
+  margin: 0;
   font-weight: 400;
 }
 cite.publication_item h3 a {
-  color: black
+  color: black;
 }
 div.publication_location {
   color: #555;
@@ -113,7 +113,7 @@ cite.publication_item span {
   font-weight: 370;
   display: inline;
   padding: 0.1rem;
-  white-space:nowrap;
+  white-space: nowrap;
 }
 div.publications hr {
   display: block;
@@ -128,12 +128,7 @@ cite.publication_item small {
   bottom: 0.15rem;
 }
 
-
-
 /* styles targetting unique key features not in includes */
-
-
-
 
 div.homepage_header {
   align-items: center;
@@ -142,7 +137,8 @@ div.homepage_header {
   /* background: linear-gradient(70deg, var(--indigo-9) 30%, rgba(0,0,0,0) 30%), linear-gradient(30deg, var(--indigo-8) 60%, var(--indigo-7) 60%); */
   /* background: linear-gradient(70deg, var(--gold-9) 30%, rgba(0,0,0,0) 30%), linear-gradient(30deg, var(--indigo-8) 60%, var(--blue-8) 60%); */
   /* background: linear-gradient(70deg, var(--gold-9) 30%, rgba(0,0,0,0) 30%), linear-gradient(30deg, var(--indigo-8) 60%, var(--blue-8) 60%); */
-  background: linear-gradient(70deg, var(--gold-8) 30%, rgba(0,0,0,0) 30%), linear-gradient(30deg, var(--orange-8) 60%, var(--cyan-8) 60%);
+  background: linear-gradient(70deg, var(--gold-8) 30%, rgba(0, 0, 0, 0) 30%),
+    linear-gradient(30deg, var(--orange-8) 60%, var(--cyan-8) 60%);
   /* background: linear-gradient(70deg, var(--gold-9) 30%, rgba(0,0,0,0) 30%), linear-gradient(30deg, var(--orange-9) 60%, var(--cyan-9) 60%); */
 
   padding: 1.5rem 3rem;
@@ -152,12 +148,12 @@ div.homepage_header h1 {
   font-size: 3rem;
   margin-top: 0;
   margin-bottom: 0;
-  text-shadow: 1px 0 0 black,0 1px 0 black,-1px 0 0 black,0 -1px 0 black;
+  text-shadow: 1px 0 0 black, 0 1px 0 black, -1px 0 0 black, 0 -1px 0 black;
   color: white;
 }
 
 span.nobreak {
-  white-space:nowrap;
+  white-space: nowrap;
 }
 
 form > label {
@@ -165,7 +161,7 @@ form > label {
   padding-right: 1rem;
   width: 11rem;
   line-height: 2rem;
-  background-color: linear-gradient( red, white );
+  background-color: linear-gradient(red, white);
 }
 form fieldset {
   padding: 1rem;

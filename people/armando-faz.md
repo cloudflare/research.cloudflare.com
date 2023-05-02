@@ -6,8 +6,9 @@ status: current
 twitter: armfazh
 blog_author: armfazh
 ---
+
 Armando Faz is a research engineer working on secure software for cryptographic algorithms and communication protocols. His research focuses on optimizations for improving efficiency of cutting-edge communication protocols tailored for the pre- and post-quantum world.
 
 ## Research Areas
-Cryptography Engineering, Elliptic Curve Cryptography, Post-Quantum Cryptography
 
+Cryptography Engineering, Elliptic Curve Cryptography, Post-Quantum Cryptography

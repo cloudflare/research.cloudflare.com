@@ -11,4 +11,5 @@ Thom was an intern at Cloudflare Research from October 2021 to the end of Februa
 At Cloudflare, Thom worked on adding post-quantum key exchange to some internal services. He also worked on formal analysis of KEMTLS, using the Tamarin prover. You can read about some of this work in the blog posts below.
 
 ## Research Areas
+
 Post-Quantum Cryptography, Real World Protocols

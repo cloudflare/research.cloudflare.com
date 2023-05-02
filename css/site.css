@@ -2,7 +2,9 @@
 
 /* global */
 body {
-  font-family: system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Noto Sans,sans-serif,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol";
+  font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell,
+    Noto Sans, sans-serif, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial,
+    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   margin: 0;
   scroll-behavior: smooth;
   color: #1c1e21;
@@ -15,7 +17,7 @@ h1 {
 
 a {
   color: var(--orange-3);
-/*  text-decoration: none; */
+  /*  text-decoration: none; */
 }
 a:hover {
   text-decoration-thickness: 0.15rem;
@@ -34,7 +36,6 @@ a.button {
 a.button:hover {
   background-color: var(--indigo-2);
 }
-
 
 .header {
   grid-area: header;
@@ -81,7 +82,6 @@ a.button:hover {
   text-decoration: none;
 }
 
-
 .content {
   grid-area: content;
   margin-left: 2rem;
@@ -92,7 +92,7 @@ a.button:hover {
 
 /* handle anchor jumps with fixed header size */
 .content [id]::before {
-  content: '';
+  content: "";
   display: block;
   height: 3.8rem;
   margin-top: -3.8rem;
@@ -106,7 +106,6 @@ a.button:hover {
 .nav ul li {
   list-style-type: none;
   padding: 0.5rem;
-
 }
 .nav .subnav {
   font-size: 0.8rem;
@@ -136,7 +135,6 @@ a.button:hover {
   text-decoration: none;
 }
 
-
 .sidebar {
   grid-area: sidebar;
   z-index: -1;
@@ -160,12 +158,12 @@ a.button:hover {
   font-size: 0.8rem;
   color: var(--blue-3);
 }
-.sidebar nav a:hover, .sidebar nav a.active, .sidebar nav a.current {
+.sidebar nav a:hover,
+.sidebar nav a.active,
+.sidebar nav a.current {
   color: var(--blue-1);
   transition: color 0.5s;
 }
-
-
 
 /* footer */
 .footer {
@@ -211,13 +209,13 @@ a.button:hover {
   height: 99.9vh;
   align-items: start;
   /*overflow: clip;*/
- /* not certain why wrapper places itself above sidebar, but this helps... */
+  /* not certain why wrapper places itself above sidebar, but this helps... */
   position: absolute;
   z-index: -10;
 }
 
 hr {
-display: none;
+  display: none;
 }
 
 /* default to showing hamburger navigation and hiding sidebar */
@@ -232,7 +230,7 @@ aside.sidebar {
   display: none;
 }
 
-@media (min-width: 950px) and (min-device-width: 950px){
+@media (min-width: 950px) and (min-device-width: 950px) {
   .wrapper {
     grid-template-columns: 1fr 6fr 1fr;
     grid-template-areas:
@@ -253,7 +251,7 @@ aside.sidebar {
     flex-direction: column;
   }
 
-/* with more width show inline navigation */
+  /* with more width show inline navigation */
   #hamburger_header_navigation {
     display: none;
   }
@@ -264,7 +262,6 @@ aside.sidebar {
     display: inline;
   }
 }
-
 
 /* general usage */
 .row {

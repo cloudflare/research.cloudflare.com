@@ -25,10 +25,8 @@ resources:
 
 <img src="https://blog.cloudflare.com/content/images/2020/12/image2-4.png" alt="Oblivious DNS over HTTPS" width="300" align="right" />
 
-
 Oblivious DNS over HTTPS (ODoH) is an [emerging protocol](https://tools.ietf.org/html/draft-pauly-dprive-oblivious-doh-03) being developed at the IETF and co-authored by engineers from Cloudflare, Apple, and Fastly. ODoH is supported by leading proxy partners, including PCCW Global, SURF, and Equinix.
 
 The ODoH protocol is a practical approach for improving privacy of users and aims to improve the overall adoption of encrypted DNS protocols without compromising performance and user experience on the Internet. ODoH works by adding a layer of public key encryption, as well as a network proxy between clients and DNS over HTTPS servers such as 1.1.1.1. The combination of these two added elements guarantees that only the user, and not any other single entity, has access to both the DNS messages and their own IP address at the same time.
 
 We’ve made source code available, so anyone can try out ODoH or run their own ODoH service.
-

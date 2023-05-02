@@ -10,4 +10,5 @@ Goutam Tamvada has a Bachelor of Applied Science in Computer Engineering from th
 At his internship at Cloudflare, he worked on adding post-quantum key-exchange to internal services as well as on the formal analysis of FrodoKEM, a post-quantum key-exchange algorithm, using the Jasmin and EasyCrypt toolchain.
 
 ## Research Areas
+
 Post-quantum Cryptography, Formal Verification

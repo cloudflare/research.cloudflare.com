@@ -9,4 +9,5 @@ His research focusses on scalable and automated formal verification for computer
 Tim interned at Cloudflare in 2022, where he worked on implementing formal verification for policy-based DNS.
 
 ## Research Areas
+
 Formal verification, Compositional reasoning, Network privacy
