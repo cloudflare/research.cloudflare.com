@@ -1,17 +1,33 @@
-{ 
+{
   "navigation": [
-    { "path": "/outreach/academic-programs/", "label": "Academic Programs", "children": [
-      { "path": "/outreach/academic-programs/interns/", "label": "Research Student Internships" },
-      { "path": "/outreach/academic-programs/researchers/", "label": "Visiting Researcher Program" }  
-    ] },
+    {
+      "path": "/outreach/academic-programs/",
+      "label": "Academic Programs",
+      "children": [
+        {
+          "path": "/outreach/academic-programs/interns/",
+          "label": "Research Student Internships"
+        },
+        {
+          "path": "/outreach/academic-programs/researchers/",
+          "label": "Visiting Researcher Program"
+        }
+      ]
+    },
     { "path": "/outreach/updates/", "label": "Latest Updates" },
     { "path": "/outreach/events/upcoming/", "label": " Upcoming Events" },
     { "path": "/outreach/events/past/", "label": " Past Events" }
   ],
   "lookup": {
-  	"/outreach/academic-programs/": [
-      { "path": "/outreach/academic-programs/interns/", "label": "Research Student Internships" },
-      { "path": "/outreach/academic-programs/researchers/", "label": "Visiting Researcher Program" }  		
-  	]
+    "/outreach/academic-programs/": [
+      {
+        "path": "/outreach/academic-programs/interns/",
+        "label": "Research Student Internships"
+      },
+      {
+        "path": "/outreach/academic-programs/researchers/",
+        "label": "Visiting Researcher Program"
+      }
+    ]
   }
 }

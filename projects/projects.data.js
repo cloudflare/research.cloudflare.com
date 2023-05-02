@@ -1,22 +1,23 @@
-const { getFrontMatter, generateNavigationFromDirectories } = require( '../_data/functions.js' )
+const {
+  getFrontMatter,
+  generateNavigationFromDirectories,
+} = require("../_data/functions.js");
 
-let { paths, lookup } = generateNavigationFromDirectories( 'projects/' )
+let { paths, lookup } = generateNavigationFromDirectories("projects/");
 //console.log( JSON.stringify( paths ) )
 //console.log( JSON.stringify( lookup ) )
 
-
 module.exports = {
-  layout: 'project',
+  layout: "project",
   navigation: paths,
-  lookup: lookup
-}
-
+  lookup: lookup,
+};
 
 /*
 
   projects.navigation
-    [ 
-      { 
+    [
+      {
         path:
         label:
       },
@@ -25,10 +26,10 @@ module.exports = {
 
   projects.lookup
     [ '/projects/application-privacy/' ] = [
-      { 
+      {
         path:
         label:
       },
-      ...	
+      ...
     ]
 */
