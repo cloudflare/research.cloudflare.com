@@ -27,17 +27,16 @@ let blogposts = [
 //console.log( blogposts )
 //let Parser = require( 'node-xml-stream' )
 //const https = require( 'https' )
-const fs = require( 'fs' )
-const path = require( 'path' )
-const stream = require( 'stream' )
-const util = require( 'util' )
+const fs = require("fs");
+const path = require("path");
+const stream = require("stream");
+const util = require("util");
 
-const { execSync } = require( 'child_process' )
+const { execSync } = require("child_process");
 
-const yaml = require( 'js-yaml' )
+const yaml = require("js-yaml");
 
-const finished = util.promisify( stream.finished )
-
+const finished = util.promisify(stream.finished);
 
 /*
 async function parseRSS( filename ) {
@@ -108,84 +107,90 @@ async function parseRSS( filename ) {
 }
 */
 
-function downloadIfNotFound( url, destination ) {
-  if ( ! fs.existsSync( destination ) ) {
-    console.log( "downloading url '" + url + "' to '" + destination + "'" )
-    execSync( "curl '" + url + "' -o " + destination + ' 2> /dev/null' )
+function downloadIfNotFound(url, destination) {
+  if (!fs.existsSync(destination)) {
+    console.log("downloading url '" + url + "' to '" + destination + "'");
+    execSync("curl '" + url + "' -o " + destination + " 2> /dev/null");
   }
 }
 
+result = {};
 
-result = {}
-
-
-function processProfileDirectory( dir ) {
-
+function processProfileDirectory(dir) {
   // process feeds per person
-  const files = fs.readdirSync( dir )
+  const files = fs.readdirSync(dir);
 
-  let content = ''
-  for ( const file of files ) {
-
-    if ( typeof file !== 'undefined' && path.parse( file ).ext == '.md' ) {
-      content = fs.readFileSync( dir + '/' + file, 'utf8' )
-      let slug = path.parse( file ).name
+  let content = "";
+  for (const file of files) {
+    if (typeof file !== "undefined" && path.parse(file).ext == ".md") {
+      content = fs.readFileSync(dir + "/" + file, "utf8");
+      let slug = path.parse(file).name;
 
       // if this slug is already present
-      if ( result[ slug ] != undefined ) {
-				throw( "blog feed for '" + slug + "' already processed. Duplicate profile at '" + dir + '/' + slug + ".md'" )
+      if (result[slug] != undefined) {
+        throw (
+          "blog feed for '" +
+          slug +
+          "' already processed. Duplicate profile at '" +
+          dir +
+          "/" +
+          slug +
+          ".md'"
+        );
       }
 
-      let front = content.substr( 4, content.indexOf( '---', 4 ) - 4 )
-      frontMatter = yaml.load( front );
-      if ( frontMatter.position ) {
-        let blog_author = frontMatter.blog_author
-        if ( blog_author == undefined )
-          blog_author = slug
+      let front = content.substr(4, content.indexOf("---", 4) - 4);
+      frontMatter = yaml.load(front);
+      if (frontMatter.position) {
+        let blog_author = frontMatter.blog_author;
+        if (blog_author == undefined) blog_author = slug;
 
-				// JSON from https://research-cloudflare-com.crypto-team.workers.dev
-				downloadIfNotFound( 'https://research-cloudflare-com.crypto-team.workers.dev/blog/author?name=' + blog_author, '_build/blogposts_' + slug + '.json' )
-				let person_posts = JSON.parse( fs.readFileSync( '_build/blogposts_' + slug + '.json' ) )
+        // JSON from https://research-cloudflare-com.crypto-team.workers.dev
+        downloadIfNotFound(
+          "https://research-cloudflare-com.crypto-team.workers.dev/blog/author?name=" +
+            blog_author,
+          "_build/blogposts_" + slug + ".json"
+        );
+        let person_posts = JSON.parse(
+          fs.readFileSync("_build/blogposts_" + slug + ".json")
+        );
 
-        if ( person_posts.length > 0 )
-          result[ slug ] = person_posts
+        if (person_posts.length > 0) result[slug] = person_posts;
       }
     }
   }
-
-
 }
 
 async function main() {
-
-  if ( !fs.existsSync( '_build' ) ) {
-        fs.mkdirSync( '_build' )
+  if (!fs.existsSync("_build")) {
+    fs.mkdirSync("_build");
   }
 
   // process feeds for /people/*
-  processProfileDirectory( 'people' )
-  processProfileDirectory( 'outreach/academic-programs/interns' )
-  processProfileDirectory( 'outreach/academic-programs/researchers' )
+  processProfileDirectory("people");
+  processProfileDirectory("outreach/academic-programs/interns");
+  processProfileDirectory("outreach/academic-programs/researchers");
 
   // process feed for the tag 'research'
 
   //downloadIfNotFound( 'https://blog.cloudflare.com/tag/research/rss/', 'rss.xml' )
   //let ordered_posts = await parseRSS( 'rss.xml' )
 
-  downloadIfNotFound( 'https://research-cloudflare-com.crypto-team.workers.dev/blog/all', '_build/blogposts_bytag.json' )
-  let ordered_posts = JSON.parse( fs.readFileSync( '_build/blogposts_bytag.json' ) )
+  downloadIfNotFound(
+    "https://research-cloudflare-com.crypto-team.workers.dev/blog/all",
+    "_build/blogposts_bytag.json"
+  );
+  let ordered_posts = JSON.parse(
+    fs.readFileSync("_build/blogposts_bytag.json")
+  );
 
-  result.ordered = ordered_posts
-
+  result.ordered = ordered_posts;
 }
 
-
-
-module.exports = async function() {
-  let done = await main().catch( console.log )
+module.exports = async function () {
+  let done = await main().catch(console.log);
 
   //console.log( result )
 
-  return result
-}
-
+  return result;
+};

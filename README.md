@@ -20,9 +20,19 @@ npm start
 
 ### Build locally (and better simulate what Cloudflare Pages will produce):
 
-```
 (you'll need [cloudflared](https://github.com/cloudflare/cloudflared) and [ImageMagick](https://imagemagick.org/index.php) installed for some of the build tasks)
+
+```
 npm run build
+```
+
+### Format code
+
+Getting linting errors in CI?
+[Install Prettier](https://prettier.io/docs/en/install.html) locally and run:
+
+```
+prettier -w .
 ```
 
 ### Markdown references

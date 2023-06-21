@@ -1,40 +1,40 @@
 let interests = {
-  "measurement": {
-    "name": "Internet Measurement",
-    "area": "measurement"
+  measurement: {
+    name: "Internet Measurement",
+    area: "measurement",
   },
-  "cryptography": {
-    "name": "Cryptography",
-    "area": "cryptography"
+  cryptography: {
+    name: "Cryptography",
+    area: "cryptography",
   },
-  "distributed_systems": {
-    "name": "Distributed Systems",
-    "area": "distributed_systems"
+  distributed_systems: {
+    name: "Distributed Systems",
+    area: "distributed_systems",
   },
-  "privacy": {
-    "name": "Privacy",
-    "area": "privacy"
+  privacy: {
+    name: "Privacy",
+    area: "privacy",
   },
-  "authentication": {
-    "name": "Authentication",
-    "area": "authentication"
+  authentication: {
+    name: "Authentication",
+    area: "authentication",
   },
-  "malware": {
-    "name": "Malware",
-    "area": "malware"
+  malware: {
+    name: "Malware",
+    area: "malware",
   },
-  "security": {
-    "name": "Network Security",
-    "area": "security"
+  security: {
+    name: "Network Security",
+    area: "security",
   },
-  "protocols": {
-    "name": "Protocol Design",
-    "area": "protocols"
+  protocols: {
+    name: "Protocol Design",
+    area: "protocols",
   },
-  "applications": {
-    "name": "Applications",
-    "area": "applications"
-  }
-}
+  applications: {
+    name: "Applications",
+    area: "applications",
+  },
+};
 
-module.exports = interests
+module.exports = interests;
