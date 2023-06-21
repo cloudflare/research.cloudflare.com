@@ -16,7 +16,7 @@ authors:
   - Maxime Guerreiro
   - Andrew Galloni
 url: https://www.usenix.org/system/files/soups2022-whalen.pdf
-### doi: 
+### doi:
 related_interests:
   - privacy
 ---

@@ -6,15 +6,19 @@ title: Visiting Researcher Program
 # Visiting Researcher Program
 
 ## Program information
+
 The Visiting Researcher Program is available to both Post-docs and full-time faculty members who aim to collaborate primarily with Cloudflare Research for periods of 3 to 12 months.
 
 ## Eligibility Criteria
+
 - Have a PhD and a well-established research track record demonstrated by peer-reviewed journal publications and conference papers
 - Relevant research experience and interest in one of the research areas
 - Ability to design and execute on a research agenda
 
 ## Selection criteria
+
 Expressions of interest will be evaluated based on the following criteria:
+
 - Address one of the research areas that Cloudflare Research focusses on
 - Have the potential to have a significant impact on the identified domain and contribute to the Internet community at large
 - Expected value for real world and Cloudflare applications and services
@@ -22,6 +26,7 @@ Expressions of interest will be evaluated based on the following criteria:
 - Ability to complete the project within the defined timeframe
 
 ## Expression of interest
+
 As we expect a high amount of interest in this program and all expressions of interest will be reviewed manually, please fill in the form carefully addressing the objectives and timeline of your visit. Do not send any confidential or proprietary information. Any information you send us as part of your expression of interest will be considered not confidential.
 
 <br>

@@ -5,7 +5,8 @@
   "scripts": {
     "start": "npx @11ty/eleventy@1.0.1 --serve",
     "prebuild": "_util/people_images.sh && _util/publications_cache.sh",
-    "build": "npx @11ty/eleventy@0.11.1"
+    "build": "npm run prettier && npx @11ty/eleventy@0.11.1",
+    "prettier": "npx prettier --write ./*.md ./*/*.md ./*/*/*.md ./*/*/*/*.md ./*/*/*/*/*.md" 
   },
   "devDependencies": {
     "@11ty/eleventy": "1.0.1",
@@ -16,6 +17,7 @@
     "markdown-it": "^12.1.0",
     "markdown-it-anchor": "8.1.2",
     "markdown-it-link-attributes": "3.0.0",
-    "node-xml-stream": "1.0.2"  
+    "node-xml-stream": "1.0.2",
+    "prettier": "2.2.1"
   }
 }

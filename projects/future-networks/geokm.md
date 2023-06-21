@@ -16,7 +16,7 @@ resources:
     youtube: https://www.youtube.com/embed/eHqIq1kFJJo
 ---
 
-Geo Key Manager is a feature that gives customers unprecedented control over where their private keys are stored when uploaded to Cloudflare, limiting the exposure of their private keys to certain locations. 
+Geo Key Manager is a feature that gives customers unprecedented control over where their private keys are stored when uploaded to Cloudflare, limiting the exposure of their private keys to certain locations.
 
 This feature builds on a previous Cloudflare innovation called Keyless SSL and a novel cryptographic access control mechanism based on both identity-based encryption and broadcast encryption. Unlike Keyless SSL, Geo Key Manager does not require customers to run a key server inside their own infrastructure.
 

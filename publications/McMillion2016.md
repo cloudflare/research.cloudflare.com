@@ -2,7 +2,7 @@
 title: Attacking White-Box AES Constructions
 year: 2016
 location: Proceedings of the 2016 ACM Workshop on Software Protection, pp. 85-90. 2016.
-authors: 
+authors:
   - Brendan McMillion
   - nick-sullivan
 url: http://library.usc.edu.ph/ACM/SIGSAC%202017/spro/p85.pdf
