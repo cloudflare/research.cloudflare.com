@@ -9,6 +9,9 @@ mkdir -p ../_build
 # try to upload all pdf.original files in _build as publications
 for pdf in ../_build/*.pdf.original; do
 
+  echo "Confirm that I can POST to files.research.cloudflare.com"
+  cloudflared access login https://files.research.cloudflare.com/post/
+
   filename=$(basename "$pdf" .original)
   echo "Processing $pdf -> https://files.research.cloudflare.com/publication/${filename}"
 

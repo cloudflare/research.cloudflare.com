@@ -43,4 +43,4 @@ prettier -w .
 
 ---
 
-Copyright &copy; 2023 Cloudflare
+Copyright &copy; 2021 Cloudflare
