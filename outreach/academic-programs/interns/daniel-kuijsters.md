@@ -9,4 +9,4 @@ Daniël Kuijsters is a PhD candidate in the Digital Security group of the Radbou
 
 ## Research Areas
 
-Applied Criptography, Security
+Applied Cryptography, Security

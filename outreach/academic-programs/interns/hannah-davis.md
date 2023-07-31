@@ -8,4 +8,4 @@ Hannah is a PhD student in theoretical and applied cryptography at the Universit
 
 ## Research Areas
 
-Privacy, security, applied cryptography
+Privacy, security, Applied Cryptography
