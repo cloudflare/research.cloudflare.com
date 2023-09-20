@@ -12,7 +12,7 @@ authors:
   - luke-valenta
 doi: 10.1145/3603269.3604875
 related_interests:
-  - internet-measurement
+  - measurement
 ---
 
 In-network devices around the world monitor and tamper with connections for many reasons, including intrusion prevention, combating spam or phishing, and country-level censorship. Connection tampering seeks to block access to specific domain names or keywords, and it affects billions of users worldwide with little-to-no transparency. To detect, diagnose, and measure connection-level blocking, “active” measurement techniques originate queries with domains or keywords believed to be blocked and send them from vantage points within networks of interest. Active measurement efforts have been critical to understanding how traffic tampering occurs, but they inherently are unable to capture critical parts of the picture. For instance, knowing the set of domains in a block-list (i.e., what could get blocked) is not the same as knowing what real users are actively experiencing (i.e., what is actively getting blocked).
