@@ -4,6 +4,7 @@ related_profiles:
   - nick-sullivan
   - tanya-verma
 related_publications:
+  - Sullivan2018
   - Stebila2015
 #related_areas:
 #  - cryptography
