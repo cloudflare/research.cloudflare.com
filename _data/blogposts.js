@@ -108,10 +108,13 @@ async function parseRSS( filename ) {
 */
 
 function downloadIfNotFound(url, destination) {
+    console.log("looking for '" + destination + "'...");
   if (!fs.existsSync(destination)) {
-    console.log("downloading url '" + url + "' to '" + destination + "'");
-    execSync("curl '" + url + "' -o " + destination + " 2> /dev/null");
+    console.log("   not found, downloading url '" + url + "' to '" + destination + "'");
+    execSync("curl -L '" + url + "' -o " + destination + " 2> /dev/null");
   }
+  console.log("  found");
+  
 }
 
 result = {};
