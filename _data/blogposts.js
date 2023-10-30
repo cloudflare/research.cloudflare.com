@@ -167,7 +167,8 @@ async function main() {
   }
 
   // process feeds for /people/*
-  processProfileDirectory("people");
+  processProfileDirectory("about/people");
+  processProfileDirectory("about/people/alumni");  
   processProfileDirectory("outreach/academic-programs/interns");
   processProfileDirectory("outreach/academic-programs/researchers");
 
