@@ -2,7 +2,6 @@
 title: Watson Ladd
 position: Research Engineer
 twitter: WatsonLadd
-status: current
 blog_author: watson
 ---
 

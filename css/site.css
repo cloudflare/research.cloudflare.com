@@ -90,6 +90,19 @@ a.button:hover {
   z-index: -5;
 }
 
+.content .grey-clouded {
+  color: var(--grey-9);
+  border: 1px solid var(--blue-8);
+  border-radius: 1rem;
+  padding: 0.5rem 0.5rem 0 0.5rem;
+  background-color: var(--blue-9);
+}
+
+.content h2 {
+  padding-top: 1rem;
+  color: var(--green-3);
+}
+
 /* handle anchor jumps with fixed header size */
 .content [id]::before {
   content: "";

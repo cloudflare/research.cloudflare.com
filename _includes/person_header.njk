@@ -8,10 +8,16 @@
   <span class="person_header title">
     {{ profile.title }}
     <br />
-    <small>{{ profile.position }}</small><br />
-    {% if profile.twitter %}
+    {% if profile.status == 'current' %}    
+      <small>{{ profile.position }}</small><br />
+    {% else %}
+      <span class="grey-clouded" title="No longer at Cloudflare">
+      <img style="height: 2rem; position: relative; top: 0.5rem; filter: brightness(0%) invert(65%) sepia(0%) saturate(2344%) hue-rotate(333deg) brightness(114%) contrast(95%);" src="/img/cloud.svg" alt="grey cloud"> <sup><small>GREY-CLOUDED</small></sup>
+      </span>
+    {% endif %}
+    {% if profile.twitter and profile.status == 'current' %}
     <a href="https://twitter.com/{{ profile.twitter }}" target="_blank"><img class="twitter" src="https://blog.cloudflare.com/assets/images/twitter.svg?v=af74676765" /></a>
     {% endif %}
-    <!-- <img style="height: 1.5rem; position: relative;" src="/img/cloud.svg" alt="orange cloud">-->
+    <!--<img style="height: 1.5rem; position: relative;" src="/img/cloud.svg" alt="orange cloud">-->
     </span>
 </div>

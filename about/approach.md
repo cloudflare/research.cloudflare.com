@@ -3,7 +3,7 @@ layout: content
 title: Approach
 ---
 
-# Cloudflare's Approach to Research
+# Cloudflare's approach to research
 
 Cloudflare is committed to building a better Internet for everyone. Research is part of that commitment in contributing to the advancement of bleeding edge technology and in advocating for those changes. We’ve learned that some of the difficult problems to solve are best approached through computer science research and experimentation to understand the solution before engineering it at scale.
 

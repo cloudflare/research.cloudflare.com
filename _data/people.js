@@ -52,18 +52,21 @@ function processProfileDir(dir) {
 }
 
 // handle employee, researcher and intern profiles
-let employees = processProfileDir("people");
+let employees = processProfileDir("about/people");
+let alumni = processProfileDir("about/people/alumni");
 let researchers = processProfileDir("outreach/academic-programs/researchers");
 let interns = processProfileDir("outreach/academic-programs/interns");
 
 module.exports = {
   employees: employees.map((element) => element.slug),
+  alumni: alumni.map((element) => element.slug),  
   researchers: researchers.map((element) => element.slug),
   interns: interns.map((element) => element.slug),
 };
 
 let all_profiles = [];
 all_profiles = all_profiles
+  .concat(alumni)
   .concat(employees)
   .concat(researchers)
   .concat(interns);
