@@ -2,9 +2,11 @@
   "navigation": [
     { "path": "/about/approach/", "label": "Approach" },
     { "path": "/about/story/", "label": "Story" },
-    { "path": "/about/people/", "label": "People", "children": [
-      { "path": "/about/people/alumni/", "label": "Alumni" }
-    ] }
+    {
+      "path": "/about/people/",
+      "label": "People",
+      "children": [{ "path": "/about/people/alumni/", "label": "Alumni" }]
+    }
   ],
   "lookup": {
     "/about/people/": [
@@ -14,5 +16,4 @@
       }
     ]
   }
-
 }

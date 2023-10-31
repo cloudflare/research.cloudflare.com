@@ -27,7 +27,7 @@ title: Past Events
   {% if event.data.description %}
   <p>{{ event.data.description }}</p>
   {% else %}
-  <p>{{ event.templateContent | safe }}</p>
+  {{ event.templateContent | safe }}
   {% endif %}
   </div>
   

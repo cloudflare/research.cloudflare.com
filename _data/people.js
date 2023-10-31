@@ -59,7 +59,7 @@ let interns = processProfileDir("outreach/academic-programs/interns");
 
 module.exports = {
   employees: employees.map((element) => element.slug),
-  alumni: alumni.map((element) => element.slug),  
+  alumni: alumni.map((element) => element.slug),
   researchers: researchers.map((element) => element.slug),
   interns: interns.map((element) => element.slug),
 };
