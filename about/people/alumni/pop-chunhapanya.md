@@ -3,7 +3,6 @@ title: Suphanat "Pop" Chunhapanya
 position: Research Engineer
 author_name: Suphanat Chunhapanya
 slug: pop-chunhapanya
-status: current
 blog_author: pop-chun
 ---
 
