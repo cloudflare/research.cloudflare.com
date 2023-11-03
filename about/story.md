@@ -35,10 +35,9 @@ In 2019, the Crypto team was renamed "Cloudflare Research" to reflect its growin
 - SSL Recommender
 - Resource development and deployment of Post Quantum Cryptography across the Internet
 
-
 ## And onward into the future
 
-Cloudflare Research plays an important role in Cloudflare’s wider mission to help build a better Internet by contributing to Computer Science research domains, and helping to take them from theory to reality. In 2021 we made our work more public and accessible at [research.cloudflare.com](https://research.cloudflare.com). 
+Cloudflare Research plays an important role in Cloudflare’s wider mission to help build a better Internet by contributing to Computer Science research domains, and helping to take them from theory to reality. In 2021 we made our work more public and accessible at [research.cloudflare.com](https://research.cloudflare.com).
 
 The [team](/about/people/) has grown over the years, and is now composed of experts in the areas of mathematics, cryptography, privacy, networking, measurement, usable security, distributed systems, caching, and more.
 
