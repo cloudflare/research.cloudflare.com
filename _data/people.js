@@ -3,7 +3,7 @@ const path = require("path");
 
 const yaml = require("js-yaml");
 
-function processProfileDir(dir) {
+function processProfileDir(dir, category) {
   let profiles = [];
 
   try {
@@ -37,6 +37,9 @@ function processProfileDir(dir) {
           );
         }
 
+        // add parent dir of profile in case helpful for categorization
+        frontMatter.category = category
+
         if (frontMatter.position) {
           frontMatter.slug = slug;
           frontMatter.path = dir + "/" + slug;
@@ -52,10 +55,10 @@ function processProfileDir(dir) {
 }
 
 // handle employee, researcher and intern profiles
-let employees = processProfileDir("about/people");
-let alumni = processProfileDir("about/people/alumni");
-let researchers = processProfileDir("outreach/academic-programs/researchers");
-let interns = processProfileDir("outreach/academic-programs/interns");
+let employees = processProfileDir("about/people", "team member");
+let alumni = processProfileDir("about/people/alumni", "team member");
+let researchers = processProfileDir("outreach/academic-programs/researchers", "visiting researcher");
+let interns = processProfileDir("outreach/academic-programs/interns", "intern");
 
 module.exports = {
   employees: employees.map((element) => element.slug),
