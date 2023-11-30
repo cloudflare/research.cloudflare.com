@@ -38,7 +38,7 @@ function processProfileDir(dir, category) {
         }
 
         // add parent dir of profile in case helpful for categorization
-        frontMatter.category = category
+        frontMatter.category = category;
 
         if (frontMatter.position) {
           frontMatter.slug = slug;
@@ -57,7 +57,10 @@ function processProfileDir(dir, category) {
 // handle employee, researcher and intern profiles
 let employees = processProfileDir("about/people", "team member");
 let alumni = processProfileDir("about/people/alumni", "team member");
-let researchers = processProfileDir("outreach/academic-programs/researchers", "visiting researcher");
+let researchers = processProfileDir(
+  "outreach/academic-programs/researchers",
+  "visiting researcher"
+);
 let interns = processProfileDir("outreach/academic-programs/interns", "intern");
 
 module.exports = {
