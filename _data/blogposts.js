@@ -116,7 +116,7 @@ function downloadIfNotFound(url, destination) {
 
 result = {};
 
-base_url = "https://website-worker.research.cloudflare.com"
+base_url = "https://website-worker.research.cloudflare.com";
 
 function processProfileDirectory(dir) {
   // process feeds per person
@@ -149,8 +149,7 @@ function processProfileDirectory(dir) {
 
         // JSON from https://research-cloudflare-com.crypto-team.workers.dev
         downloadIfNotFound(
-          base_url + "/blog/author?name=" +
-            blog_author,
+          base_url + "/blog/author?name=" + blog_author,
           "_build/blogposts_" + slug + ".json"
         );
         let person_posts = JSON.parse(
@@ -178,10 +177,7 @@ async function main() {
   //downloadIfNotFound( 'https://blog.cloudflare.com/tag/research/rss/', 'rss.xml' )
   //let ordered_posts = await parseRSS( 'rss.xml' )
 
-  downloadIfNotFound(
-    base_url + "/blog/all",
-    "_build/blogposts_bytag.json"
-  );
+  downloadIfNotFound(base_url + "/blog/all", "_build/blogposts_bytag.json");
   let ordered_posts = JSON.parse(
     fs.readFileSync("_build/blogposts_bytag.json")
   );
