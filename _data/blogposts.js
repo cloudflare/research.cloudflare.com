@@ -151,7 +151,7 @@ function processProfileDirectory(dir) {
 
         // JSON from https://research-cloudflare-com.crypto-team.workers.dev
         downloadIfNotFound(
-          "https://research-cloudflare-com.crypto-team.workers.dev/blog/author?name=" +
+          "https://website-worker.research.cloudflare.com/blog/author?name=" +
             blog_author,
           "_build/blogposts_" + slug + ".json"
         );
@@ -182,7 +182,7 @@ async function main() {
   //let ordered_posts = await parseRSS( 'rss.xml' )
 
   downloadIfNotFound(
-    "https://research-cloudflare-com.crypto-team.workers.dev/blog/all",
+    "https://website-worker.research.cloudflare.com/blog/all",
     "_build/blogposts_bytag.json"
   );
   let ordered_posts = JSON.parse(
