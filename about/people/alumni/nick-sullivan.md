@@ -1,7 +1,6 @@
 ---
 title: Nick Sullivan
 position: Head of Research
-status: current
 twitter: grittygrease
 blog_author: nick-sullivan
 ---

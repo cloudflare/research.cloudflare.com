@@ -3,7 +3,7 @@ layout: content
 title: Approach
 ---
 
-# Cloudflare's Approach to Research
+# Cloudflare's approach to research
 
 Cloudflare is committed to building a better Internet for everyone. Research is part of that commitment in contributing to the advancement of bleeding edge technology and in advocating for those changes. We’ve learned that some of the difficult problems to solve are best approached through computer science research and experimentation to understand the solution before engineering it at scale.
 
@@ -21,7 +21,7 @@ Our goal is to enable a research environment that generates both new knowledge a
 
 ## Open collaboration, open standards, and open source
 
-Cloudflare’s massive popularity puts us in a very privileged position. We can research, implement and deploy experiments at a scale that simply can’t be done by most organizations. This makes Cloudflare an attractive research partner for universities and other research institutions who have domain knowledge but not data. We rely on our own expertise along with that of peers in both academia and industry to decide which problems to tackle in order to achieve common goals and make new scientific progress. Our [middlebox detection project](https://blog.cloudflare.com/monsters-in-the-middleboxes/) proposed by researchers at the University of Michigan, is an example of such a problem. Further engagements with academia are also facilitated by our recurrent [internship](/outreach/interns/) opportunities.
+Cloudflare’s massive popularity puts us in a very privileged position. We can research, implement and deploy experiments at a scale that simply can’t be done by most organizations. This makes Cloudflare an attractive research partner for universities and other research institutions who have domain knowledge but not data. We rely on our own expertise along with that of peers in both academia and industry to decide which problems to tackle in order to achieve common goals and make new scientific progress. Our [middlebox detection project](https://blog.cloudflare.com/monsters-in-the-middleboxes/) proposed by researchers at the University of Michigan, is an example of such a problem. Further engagements with academia are also facilitated by our recurrent [internship](/outreach/academic-programs/interns/) opportunities.
 
 We’re not purists who are only interested in pursuing our own ideas. Some interesting problems have already been solved, but the solution isn’t widely known or implemented. In this situation, we contribute our efforts to help elevate the best ideas and make them available to the public in an accessible way. Our early work popularizing [elliptic curves](https://blog.cloudflare.com/a-relatively-easy-to-understand-primer-on-elliptic-curve-cryptography/) on [the Internet](https://blog.cloudflare.com/ecdsa-the-digital-signature-algorithm-of-a-better-internet/) is such an example.
 

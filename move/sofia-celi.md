@@ -1,7 +1,6 @@
 ---
 title: Sofía Celi
 position: Systems Engineer
-status: current
 twitter: claucece
 blog_author: sofia
 ---

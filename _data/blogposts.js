@@ -108,10 +108,14 @@ async function parseRSS( filename ) {
 */
 
 function downloadIfNotFound(url, destination) {
+  console.log("looking for '" + destination + "'...");
   if (!fs.existsSync(destination)) {
-    console.log("downloading url '" + url + "' to '" + destination + "'");
-    execSync("curl '" + url + "' -o " + destination + " 2> /dev/null");
+    console.log(
+      "   not found, downloading url '" + url + "' to '" + destination + "'"
+    );
+    execSync("curl -L '" + url + "' -o " + destination + " 2> /dev/null");
   }
+  console.log("  found");
 }
 
 result = {};
@@ -168,7 +172,8 @@ async function main() {
   }
 
   // process feeds for /people/*
-  processProfileDirectory("people");
+  processProfileDirectory("about/people");
+  processProfileDirectory("about/people/alumni");
   processProfileDirectory("outreach/academic-programs/interns");
   processProfileDirectory("outreach/academic-programs/researchers");
 

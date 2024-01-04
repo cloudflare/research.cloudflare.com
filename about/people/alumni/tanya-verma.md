@@ -1,7 +1,6 @@
 ---
 title: Tanya Verma
 position: Research Engineer
-status: current
 blog_author: tanya
 ---
 

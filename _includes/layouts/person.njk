@@ -11,7 +11,9 @@ layout: content
 <img style="height: 2rem; position: relative; top: 0.5rem; filter: brightness(0%) invert(65%) sepia(0%) saturate(2344%) hue-rotate(333deg) brightness(114%) contrast(95%);" src="/img/cloud.svg" alt="grey cloud"> <sup><small>team alum</small></sup>
 {% endif -%} -->
 
+{% if people[ person_slug ].status == 'current' -%}
 {{ content | safe }}
+{% endif %}
 
 {% if projects[ person_slug ] -%}
 <h2 id="projects">Projects</h2>

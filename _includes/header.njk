@@ -1,8 +1,7 @@
 {% set items = [
-  { 'Approach': '/approach/' },
+  { 'About': '/about/approach/' },
   { 'Research areas': '/projects/' },
   { 'Publications': '/publications/' },
-  { 'People': '/people/' },
   { 'Outreach': '/outreach/academic-programs/' },
   { 'Resources': '/resources/' }
 ] -%}
@@ -21,7 +20,8 @@
 <ul class="burger-menu">
 {% for item in items -%}
 {% for name, link in item -%}
-<li><a {% if link in page.url -%}class="active" {% endif -%}{% if 'http' in link -%}target="_blank" rel="noopener" {% endif -%}href="{{ link }}">{{ name }}</a></li>
+{% set link_root = link.slice( 0, link.slice( 1 ).indexOf( '/' ) + 1 ) -%}
+<li><a {% if link_root in page.url -%}class="active" {% endif -%}{% if 'http' in link -%}target="_blank" rel="noopener" {% endif -%}href="{{ link }}">{{ name }}</a></li>
 {% endfor -%}
 {% endfor -%}
 </ul>
@@ -34,7 +34,8 @@
 <ul id="inline_header_navigation" style="font-size: 0.9rem; margin-top: 1.1rem;">
 {% for item in items -%}
 {% for name, link in item -%}
-<li><a {% if link in page.url -%}class="active" {% endif -%}{% if 'http' in link -%}target="_blank" rel="noopener" {% endif -%}href="{{ link }}">{{ name }}</a></li>
+{% set link_root = link.slice( 0, link.slice( 1 ).indexOf( '/' ) + 1 ) -%}
+<li><a {% if link_root in page.url -%}class="active" {% endif -%}{% if 'http' in link -%}target="_blank" rel="noopener" {% endif -%}href="{{ link }}">{{ name }}</a></li>
 {% endfor -%}
 {% endfor -%}
 </ul>

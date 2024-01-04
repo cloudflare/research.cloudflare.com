@@ -1,0 +1,30 @@
+---
+layout: skaffold
+title: Alumni
+---
+
+<nav class="nav" id="nav">
+</nav>
+
+<article class="content" id="content">
+
+<h1>Our alumni</h1>
+
+We are fortunate to build on the efforts of those who came before us. The list below is 
+imcomplete - we appreciate all those colleagues, mentors and co-conspirators who have 
+helped us help build a better Internet. 
+
+<nav class="profiles">
+
+{% set related_profiles = people.alumni -%}
+{% include 'related_profiles.njk' -%}
+
+ <!--  <div style="padding: 0 0.2rem; margin: 0 0.2rem"></div>  -->
+
+ <!-- {% set related_profiles = other_profiles -%}  -->
+ <!-- {% include 'related_profiles.njk' -%}  -->
+
+</nav>
+
+<!-- content -->
+</article>

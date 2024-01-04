@@ -1,7 +1,6 @@
 ---
 title: Kristin Berdan
 position: Research Lead
-status: current
 twitter: kjberdan
 blog_author: kristin
 ---
