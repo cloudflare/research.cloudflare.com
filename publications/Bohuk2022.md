@@ -7,7 +7,7 @@ authors:
   - Mazharul Islam
   - suleman-ahmad
   - Michael Swift
-  - thomas-ristenpart
+  - Thomas Ristenpart
   - Rahul Chatterjee
 url: https://www.usenix.org/conference/usenixsecurity22/presentation/sanusi-bohuk
 ### doi: 10.1007/978-3-031-07085-3_23

@@ -4,7 +4,7 @@ year: 2021
 location: Selected Areas in Cryptography (SAC 2021). Lecture Notes in Computer Science, vol 13203, Springer, Cham, 2021.
 authors:
   - armando-faz
-  - Watson Ladd
+  - watson-ladd
   - deepak-maram
 url: https://eprint.iacr.org/2021/1183
 doi: 10.1007/978-3-030-99277-4_4

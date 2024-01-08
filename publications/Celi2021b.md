@@ -7,7 +7,7 @@ authors:
   - armando-faz
   - Peter Schwabe
   - Douglas Stebila
-  - Thom Wiggers
+  - thom-wiggers
 url: https://iacr.org/submit/files/slides/2021/rwc/rwc2021/68/slides.pdf
 related_interests:
   - cryptography

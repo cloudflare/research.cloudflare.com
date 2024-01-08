@@ -3,7 +3,7 @@ title: "Portunus: Re-imagining access control in distributed systems using attri
 year: 2023
 location: Real World Crypto Symposium 2023. Tokyo, Japan. March 2023.
 authors:
-  - Watson Ladd
+  - watson-ladd
   - Marloes Venema
   - tanya-verma
 url: https://iacr.org/submit/files/slides/2023/rwc/rwc2023/83/slides.pptx

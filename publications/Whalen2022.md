@@ -6,10 +6,10 @@ authors:
   - tara-whalen
   - thibault-meunier
   - Mrudula Kodali
-  - Alex Davidson
+  - alex-davidson
   - marwan-fayed
   - armando-faz
-  - Watson Ladd
+  - watson-ladd
   - deepak-maram
   - nick-sullivan
   - Benedikt Christoph Wolters

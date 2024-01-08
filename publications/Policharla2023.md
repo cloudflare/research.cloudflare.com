@@ -3,7 +3,7 @@ title: "Post-Quantum Privacy Pass via Post-Quantum Anonymous Credentials"
 location: Real World Crypto Symposium 2023. Tokyo, Japan. March 2023.
 year: 2023
 authors:
-  - Guru-Vamsi Policharla
+  - vamsi-policharla
   - bas-westerbaan
   - armando-faz
   - christopher-wood

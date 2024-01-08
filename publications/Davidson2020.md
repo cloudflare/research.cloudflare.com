@@ -3,7 +3,7 @@ title: Adaptively secure constrained pseudorandom functions in the standard mode
 year: 2020
 location: Advances in Cryptology - CRYPTO 2020 - 40th Annual International Cryptology Conference, vol 12170, pp. 559-589. Springer, Cham, 2020.
 authors:
-  - Alex Davidson
+  - alex-davidson
   - Shuichi Katsumata
   - Ryo Nishimaki
   - Shota Yamada

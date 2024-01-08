@@ -4,7 +4,7 @@ year: 2021
 location: IACR International Conference on Public-Key Cryptography, pp. 261-289. Springer, Cham, 2021.
 authors:
   - Martin Albrecht
-  - Alex Davidson
+  - alex-davidson
   - Amit Deo
   - Nigel P. Smart
 url: https://eprint.iacr.org/2019/1271.pdf

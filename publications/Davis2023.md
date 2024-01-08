@@ -7,6 +7,7 @@ authors:
   - christopher-patton
   - mike-rosulek
   - Phillipp Schoppmann
+url: https://petsymposium.org/popets/2023/popets-2023-0126.pdf
 related_interests:
   - privacy
   - protocols
