@@ -9,10 +9,13 @@ related_profiles:
 related_publications:
   - Tyagi2022
   - Davidson2018
+  - Davidson2023
 #related_areas:
 #  - cryptography
 #  - privacy
 resources:
+  - text: "Privacy Pass: upgrading to the latest protocol version"
+    blog: https://blog.cloudflare.com/privacy-pass-standard/
   - text: "Privacy Pass v3: the new privacy bits"
     blog: https://blog.cloudflare.com/privacy-pass-v3/
   - text: Supporting the latest version of the Privacy Pass Protocol
