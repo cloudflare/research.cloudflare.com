@@ -45,7 +45,7 @@ resources:
     blog: https://blog.cloudflare.com/the-tls-post-quantum-experiment/
   - text: The Quantum Menace
     blog: https://blog.cloudflare.com/the-quantum-menace/
-  - text: The Future of the Post-Quantum Competition: the Signatures
+  - text: "The Future of the Post-Quantum Competition: the Signatures"
     cfstream: e8c29fb1517604d615b6bce47d52f10b
   - text: Hertzbleed in simple terms
     cfstream: 803802d76afc258a95cbfe75146e8155
