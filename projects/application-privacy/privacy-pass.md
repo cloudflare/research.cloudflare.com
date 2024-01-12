@@ -29,9 +29,9 @@ resources:
   - text: The Future of Privacy-Preserving Technology Roundtable
     cfstream: 98835feb4ca00342d6f424059561e3a1
   - text: Privacy Pass Home
-    link: https://privacypass.github.io/
+    link: https://developers.cloudflare.com/waf/tools/privacy-pass/
   - text: GitHub Organization
-    link: https://github.com/privacypass
+    link: https://github.com/cloudflare?q=pp-&type=all&language=&sort=
   - text: Privacy Pass IETF's working group
     link: https://datatracker.ietf.org/wg/privacypass/about
 ---
