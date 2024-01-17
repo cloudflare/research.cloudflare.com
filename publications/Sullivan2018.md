@@ -4,7 +4,7 @@ location: Real World Crypto Symposium 2018. Zurich, Switzerland. January 2018.
 year: 2018
 authors:
   - nick-sullivan
-  - Brendan McMillion
+  - brendan-mcmillion
 url: https://rwc.iacr.org/2018/Slides/Sullivan.pdf
 related_interests:
   - cryptography
