@@ -1,13 +1,13 @@
 ---
-title: Armando Faz Hernández
+title: Armando Faz Hernandez
 position: Research Engineer
-author_name: Armando Faz-Hernández
+author_name: Armando Faz-Hernandez
 status: current
 twitter: armfazh
 blog_author: armfazh
 ---
 
-Armando Faz is a research engineer working on secure software for cryptographic algorithms and communication protocols. His research focuses on optimizations for improving efficiency of cutting-edge communication protocols tailored for the pre- and post-quantum world.
+Armando Faz is a research engineer working on securing cryptographic software and communication protocols. His research focuses on optimizing and developing communication protocols using classic and quantum-resistant cryptography.
 
 ## Research Areas
 
