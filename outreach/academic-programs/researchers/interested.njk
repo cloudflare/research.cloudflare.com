@@ -10,7 +10,7 @@ layout: content
   <label for="lastname">Last Name</label><input name="lastname" required><br>
   <label for="email">Email</label><input name="email" type="email" required><br>
   <label for="publications_profile">Publications Profile</label><input name="publications_profile" size="35" placeholder="Google Scholar/ORCID/personal profile" type="url"><br>
-  <label for="interest">Area of interest</label><select name="interest">{% for option, value in areas %}<option>{{ value.name }}</option>{% endfor %}</select><br>
+  <label for="interest">Area of interest</label><select name="interest">{% for index, item in interests %}<option value="{{ item.area }}">{{ item.name }}</option>{% endfor %}</select><br>
   <label for="timeframe">Proposed Timeframe</label><input name="timeframe" size="60" placeholder="Preferred start/end date and time commitment (hours per day or week)"><br>
 
   <br />
