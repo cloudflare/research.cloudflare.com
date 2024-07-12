@@ -2,7 +2,6 @@
 title: Albert Gran Alcoz
 position: Research Intern
 year: 2023
-status: current
 ---
 
 Albert is a Research Intern at Cloudflare, supervised by Prof. Dr. Marwan Fayed, and a PhD student in the Networked Systems Group at ETH Zürich under the guidance of Prof. Dr. Laurent Vanbever. His research focuses on building data-driven infrastructures to enhance network performance and security.
