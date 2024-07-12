@@ -10,4 +10,5 @@ Innocent is a PhD student in the ICTD Lab at the University of Washington under 
 At Cloudflare, his work is focused on the design of experiments to understand how internal traffic engineering decisions and interdomain routing in the public internet impact the performance of our global anycast network. He holds a Master’s in Information Science from the University of Michigan School of Information (2019) and a Bachelor's (2016) Degree in International Political Economy from Georgetown University’s Walsh School of Foreign Service.
 
 ## Research Areas
+
 Networking, API Security, Formal Methods, Peering, Interdomain Routing
