@@ -12,5 +12,3 @@ At Cloudflare, his work is focused on the design of experiments to understand ho
 
 ## Research Areas
 Networking, API Security, Formal Methods, Peering, Interdomain Routing
-
-
