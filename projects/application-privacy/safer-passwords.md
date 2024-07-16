@@ -36,7 +36,7 @@ resources:
   - text: Automated exposed credentials check
     link: https://developers.cloudflare.com/waf/exposed-credentials-check
   - text: GitHub Repositories
-    link: https://github.com/search?q=org%3Acloudflare+opaque
+    link: https://github.com/cloudflare?q=opaque&type=all&language=&sort=
   - text: OPAQUE Demo
     link: https://opaque.research.cloudflare.com
   - text: MIGP Demo
