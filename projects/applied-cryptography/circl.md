@@ -5,6 +5,7 @@ related_profiles:
   - bas-westerbaan
   - christopher-wood
   - christopher-patton
+  - watson-ladd
 #related_areas:
 #  - authentication
 #  - privacy
