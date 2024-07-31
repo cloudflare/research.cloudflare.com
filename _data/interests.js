@@ -35,6 +35,10 @@ let interests = {
     name: "Applications",
     area: "applications",
   },
+  formal_verification: {
+    name: "Formal Verification",
+    area: "formal_verification",
+  },
 };
 
 module.exports = interests;

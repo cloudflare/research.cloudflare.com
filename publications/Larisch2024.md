@@ -13,9 +13,9 @@ url: https://dl.acm.org/doi/10.1145/3651890.3672240
 doi: 10.1145/3651890.3672240
 related_interests:
   - distributed_systems
-  - network_security
-  - formal_verification
+  - security
   - measurement
+  - formal_verification
 ---
 
 Today, when a CDN nameserver receives a DNS query for a customer's domain, it decides which CDN IP to return based on servicelevel objectives such as managing load or maintaining performance, but also internal needs like split testing. Many of these decisions are made a priori by assignment systems that imperatively generate maps from DNS query to IP address(es). Unfortunately, imperative assignments obfuscate nameserver behavior, especially when different objectives conflict.
