@@ -13,7 +13,7 @@ jobs:
     name: Run linters
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - uses: actionsx/prettier@v2
         with:
           args: --check .
