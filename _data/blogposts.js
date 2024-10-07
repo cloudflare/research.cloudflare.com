@@ -187,6 +187,13 @@ async function main() {
     fs.readFileSync("_build/blogposts_bytag.json")
   );
 
+  // download the first three featured images
+  for (let post of ordered_posts.slice(0, 3)) {
+    filename = "_site/img/blog_featured_" + post.image.split("/").at(-1);
+    downloadIfNotFound(post.image, filename);
+    post.image = filename.replace("_site/", "/");
+  }
+
   result.ordered = ordered_posts;
 }
 
