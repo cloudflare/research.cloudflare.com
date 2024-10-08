@@ -101,7 +101,7 @@ quick_references:
 
 <div class="box">
   {% for experiment in collections.experiment | reverse %}
-  <a href="{{ experiment.data.url }}" {% if 'http' in experiment.data.url %}target="_blank" nofollow{% endif %}>
+  <a href="{{ experiment.data.url }}" {% if 'http' in experiment.data.url %}target="_blank" rel="noopener" nofollow{% endif %}>
     <h3>{{ experiment.data.title }}</h3>
     <p>
       {{ experiment.data.description }}
@@ -114,7 +114,7 @@ quick_references:
 
 <div class="box">
   {% for card in quick_references %}
-  <a class="reference" href="{{ card.url }}" target="_blank" nofollow>
+  <a class="reference" href="{{ card.url }}" target="_blank" rel="noopener" nofollow>
     <h3>{{ card.title }}</h3>
     <p>
       {{ card.description }}

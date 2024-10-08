@@ -6,6 +6,6 @@
 
 <ul>
 {% for post in related_blogposts -%}
-  <li><a href="{{ post.link }}" target="_blank" nofollow>{{ post.heading }}</a></li>
+  <li><a href="{{ post.link }}" target="_blank" rel="noopener" nofollow>{{ post.heading }}</a></li>
 {% endfor -%}
 </ul>

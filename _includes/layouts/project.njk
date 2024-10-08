@@ -74,7 +74,7 @@ layout: content
 <h2 id="resources">Resources</h2>
 <ul>
 {% for res in other_resources -%}
-  <li><a href="{{ res[ 'link' ] }}">{{ res[ 'text' ] }}</a></li>
+  <li><a href="{{ res[ 'link' ] }}" rel="noopener">{{ res[ 'text' ] }}</a></li>
 {% endfor -%}
 </ul>
 {% endif -%}

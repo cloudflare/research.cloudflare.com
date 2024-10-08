@@ -19,9 +19,9 @@ title: Past Events
   <div>
   <h3><small>{{ event.date.getFullYear() + "-" + ( "0" + ( event.date.getMonth() + 1 ) ).slice( -2 ) + "-" + ( "0" + event.date.getDate() ).slice( -2 ) }}</small> 
     {% if event.data.link %}
-    <a href="{{ event.data.link }}">{{ event.data.title }}</a>
+    <a href="{{ event.data.link }}" target="_blank" rel="noopener">{{ event.data.title }}</a>
     {% else %}
-    <a href="{{ event.url }}">{{ event.data.title }}</a>    
+    <a href="{{ event.url }}" target="_blank" rel="noopener">{{ event.data.title }}</a>    
     {% endif %}
   </h3>
   {% if event.data.description %}
