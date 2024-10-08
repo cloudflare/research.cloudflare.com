@@ -19,13 +19,13 @@ layout: content
 
 <div class="publication_location">{{ location }}</div>
 {% if doi %}
-<a href="https://doi.org/{{ doi }}" target="_blank">view &#x2197;</a>
+<a href="https://doi.org/{{ doi }}" target="_blank" rel="noopener">view &#x2197;</a>
 {% elif url %}
-<a href="{{ url }}" target="_blank">view &#x2197;</a>
+<a href="{{ url }}" target="_blank" rel="noopener">view &#x2197;</a>
 {% endif %}
 
 {% if publications[ page.fileSlug ].local %}
-&nbsp; &nbsp;<a href="https://files.research.cloudflare.com/publication/{{ page.fileSlug }}.pdf" target="_blank">download </a><br />
+&nbsp; &nbsp;<a href="https://files.research.cloudflare.com/publication/{{ page.fileSlug }}.pdf" target="_blank" rel="noopener">download </a><br />
 {% endif %}
 
 <br />
@@ -37,7 +37,7 @@ layout: content
 <h2>Artifacts</h2>
   <ul>
   {% for artifact in artifacts -%}
-    <li><a href="{{ artifact.url }}">{{ artifact.text }}</a></li>
+    <li><a href="{{ artifact.url }}" target="_blank" rel="noopener">{{ artifact.text }}</a></li>
   {% endfor -%}
   </ul>
 {% endif -%}

@@ -6,8 +6,8 @@ title: Updates
 <article class="content" id="content">
 
 <h1>
-  Research Updates from the <a href="https://blog.cloudflare.com/">Cloudflare Blog</a>
-  <a href="https://blog.cloudflare.com/tag/research/rss/"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="25px" height="25px" id="RSSicon" viewBox="0 0 256 256" alt="RSS feed">
+  Research Updates from the <a href="https://blog.cloudflare.com/" rel="noopener">Cloudflare Blog</a>
+  <a href="https://blog.cloudflare.com/tag/research/rss/" rel="noopener"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="25px" height="25px" id="RSSicon" viewBox="0 0 256 256" alt="RSS feed">
     <defs>
       <linearGradient x1="0.085" y1="0.085" x2="0.915" y2="0.915" id="RSSg">
         <stop offset="0.0" stop-color="#E3702D"/><stop offset="0.1071" stop-color="#EA7D31"/>
@@ -28,7 +28,7 @@ title: Updates
 <div class="updates">
   {% for blogpost in blogposts.ordered %}
   <div>
-  <h3><small>{{ blogpost.date.slice( 0, 10 ) }}</small> <a href="{{ blogpost.link | replace( 'http:', 'https:' ) }}" target="_blank">{{ blogpost.heading }}</a></h3>
+  <h3><small>{{ blogpost.date.slice( 0, 10 ) }}</small> <a href="{{ blogpost.link | replace( 'http:', 'https:' ) }}" target="_blank" rel="noopener">{{ blogpost.heading }}</a></h3>
   <p>{{ blogpost.text }}</p>
   </div>
   {% endfor %}
