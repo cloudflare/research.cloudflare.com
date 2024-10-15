@@ -6,7 +6,12 @@ twitter: bwesterb
 blog_author: bas
 ---
 
-Bas is a mathematician with an interest in cryptography and quantum computing. He is a member of the [SPHINCS⁺ team](https://sphincs.org/).
+Bas works to drive the adoption of post-quantum cryptography
+at Cloudflare and the Internet at large. His works range
+from cryptography engineering, standardisation, to large-scale
+experimentation, and subsequent deployment.
+In a previous life, Bas studied the mathemetical 
+[foundations of quantum theory](https://iopscience.iop.org/article/10.1088/1751-8121/ac8459).
 
 ## Research Areas
 
