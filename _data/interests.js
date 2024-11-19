@@ -39,6 +39,10 @@ let interests = {
     name: "Formal Verification",
     area: "formal_verification",
   },
+  machine_learning: {
+    name: "Machine Learning",
+    area: "machine_learning",
+  },
 };
 
 module.exports = interests;
