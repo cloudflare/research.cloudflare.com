@@ -10,7 +10,6 @@ Ethan's research background is in network security, distributed systems, peer-to
 
 He has a PhD from Boston University.
 
-
 ## Research Areas
 
 Network Security, Distributed Systems, Privacy, Cryptography, Cryptanalysis
