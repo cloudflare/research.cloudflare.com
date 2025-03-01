@@ -2,7 +2,7 @@
 title: Thibault Meunier
 position: Research Engineer
 status: current
-twitter: thibmeu
+bluesky: thibmeu.com
 blog_author: thibault
 ---
 
