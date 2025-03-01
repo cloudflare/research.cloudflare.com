@@ -18,6 +18,9 @@
     {% if profile.twitter and profile.status == 'current' %}
     <a href="https://twitter.com/{{ profile.twitter }}" target="_blank" rel="noopener"><img class="twitter" src="/img/twitter.svg" /></a>
     {% endif %}
+    {% if profile.bluesky and profile.status == 'current' %}
+    <a href="https://bsky.app/profile/{{ profile.bluesky }}" target="_blank" rel="noopener"><img class="bluesky" src="/img/bluesky.svg" /></a>
+    {% endif %}
     <!--<img style="height: 1.5rem; position: relative;" src="/img/cloud.svg" alt="orange cloud">-->
     </span>
 </div>
