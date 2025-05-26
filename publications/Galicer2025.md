@@ -1,6 +1,7 @@
 ---
 title: "Auditing Key Transparency"
 year: 2025
+url: https://www.youtube.com/watch?v=JKkTZJPTh6o
 location: Real World Crypto Symposium 2025. Sofia, Bulgaria. March 2025.
 authors:
   - Mari Galicer
