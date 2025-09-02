@@ -1,7 +1,6 @@
 _site
 _build
 node_modules
-package-lock.json
 **/.DS_Store
 .DS_Store
 img/blog_featured_*

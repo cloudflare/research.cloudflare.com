@@ -4,11 +4,14 @@
 
 > Built with Eleventy https://www.11ty.dev/
 
+> _uses Node 14 for building only_, not a runtime dependency
+
 ---
 
 ### Install build dependencies:
 
 ```
+nvm install 14
 npm install
 ```
 
@@ -43,4 +46,4 @@ prettier -w .
 
 ---
 
-Copyright &copy; 2021 Cloudflare
+Copyright &copy; 2025 Cloudflare
