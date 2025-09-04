@@ -4,14 +4,14 @@
 
 > Built with Eleventy https://www.11ty.dev/
 
-> _uses Node 16 for building only_, not a runtime dependency
+> _uses Node 22 for building only_, not a runtime dependency
 
 ---
 
 ### Install build dependencies:
 
 ```
-nvm install 16
+nvm install 22
 npm install
 ```
 

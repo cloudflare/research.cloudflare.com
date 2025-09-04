@@ -2,7 +2,7 @@
   "name": "research.cloudflare.com",
   "version": "0.0.0",
   "engines": {
-    "node": ">=16.0.0 <17.0.0"
+    "node": ">=22.0.0 <23.0.0"
   },
   "private": true,
   "scripts": {
@@ -12,12 +12,12 @@
     "prettier": "npx prettier --write ."
   },
   "devDependencies": {
-    "@11ty/eleventy": "1.0.1",
-    "@11ty/eleventy-plugin-syntaxhighlight": "3.1.2",
+    "@11ty/eleventy": "3.1.2",
+    "@11ty/eleventy-plugin-syntaxhighlight": "5.0.2",
     "eleventy-plugin-toc": "1.1.0",
     "js-yaml": "4.1.0",
-    "cheerio": "1.0.0-rc.12",
-    "check-engine": "^1.14.0",
+    "cheerio": "1.1.2",
+    "check-engine": "1.14.0",
     "js-beautify": "1.15.4",
     "katex": "0.16.21",
     "markdown-it": "^12.1.0",
