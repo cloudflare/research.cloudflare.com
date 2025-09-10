@@ -13,5 +13,4 @@ related_interests:
   - protocols
 ---
 
-This document specifies the conventions for using the SLH-DSA
-signature algorithm with the Cryptographic Message Syntax (CMS).
+This document specifies the conventions for using the SLH-DSA signature algorithm with the Cryptographic Message Syntax (CMS).
