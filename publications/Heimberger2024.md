@@ -4,7 +4,7 @@ year: 2024
 location: Transparency.dev Summit. October 9-11, 2024.
 authors:
   - lena-heimberger
-  - chris-patton
+  - christopher-patton
   - bas-westerbaan
 url: https://eprint.iacr.org/2025/556
 related_interests:
