@@ -11,6 +11,7 @@ related_profiles:
   - yingchen-wang
   - josh-brown
 related_publications:
+  - Barbosa2024
   - Celi2022
   - Celi2021
   - Kwiatkowski2019
