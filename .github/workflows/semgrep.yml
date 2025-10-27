@@ -9,7 +9,7 @@ on:
     - cron: "0 0 * * *"
 name: Semgrep config
 permissions:
-  content: read
+  contents: read
 jobs:
   semgrep:
     name: semgrep/ci
