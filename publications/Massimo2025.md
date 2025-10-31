@@ -13,4 +13,4 @@ related_interests:
   - protocols
 ---
 
-Digital signatures are used within X.509 certificates and Certificate Revocation Lists (CRLs), and to sign messages.  This document specifies the conventions for using FIPS 204, the Module-Lattice- Based Digital Signature Algorithm (ML-DSA) in Internet X.509 certificates and CRLs.  The conventions for the associated signatures, subject public keys, and private key are also described.
+Digital signatures are used within X.509 certificates and Certificate Revocation Lists (CRLs), and to sign messages. This document specifies the conventions for using FIPS 204, the Module-Lattice- Based Digital Signature Algorithm (ML-DSA) in Internet X.509 certificates and CRLs. The conventions for the associated signatures, subject public keys, and private key are also described.
