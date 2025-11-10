@@ -1,13 +1,15 @@
 const fs = require("fs");
 const path = require("path");
 
-const { execSync } = require("child_process");
-
 const yaml = require("js-yaml");
 
-function download(url, destination) {
+async function download(url, destination) {
   console.log("downloading url '" + url + "' to '" + destination + "'");
-  execSync("curl '" + url + "' -o " + destination);
+
+  const response = await fetch(url);
+  const content = await response.text();
+
+  fs.writeFileSync(destination, content);
 }
 
 function generatePublications() {
@@ -44,88 +46,99 @@ function generatePublications() {
 
   return publications;
 }
-// parse the front matter and add to 'profiles'
-let publications = generatePublications();
-//console.log( publications );
 
-// sort without year first and then newest to oldest years
-let ordered = publications.sort((a, b) => {
-  if (typeof a.year == "number" && typeof b.year == "number")
-    return b.year - a.year;
-  else if (a.year == "pending" && b.year == null) return 0;
-  else if (a.year == "pending") return -1;
-  else if (b.year == "pending") return 1;
-});
+result = {};
 
-let author_publications = {};
-for (const publication of ordered) {
-  for (const author of publication.authors) {
-    //console.log( author )
-    if (author_publications[author] === undefined)
-      author_publications[author] = [];
-    author_publications[author].push(publication.slug);
-  }
-}
+async function main() {
+  // parse the front matter and add to 'profiles'
+  let publications = generatePublications();
+  //console.log( publications );
 
-// get list of cached publications for which we can offer a 'read' link
-download(
-  "https://files.research.cloudflare.com/list/publication/",
-  "_build/publications_cached.json"
-);
-let cached_list = JSON.parse(
-  fs.readFileSync("_build/publications_cached.json")
-);
+  // sort without year first and then newest to oldest years
+  let ordered = publications.sort((a, b) => {
+    if (typeof a.year == "number" && typeof b.year == "number")
+      return b.year - a.year;
+    else if (a.year == "pending" && b.year == null) return 0;
+    else if (a.year == "pending") return -1;
+    else if (b.year == "pending") return 1;
+  });
 
-module.exports = {
-  ordered: ordered,
-};
-
-let publication_years = [];
-let publication_interests = [];
-
-for (publication of publications) {
-  //console.log( cached_list )
-
-  // add a local property to indicate whether we have a
-  publication.local = cached_list.includes(
-    "/publication/" + publication.slug + ".pdf"
-  );
-  if (!publication.local) {
-    console.log(
-      " - " +
-        publication.slug +
-        " is missing a cached copy. Add '_build/" +
-        publication.slug +
-        ".pdf.original'"
-    );
-  }
-
-  module.exports[publication.slug] = publication;
-
-  if (!publication_years.includes(publication.year))
-    publication_years.push(publication.year);
-
-  if (publication.related_interests != undefined) {
-    for (interest of publication.related_interests) {
-      if (!publication_interests.includes(interest) && interest.trim() != "")
-        publication_interests.push(interest);
+  let author_publications = {};
+  for (const publication of ordered) {
+    for (const author of publication.authors) {
+      //console.log( author )
+      if (author_publications[author] === undefined)
+        author_publications[author] = [];
+      author_publications[author].push(publication.slug);
     }
-  } else {
-    console.log(
-      " ! " +
-        publication.slug +
-        " is missing 'related_interests' in the front matter and so cannot be displayed correctly."
-    );
-    process.exit(1);
   }
+
+  // get list of cached publications for which we can offer a 'read' link
+  await download(
+    "https://files.research.cloudflare.com/list/publication/",
+    "_build/publications_cached.json"
+  );
+  let cached_list = JSON.parse(
+    fs.readFileSync("_build/publications_cached.json")
+  );
+
+  result[ordered] = ordered;
+
+  let publication_years = [];
+  let publication_interests = [];
+
+  for (publication of publications) {
+    //console.log( cached_list )
+
+    // add a local property to indicate whether we have a
+    publication.local = cached_list.includes(
+      "/publication/" + publication.slug + ".pdf"
+    );
+    if (!publication.local) {
+      console.log(
+        " - " +
+          publication.slug +
+          " is missing a cached copy. Add '_build/" +
+          publication.slug +
+          ".pdf.original'"
+      );
+    }
+
+    result[publication.slug] = publication;
+
+    if (!publication_years.includes(publication.year))
+      publication_years.push(publication.year);
+
+    if (publication.related_interests != undefined) {
+      for (interest of publication.related_interests) {
+        if (!publication_interests.includes(interest) && interest.trim() != "")
+          publication_interests.push(interest);
+      }
+    } else {
+      console.log(
+        " ! " +
+          publication.slug +
+          " is missing 'related_interests' in the front matter and so cannot be displayed correctly."
+      );
+      process.exit(1);
+    }
+  }
+
+  for (author in author_publications) {
+    result[author] = author_publications[author];
+  }
+
+  result.years = publication_years;
+  result.interests = publication_interests;
 }
 
-for (author in author_publications) {
-  module.exports[author] = author_publications[author];
-}
+module.exports = (async function () {
+  await main().catch(console.log);
 
-module.exports.years = publication_years;
-module.exports.interests = publication_interests;
+  //console.log( result )
+
+  return result;
+})();
 
 //console.log( module.exports )
 
