@@ -35,7 +35,7 @@ Getting linting errors in CI?
 [Install Prettier](https://prettier.io/docs/en/install.html) locally and run:
 
 ```
-prettier -w .
+npm run prettier
 ```
 
 ### Markdown references
