@@ -167,6 +167,8 @@ async function processProfileDirectory(dir) {
       }
     }
   }
+
+  await Promise.all(downloadPromises);
 }
 
 async function main() {
@@ -175,10 +177,10 @@ async function main() {
   }
 
   // process feeds for /people/*
-  processProfileDirectory("about/people");
-  processProfileDirectory("about/people/alumni");
-  processProfileDirectory("outreach/academic-programs/interns");
-  processProfileDirectory("outreach/academic-programs/researchers");
+  await processProfileDirectory("about/people");
+  await processProfileDirectory("about/people/alumni");
+  await processProfileDirectory("outreach/academic-programs/interns");
+  await processProfileDirectory("outreach/academic-programs/researchers");
 
   // process feed for the tag 'research'
 
