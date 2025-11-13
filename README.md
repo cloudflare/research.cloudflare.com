@@ -46,5 +46,4 @@ prettier -w .
 
 ---
 
-
-Copyright &copy; 2025 Cloudflare
+Copyright &copy; 2025 Cloudflare &nbsp;
