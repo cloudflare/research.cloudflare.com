@@ -32,8 +32,6 @@ const path = require("path");
 const stream = require("stream");
 const util = require("util");
 
-const { execSync } = require("child_process");
-
 const yaml = require("js-yaml");
 
 const finished = util.promisify(stream.finished);
@@ -107,22 +105,27 @@ async function parseRSS( filename ) {
 }
 */
 
-function downloadIfNotFound(url, destination) {
+async function downloadIfNotFound(url, destination) {
   console.log("looking for '" + destination + "'...");
   if (!fs.existsSync(destination)) {
     console.log(
       "   not found, downloading url '" + url + "' to '" + destination + "'"
     );
-    execSync("curl -L '" + url + "' -o " + destination + " 2> /dev/null");
+
+    const response = await fetch(url);
+    const content = await response.text();
+
+    fs.writeFileSync(destination, content);
+  } else {
+    console.log("  found");
   }
-  console.log("  found");
 }
 
 result = {};
 
 base_url = "https://website-worker.research.cloudflare.com";
 
-function processProfileDirectory(dir) {
+async function processProfileDirectory(dir) {
   // process feeds per person
   const files = fs.readdirSync(dir);
 
@@ -152,7 +155,7 @@ function processProfileDirectory(dir) {
         if (blog_author == undefined) blog_author = slug;
 
         // JSON from https://research-cloudflare-com.crypto-team.workers.dev
-        downloadIfNotFound(
+        await downloadIfNotFound(
           base_url + "/blog/author?name=" + blog_author,
           "_build/blogposts_" + slug + ".json"
         );
@@ -172,17 +175,20 @@ async function main() {
   }
 
   // process feeds for /people/*
-  processProfileDirectory("about/people");
-  processProfileDirectory("about/people/alumni");
-  processProfileDirectory("outreach/academic-programs/interns");
-  processProfileDirectory("outreach/academic-programs/researchers");
+  await processProfileDirectory("about/people");
+  await processProfileDirectory("about/people/alumni");
+  await processProfileDirectory("outreach/academic-programs/interns");
+  await processProfileDirectory("outreach/academic-programs/researchers");
 
   // process feed for the tag 'research'
 
   //downloadIfNotFound( 'https://blog.cloudflare.com/tag/research/rss/', 'rss.xml' )
   //let ordered_posts = await parseRSS( 'rss.xml' )
 
-  downloadIfNotFound(base_url + "/blog/all", "_build/blogposts_bytag.json");
+  await downloadIfNotFound(
+    base_url + "/blog/all",
+    "_build/blogposts_bytag.json"
+  );
   let ordered_posts = JSON.parse(
     fs.readFileSync("_build/blogposts_bytag.json")
   );
@@ -190,17 +196,17 @@ async function main() {
   // download the first three featured images
   for (let post of ordered_posts.slice(0, 3)) {
     filename = "img/blog_featured_" + post.image.split("/").at(-1);
-    downloadIfNotFound(post.image, filename);
+    await downloadIfNotFound(post.image, filename);
     post.image = "/" + filename;
   }
 
   result.ordered = ordered_posts;
 }
 
-module.exports = async function () {
-  let done = await main().catch(console.log);
+module.exports = (async function () {
+  await main().catch((e) => console.log(e));
 
   //console.log( result )
 
   return result;
-};
+})();
