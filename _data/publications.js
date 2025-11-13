@@ -133,7 +133,7 @@ async function main() {
 }
 
 module.exports = (async function () {
-  await main().catch(console.log);
+  await main().catch((e) => console.log(e));
 
   //console.log( result )
 
