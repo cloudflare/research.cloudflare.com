@@ -167,8 +167,6 @@ async function processProfileDirectory(dir) {
       }
     }
   }
-
-  await Promise.all(downloadPromises);
 }
 
 async function main() {
