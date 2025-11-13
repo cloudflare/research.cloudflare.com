@@ -53,6 +53,7 @@ async function main() {
   // parse the front matter and add to 'profiles'
   let publications = generatePublications();
   //console.log( publications );
+  //process.exit()
 
   // sort without year first and then newest to oldest years
   let ordered = publications.sort((a, b) => {
@@ -62,6 +63,8 @@ async function main() {
     else if (a.year == "pending") return -1;
     else if (b.year == "pending") return 1;
   });
+  //console.log( ordered );
+  //process.exit()
 
   let author_publications = {};
   for (const publication of ordered) {
@@ -82,7 +85,7 @@ async function main() {
     fs.readFileSync("_build/publications_cached.json")
   );
 
-  result[ordered] = ordered;
+  result["ordered"] = ordered;
 
   let publication_years = [];
   let publication_interests = [];

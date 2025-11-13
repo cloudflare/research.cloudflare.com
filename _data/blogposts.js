@@ -113,7 +113,12 @@ async function downloadIfNotFound(url, destination) {
     );
 
     const response = await fetch(url);
-    const content = await response.text();
+    let content;
+    if (response.headers.get("Content-Type").startsWith("text")) {
+      content = await response.text();
+    } else {
+      content = await response.bytes();
+    }
 
     fs.writeFileSync(destination, content);
   } else {
