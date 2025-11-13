@@ -6,7 +6,7 @@
   },
   "private": true,
   "scripts": {
-    "start": "npx @11ty/eleventy@1.0.1 --serve",
+    "start": "NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS:-/etc/ssl/certs/ca-certificates.crt} npx @11ty/eleventy@1.0.1 --serve",
     "prebuild": "npm install && _util/people_images.sh && _util/publications_cache.sh",
     "build": "npm run prettier && NODE_EXTRA_CA_CERTS=${NODE_EXTRA_CA_CERTS:-/etc/ssl/certs/ca-certificates.crt} npx @11ty/eleventy@0.11.1",
     "prettier": "npx prettier --write ."
