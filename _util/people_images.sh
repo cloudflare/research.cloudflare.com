@@ -27,7 +27,9 @@ for path in $PROFILE_PATHS; do
 
     if [ -f "${image_path}.original" ]; then
       echo "Converting '${image_path:3}.jpg.original'"
-      convert ${image_path}.original -resize '400X400^' -gravity center -extent '400x400' ${image_path}
+      if ! convert "${image_path}.original" -resize '400X400^' -gravity center -extent '400x400' "${image_path}"; then
+		exit $?
+      fi
     else
       echo "'${image_path:3}.original not found. Please add and retry."
       echo
