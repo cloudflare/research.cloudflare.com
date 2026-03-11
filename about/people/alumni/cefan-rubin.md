@@ -1,7 +1,6 @@
 ---
 title: Cefan Rubin
 position: Systems Engineer
-status: current
 blog_author: cdrubin
 ---
 

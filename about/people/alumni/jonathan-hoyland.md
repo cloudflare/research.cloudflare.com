@@ -1,7 +1,6 @@
 ---
 title: Jonathan Hoyland
 position: Research Engineer
-status: current
 twitter: jhoyla
 blog_author: jonathan-hoyland
 ---
