@@ -47,14 +47,14 @@ The website for Cloudflare Research, showcasing our work in building a better In
 
 All commands are run from the root of the project:
 
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run icons`           | Generate SVG sprite from icons in `/other/svg-icons` |
-| `npm run ui`              | Add shadcn/ui components                         |
+| Command           | Action                                               |
+| :---------------- | :--------------------------------------------------- |
+| `npm install`     | Installs dependencies                                |
+| `npm run dev`     | Starts local dev server at `localhost:4321`          |
+| `npm run build`   | Build your production site to `./dist/`              |
+| `npm run preview` | Preview your build locally, before deploying         |
+| `npm run icons`   | Generate SVG sprite from icons in `/other/svg-icons` |
+| `npm run ui`      | Add shadcn/ui components                             |
 
 ## 📝 Content Management
 
@@ -68,6 +68,7 @@ Content is managed through Astro's Content Collections located in the `/content`
 ## 🎨 Design System
 
 The site uses a custom design system with:
+
 - Responsive breakpoints: mobile (< 640px), tablet (640px-1024px), desktop (1024px+)
 - Dark mode support via CSS custom properties
 - Custom utility classes for headings, subheadings, and layout components
@@ -85,6 +86,7 @@ The site uses a custom design system with:
 ## 📱 Responsive Design
 
 The site is fully responsive with:
+
 - Mobile-first approach
 - Hamburger menu for mobile navigation
 - Adaptive grids (1, 2, or 3 columns based on screen size)
