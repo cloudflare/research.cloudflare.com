@@ -4,8 +4,6 @@ import tailwindcss from "@tailwindcss/vite";
 
 import react from "@astrojs/react";
 
-import cloudflare from "@astrojs/cloudflare";
-
 import mdx from "@astrojs/mdx";
 
 import sitemap from "@astrojs/sitemap";
@@ -13,7 +11,7 @@ import sitemap from "@astrojs/sitemap";
 // https://astro.build/config
 export default defineConfig({
   site: "https://research.cloudflare.com",
-  output: "server",
+  output: "static",
   build: {
     inlineStylesheets: "auto",
   },
@@ -26,13 +24,6 @@ export default defineConfig({
       assetsInlineLimit: 4096,
       rollupOptions: {
         output: {
-          manualChunks: {
-            "react-vendor": ["react", "react-dom"],
-            "ui-components": [
-              "@radix-ui/react-dialog",
-              "@radix-ui/react-navigation-menu",
-            ],
-          },
           assetFileNames: (assetInfo) => {
             if (assetInfo.name && assetInfo.name.endsWith(".css")) {
               return "assets/[name].[hash][extname]";
@@ -44,12 +35,6 @@ export default defineConfig({
     },
   },
   integrations: [react(), mdx(), sitemap()],
-  adapter: cloudflare({
-    imageService: "cloudflare",
-    platformProxy: {
-      enabled: true,
-    },
-  }),
   redirects: {
     "/about/approach/": "/people",
     "/about/story/": "/people",

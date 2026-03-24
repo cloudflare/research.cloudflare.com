@@ -1,6 +1,4 @@
 ---
-export const prerender = false;
-
 import { cn } from "@/lib/utils";
 import InteriorLayout from "../../layouts/interior.astro";
 import Section from "../../components/Section.astro";
@@ -8,6 +6,11 @@ import NarrowContent from "../../components/NarrowContent.astro"
 import ArticleGrid from "@/components/ArticleGrid.astro";
 import Icon from "@/components/Icon.astro";
 import { getEntry, getCollection } from 'astro:content';
+
+export async function getStaticPaths() {
+  const people = await getCollection('people');
+  return people.map((person) => ({ params: { slug: person.id } }));
+}
 
 // get the slug from the URL
 const { slug } = Astro.params;

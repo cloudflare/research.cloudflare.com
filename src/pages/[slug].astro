@@ -1,12 +1,15 @@
 ---
-export const prerender = false;
-
 import InteriorLayout from "../layouts/interior.astro";
 import ArticleHeading, { type typeClassNames } from "../components/ArticleHeading.astro";
 import SeeMore from "@/components/SeeMore.astro";
 import Section from "../components/Section.astro";
 import NarrowContent from "../components/NarrowContent.astro"
 import { getCollection, getEntry } from "astro:content";
+
+export async function getStaticPaths() {
+  const publications = await getCollection('publications');
+  return publications.map((pub) => ({ params: { slug: pub.id } }));
+}
 
 // get the slug from the URL
 const { slug } = Astro.params;
