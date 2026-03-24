@@ -140,17 +140,18 @@ async function processProfileDirectory(dir) {
       content = fs.readFileSync(dir + "/" + file, "utf8");
       let slug = path.parse(file).name;
 
-      // if this slug is already present
+      // if this slug is already present, skip it with a warning
       if (result[slug] != undefined) {
-        throw (
-          "blog feed for '" +
-          slug +
-          "' already processed. Duplicate profile at '" +
-          dir +
-          "/" +
-          slug +
-          ".md'"
+        console.error(
+          "ERROR: blog feed for '" +
+            slug +
+            "' already processed. Duplicate profile at '" +
+            dir +
+            "/" +
+            slug +
+            ".md' — skipping"
         );
+        continue;
       }
 
       let front = content.substr(4, content.indexOf("---", 4) - 4);
@@ -209,7 +210,7 @@ async function main() {
 }
 
 module.exports = (async function () {
-  await main().catch((e) => console.log(e));
+  await main().catch((e) => console.error("ERROR in blogposts.js:", e));
 
   //console.log( result )
 
