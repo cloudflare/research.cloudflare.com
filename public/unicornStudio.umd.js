@@ -37,7 +37,7 @@
   }
   function n() {
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (e) => {
-      let t = (16 * Math.random()) | 0;
+      let t = crypto.getRandomValues(new Uint8Array(1))[0] & 15;
       return ("x" === e ? t : (3 & t) | 8).toString(16).toUpperCase();
     });
   }
@@ -4819,8 +4819,14 @@
   function be() {
     return (
       "id-" +
-      Math.random().toString(36).substring(2, 15) +
-      Math.random().toString(36).substring(2, 15)
+      Array.from(crypto.getRandomValues(new Uint8Array(8)))
+        .map((b) => b.toString(36))
+        .join("")
+        .substring(0, 13) +
+      Array.from(crypto.getRandomValues(new Uint8Array(8)))
+        .map((b) => b.toString(36))
+        .join("")
+        .substring(0, 13)
     );
   }
   function Pe(e) {
