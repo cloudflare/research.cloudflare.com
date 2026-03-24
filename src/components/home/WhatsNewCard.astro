@@ -1,0 +1,34 @@
+---
+import { cn } from "@/lib/utils";
+
+import Badge from "../Badge.astro";
+import Icon from "../Icon.astro";
+
+interface Props {
+  className?: string;
+  title: string;
+  date: string;
+  link: string;
+  tags?: string[];
+}
+
+const { className, title, date, link, tags } = Astro.props as Props;
+---
+
+<a href={link} class={cn("border-2 border-page-border hover:border-blue group/card p-8 flex flex-col justify-between relative", className)}>
+  <div>
+    <div class="font-mono text-sm text-stack mb-4">{date}</div>
+    <h4 class="text-bizarre group-hover/card:text-baby-blue-eyes">{title}</h4>
+    <div class="mb-10"><slot /></div>
+  </div>
+  { tags && (
+    <div class="mt-auto flex gap-1 items-center">
+      {tags.map(tag => (
+        <Badge variant="blue">{tag}</Badge>
+      ))}
+    </div>
+  )}
+  <div class="opacity-0 group-hover/card:opacity-100 corner">
+    <Icon id="arrowRight" size={20} className="group-hover/card:text-white hover:group-hover/card:text-background" />
+  </div>
+</a>

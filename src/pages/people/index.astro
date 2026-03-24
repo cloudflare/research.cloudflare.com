@@ -1,0 +1,25 @@
+---
+import HeaderPeople from "@/components/HeaderPeople.astro";
+import InteriorLayout from "../../layouts/interior.astro";
+import Section from "@/components/Section.astro";
+import PersonCard from "@/components/PersonCard.astro";
+import { cn } from "@/lib/utils";
+import { getCollection } from 'astro:content';
+
+// get all people from the content collection
+const allPeople = await getCollection('people', ({ data }) => data.type === 'active');
+---
+
+<InteriorLayout metaTitle="People" metaDescription="Meet the scientists, engineers, and researchers at Cloudflare. Learn from the diverse team of experts dedicated to advancing internet security, privacy, and performance through innovative research and real-world implementation.">
+  <HeaderPeople />
+
+  <Section>
+    <div class={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 person-grid",
+      "[&>article]:p-8")}>
+      {allPeople.map(person =>(
+        <PersonCard image={person.data.avatar} name={person.data.title} role={person.data.position} slug={person.data.slug} />
+      ))}
+    </div>
+  </Section>
+
+</InteriorLayout>

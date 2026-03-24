@@ -1,0 +1,20 @@
+---
+import HeaderFast from "@/components/HeaderFast.astro";
+import InteriorLayout from "../../layouts/interior.astro";
+import Section from "@/components/Section.astro";
+import ArticleGrid from "@/components/ArticleGrid.astro";
+import { getArticlesByPillar } from "@/lib/getArticlesByPillar";
+
+const combinedArticles = await getArticlesByPillar('fast');
+---
+
+<InteriorLayout metaTitle="Fast Focus Area"
+  metaDescription="Driving innovation to create a faster internet. Discover how Cloudflare Research is optimizing web protocols and network architecture to eliminate bottlenecks and deliver instantaneous digital experiences at global scale."
+>
+  <HeaderFast />
+
+  <Section>
+    <ArticleGrid publications={combinedArticles} />
+  </Section>
+
+</InteriorLayout>

@@ -1,0 +1,20 @@
+---
+import { NavMenu } from "./NavigationMenu"
+---
+
+<div class="flex items-center justify-between py-4 px-3 sm:px-5">
+  <div class="shrink-0">
+    <a href="/">
+      <picture>
+        <source srcset="/images/logo.svg" media="(prefers-color-scheme: dark)" />
+        <img src="/images/logo--light.svg" alt="Cloudflare Research" class="h-8 sm:h-auto" width="191" height="32" />
+      </picture>
+    </a>
+  </div>
+  <nav class="flex-1 flex justify-end md:justify-end lg:justify-center">
+    <NavMenu client:only />
+  </nav>
+  <div class="hidden lg:block w-[197px] text-page-text text-right">
+    &nbsp;
+  </div>
+</div>

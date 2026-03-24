@@ -1,0 +1,33 @@
+---
+import HeaderFocusAreas from "@/components/HeaderFocusAreas.astro";
+import InteriorLayout from "../../layouts/interior.astro";
+import Section from "@/components/Section.astro";
+import ArticleGrid from "@/components/ArticleGrid.astro";
+import { getCollection } from "astro:content";
+import type { CollectionEntry } from "astro:content";
+
+// Fetch all publications and blog posts
+const publications = await getCollection('publications');
+const blogPosts = await getCollection('blog');
+
+// Combine and sort by date (newest first)
+const combinedArticles: (CollectionEntry<'publications'> | CollectionEntry<'blog'>)[] = [
+  ...publications,
+  ...blogPosts
+];
+
+combinedArticles.sort((a, b) => {
+  const dateA = a.collection === 'blog' ? a.data.date : new Date(a.data.year || 0, 0);
+  const dateB = b.collection === 'blog' ? b.data.date : new Date(b.data.year || 0, 0);
+  return dateB.getTime() - dateA.getTime();
+});
+---
+
+<InteriorLayout metaTitle="Fast Focus Area">
+  <HeaderFocusAreas />
+
+  <Section>
+    <ArticleGrid publications={combinedArticles} />
+  </Section>
+
+</InteriorLayout>

@@ -1,0 +1,15 @@
+---
+const { image, name, role, slug } = Astro.props;
+---
+
+<article>
+  <a href={`/people/${slug}`}>
+    <img src={`/images/people/${image}`} alt={name} class="aspect-square" />
+  </a>
+  <div class="pt-8">
+    <h3 class="mb-1 font-medium text-xl leading-none">
+      <a href={`/people/${slug}`} class="hover:underline">{name}</a>
+    </h3>
+    <p class="text-sm font-medium font-mono text-jumbo uppercase">{role}</p>
+  </div>
+</article>

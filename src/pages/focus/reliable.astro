@@ -1,0 +1,18 @@
+---
+import HeaderReliable from "@/components/HeaderReliable.astro";
+import InteriorLayout from "../../layouts/interior.astro";
+import Section from "@/components/Section.astro";
+import ArticleGrid from "@/components/ArticleGrid.astro";
+import { getArticlesByPillar } from "@/lib/getArticlesByPillar";
+
+const combinedArticles = await getArticlesByPillar('reliable');
+---
+
+<InteriorLayout metaTitle="Reliable Focus Area" metaDescription="Ensuring a stable and available Internet. Explore Cloudflare Research on robust distributed systems, secure time synchronization protocols, and the architecture that keeps global networks resilient at scale.">
+  <HeaderReliable />
+
+  <Section>
+    <ArticleGrid publications={combinedArticles} />
+  </Section>
+
+</InteriorLayout>

@@ -1,0 +1,20 @@
+---
+import HeaderMeasurable from "@/components/HeaderMeasurable.astro";
+import InteriorLayout from "../../layouts/interior.astro";
+import Section from "@/components/Section.astro";
+import ArticleGrid from "@/components/ArticleGrid.astro";
+import { getArticlesByPillar } from "@/lib/getArticlesByPillar";
+
+const combinedArticles = await getArticlesByPillar('measurable');
+---
+
+<InteriorLayout metaTitle="Measurable Focus Area"
+  metaDescription="Promoting accountability in Internet infrastructure. Explore Cloudflare Research on open standards, Certificate Transparency, and the tools making global systems verifiable, transparent, and measurable."
+>
+  <HeaderMeasurable />
+
+  <Section>
+    <ArticleGrid publications={combinedArticles} />
+  </Section>
+
+</InteriorLayout>

@@ -1,0 +1,119 @@
+// @ts-check
+import { defineConfig } from "astro/config";
+import tailwindcss from "@tailwindcss/vite";
+
+import react from "@astrojs/react";
+
+import cloudflare from "@astrojs/cloudflare";
+
+import mdx from "@astrojs/mdx";
+
+import sitemap from "@astrojs/sitemap";
+
+// https://astro.build/config
+export default defineConfig({
+  site: "https://research.cloudflare.com",
+  output: "static",
+  build: {
+    inlineStylesheets: "auto",
+  },
+  vite: {
+    plugins: [tailwindcss()],
+    build: {
+      cssMinify: true,
+      minify: "terser",
+      cssCodeSplit: true,
+      assetsInlineLimit: 4096,
+      rollupOptions: {
+        output: {
+          manualChunks: {
+            "react-vendor": ["react", "react-dom"],
+            "ui-components": [
+              "@radix-ui/react-dialog",
+              "@radix-ui/react-navigation-menu",
+            ],
+          },
+          assetFileNames: (assetInfo) => {
+            if (assetInfo.name && assetInfo.name.endsWith(".css")) {
+              return "assets/[name].[hash][extname]";
+            }
+            return "assets/[name].[hash][extname]";
+          },
+        },
+      },
+    },
+  },
+  integrations: [react(), mdx(), sitemap()],
+  adapter: cloudflare({
+    imageService: "cloudflare",
+    platformProxy: {
+      enabled: true,
+    },
+  }),
+  redirects: {
+    "/about/approach/": "/people",
+    "/about/story/": "/people",
+    "/about/people/": "/people",
+    "/about/people/armando-faz/": "/people/armando-faz-hernandez",
+    "/about/people/avani-wildani/": "/people/avani-wildani",
+    "/about/people/bas-westerbaan/": "/people/bas-westerbaan",
+    "/about/people/bob-halley/": "/people/bob-halley",
+    "/about/people/cefan-rubin/": "/people/cefan-rubin",
+    "/about/people/christopher-patton/": "/people/christopher-patton",
+    "/about/people/ethan-heilman/": "/people/ethan-heilman",
+    "/about/people/james-larisch/": "/people/james-larisch",
+    "/about/people/jonathan-hoyland/": "/people/jonathan-hoyland",
+    "/about/people/luke-valenta/": "/people/luke-valenta",
+    "/about/people/marwan-fayed/": "/people/marwan-fayed",
+    "/about/people/michael-rosenberg/": "/people/michael-rosenberg",
+    "/about/people/peter-wu/": "/people/peter-wu",
+    "/about/people/simon-newton/": "/people/simon-newton",
+    "/about/people/suleman-ahmad/": "/people/suleman-ahmad",
+    "/about/people/teresa-brooks-mejia/": "/people/teresa-brooks-mejia",
+    "/about/people/thibault-meunier/": "/people/thibault-meunier",
+    "/about/people/vania-goncalves/": "/people/vania-goncalves",
+    "/about/people/vasilis-giotsas/": "/people/vasilis-giotsas",
+    "/about/people/wesley-evans/": "/people/wesley-evans",
+    "/projects/": "/focus",
+    "/publications/": "/focus",
+    "/outreach/academic-programs/": "/people",
+    "/outreach/academic-programs/interns/": "/people",
+    "/outreach/academic-programs/interns/albert-gran/": "/people",
+    "/outreach/academic-programs/interns/alishah-chator/": "/people",
+    "/outreach/academic-programs/interns/arian-niaki/": "/people",
+    "/outreach/academic-programs/interns/ben-weintraub/": "/people",
+    "/outreach/academic-programs/interns/daniel-kuijsters/": "/people",
+    "/outreach/academic-programs/interns/deepak-maram/": "/people",
+    "/outreach/academic-programs/interns/diwen-xue/": "/people",
+    "/outreach/academic-programs/interns/goutam-tamvada/": "/people",
+    "/outreach/academic-programs/interns/hannah-davis/": "/people",
+    "/outreach/academic-programs/interns/ian-mcquoid/": "/people",
+    "/outreach/academic-programs/interns/innocent-obi/": "/people",
+    "/outreach/academic-programs/interns/isaac-khor/": "/people",
+    "/outreach/academic-programs/interns/jack-wampler/": "/people",
+    "/outreach/academic-programs/interns/jenny-blessing/": "/people",
+    "/outreach/academic-programs/interns/joao-leite/": "/people",
+    "/outreach/academic-programs/interns/josh-brown/": "/people",
+    "/outreach/academic-programs/interns/joshua-reynolds/": "/people",
+    "/outreach/academic-programs/interns/kyle-hogan/": "/people",
+    "/outreach/academic-programs/interns/lena-heimberger/": "/people",
+    "/outreach/academic-programs/interns/lenka-marekova/": "/people",
+    "/outreach/academic-programs/interns/marina-sanusi/": "/people",
+    "/outreach/academic-programs/interns/matthieu-gouel/": "/people",
+    "/outreach/academic-programs/interns/petros-gigis/": "/people",
+    "/outreach/academic-programs/interns/pierre-tholoniat/": "/people",
+    "/outreach/academic-programs/interns/prajjwal-gupta/": "/people",
+    "/outreach/academic-programs/interns/ram-sundararaman/": "/people",
+    "/outreach/academic-programs/interns/sudheesh-singanamalla/": "/people",
+    "/outreach/academic-programs/interns/talha-paracha/": "/people",
+    "/outreach/academic-programs/interns/thom-wiggers/": "/people",
+    "/outreach/academic-programs/interns/tim-alberdingkthijm/": "/people",
+    "/outreach/academic-programs/interns/vamsi-policharla/": "/people",
+    "/outreach/academic-programs/interns/varun-gandhi/": "/people",
+    "/outreach/academic-programs/interns/weitong-li/": "/people",
+    "/outreach/academic-programs/interns/yingchen-wang/": "/people",
+    "/outreach/academic-programs/interns/yoshimichi-nakatsuka/": "/people",
+    "/outreach/academic-programs/interns/yunfan-zhang/": "/people",
+    "/outreach/academic-programs/researchers/": "/people",
+  },
+});

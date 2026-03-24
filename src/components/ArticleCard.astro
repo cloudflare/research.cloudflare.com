@@ -1,0 +1,63 @@
+---
+import { type VariantProps } from "class-variance-authority";
+import Badge from "./Badge.astro";
+import ArticleHeading, { type typeClassNames } from "./ArticleHeading.astro";
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  authors?: CollectionEntry<'people'>[];
+  slug: string;
+  type: VariantProps<typeof typeClassNames>["type"];
+  date?: string;
+  year?: string;
+  title: string;
+  thumbnail?: string;
+  tags?: string[];
+  "data-tags"?: string;
+}
+
+const { authors, slug, type, date, year, title, thumbnail, tags } = Astro.props;
+const dataTags = Astro.props["data-tags"];
+
+// For blog posts, slug contains the full URL; for publications, it's just the ID
+const isBlogPost = type === 'blog';
+const linkUrl = isBlogPost ? slug : `/${slug}`;
+const linkTarget = isBlogPost ? "_blank" : undefined;
+const linkRel = isBlogPost ? "noopener noreferrer" : undefined;
+---
+
+<article class="p-8 flex flex-col justify-between article-card" data-tags={dataTags}>
+  <div class="flex-1">
+    <ArticleHeading type={type} date={date || ""} year={year || ""} />
+
+    <!-- title -->
+    <h3 class="leading-snug text-lg font-medium text-bizarre title">
+      <a href={linkUrl} target={linkTarget} rel={linkRel} class="hover:underline">
+        { title }
+      </a>
+    </h3>
+
+    <!-- authors (only show for publications, not blog posts) -->
+    {authors && type !== 'blog' && (
+      <div class="text-sm font-medium text-page-text-muted authors">
+        {authors.map((author, index) => (
+          <>{index > 0 && ", "}{author.data.type === 'external' ? (
+            <span>{author.data.title}</span>
+          ) : (
+            <a href={`/people/${author.id}`} class="hover:underline hover:text-bizarre">{author.data.title}</a>
+          )}</>
+        ))}
+      </div>
+    )}
+
+    <!-- thumbnail -->
+    { thumbnail && <img src={thumbnail} alt={title} class="thumbnail aspect-video object-cover" /> }
+  </div>
+
+  <!-- tags -->
+  { tags && (
+    <div class="flex flex-wrap gap-1">
+      {tags.map((tag, i) => <Badge key={i} color="blue">{tag}</Badge>)}
+    </div>
+  )}
+</article>

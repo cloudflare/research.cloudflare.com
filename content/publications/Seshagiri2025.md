@@ -1,0 +1,27 @@
+---
+title: "Rethinking the Networking Stack for Serverless Environments: A Sidecar Approach"
+year: 2025
+location: "2025 USENIX Annual Technical Conference (USENIX ATC 25), Santa Clara, CA, July 2025"
+authors:
+  - amogh-seshagiri
+  - avani-wildani
+  - marwan-fayed
+url: https://www.usenix.org/conference/atc25/presentation/seshagiri
+related_interests:
+  - distributed-systems
+  - networking
+pillar: fast
+metaDescription: "Sidecar-based networking architecture for serverless environments addressing cold-start latency, connection reuse, and security isolation challenges in modern serverless computing platforms."
+---
+
+Serverless platforms rely onlegacy networking stacks for communication and data movement. We quantitatively analyze
+the performance of these stacks and show their mismatch with
+highly consolidated, virtualized modern serverless environments, focusing on Firecracker, the most common serverless
+virtualization framework. As serverless applications grow in
+complexity and interaction, the resulting network bottleneck
+is a prime source of user-perceived, end-to-end latency. In this
+paper, we present a detailed vision of a new, sidecar-based
+networking stack for serverless environments. Our primary
+design goal is to provide low-overhead networking while
+maintaining existing security guarantees. We outline the research challenges in both the control and the data plane that
+the community needs to tackle before such a sidecar architecture can be used in practice.

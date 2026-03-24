@@ -1,0 +1,16 @@
+---
+import BaseLayout from "../layouts/base.astro";
+import Nav from "../components/Nav.astro";
+
+interface Props {
+	metaTitle?: string;
+	metaDescription?: string;
+}
+
+const {metaTitle = "", metaDescription = ""} = Astro.props;
+---
+
+<BaseLayout metaTitle={metaTitle} metaDescription={metaDescription}>
+  <div class="border-b border-page-border"><Nav /></div>
+  <slot />
+</BaseLayout>

@@ -1,0 +1,9 @@
+---
+import Icon from "./Icon.astro";
+const { href, description } = Astro.props;
+---
+
+<a href={href} title={description} class="text-sm lg:text-base text-page-text py-4 px-6 inline-flex justify-center items-center gap-2 border border-page-border rounded-full hover:bg-blue hover:border-blue hover:text-white group/button transition-color">
+  <slot />
+  <div class="relative group-hover/button:translate-x-[4px] group-hover/button:translate-y-[-4px] transition-transform text-alto dark:text-balticSea"><Icon id="arrowUpRight" /></div>
+</a>
