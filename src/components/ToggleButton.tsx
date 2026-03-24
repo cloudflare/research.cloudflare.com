@@ -17,7 +17,7 @@ const toggleButtonVariants = cva(
     defaultVariants: {
       variant: "toggledOff",
     },
-  },
+  }
 );
 
 const ToggleButton = ({
@@ -78,7 +78,7 @@ const ToggleButton = ({
     window.dispatchEvent(
       new CustomEvent("tagsChanged", {
         detail: { tags: newTags },
-      }),
+      })
     );
 
     setToggled((prev) => !prev);

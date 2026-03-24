@@ -12,12 +12,12 @@ export async function getArticlesByPillar(pillar: Pillar) {
   // Fetch publications and blog posts for this pillar
   const publications = await getCollection(
     "publications",
-    (publication) => publication.data.pillar === pillar,
+    (publication) => publication.data.pillar === pillar
   );
 
   const blogPosts = await getCollection(
     "blog",
-    (post) => post.data.pillar === pillar,
+    (post) => post.data.pillar === pillar
   );
 
   // Combine publications and blog posts
