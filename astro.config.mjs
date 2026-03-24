@@ -13,7 +13,7 @@ import sitemap from "@astrojs/sitemap";
 // https://astro.build/config
 export default defineConfig({
   site: "https://research.cloudflare.com",
-  output: "static",
+  output: "server",
   build: {
     inlineStylesheets: "auto",
   },
