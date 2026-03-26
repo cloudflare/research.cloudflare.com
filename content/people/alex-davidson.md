@@ -2,7 +2,7 @@
 title: Alex Davidson
 position: Research Engineer
 twitter: alxdavids
-avatar: alex-davidson.jpg
+avatar: alex-davidson.jpeg
 slug: alex-davidson
 type: alumni
 ---

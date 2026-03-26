@@ -2,8 +2,8 @@
 title: João Pedro Leite
 position: Research Engineer
 slug: joao-leite
-avatar: placeholder.png
-type: inactive
+avatar: joao-leite.jpg
+type: active
 status: current
 ---
 

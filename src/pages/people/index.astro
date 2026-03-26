@@ -7,7 +7,8 @@ import { cn } from "@/lib/utils";
 import { getCollection } from 'astro:content';
 
 // get all people from the content collection
-const allPeople = await getCollection('people', ({ data }) => data.type === 'active');
+const activePeople = await getCollection('people', ({ data }) => data.type === 'active');
+const alumni = await getCollection('people', ({ data }) => data.type === 'alumni');
 ---
 
 <InteriorLayout metaTitle="People" metaDescription="Meet the scientists, engineers, and researchers at Cloudflare. Learn from the diverse team of experts dedicated to advancing internet security, privacy, and performance through innovative research and real-world implementation.">
@@ -16,7 +17,19 @@ const allPeople = await getCollection('people', ({ data }) => data.type === 'act
   <Section>
     <div class={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 person-grid",
       "[&>article]:p-8")}>
-      {allPeople.map(person =>(
+      {activePeople.map(person =>(
+        <PersonCard image={person.data.avatar} name={person.data.title} role={person.data.position} slug={person.data.slug} />
+      ))}
+    </div>
+  </Section>
+
+  <Section>
+    <div class="border-b-2 border-page-border">
+      <h2 class="px-8 py-4 uppercase font-mono">Alumni</h2>
+    </div>
+    <div class={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 person-grid",
+      "[&>article]:p-8")}>
+      {alumni.map(person =>(
         <PersonCard image={person.data.avatar} name={person.data.title} role={person.data.position} slug={person.data.slug} />
       ))}
     </div>
