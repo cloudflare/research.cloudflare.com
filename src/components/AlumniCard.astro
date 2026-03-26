@@ -1,0 +1,13 @@
+---
+const { image, name, role, slug } = Astro.props;
+---
+
+<article>
+  <img src={`/images/people/${image}`} alt={name} class="aspect-square" />
+  <div class="pt-8">
+    <h3 class="mb-1 font-medium text-xl leading-tight">
+      {name}
+    </h3>
+    <p class="text-sm font-medium font-mono text-jumbo uppercase">{role}</p>
+  </div>
+</article>
