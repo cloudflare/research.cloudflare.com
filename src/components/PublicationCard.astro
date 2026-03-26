@@ -1,0 +1,50 @@
+---
+import Badge from "./Badge.astro";
+import ArticleHeading from "./ArticleHeading.astro";
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  publication: CollectionEntry<'publications'>;
+  authors?: CollectionEntry<'people'>[];
+  "data-tags"?: string;
+}
+
+const { publication, authors } = Astro.props;
+const dataTags = Astro.props["data-tags"];
+
+const year = publication.data.year?.toString() || "";
+const tags = publication.data.related_interests || [];
+---
+
+<article class="p-8 flex flex-col justify-between article-card" data-tags={dataTags}>
+  <div class="flex-1">
+    <ArticleHeading type="publication" date="" year={year} />
+
+    <!-- title -->
+    <h3 class="leading-snug text-lg font-medium text-bizarre title">
+      <a href={`/${publication.id}`} class="hover:underline">
+        {publication.data.title}
+      </a>
+    </h3>
+
+    <!-- authors -->
+    {authors && (
+      <div class="text-sm font-medium text-page-text-muted authors">
+        {authors.map((author, index) => (
+          <>{index > 0 && ", "}{author.data.type === 'external' ? (
+            <span>{author.data.title}</span>
+          ) : (
+            <a href={`/people/${author.id}`} class="hover:underline hover:text-bizarre">{author.data.title}</a>
+          )}</>
+        ))}
+      </div>
+    )}
+  </div>
+
+  <!-- tags -->
+  {tags.length > 0 && (
+    <div class="flex flex-wrap gap-1">
+      {tags.map((tag, i) => <Badge key={i} color="blue">{tag}</Badge>)}
+    </div>
+  )}
+</article>

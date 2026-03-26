@@ -1,0 +1,26 @@
+---
+import PresentationCard from "@/components/PresentationCard.astro";
+import {ToggleButton} from "@/components/ToggleButton.tsx";
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  presentations: CollectionEntry<'presentations'>[];
+}
+
+const { presentations } = Astro.props;
+
+---
+
+<!-- focus area cards -->
+<div id="publications-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+  {presentations.map(presentation => (
+    <PresentationCard type="presentation"
+      slug={presentation.data.youtube}
+      date=""
+      thumbnail={presentation.data.thumbnail}
+      year={presentation.data.year?.toString() || ""}
+      title={presentation.data.title}
+      tags={presentation.data.related_interests}
+      data-tags={presentation.data.related_interests?.join(',')} />
+  ))}
+</div>

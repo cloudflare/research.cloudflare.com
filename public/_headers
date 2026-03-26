@@ -1,0 +1,57 @@
+# Cache static assets for 1 year (immutable)
+/images/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/fonts/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.ttf
+  Cache-Control: public, max-age=31536000, immutable
+
+# Unicorn Studio - never changes, cache forever
+/unicornStudio.umd.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.css
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.svg
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.png
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.jpg
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.jpeg
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.webp
+  Cache-Control: public, max-age=31536000, immutable
+
+# Cache JSON data for 1 day
+/*.json
+  Cache-Control: public, max-age=86400, must-revalidate
+
+# Cache HTML pages for 1 hour with revalidation
+/*.html
+  Cache-Control: public, max-age=3600, must-revalidate
+
+# Cache root and main pages for 1 hour
+/
+  Cache-Control: public, max-age=3600, must-revalidate
+
+# Sitemap - cache for 1 day
+/sitemap*.xml
+  Cache-Control: public, max-age=86400, must-revalidate
+
+# Security headers for all pages
+/*
+  X-Frame-Options: DENY
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: strict-origin-when-cross-origin
+  Permissions-Policy: interest-cohort=()

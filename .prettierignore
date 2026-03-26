@@ -1,2 +1,3 @@
-*.min.css
-_site
+dist/
+.astro/
+.wrangler/

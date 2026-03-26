@@ -1,0 +1,16 @@
+---
+title: "Geo Key Manager"
+location: Real World Crypto Symposium 2018. Zurich, Switzerland. January 2018.
+year: 2018
+authors:
+  - nick-sullivan
+  - brendan-mcmillion
+url: https://rwc.iacr.org/2018/Slides/Sullivan.pdf
+related_interests:
+  - cryptography
+  - protocols
+pillar: safe
+metaDescription: "Feature giving customers control over geographic storage locations of private keys uploaded to Cloudflare, limiting key exposure to specific regions for enhanced security."
+---
+
+Geo Key Manager is a feature that gives customers unprecedented control over where their private keys are stored when uploaded to Cloudflare, limiting the exposure of their private keys to certain locations.

@@ -1,0 +1,18 @@
+---
+import HeaderSafe from "@/components/HeaderSafe.astro";
+import InteriorLayout from "../../layouts/interior.astro";
+import Section from "@/components/Section.astro";
+import ArticleGrid from "@/components/ArticleGrid.astro";
+import { getArticlesByPillar } from "@/lib/getArticlesByPillar";
+
+const combinedArticles = await getArticlesByPillar('safe');
+---
+
+<InteriorLayout metaTitle="Safe Focus Area" metaDescription="Creating production-quality security defenses for the modern web. Explore Cloudflare Research on network interference, advanced cryptography, and the protocols ensuring safe, global connectivity against emerging threats.">
+  <HeaderSafe />
+
+  <Section>
+    <ArticleGrid publications={combinedArticles} />
+  </Section>
+
+</InteriorLayout>

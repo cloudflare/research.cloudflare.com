@@ -1,0 +1,32 @@
+---
+import { cva, type VariantProps } from "class-variance-authority";
+
+const badgeClassNames = cva(
+  "inline-block border font-mono leading-6 px-2 rounded-[4px] font-mono text-xs",
+  {
+    variants: {
+      variant: {
+        default: "border-page-border-subtle text-page-text",
+        red: "border-red-500 text-red-500",
+        orange: "border-orange-500 text-orange-500",
+        yellow: "border-yellow-500 text-yellow-500",
+        green: "border-green-500 text-green-500",
+        blue: "border-blue-500 text-blue-500",
+        purple: "border-purple-500 text-purple-500",
+        white: "border-page-text text-page-text",
+      },
+    },
+    defaultVariants: {
+      variant: "default",
+    },
+  }
+);
+
+type BadgeProps = VariantProps<typeof badgeClassNames> & {
+  linkTo: string;
+};
+
+const { variant, linkTo } = Astro.props as BadgeProps;
+---
+
+{ linkTo ? <a href={linkTo} class={badgeClassNames({ variant })}><slot /></a> : <span class={badgeClassNames({ variant })}><slot /></span> }
