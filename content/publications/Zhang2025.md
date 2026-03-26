@@ -9,7 +9,7 @@ authors:
   - ana-klimovic
 url: https://yazhuozhang.com/assets/publication/socc25-rethinking-web-cache.pdf
 related_interests:
-  - ai
+  - AI
   - storage
 pillar: fast
 metaDescription: "Analysis of AI-generated traffic impact on web caching, proposing new cache design paradigm with lightweight filtering for human traffic and differentiated policies for AI agents."
