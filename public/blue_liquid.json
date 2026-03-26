@@ -161,7 +161,7 @@
     "dpi": 1.5,
     "scale": 1,
     "includeLogo": false,
-    "isProduction": false
+    "isProduction": true
   },
   "version": "2.0.1",
   "id": "rObni57XMM3yDggxB1ir"

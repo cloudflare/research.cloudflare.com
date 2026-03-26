@@ -19,25 +19,22 @@ import ButtonLink from "../ButtonLink.astro";
     <div class="rounded-4xl overflow-hidden xl:w-page absolute inset-0 z-[-2] md:z-0 md:relative md:h-[695px]">
       <div data-us-project-src="/blue_liquid.json" class="w-full h-full" style="min-width:1440px; height: 900px;"></div>
     </div>
-    <script is:inline src="/unicornStudio.umd.js" defer></script>
     <script is:inline>
-      // Wait for page to be interactive before initializing
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initUnicorn);
-      } else {
-        initUnicorn();
-      }
-
-      function initUnicorn() {
-        if (window.UnicornStudio) {
-          window.UnicornStudio.init()
-            .then(function(scenes) {
-              console.log('🦄', scenes);
-            })
-            .catch(function(err) {
-              console.error('🦄', err);
-            });
-        }
-      }
+      (function() {
+        var script = document.createElement('script');
+        script.src = '/unicornStudio.umd.js';
+        script.onload = function() {
+          if (window.UnicornStudio) {
+            window.UnicornStudio.init()
+              .then(function(scenes) {
+                console.log('🦄', scenes);
+              })
+              .catch(function(err) {
+                console.error('🦄', err);
+              });
+          }
+        };
+        document.head.appendChild(script);
+      })();
     </script>
 </header>
