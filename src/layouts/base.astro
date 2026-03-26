@@ -6,9 +6,10 @@ import "../styles/fonts.css"
 type Props = {
 	metaTitle?: string;
 	metaDescription?: string;
+	bodyClassName?: string;
 }
 
-const { metaTitle, metaDescription } = Astro.props;
+const { metaTitle, metaDescription, bodyClassName = '' } = Astro.props;
 ---
 
 <html lang="en">
@@ -39,8 +40,8 @@ const { metaTitle, metaDescription } = Astro.props;
 		<link rel="preload" href="/unicornStudio.umd.js" as="script">
 		<link rel="preload" href="/blue_liquid.json" as="fetch" crossorigin>
 	</head>
-	<body>
-		<main class="w-full max-w-page mx-auto md:dashed-borders">
+	<body class={bodyClassName || ''}>
+		<main class={`w-full max-w-page mx-auto ${bodyClassName !== 'home' ? 'md:dashed-borders' : ''}`}>
 			<slot />
 			<Footer />
 		</main>

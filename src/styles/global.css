@@ -346,6 +346,33 @@
 }
 
 @layer page {
+  @media (min-width: 768px) {
+    body.home main {
+      @apply relative;
+
+      &:before,
+      &:after {
+        content: "";
+        @apply block w-[2px] h-full absolute top-[100px] z-[-1];
+        background: url("/images/pattern--dashed-border--light.svg") left top
+          repeat-y;
+
+        @media (prefers-color-scheme: dark) {
+          background: url("/images/pattern--dashed-border.svg") left top
+            repeat-y;
+        }
+      }
+
+      &:before {
+        @apply left-0;
+      }
+
+      &:after {
+        @apply right-0;
+      }
+    }
+  }
+
   .bg-grid {
     background: url("/images/pattern--large-grid.svg") center 10px repeat;
     background-opacity: 25%;
