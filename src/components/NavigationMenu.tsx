@@ -58,6 +58,7 @@ export function NavMenu() {
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [focusAreasOpen, setFocusAreasOpen] = React.useState(false);
+  const [aboutOpen, setAboutOpen] = React.useState(false);
 
   // Lock body scroll when mobile menu is open
   React.useEffect(() => {
@@ -139,13 +140,34 @@ export function NavMenu() {
                 Presentations
               </a>
 
-              <a
-                href="/people"
-                className="text-lg font-medium text-page-text hover:text-baby-blue-eyes transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                People
-              </a>
+              {/* About Section */}
+              <div>
+                <button
+                  onClick={() => setAboutOpen(!aboutOpen)}
+                  className="text-lg font-medium text-page-text hover:text-baby-blue-eyes transition-colors w-full text-left flex items-center justify-between"
+                >
+                  About Us
+                  <span className="text-sm pr-3">{aboutOpen ? "−" : "+"}</span>
+                </button>
+                {aboutOpen && (
+                  <div className="mt-4 space-y-4 pl-4">
+                    <a
+                      href="/people"
+                      className="block text-base font-medium text-page-text hover:text-baby-blue-eyes transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      People
+                    </a>
+                    <a
+                      href="/philosophy"
+                      className="block text-base font-medium text-page-text hover:text-baby-blue-eyes transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Philosophy
+                    </a>
+                  </div>
+                )}
+              </div>
 
               <a
                 href={CONSTANTS.CLOUDFLARE_JOBS}
@@ -188,12 +210,13 @@ export function NavMenu() {
           </NavigationMenuItem>
 
           <NavigationMenuItem>
-            <NavigationMenuLink
-              asChild
-              className={navigationMenuTriggerStyle()}
-            >
-              <a href="/people">People</a>
-            </NavigationMenuLink>
+            <NavigationMenuTrigger>About Us</NavigationMenuTrigger>
+            <NavigationMenuContent>
+              <ul className="grid gap-2 w-[200px] z-(--z-nav) relative p-2">
+                <ListItem title="People" href="/people" />
+                <ListItem title="Philosophy" href="/philosophy" />
+              </ul>
+            </NavigationMenuContent>
           </NavigationMenuItem>
 
           <NavigationMenuItem>
@@ -223,9 +246,11 @@ function ListItem({
           <div className="text-sm leading-none font-medium subnav-title">
             {title}
           </div>
-          <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
-            {children}
-          </p>
+          {children && (
+            <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
+              {children}
+            </p>
+          )}
         </a>
       </NavigationMenuLink>
     </li>
