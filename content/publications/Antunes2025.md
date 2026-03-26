@@ -14,7 +14,7 @@ authors:
   - erez-zadok
 doi: 10.1016/j.softx.2025.102161
 related_interests:
-  - workload analysis
+  - Workload Analysis
   - storage
 pillar: measurable
 metaDescription: "Open-source library for detecting knee and elbow points in performance curves, incorporating established algorithms like Kneedle and L-method, plus Z-Method for multi-knee detection in complex curves."

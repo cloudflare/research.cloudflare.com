@@ -25,21 +25,21 @@ export const blogMappings: Record<string, BlogMapping> = {
   },
   "http://blog.cloudflare.com/measuring-network-connections-at-scale": {
     pillar: "measurable",
-    tags: ["measurement", "tcp"],
+    tags: ["measurement", "TCP"],
   },
   "http://blog.cloudflare.com/detecting-cgn-to-reduce-collateral-damage": {
     pillar: "measurable",
-    tags: ["measurement", "ipv4"],
+    tags: ["measurement", "IPv4"],
   },
   "http://blog.cloudflare.com/how-to-build-your-own-vpn-or-the-history-of-warp":
     {
       pillar: "private",
-      tags: ["vpn", "privacy"],
+      tags: ["VPN", "privacy"],
     },
   "http://blog.cloudflare.com/defending-quic-from-acknowledgement-based-ddos-attacks":
     {
       pillar: "safe",
-      tags: ["security", "ddos", "quic"],
+      tags: ["security", "DDoS", "quic"],
     },
   "http://blog.cloudflare.com/so-long-and-thanks-for-all-the-fish-how-to-escape-the-linux-networking-stack":
     {
@@ -64,7 +64,7 @@ export const blogMappings: Record<string, BlogMapping> = {
   },
   "http://blog.cloudflare.com/introducing-tld-insights-on-cloudflare-radar": {
     pillar: "measurable",
-    tags: ["measurement", "dns"],
+    tags: ["measurement", "DNS"],
   },
   "http://blog.cloudflare.com/experience-of-data-at-scale": {
     pillar: "measurable",
@@ -116,7 +116,7 @@ export const blogMappings: Record<string, BlogMapping> = {
   "http://blog.cloudflare.com/open-sourcing-openpubkey-ssh-opkssh-integrating-single-sign-on-with-ssh":
     {
       pillar: "safe",
-      tags: ["security", "ssh"],
+      tags: ["security", "SSH"],
     },
   "http://blog.cloudflare.com/lattice-crypto-primer": {
     pillar: "private",
@@ -130,7 +130,7 @@ export const blogMappings: Record<string, BlogMapping> = {
   "http://blog.cloudflare.com/an-early-look-at-cryptographic-watermarks-for-ai-generated-content":
     {
       pillar: "private",
-      tags: ["cryptography", "ai"],
+      tags: ["cryptography", "AI"],
     },
   "http://blog.cloudflare.com/post-quantum-zero-trust": {
     pillar: "private",
@@ -142,7 +142,7 @@ export const blogMappings: Record<string, BlogMapping> = {
   },
   "http://blog.cloudflare.com/topaz-policy-engine-design": {
     pillar: "safe",
-    tags: ["security", "dns"],
+    tags: ["security", "DNS"],
   },
   "http://blog.cloudflare.com/another-look-at-pq-signatures": {
     pillar: "private",
@@ -162,7 +162,7 @@ export const blogMappings: Record<string, BlogMapping> = {
   },
   "http://blog.cloudflare.com/tcp-resets-timeouts": {
     pillar: "measurable",
-    tags: ["measurement", "tcp"],
+    tags: ["measurement", "TCP"],
   },
   "http://blog.cloudflare.com/nists-first-post-quantum-standards": {
     pillar: "private",
@@ -171,7 +171,7 @@ export const blogMappings: Record<string, BlogMapping> = {
   "http://blog.cloudflare.com/introducing-automatic-ssl-tls-securing-and-simplifying-origin-connectivity":
     {
       pillar: "safe",
-      tags: ["security", "ssl"],
+      tags: ["security", "SSL"],
     },
   "http://blog.cloudflare.com/harnessing-office-chaos": {
     pillar: "private",
@@ -238,7 +238,7 @@ export const blogMappings: Record<string, BlogMapping> = {
   },
   "http://blog.cloudflare.com/securing-origin-connectivity": {
     pillar: "safe",
-    tags: ["security", "ssl"],
+    tags: ["security", "SSL"],
   },
   "http://blog.cloudflare.com/post-quantum-tunnel": {
     pillar: "private",
@@ -266,7 +266,7 @@ export const blogMappings: Record<string, BlogMapping> = {
   },
   "http://blog.cloudflare.com/cloudflare-pages-on-ipfs": {
     pillar: "reliable",
-    tags: ["web3", "ipfs"],
+    tags: ["web3", "IPFS"],
   },
   "http://blog.cloudflare.com/ipfs-measurements": {
     pillar: "measurable",
@@ -290,7 +290,7 @@ export const blogMappings: Record<string, BlogMapping> = {
   },
   "http://blog.cloudflare.com/announcing-ddr-support": {
     pillar: "private",
-    tags: ["privacy", "dns"],
+    tags: ["privacy", "DNS"],
   },
   "http://blog.cloudflare.com/post-quantum-future": {
     pillar: "private",
@@ -383,7 +383,7 @@ export const blogMappings: Record<string, BlogMapping> = {
   },
   "http://blog.cloudflare.com/ssl-tls-recommender": {
     pillar: "safe",
-    tags: ["security", "ssl"],
+    tags: ["security", "SSL"],
   },
   "http://blog.cloudflare.com/spectre-research-with-tu-graz": {
     pillar: "safe",

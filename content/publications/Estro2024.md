@@ -14,7 +14,7 @@ authors:
   - erez-zadok
 doi: 10.1016/j.peva.2024.102410
 related_interests:
-  - workload analysis
+  - Workload Analysis
   - storage
 pillar: fast
 metaDescription: "Framework for identifying key points in Miss Ratio Curves for storage cache simulation using efficient hash-based sampling, curve simplification, and Z-Method multi-knee detection algorithm."

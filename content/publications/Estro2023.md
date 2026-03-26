@@ -14,7 +14,7 @@ authors:
   - erez-zadok
 doi: 10.1109/MASCOTS59514.2023.10387545
 related_interests:
-  - workload analysis
+  - Workload Analysis
   - storage
 pillar: fast
 metaDescription: "Multi-stage framework for identifying key points in Miss Ratio Curves using hash-based sampling and Z-Method, a new multi-knee detection algorithm for storage cache simulation."
