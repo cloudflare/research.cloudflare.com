@@ -33,12 +33,10 @@ const { metaTitle, metaDescription, bodyClassName = '' } = Astro.props;
 		<meta property="og:image:type" content="image/jpeg" />
 
 		<!-- Preload critical font files -->
-		<link rel="preload" href="/fonts/Inter/Inter-VariableFont_opsz,wght.ttf" as="font" type="font/ttf" crossorigin>
-		<link rel="preload" href="/fonts/Roboto_Mono/RobotoMono-VariableFont_wght.ttf" as="font" type="font/ttf" crossorigin>
+		<link rel="preload" href="/fonts/Inter/Inter-VariableFont_opsz,wght.woff2" as="font" type="font/woff2" crossorigin>
+		<link rel="preload" href="/fonts/Roboto_Mono/RobotoMono-VariableFont_wght.woff2" as="font" type="font/woff2" crossorigin>
 
-		<!-- Preload critical assets -->
-		<link rel="preload" href="/unicornStudio.umd.js" as="script">
-		<link rel="preload" href="/blue_liquid.json" as="fetch" crossorigin>
+		<slot name="head" />
 	</head>
 	<body class={bodyClassName || ''}>
 		<main class={`w-full max-w-page mx-auto ${bodyClassName !== 'home' ? 'md:dashed-borders' : ''}`}>

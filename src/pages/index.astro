@@ -25,6 +25,10 @@ const recentPublications = (
 	bodyClassName="home"
 	metaDescription="Cloudflare Research explores the future of the internet by bridging the gap between academic theory and real-world implementation. Discover our work in cryptography, networking, security, and privacy to help build a better, more secure web."
 >
+	<Fragment slot="head">
+		<link rel="preload" href="/unicornStudio.umd.js" as="script">
+		<link rel="preload" href="/blue_liquid.json" as="fetch" crossorigin>
+	</Fragment>
 	<!-- header -->
 	<Header />
 

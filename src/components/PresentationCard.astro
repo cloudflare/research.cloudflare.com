@@ -40,7 +40,7 @@ const dataTags = Astro.props["data-tags"];
     )}
 
     <!-- thumbnail -->
-    { thumbnail && <a href={slug} target="_blank"><img src={thumbnail} alt={title} class="thumbnail aspect-video object-cover" /></a> }
+    { thumbnail && <a href={slug} target="_blank"><img src={thumbnail} alt={title} class="thumbnail aspect-video object-cover" loading="lazy" decoding="async" /></a> }
   </div>
 
   <!-- tags -->

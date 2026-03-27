@@ -35,7 +35,7 @@ const personPublications = await getCollection('publications', (pub) => {
   <Section>
     <NarrowContent>
       <div class="grid grid-cols-1 md:grid-cols-[315px_1fr]">
-      <div class="relative md:-top-3 md:-left-8 mb-6 md:mb-0"><img src={`/images/people/${person.data.avatar}`} alt={person.data.title} class="w-full sm:max-w-[315px] mx-auto md:mx-0" /></div>
+      <div class="relative md:-top-3 md:-left-8 mb-6 md:mb-0"><img src={`/images/people/${person.data.avatar}`} alt={person.data.title} class="w-full sm:max-w-[315px] mx-auto md:mx-0" decoding="async" /></div>
 
       <div class="mt-0 md:mt-4 pb-12">
         <h1 class="heading text-3xl sm:text-4xl md:text-5xl mb-2">{person.data.title}</h1>

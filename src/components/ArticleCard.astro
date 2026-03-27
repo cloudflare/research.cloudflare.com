@@ -51,7 +51,7 @@ const linkRel = isBlogPost ? "noopener noreferrer" : undefined;
     )}
 
     <!-- thumbnail -->
-    { thumbnail && <img src={thumbnail} alt={title} class="thumbnail aspect-video object-cover" /> }
+    { thumbnail && <img src={thumbnail} alt={title} class="thumbnail aspect-video object-cover" loading="lazy" decoding="async" /> }
   </div>
 
   <!-- tags -->
