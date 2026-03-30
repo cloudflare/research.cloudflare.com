@@ -57,7 +57,7 @@ const uniqueTags = Array.from(
   <strong class="text-page-text inline-block py-2 px-[18px]">Filter by:</strong>
   {
     uniqueTags.map(tag => (
-      <ToggleButton color="blue" defaultValue={false} tagSlug={tag.slug} client:only="react">{tag.name}</ToggleButton>
+      <ToggleButton color="blue" defaultValue={false} tagSlug={tag.slug} client:load>{tag.name}</ToggleButton>
     ))
   }
 </div>
