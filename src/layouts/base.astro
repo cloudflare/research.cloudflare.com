@@ -1,7 +1,7 @@
 ---
 import Footer from "../components/Footer.astro"
 import "../styles/global.css"
-import "../styles/fonts.css"
+import { Font } from "astro:assets"
 
 type Props = {
 	metaTitle?: string;
@@ -32,9 +32,8 @@ const { metaTitle, metaDescription, bodyClassName = '' } = Astro.props;
 		<meta property="og:image:alt" content="Cloudflare Research" />
 		<meta property="og:image:type" content="image/jpeg" />
 
-		<!-- Preload critical font files -->
-		<link rel="preload" href="/fonts/Inter/Inter-VariableFont_opsz,wght.woff2" as="font" type="font/woff2" crossorigin>
-		<link rel="preload" href="/fonts/Roboto_Mono/RobotoMono-VariableFont_wght.woff2" as="font" type="font/woff2" crossorigin>
+		<Font cssVariable="--font-inter" preload />
+		<Font cssVariable="--font-roboto-mono" preload />
 
 		<slot name="head" />
 	</head>

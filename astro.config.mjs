@@ -1,5 +1,5 @@
 // @ts-check
-import { defineConfig } from "astro/config";
+import { defineConfig, fontProviders } from "astro/config";
 import tailwindcss from "@tailwindcss/vite";
 
 import react from "@astrojs/react";
@@ -12,6 +12,54 @@ import sitemap from "@astrojs/sitemap";
 export default defineConfig({
   site: "https://research.cloudflare.com",
   output: "static",
+  fonts: [
+    {
+      provider: fontProviders.local(),
+      name: "Inter",
+      cssVariable: "--font-inter",
+      options: {
+        variants: [
+          {
+            src: [
+              "./src/assets/fonts/Inter/Inter-VariableFont_opsz,wght.woff2",
+            ],
+            weight: "100 900",
+            style: "normal",
+          },
+          {
+            src: [
+              "./src/assets/fonts/Inter/Inter-Italic-VariableFont_opsz,wght.woff2",
+            ],
+            weight: "100 900",
+            style: "italic",
+          },
+        ],
+      },
+    },
+    {
+      provider: fontProviders.local(),
+      name: "Roboto Mono",
+      cssVariable: "--font-roboto-mono",
+      options: {
+        variants: [
+          {
+            src: [
+              "./src/assets/fonts/Roboto_Mono/RobotoMono-VariableFont_wght.woff2",
+            ],
+            weight: "100 700",
+            style: "normal",
+          },
+          {
+            src: [
+              "./src/assets/fonts/Roboto_Mono/RobotoMono-Italic-VariableFont_wght.woff2",
+            ],
+            weight: "100 700",
+            style: "italic",
+          },
+        ],
+      },
+    },
+  ],
   build: {
     inlineStylesheets: "auto",
   },
