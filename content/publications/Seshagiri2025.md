@@ -1,15 +1,15 @@
 ---
 title: "Rethinking the Networking Stack for Serverless Environments: A Sidecar Approach"
-year: 2025
-location: "2025 USENIX Annual Technical Conference (USENIX ATC 25), Santa Clara, CA, July 2025"
+year: 2024
+location: "Proceedings of the 2024 ACM Symposium on Cloud Computing"
 authors:
-  - amogh-seshagiri
+  - vishwanath-seshagiri
+  - abhinav-gupta
+  - vahab-jabrayilov
   - avani-wildani
-  - marwan-fayed
-url: https://www.usenix.org/conference/atc25/presentation/seshagiri
+  - Kostis Kaffes
 related_interests:
-  - distributed-systems
-  - networking
+  - storage
 pillar: fast
 metaDescription: "Sidecar-based networking architecture for serverless environments addressing cold-start latency, connection reuse, and security isolation challenges in modern serverless computing platforms."
 ---
@@ -23,5 +23,4 @@ is a prime source of user-perceived, end-to-end latency. In this
 paper, we present a detailed vision of a new, sidecar-based
 networking stack for serverless environments. Our primary
 design goal is to provide low-overhead networking while
-maintaining existing security guarantees. We outline the research challenges in both the control and the data plane that
-the community needs to tackle before such a sidecar architecture can be used in practice.
+maintaining existing security guarantees. We outline the research challenges in both the control and the data plane that the community needs to tackle before such a sidecar architecture can be used in practice.
