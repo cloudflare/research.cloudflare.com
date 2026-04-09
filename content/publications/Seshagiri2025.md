@@ -7,7 +7,8 @@ authors:
   - abhinav-gupta
   - vahab-jabrayilov
   - avani-wildani
-  - Kostis Kaffes
+  - kostis-kaffes
+doi: 10.1145/3698038.3698561
 related_interests:
   - storage
 pillar: fast
