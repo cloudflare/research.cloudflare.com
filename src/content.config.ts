@@ -9,6 +9,19 @@ import { blogLoader } from "./loaders/blog";
 import { z } from "astro/zod";
 
 // 4. Define your collection(s)
+const site = defineCollection({
+  loader: file("./content/site.toml"),
+  schema: z.object({
+    featuredResearch: z.object({
+      publication: reference("publications"),
+      title: z.string(),
+      description: z.string(),
+      link: z.string(),
+      buttonLabel: z.string().default("Read the Full Article"),
+    }),
+  }),
+});
+
 const people = defineCollection({
   loader: glob({ pattern: "**/*.md", base: "./content/people" }),
   schema: z.object({
@@ -89,4 +102,11 @@ const blog = defineCollection({
 });
 
 // 5. Export a single `collections` object to register your collection(s)
-export const collections = { people, publications, tags, presentations, blog };
+export const collections = {
+  site,
+  people,
+  publications,
+  tags,
+  presentations,
+  blog,
+};

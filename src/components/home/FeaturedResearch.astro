@@ -1,6 +1,10 @@
 ---
 import Icon from "../Icon.astro";
 import SeeMore from "../SeeMore.astro";
+import { getCollection } from "astro:content";
+
+const [siteSettings] = await getCollection("site");
+const { title, description, link, buttonLabel } = siteSettings.data.featuredResearch;
 ---
 
 <section class="interior-content border-b-2 border-page-border connector-bl connector-br">
@@ -12,11 +16,11 @@ import SeeMore from "../SeeMore.astro";
   </div>
   <div class="px-8 md:px-4 lg:px-12 py-10">
     <div class="font-mono text-sm text-stack mb-4">Featured Research</div>
-    <a href="/galicer2025" class="mb-8 block group/link">
-      <h1 class="heading inline group-hover/link:text-blue text-2xl sm:text-3xl lg:text-4xl">Auditing Key Transparency</h1>
+    <a href={link} class="mb-8 block group/link">
+      <h1 class="heading inline group-hover/link:text-blue text-2xl sm:text-3xl lg:text-4xl">{title}</h1>
     </a>
-    <p>WhatsApp's 2023 deployment of key transparency reduces reliance on centralized servers for distributing end-to-end encryption keys. This research explores Cloudflare's integration to audit WhatsApp's key transparency data structure in a live production environment.</p>
-    <SeeMore href="/galicer2025">Read the Full Article</SeeMore>
+    <p>{description}</p>
+    <SeeMore href={link}>{buttonLabel}</SeeMore>
   </div>
   <div class="relative">
     <picture>

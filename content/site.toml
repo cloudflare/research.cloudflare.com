@@ -1,0 +1,6 @@
+[main.featuredResearch]
+publication = "galicer2025"
+title = "Auditing Key Transparency"
+description = "WhatsApp's 2023 deployment of key transparency reduces reliance on centralized servers for distributing end-to-end encryption keys. This research explores Cloudflare's integration to audit WhatsApp's key transparency data structure in a live production environment."
+link = "/galicer2025"
+buttonLabel = "Read the Full Article"
