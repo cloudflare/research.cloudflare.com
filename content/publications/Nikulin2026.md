@@ -1,6 +1,7 @@
 ---
 title: "Unweight: Lossless MLP Weight Compression for LLM Inference"
 year: 2026
+date: 2026-04-17
 location: "Cloudflare Technical Report Cf-TR-2026.04.v1, April 2026"
 authors:
   - ivan-nikulin

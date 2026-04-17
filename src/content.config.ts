@@ -73,6 +73,7 @@ const publications = defineCollection({
   schema: z.object({
     title: z.string(),
     year: z.number().optional(),
+    date: z.coerce.date().optional(),
     location: z.string().optional(),
     authors: z.array(reference("people")).optional(),
     url: z.string().optional(),

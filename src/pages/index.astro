@@ -12,13 +12,17 @@ import { CONSTANTS } from "@/lib/constants";
 import SeeMore from "@/components/SeeMore.astro";
 import { linkDescriptions } from "@/data/seo";
 
-// Pull in 3 cards from 2025 or 2026 Publications
+// Pull in 3 most recent publications (2025+), sorted by date
 const recentPublications = (
 	await getCollection(
 		"publications",
 		({ data }) => data.year && data.year >= 2025,
 	)
-).slice(0, 3);
+).sort((a, b) => {
+	const dateA = a.data.date || new Date(a.data.year || 0, 11, 31);
+	const dateB = b.data.date || new Date(b.data.year || 0, 11, 31);
+	return dateB.getTime() - dateA.getTime();
+}).slice(0, 3);
 ---
 
 <BaseLayout

@@ -1,6 +1,6 @@
 [main.featuredResearch]
-publication = "galicer2025"
-title = "Auditing Key Transparency"
-description = "WhatsApp's 2023 deployment of key transparency reduces reliance on centralized servers for distributing end-to-end encryption keys. This research explores Cloudflare's integration to audit WhatsApp's key transparency data structure in a live production environment."
-link = "/galicer2025"
+publication = "nikulin2026"
+title = "Unweight: Lossless MLP Weight Compression for LLM Inference"
+description = "Unweight is a lossless compression system for LLM weight tensors achieving 1.44x compression on BF16 MLP weights with GPU-native decompression for inference on NVIDIA Hopper GPUs (H100, H200)."
+link = "/nikulin2026"
 buttonLabel = "Read the Full Article"
