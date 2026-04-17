@@ -17,8 +17,14 @@ const combinedArticles: (CollectionEntry<'publications'> | CollectionEntry<'blog
 ];
 
 combinedArticles.sort((a, b) => {
-  const dateA = a.collection === 'blog' ? a.data.date : new Date(a.data.year || 0, 0);
-  const dateB = b.collection === 'blog' ? b.data.date : new Date(b.data.year || 0, 0);
+  const dateA =
+    a.collection === 'blog'
+      ? a.data.date
+      : a.data.date || new Date(a.data.year || 0, 11, 31);
+  const dateB =
+    b.collection === 'blog'
+      ? b.data.date
+      : b.data.date || new Date(b.data.year || 0, 11, 31);
   return dateB.getTime() - dateA.getTime();
 });
 ---
