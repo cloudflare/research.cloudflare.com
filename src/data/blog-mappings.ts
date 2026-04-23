@@ -421,4 +421,12 @@ export const blogMappings: Record<string, BlogMapping> = {
     pillar: "reliable",
     tags: ["web3"],
   },
+  "http://blog.cloudflare.com/the-quantum-menace": {
+    pillar: "safe",
+    tags: ["research", "cryptography", "post-quantum"],
+  },
+  "http://blog.cloudflare.com/introducing-circl": {
+    pillar: "safe",
+    tags: ["research", "cryptography", "post-quantum"],
+  },
 };
