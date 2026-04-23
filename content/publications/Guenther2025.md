@@ -3,10 +3,11 @@ title: "Hybrid Obfuscated Key Exchange and KEMs"
 year: 2025
 location: "CRYPTO 2025"
 authors:
-  - Felix Günther
-  - Michael Rosenberg
-  - Douglas Stebila
-  - Shannon Veitch
+  - felix-guenther
+  - michael-rosenberg
+  - douglas-stebila
+  - shannon-veitch
+url: https://eprint.iacr.org/2025/408
 doi: 10.1007/978-3-032-01881-6_18
 related_interests:
   - cryptography
