@@ -13,7 +13,7 @@
     "format": "prettier --write ."
   },
   "dependencies": {
-    "@astrojs/cloudflare": "^13.1.2",
+    "@astrojs/cloudflare": "^13.1.10",
     "@astrojs/mdx": "^5.0.1",
     "@astrojs/react": "^5.0.0",
     "@astrojs/sitemap": "^3.7.1",
