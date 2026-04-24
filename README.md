@@ -41,7 +41,7 @@ The website for Cloudflare Research, showcasing our work in building a better In
 - **Styling**: [Tailwind CSS v4](https://tailwindcss.com/)
 - **Content**: Astro Content Collections for type-safe content management
 - **Icons**: Custom SVG sprite system via lemon-lime-svgs
-- **Deployment**: Cloudflare Pages
+- **Deployment**: Cloudflare Workers
 
 ## 🧞 Commands
 
@@ -95,4 +95,4 @@ The site is fully responsive with:
 
 ## 🚢 Deployment
 
-The site is deployed on Cloudflare Pages with automatic deployments from the main branch.
+The site is deployed on Cloudflare Workers with automatic deployments (via Workers Builds) from the main branch.
