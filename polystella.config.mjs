@@ -1,4 +1,5 @@
-// @ts-check
+import "dotenv/config";
+
 /**
  * PolyStella configuration for the Cloudflare Research site.
  *
@@ -33,6 +34,7 @@ const config = {
   // Glob patterns relative to `sourceDir`. A file is considered for
   // translation if it matches at least one `include` and no `exclude`.
   // include: ["**/*.md", "**/*.mdx"],
+  include: ["publications/Antunes2025.md"],
   // exclude: [],
   //
   // Staged-rollout example — translate publications first:
@@ -81,21 +83,20 @@ const config = {
   // },
 
   // ─── AI provider ─────────────────────────────────────────────────────
-  // Becomes required once M5 wires the AI translator.
   //
   // Workers AI:
-  // provider: {
-  //   kind: "workers-ai",
-  //   accountId: process.env.CF_ACCOUNT_ID,
-  //   apiToken: process.env.WORKERS_AI_API_TOKEN,
-  //   model: "@cf/meta/llama-3.1-8b-instruct",
-  //   // …or per-locale, with a `default` fallback:
-  //   // model: {
-  //   //   default: "@cf/meta/llama-3.1-8b-instruct",
-  //   //   "ja-JP": "@cf/qwen/qwen2.5-7b-instruct",
-  //   // },
-  //   // endpoint: "https://...",            // override the default WAI endpoint
-  // },
+  provider: {
+    kind: "workers-ai",
+    accountId: process.env.CF_ACCOUNT_ID ?? "",
+    apiToken: process.env.WORKERS_AI_API_TOKEN ?? "",
+    model: "@cf/meta/llama-3.1-8b-instruct",
+    // …or per-locale, with a `default` fallback:
+    // model: {
+    //   default: "@cf/meta/llama-3.1-8b-instruct",
+    //   "ja-JP": "@cf/qwen/qwen2.5-7b-instruct",
+    // },
+    // endpoint: "https://...",            // override the default WAI endpoint
+  },
   //
   // Anthropic:
   // provider: {
@@ -114,6 +115,27 @@ const config = {
   // you'd rather declare terminology directly in this config.
   glossary: {
     file: "./i18n/glossaries/{locale}.yaml",
+  },
+
+  // ─── Prompt customisation ────────────────────────────────────────────
+  // The package ships a generic "You are a professional translator."
+  // opener. Use `context` to add a single line of site-/domain-specific
+  // framing right after that opener, before the source/target locale
+  // line. Keep it short and prescriptive — the model treats it as part
+  // of its role definition, not as content to translate.
+  prompt: {
+    context:
+      "Specialise in technical research content from the Cloudflare Research portal: cryptography, networking, distributed systems, and applied security.",
+  },
+
+  // ─── Debug: preview-output directory ─────────────────────────────────
+  // Until the cache + route-injection layers land, translated MDX is
+  // discarded after each successful build. Setting `debug.previewDir`
+  // dumps every (locale, file) result to disk so you can diff/spot-check
+  // the translations. Path is relative to the Astro project root and is
+  // gitignored. Remove this block once the cache layer takes over.
+  debug: {
+    previewDir: "./i18n/.preview",
   },
 
   // ─── Hand-written translation overrides ──────────────────────────────

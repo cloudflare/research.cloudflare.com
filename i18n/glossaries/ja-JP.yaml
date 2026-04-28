@@ -9,7 +9,7 @@
 # Bump `version` whenever you make a meaningful edit so the cache
 # invalidation is intentional and reviewable in version control.
 
-version: "2025-04"
+version: "2026-04"
 
 # Terms that must NOT be translated. They appear verbatim in output.
 # Japanese technical writing routinely keeps protocol and crypto

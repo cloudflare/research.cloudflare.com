@@ -130,6 +130,42 @@ export const polystellaOptionsSchema = z
     // --- Translation overrides (§3.10) ---
     overridesDir: z.string().default("./i18n/overrides"),
 
+    // --- Prompt customisation ---
+    // The package ships a deliberately generic system prompt
+    // ("You are a professional translator."). Sites that want to bias
+    // the model toward a domain (research, marketing, legal, …) can
+    // supply a `context` string here; it's appended as a separate
+    // system-prompt line right after the role declaration. Future
+    // knobs (e.g. extra format rules) will land in this same namespace.
+    prompt: z
+      .object({
+        context: z
+          .string()
+          .optional()
+          .describe(
+            "Site-/domain-specific guidance appended to the default 'You are a professional translator.' opener. Example: 'Specialise in technical research content from the Cloudflare Research portal.'",
+          ),
+      })
+      .default({}),
+
+    // --- Debugging / inspection ---
+    // Until the cache + route-injection layers land, translated MDX is
+    // discarded after the build hook logs its preview line. Setting
+    // `debug.previewDir` writes each successful translation to
+    // `<previewDir>/<locale>/<sourceRelativePath>` for human inspection.
+    // Treat the directory as ephemeral — it'll be superseded by the
+    // real cache/output path once that work lands.
+    debug: z
+      .object({
+        previewDir: z
+          .string()
+          .optional()
+          .describe(
+            "If set, write translated MDX to this directory (one file per locale × source) for inspection. Ephemeral; replaced by the cache layer.",
+          ),
+      })
+      .default({}),
+
     // --- Behavior ---
     fallback: z.enum(["default-locale", "skip"]).default("default-locale"),
     concurrency: z.number().int().positive().default(4),
