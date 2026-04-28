@@ -16,6 +16,18 @@
     "src",
     "components"
   ],
+  "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "dependencies": {
+    "picomatch": "^4.0.2",
+    "s3mini": "^0.9.4"
+  },
+  "devDependencies": {
+    "@types/picomatch": "^4.0.0",
+    "vitest": "^3.0.0"
+  },
   "peerDependencies": {
     "astro": "^6.0.0"
   }

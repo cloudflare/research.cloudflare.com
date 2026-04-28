@@ -9,6 +9,7 @@ import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
 
 import polystella from "polystella";
+import polystellaConfig from "./polystella.config.mjs";
 
 // https://astro.build/config
 export default defineConfig({
@@ -84,15 +85,7 @@ export default defineConfig({
       },
     },
   },
-  integrations: [
-    react(),
-    mdx(),
-    sitemap(),
-    polystella({
-      defaultLocale: "en",
-      locales: ["pt-BR", "ja-JP"],
-    }),
-  ],
+  integrations: [react(), mdx(), sitemap(), polystella(polystellaConfig)],
   redirects: {
     "/about/approach/": "/people",
     "/about/story/": "/people",

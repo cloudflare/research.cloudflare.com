@@ -1,17 +1,15 @@
 import { z } from "astro/zod";
 
 /**
- * PolyStella options schema (M2.1).
- *
+ * PolyStella options schema.
  *
  * Validation strategy:
  *   - `defaultLocale` and `locales` are strictly required (the integration
  *     cannot do anything useful without them).
- *   - `r2` and `provider` are zod-optional at this stage. They become
- *     strictly required at the point of consumption (M6 for R2, M5 for
- *     the provider). This keeps M1–M4 (dry-run / parse / glossary work)
- *     unblocked while §0 prerequisites are still being provisioned in
- *     parallel.
+ *   - `r2` and `provider` are zod-optional. They become strictly required
+ *     at their point of consumption — `provider` when M5 wires the AI
+ *     translator, `r2` when M6 wires real cache fetches — so dry-run /
+ *     parse / glossary work can proceed without credentials provisioned.
  *   - All other fields have sensible defaults.
  */
 
@@ -49,7 +47,8 @@ const workersAiProviderSchema = z.object({
   endpoint: z.string().url().optional(),
   /**
    * Either a single model id, or a per-locale map with a `default` key.
-   * Engineering plan §1: the resolved model is part of the cache key.
+   * The resolved model id is part of the cache key, so changing it
+   * invalidates that locale's cached translations.
    */
   model: z.union([
     z.string().min(1),
@@ -118,10 +117,10 @@ export const polystellaOptionsSchema = z
     noTranslateBehavior: z.enum(["fallback", "404"]).default("fallback"),
     rewriteInternalLinks: z.boolean().default(true),
 
-    // --- Storage (zod-optional at M2; required at M6) ---
+    // --- Storage (required when M6 wires real R2 access) ---
     r2: r2OptionsSchema.optional(),
 
-    // --- Provider (zod-optional at M2; required at M5) ---
+    // --- Provider (required when M5 wires the AI translator) ---
     provider: providerSchema.optional(),
 
     // --- Glossary ---
@@ -183,6 +182,6 @@ export function resolveOptions(raw: unknown): PolyStellaResolvedOptions {
     })
     .join("\n");
   throw new Error(
-    `[polystella] invalid options:\n${issues}\n\nSee .windsurf/plans/polystella-rfc-6fe9a6.md §6.1 for the full options reference.`,
+    `[polystella] invalid options:\n${issues}\n\nSee polystella.config.mjs (or your project's PolyStella config) for the full options reference.`,
   );
 }
