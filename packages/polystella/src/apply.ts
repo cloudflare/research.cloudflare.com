@@ -17,7 +17,8 @@ import { inlineSpan, visitTranslatableBlocks } from "./traverse.js";
  *   becomes `\[citation]` on stringify, and `S&P` becomes `S\&P`. There
  *   is no user-facing knob to disable these escapes, and accepting them
  *   would mean the no-replacement round-trip can never be byte-identical
- *   (failing M3.4 by design).
+ *   (which we explicitly require: parsing a doc and applying no
+ *   translations must return the source unchanged).
  *
  *   By using mdast `position.offset`s — which `remark-parse` populates
  *   for every node — we can replace just the source spans we care about
@@ -25,12 +26,13 @@ import { inlineSpan, visitTranslatableBlocks } from "./traverse.js";
  *   untouched character byte-for-byte from the source. The empty-map
  *   case becomes trivially `return source`.
  *
- *   Trade-off: when a translation IS applied to a body block, the
- *   replacement is plain text — any inline markdown formatting in the
- *   source block (bold, italic, links inside the paragraph) is lost in
- *   that block's output. This matches the v0.1 plain-text limitation
- *   already documented in `traverse.ts`. Restoring inline-formatting
- *   fidelity for translated blocks is a v0.2 concern.
+ *   Because both the extractor and the applier target the children's
+ *   inline range (not the whole block), a translation may contain its
+ *   own inline markdown — `**bold**`, `_italic_`, `` `code` ``, or
+ *   `[link](url)` — and those markers re-parse as real Strong /
+ *   Emphasis / InlineCode / Link nodes. The block-level prefix
+ *   (`# ` for headings, `- ` for list items, `> ` for blockquotes)
+ *   sits outside the splice range and is preserved untouched.
  */
 export function applyTranslations(
   ast: Root,

@@ -10,7 +10,7 @@ import { unified } from "unified";
  * The parser recognises:
  *   - YAML frontmatter as a first-class `yaml` AST node (so frontmatter
  *     values can be located, translated, and written back at the same
- *     position by M3.3 — they are NOT stripped).
+ *     position by the applier — they are NOT stripped).
  *   - GFM extensions: tables, strikethrough, task-list items, autolinks,
  *     and footnotes. The publications corpus uses tables and autolinks.
  *
@@ -28,9 +28,9 @@ import { unified } from "unified";
 
 /**
  * Build a fresh `unified` processor pre-loaded with PolyStella's
- * markdown plugin chain. Exposed so M3.3's applier can attach
- * `remark-stringify` to a processor that recognises the same syntax
- * extensions used at parse time.
+ * markdown plugin chain. Exposed so callers (e.g. an AST-based
+ * stringifier) can attach further plugins to a processor that
+ * recognises the same syntax extensions used at parse time.
  */
 export function createMarkdownProcessor() {
   return unified()

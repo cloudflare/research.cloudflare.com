@@ -13,23 +13,23 @@ import { createHash } from "node:crypto";
 export interface HashInput {
   /**
    * The canonical body string. Currently the raw file bytes (UTF-8);
-   * once the M3 parser lands this becomes the parsed-then-restringified
+   * once the parser is wired in this becomes the parsed-then-restringified
    * body, so cosmetic whitespace changes won't bust the cache.
    */
   body: string;
   /**
    * Frontmatter values selected by the per-glob rules in
-   * `polystella({ frontmatter })`. Empty `{}` until the M3 parser populates it.
+   * `polystella({ frontmatter })`. Empty `{}` until the parser populates it.
    */
   frontmatter: Record<string, unknown>;
   /**
    * SHA-256 hex of the locale's glossary YAML, or empty string when no
-   * glossary is configured. Populated when M4 lands.
+   * glossary is configured. Populated once glossaries are wired in.
    */
   glossaryHash: string;
   /**
    * Resolved model id for this locale (e.g. `@cf/meta/llama-3.1-8b-instruct`).
-   * Populated when M5 lands.
+   * Populated once provider resolution is wired in.
    */
   modelId: string;
 }

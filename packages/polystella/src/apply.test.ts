@@ -11,7 +11,8 @@ describe("applyTranslations", () => {
     const output = applyTranslations(ast, new Map(), source);
 
     // Position-based splicing means an empty translations map is a no-op
-    // and we return the source string itself. M3.4 covers the full corpus.
+    // and we return the source string itself. The corpus round-trip test
+    // exercises this on every publication.
     expect(output).toBe(source);
   });
 
@@ -110,8 +111,7 @@ describe("applyTranslations — end-to-end with formatted translations", () => {
   // containing markdown markers (bold, italic, code, links) splices in
   // cleanly, AND when the output is re-parsed the AST contains real
   // formatting nodes (Strong, Emphasis, InlineCode, Link) — not escaped
-  // literal text. This is the behaviour we need before M5 wires real
-  // translation calls.
+  // literal text. This is what real translation calls will rely on.
 
   const noOpts = { sourcePath: "test.md", frontmatter: {} };
 

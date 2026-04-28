@@ -7,16 +7,16 @@ import { extractSegments } from "./extract.js";
 import { parseMarkdown } from "./parse.js";
 
 /**
- * M3.4 — Identity round-trip on the publications corpus.
+ * Identity round-trip on the publications corpus.
  *
  * For every `content/publications/*.md` file in the workspace, run:
  *   parseMarkdown → extractSegments (collect, don't replace)
- *                 → applyTranslations(empty map)
+ *                 → applyTranslations (with empty Map)
  *                 → assert output === source
  *
- * Any divergence is a parser/serializer config bug to fix here, not in a
- * later milestone where it would be much harder to disentangle from
- * translation-related changes.
+ * Any divergence is a parser/serializer config bug, and we want to catch
+ * it here rather than once translation-related changes are layered on
+ * top, where it would be much harder to disentangle.
  *
  * The file list is generated dynamically at module-load time so the test
  * automatically covers any future publications added to the corpus.
@@ -31,7 +31,7 @@ const publicationFiles = readdirSync(PUBLICATIONS_DIR)
   .filter((name) => name.endsWith(".md"))
   .sort();
 
-describe("M3.4 — publications corpus round-trip", () => {
+describe("publications corpus round-trip", () => {
   it("finds publication files to test", () => {
     // Sanity: if this fails, the path-resolution above is wrong and every
     // other assertion below is meaningless.

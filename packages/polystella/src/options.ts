@@ -7,9 +7,10 @@ import { z } from "astro/zod";
  *   - `defaultLocale` and `locales` are strictly required (the integration
  *     cannot do anything useful without them).
  *   - `r2` and `provider` are zod-optional. They become strictly required
- *     at their point of consumption — `provider` when M5 wires the AI
- *     translator, `r2` when M6 wires real cache fetches — so dry-run /
- *     parse / glossary work can proceed without credentials provisioned.
+ *     at their point of consumption — `provider` once the AI translator
+ *     is wired in, `r2` once real cache fetches are wired in — so
+ *     dry-run / parse / glossary work can proceed without credentials
+ *     provisioned.
  *   - All other fields have sensible defaults.
  */
 
@@ -117,10 +118,10 @@ export const polystellaOptionsSchema = z
     noTranslateBehavior: z.enum(["fallback", "404"]).default("fallback"),
     rewriteInternalLinks: z.boolean().default(true),
 
-    // --- Storage (required when M6 wires real R2 access) ---
+    // --- Storage (required once real R2 access is wired in) ---
     r2: r2OptionsSchema.optional(),
 
-    // --- Provider (required when M5 wires the AI translator) ---
+    // --- Provider (required once the AI translator is wired in) ---
     provider: providerSchema.optional(),
 
     // --- Glossary ---

@@ -27,15 +27,16 @@ export {
 /**
  * PolyStella — AI-driven content localization for Astro.
  *
- * v0.1: standalone-mode pilot.
+ * Standalone-mode pilot integration.
  *
  * Current behaviour:
  *   - options validated at `astro:config:setup`,
  *   - source tree walked at `astro:build:start`,
  *   - per-(file, locale) R2 cache keys computed and logged (dry-run).
  *
- * Real R2 fetches, AI translation, and route injection arrive in later
- * milestones (M3 parser, M4 glossary, M5 provider, M6 R2 cache, …).
+ * Real R2 fetches, AI translation, and route injection are wired up
+ * incrementally as the parser, glossary, provider, and R2 cache layers
+ * land.
  */
 export default function polystella(
   options: PolyStellaOptions,
@@ -85,9 +86,9 @@ export default function polystella(
             for (const locale of resolved!.locales) {
               const hash = computeSourceHash({
                 body,
-                frontmatter: {}, // populated by the M3 parser
-                glossaryHash: "", // populated when M4 lands
-                modelId: "", // populated when M5 lands
+                frontmatter: {}, // populated once the parser is wired in
+                glossaryHash: "", // populated once glossaries are wired in
+                modelId: "", // populated once provider resolution is wired in
               });
               const key = buildR2Key({
                 locale,
