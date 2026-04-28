@@ -28,6 +28,7 @@
     "lemon-lime-svgs": "^2.0.1",
     "lucide-react": "^0.562.0",
     "motion": "^12.37.0",
+    "polystella": "workspace:*",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "sharp": "^0.34.5",

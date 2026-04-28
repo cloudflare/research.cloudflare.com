@@ -8,6 +8,8 @@ import mdx from "@astrojs/mdx";
 
 import sitemap from "@astrojs/sitemap";
 
+import polystella from "polystella";
+
 // https://astro.build/config
 export default defineConfig({
   site: "https://research.cloudflare.com",
@@ -82,7 +84,15 @@ export default defineConfig({
       },
     },
   },
-  integrations: [react(), mdx(), sitemap()],
+  integrations: [
+    react(),
+    mdx(),
+    sitemap(),
+    polystella({
+      defaultLocale: "en",
+      locales: ["pt-BR", "ja-JP"],
+    }),
+  ],
   redirects: {
     "/about/approach/": "/people",
     "/about/story/": "/people",
