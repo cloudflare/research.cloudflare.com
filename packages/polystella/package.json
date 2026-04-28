@@ -22,9 +22,15 @@
   },
   "dependencies": {
     "picomatch": "^4.0.2",
-    "s3mini": "^0.9.4"
+    "remark-frontmatter": "^5.0.0",
+    "remark-gfm": "^4.0.1",
+    "remark-parse": "^11.0.0",
+    "s3mini": "^0.9.4",
+    "unified": "^11.0.5",
+    "yaml": "^2.8.3"
   },
   "devDependencies": {
+    "@types/mdast": "^4.0.4",
     "@types/picomatch": "^4.0.0",
     "vitest": "^3.0.0"
   },
