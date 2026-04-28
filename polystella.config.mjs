@@ -105,24 +105,16 @@ const config = {
   // },
 
   // ─── Glossary ────────────────────────────────────────────────────────
-  // Per-locale terminology rules. Pick one of two shapes:
+  // Per-locale terminology rules. The integration loads one YAML per
+  // locale from `./i18n/glossary/<locale>.yaml`, hashes the contents,
+  // and folds that hash into each translated file's cache key — so a
+  // glossary edit invalidates only the affected locale's translations.
   //
-  // (a) File-based: one YAML per locale, looked up by template.
-  // glossary: {
-  //   file: "./i18n/glossary/{locale}.yaml",
-  // },
-  //
-  // (b) Inline: declare directly in this config.
-  // glossary: {
-  //   inline: {
-  //     "pt-BR": {
-  //       version: "2025-01",
-  //       doNotTranslate: ["Cloudflare", "Workers", "R2"],
-  //       preferredTranslations: { "edge": "borda" },
-  //       notes: "Use Brazilian Portuguese spelling.",
-  //     },
-  //   },
-  // },
+  // Inline glossaries are also supported via `{ inline: {...} }` if
+  // you'd rather declare terminology directly in this config.
+  glossary: {
+    file: "./i18n/glossaries/{locale}.yaml",
+  },
 
   // ─── Hand-written translation overrides ──────────────────────────────
   // Files placed under this directory always win over machine translation.

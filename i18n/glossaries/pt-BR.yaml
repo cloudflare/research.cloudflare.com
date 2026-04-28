@@ -1,0 +1,143 @@
+# Cloudflare Research site — pt-BR translation glossary.
+#
+# This file pins the terminology rules the translator must follow when
+# producing the Brazilian Portuguese version of pages on this site.
+# It is hashed into each translated file's cache key, so editing it
+# invalidates pt-BR translations on the next build (only pt-BR — other
+# locales are unaffected).
+#
+# Bump `version` whenever you make a meaningful edit so the cache
+# invalidation is intentional and reviewable in version control.
+
+version: "2025-04"
+
+# Terms that must NOT be translated. They appear verbatim in output.
+# Group by family so future edits stay tidy; the loader normalises this
+# to a deduplicated, ascending-sorted list before hashing — comments
+# and ordering here have no effect on the cache key.
+doNotTranslate:
+  # ─── Cloudflare brand and products ─────────────────────────────────
+  - Cloudflare
+  - Workers
+  - Workers AI
+  - Pages
+  - R2
+  - KV
+  - D1
+  - Durable Objects
+  - Hyperdrive
+  - Queues
+  - Vectorize
+  - WARP
+  - Zero Trust
+  - Magic Transit
+  - Magic WAN
+  - Argo
+  - Spectrum
+  - Stream
+  - Privacy Pass
+  - Turnstile
+  - Radar
+
+  # ─── Network protocols and standards ───────────────────────────────
+  - HTTP
+  - HTTPS
+  - HTTP/2
+  - HTTP/3
+  - QUIC
+  - TCP
+  - UDP
+  - IP
+  - IPv4
+  - IPv6
+  - TLS
+  - DTLS
+  - DNS
+  - DNSSEC
+  - BGP
+  - WebRTC
+  - SCTP
+  - SMTP
+  - SSH
+  - SNI
+  - ECH
+  - NAT
+  - CDN
+  - VPN
+  - DDoS
+  - WAF
+  - PKI
+  - CA
+
+  # ─── Cryptographic primitives ──────────────────────────────────────
+  - SHA-256
+  - SHA-3
+  - AES
+  - RSA
+  - ECDSA
+  - EdDSA
+  - Ed25519
+  - X25519
+  - SIDH
+  - SIKE
+  - Kyber
+  - Dilithium
+  - Falcon
+  - SPHINCS+
+  - OPRF
+  - VOPRF
+  - HMAC
+  - HKDF
+  - PRF
+  - PRG
+  - PRP
+  - MAC
+  - HSM
+  - ZK
+  - ZKP
+  - SNARK
+  - STARK
+  - FHE
+  - MPC
+  - PSI
+  - OT
+  - GC
+
+  # ─── Conferences and venues ────────────────────────────────────────
+  - USENIX
+  - NDSS
+  - SIGCOMM
+  - NSDI
+  - OSDI
+  - SOSP
+  - IMC
+  - PETS
+  - PoPETs
+  - CCS
+  - Crypto
+  - Eurocrypt
+  - PKC
+  - TCC
+  - Asiacrypt
+  - FOCS
+  - STOC
+
+# Source-language → preferred translation. The translator should prefer
+# these renderings over its default choice. Keep the list short and
+# focused on terms where the default is wrong or inconsistent — adding
+# everyday vocabulary here just bloats the prompt.
+preferredTranslations:
+  edge: borda
+  blog post: post do blog
+  research paper: artigo de pesquisa
+  publication: publicação
+  publications: publicações
+  presentation: apresentação
+  keynote: palestra principal
+
+# Free-text instructions appended verbatim to the translator prompt.
+notes: |
+  Use Brazilian Portuguese spelling and conventions throughout. The tone
+  is academic and neutral — this is a research site, not marketing
+  copy. Prefer the formal "você" register for prose. Keep author names,
+  paper titles in cited bibliography, and code identifiers verbatim.
