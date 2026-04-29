@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { z } from "astro/zod";
 import { parse as parseYaml } from "yaml";
-import type { PolyStellaResolvedOptions } from "./options.js";
+import type { PolyStellaResolvedOptions } from "../config/options.js";
 
 /**
  * Validated, normalised contents of a single locale's glossary.
@@ -169,9 +169,7 @@ function validateGlossary(raw: unknown, context: string): Glossary {
         return `  • ${p}: ${issue.message}`;
       })
       .join("\n");
-    throw new Error(
-      `[polystella] invalid glossary at ${context}:\n${issues}`,
-    );
+    throw new Error(`[polystella] invalid glossary at ${context}:\n${issues}`);
   }
   const data = parsed.data;
   return {
@@ -196,7 +194,6 @@ function sortedRecord(rec: Record<string, string>): Record<string, string> {
 
 function isNodeNotFoundError(err: unknown): boolean {
   return (
-    err instanceof Error &&
-    (err as NodeJS.ErrnoException).code === "ENOENT"
+    err instanceof Error && (err as NodeJS.ErrnoException).code === "ENOENT"
   );
 }

@@ -1,5 +1,5 @@
-import type { Segment } from "./extract.js";
-import type { Glossary } from "./glossary.js";
+import type { Segment } from "../parsing/extract.js";
+import type { Glossary } from "../glossary/glossary.js";
 
 /**
  * The prompt-construction contract: PolyStella asks the model for a

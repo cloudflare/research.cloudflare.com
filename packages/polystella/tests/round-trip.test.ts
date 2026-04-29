@@ -2,9 +2,9 @@ import { readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { applyTranslations } from "./apply.js";
-import { extractSegments } from "./extract.js";
-import { parseMarkdown } from "./parse.js";
+import { applyTranslations } from "../src/parsing/apply.js";
+import { extractSegments } from "../src/parsing/extract.js";
+import { parseMarkdown } from "../src/parsing/parse.js";
 
 /**
  * Identity round-trip on the publications corpus.

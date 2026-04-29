@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { computeSourceHash } from "./hash.js";
+import { computeSourceHash } from "../src/storage/hash.js";
 
 const baseInput = {
   body: "# Hello\n\nA paragraph.\n",

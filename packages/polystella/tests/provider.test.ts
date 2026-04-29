@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import type { Segment } from "./extract.js";
-import { EMPTY_GLOSSARY } from "./glossary.js";
+import type { Segment } from "../src/parsing/extract.js";
+import { EMPTY_GLOSSARY } from "../src/glossary/glossary.js";
 import {
   createTranslator,
   resolveModelId,
   translateBatch,
   type Translator,
-} from "./provider.js";
+} from "../src/translation/provider.js";
 
 /**
  * Build a fetch stub that returns a single canned response. Each test

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { extractSegments } from "./extract.js";
-import { parseMarkdown } from "./parse.js";
+import { extractSegments } from "../src/parsing/extract.js";
+import { parseMarkdown } from "../src/parsing/parse.js";
 
 const noFrontmatterRules = { sourcePath: "test.md", frontmatter: {} };
 

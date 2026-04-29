@@ -3,10 +3,6 @@ import "dotenv/config";
 /**
  * PolyStella configuration for the Cloudflare Research site.
  *
- * Imported by `astro.config.mjs`. Keeping it here means the Astro config
- * stays focused on Astro's own concerns and this file is the one place
- * you go to tune translation behaviour.
- *
  * Every available option is listed below. Required ones are uncommented
  * and filled in with the values this site uses; optional ones are
  * commented out with their defaults so you can see the full surface at a
@@ -71,16 +67,16 @@ const config = {
   // Becomes required once M6 wires real R2 access. While we're in
   // dry-run, this can be omitted entirely.
   //
-  // r2: {
-  //   accountId: process.env.CF_ACCOUNT_ID,
-  //   bucket: "research-i18n-cache",
-  //   accessKeyId: process.env.R2_ACCESS_KEY_ID,
-  //   secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-  //   prefix: "i18n/",                       // default: "i18n/"
-  //   // endpoint: "https://<accountId>.eu.r2.cloudflarestorage.com",
-  //   // readOnly: false,                    // skip writes; useful for staging
-  //   // keepLastN: 5,                       // pruning per (locale, sourcePath); set to false to disable
-  // },
+  r2: {
+    accountId: process.env.CF_ACCOUNT_ID,
+    bucket: "research-i18n-cache",
+    accessKeyId: process.env.R2_ACCESS_KEY_ID,
+    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+    prefix: "i18n/", // default: "i18n/"
+    // endpoint: "https://<accountId>.eu.r2.cloudflarestorage.com",
+    // readOnly: false,                    // skip writes; useful for staging
+    // keepLastN: 5,                       // pruning per (locale, sourcePath); set to false to disable
+  },
 
   // ─── AI provider ─────────────────────────────────────────────────────
   //

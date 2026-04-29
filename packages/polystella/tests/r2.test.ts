@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildR2Key, createR2Client } from "./r2.js";
+import { buildR2Key, createR2Client } from "../src/storage/r2.js";
 
 const TEST_HASH = "a1b2c3d4e5f6";
 

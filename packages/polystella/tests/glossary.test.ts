@@ -9,8 +9,8 @@ import {
   hashGlossary,
   loadGlossaries,
   type Glossary,
-} from "./glossary.js";
-import type { PolyStellaResolvedOptions } from "./options.js";
+} from "../src/glossary/glossary.js";
+import type { PolyStellaResolvedOptions } from "../src/config/options.js";
 
 /**
  * Build a minimal `PolyStellaResolvedOptions` with sensible defaults so

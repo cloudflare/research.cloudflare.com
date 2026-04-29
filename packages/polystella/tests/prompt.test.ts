@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { Segment } from "./extract.js";
-import { EMPTY_GLOSSARY, type Glossary } from "./glossary.js";
-import { buildPrompt, parseResponse } from "./prompt.js";
+import type { Segment } from "../src/parsing/extract.js";
+import { EMPTY_GLOSSARY, type Glossary } from "../src/glossary/glossary.js";
+import { buildPrompt, parseResponse } from "../src/translation/prompt.js";
 
 const sampleSegments: Segment[] = [
   { id: "fm:title", text: "An apology for outdated cryptography" },

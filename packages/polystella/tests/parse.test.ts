@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseMarkdown } from "./parse.js";
+import { parseMarkdown } from "../src/parsing/parse.js";
 
 describe("parseMarkdown", () => {
   it("produces an mdast Root with heading + paragraph for plain markdown", () => {
@@ -28,9 +28,14 @@ describe("parseMarkdown", () => {
   });
 
   it("captures YAML frontmatter as a `yaml` node (not stripped, not a thematic break)", () => {
-    const source = ["---", "title: Foo", "tags: [a, b]", "---", "", "# Body"].join(
-      "\n",
-    );
+    const source = [
+      "---",
+      "title: Foo",
+      "tags: [a, b]",
+      "---",
+      "",
+      "# Body",
+    ].join("\n");
     const ast = parseMarkdown(source);
 
     expect(ast.children[0]).toMatchObject({
@@ -46,12 +51,7 @@ describe("parseMarkdown", () => {
   });
 
   it("parses GFM tables as `table` nodes (not flattened to paragraphs)", () => {
-    const source = [
-      "| a | b |",
-      "| - | - |",
-      "| 1 | 2 |",
-      "",
-    ].join("\n");
+    const source = ["| a | b |", "| - | - |", "| 1 | 2 |", ""].join("\n");
     const ast = parseMarkdown(source);
 
     expect(ast.children[0]?.type).toBe("table");

@@ -1,6 +1,6 @@
-import type { Segment } from "./extract.js";
-import type { Glossary } from "./glossary.js";
-import type { PolyStellaResolvedOptions } from "./options.js";
+import type { Segment } from "../parsing/extract.js";
+import type { Glossary } from "../glossary/glossary.js";
+import type { PolyStellaResolvedOptions } from "../config/options.js";
 import { buildPrompt, parseResponse } from "./prompt.js";
 
 /**
