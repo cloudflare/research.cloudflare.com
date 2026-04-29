@@ -47,11 +47,11 @@ const config = {
   // frontmatter keys that should be translated. Frontmatter keys not
   // listed here are passed through verbatim.
   //
-  //   frontmatter: {
-  //     "publications/**": ["title", "abstract"],
-  //     "people/**": ["bio"],
-  //     "tags/**": ["title", "description"],
-  //   },
+  frontmatter: {
+    "publications/**": ["title", "metaDescription", "related_interests"],
+    //"people/**": ["bio"],
+    //"tags/**": ["title", "description"],
+  },
   // frontmatter: {},
 
   // ─── Standalone-mode routing ─────────────────────────────────────────
@@ -89,12 +89,11 @@ const config = {
     kind: "workers-ai",
     accountId: process.env.CF_ACCOUNT_ID ?? "",
     apiToken: process.env.WORKERS_AI_API_TOKEN ?? "",
-    model: "@cf/meta/llama-3.1-8b-instruct",
     // …or per-locale, with a `default` fallback:
-    // model: {
-    //   default: "@cf/meta/llama-3.1-8b-instruct",
-    //   "ja-JP": "@cf/qwen/qwen2.5-7b-instruct",
-    // },
+    model: {
+      default: "@cf/meta/llama-3.1-8b-instruct",
+      "ja-JP": "@cf/qwen/qwen2.5-coder-32b-instruct",
+    },
     // endpoint: "https://...",            // override the default WAI endpoint
   },
   //

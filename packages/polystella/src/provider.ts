@@ -126,7 +126,7 @@ function createWorkersAITranslator(
         );
       }
       const data = (await res.json()) as {
-        result?: { response?: string };
+        result?: { response?: unknown };
         success?: boolean;
         errors?: unknown[];
       };
@@ -137,13 +137,36 @@ function createWorkersAITranslator(
           )}`,
         );
       }
-      const text = data.result?.response;
-      if (typeof text !== "string") {
-        throw new Error(
-          `[polystella] unexpected Workers AI response shape: result.response missing or non-string`,
-        );
+      const response = data.result?.response;
+
+      // Standard shape: response is the model's raw text. parseResponse
+      // strips code fences and parses the JSON downstream.
+      if (typeof response === "string") return response;
+
+      // Some WAI models (observed: @cf/qwen/qwen2.5-coder-32b-instruct)
+      // detect JSON-output prompts and pre-parse the model's response
+      // server-side, returning result.response as an already-parsed
+      // object. Round-trip it through JSON.stringify so parseResponse
+      // sees a string and can validate the segment-id contract
+      // uniformly across providers. This is strictly a win — it
+      // sidesteps any code-fence/preamble quirks for those models.
+      if (response !== null && typeof response === "object") {
+        return JSON.stringify(response);
       }
-      return text;
+
+      // Anything else (null, undefined, number, …) is genuinely
+      // unexpected. Dump the envelope so the operator can see what
+      // came back; caps at ~800 chars to keep build logs readable.
+      const dump = JSON.stringify(data);
+      const preview =
+        dump.length > 800
+          ? `${dump.slice(0, 800)}\n... [truncated, total length ${
+              dump.length
+            }]`
+          : dump;
+      throw new Error(
+        `[polystella] unexpected Workers AI response shape (model="${modelId}"): result.response missing or of unsupported type "${typeof response}". Raw response was:\n${preview}`,
+      );
     },
   };
 }

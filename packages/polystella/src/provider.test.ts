@@ -194,6 +194,36 @@ describe("Workers AI translator", () => {
       /unexpected Workers AI response shape/,
     );
   });
+
+  it("accepts an already-parsed-object response and stringifies it", async () => {
+    // Some WAI models (e.g. qwen2.5-coder-32b-instruct) auto-parse the
+    // model's JSON output server-side and return result.response as an
+    // object. The translator must round-trip it back through
+    // JSON.stringify so parseResponse downstream can validate it.
+    const parsedPayload = {
+      "fm:title": "ある古い暗号化への謝罪",
+      "body:0": "ご**迷惑**をおかけして申し訳ありません。",
+    };
+    const fetchStub = makeFetchStub({
+      result: { response: parsedPayload, tool_calls: [], usage: {} },
+      success: true,
+    });
+    const t = createTranslator(provider, "ja-JP", { fetchImpl: fetchStub });
+    const out = await t.translate("s", "u");
+    expect(typeof out).toBe("string");
+    expect(JSON.parse(out)).toEqual(parsedPayload);
+  });
+
+  it("includes the typeof and dump in the unexpected-shape error", async () => {
+    const fetchStub = makeFetchStub({
+      result: { response: 42 },
+      success: true,
+    });
+    const t = createTranslator(provider, "pt-BR", { fetchImpl: fetchStub });
+    await expect(t.translate("s", "u")).rejects.toThrow(
+      /unsupported type "number".*"response":42/s,
+    );
+  });
 });
 
 describe("Anthropic translator", () => {
