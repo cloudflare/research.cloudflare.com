@@ -75,7 +75,7 @@ const config = {
     prefix: "i18n/", // default: "i18n/"
     // endpoint: "https://<accountId>.eu.r2.cloudflarestorage.com",
     // readOnly: false,                    // skip writes; useful for staging
-    // keepLastN: 5,                       // pruning per (locale, sourcePath); set to false to disable
+    keepLastN: 3,                       // pruning per (locale, sourcePath); set to false to disable
   },
 
   // ─── AI provider ─────────────────────────────────────────────────────
@@ -137,7 +137,7 @@ const config = {
   // Files placed under this directory always win over machine translation.
   // Mirror the structure of `sourceDir`, scoped per locale.
   //   ./i18n/overrides/pt-BR/publications/foo.md
-  // overridesDir: "./i18n/overrides",
+   overridesDir: "./i18n/overrides",
 
   // ─── Behaviour ───────────────────────────────────────────────────────
   // What to do when translation can't be produced for a route:

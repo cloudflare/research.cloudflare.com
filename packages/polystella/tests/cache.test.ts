@@ -5,18 +5,27 @@ import {
   type TranslateOrLoadOptions,
 } from "../src/storage/cache.js";
 import { extractSegments } from "../src/parsing/extract.js";
-import { EMPTY_GLOSSARY } from "../src/glossary/glossary.js";
+import {
+  EMPTY_GLOSSARY,
+  hashGlossary,
+  type Glossary,
+} from "../src/glossary/glossary.js";
+import { computeSourceHash } from "../src/storage/hash.js";
 import { parseMarkdown } from "../src/parsing/parse.js";
-import type { R2Client, R2GetResult } from "../src/storage/r2.js";
+import {
+  buildR2Key,
+  type R2Client,
+  type R2GetResult,
+} from "../src/storage/r2.js";
 import type { Translator } from "../src/translation/provider.js";
 
 /**
  * Cache-aware orchestrator tests.
  *
- * The flagship test (`miss-then-hit sequence`) exercises the M6.2
- * acceptance criterion: simulate two consecutive builds against an
- * in-memory R2 fixture and assert that the second build is a pure
- * cache hit — no provider call, no PUT. Several focused tests around
+ * The flagship test (`miss-then-hit sequence`) simulates two
+ * consecutive builds against an in-memory R2 fixture and asserts
+ * that the second build is a pure cache hit — no provider call, no
+ * PUT — which is the whole point of the cache. Several focused tests around
  * it cover the supporting behaviours (no-r2 fallback, metadata round-
  * trip, error propagation) so a regression in any branch surfaces
  * immediately rather than via the larger orchestration test.
@@ -292,6 +301,275 @@ describe("translateOrLoadFromCache — fallback paths", () => {
       translateOrLoadFromCache(makeOptions({ r2: flakyR2, translator })),
     ).rejects.toThrow(/R2 unreachable/);
     expect(translator.calls).toBe(0);
+  });
+});
+
+describe("translateOrLoadFromCache — write events", () => {
+  it("fires onWriteStart then onWriteDone exactly once on a miss with r2", async () => {
+    const r2 = makeInMemoryR2();
+    const calls: Array<["start" | "done", Record<string, unknown>]> = [];
+    const result = await translateOrLoadFromCache(
+      makeOptions({
+        r2: r2.client,
+        events: {
+          onWriteStart: (e) => calls.push(["start", e]),
+          onWriteDone: (e) => calls.push(["done", e]),
+        },
+      }),
+    );
+
+    expect(result.outcome).toBe("miss");
+    // Exactly one start + one done, in that order.
+    expect(calls.map(([name]) => name)).toEqual(["start", "done"]);
+
+    const [, startEvent] = calls[0]!;
+    const [, doneEvent] = calls[1]!;
+    // Both events carry the same key, locale, and byte count so the
+    // operator can correlate them in the build log.
+    expect(startEvent).toMatchObject({
+      key: "i18n/pt-BR/publications/sample.md#abc123.md",
+      locale: "pt-BR",
+    });
+    expect(doneEvent).toMatchObject({
+      key: startEvent["key"],
+      locale: startEvent["locale"],
+      bytes: startEvent["bytes"],
+    });
+    // bytes is the UTF-8 byte length of what got written.
+    expect(doneEvent["bytes"]).toBe(Buffer.byteLength(result.body, "utf8"));
+    // durationMs is a non-negative integer (Date.now() resolution can
+    // legitimately yield 0 on a fast in-memory PUT).
+    expect(typeof doneEvent["durationMs"]).toBe("number");
+    expect(doneEvent["durationMs"]).toBeGreaterThanOrEqual(0);
+  });
+
+  it("does NOT fire write events on a cache hit", async () => {
+    const r2 = makeInMemoryR2();
+    const key = "i18n/pt-BR/publications/sample.md#abc123.md";
+    // Pre-populate to force a hit.
+    await r2.client.put(key, "# cached\n", {
+      metadata: { "source-path": "publications/sample.md" },
+    });
+
+    const onWriteStart = vi.fn();
+    const onWriteDone = vi.fn();
+    const result = await translateOrLoadFromCache(
+      makeOptions({
+        r2: r2.client,
+        events: { onWriteStart, onWriteDone },
+      }),
+    );
+
+    expect(result.outcome).toBe("hit");
+    expect(onWriteStart).not.toHaveBeenCalled();
+    expect(onWriteDone).not.toHaveBeenCalled();
+  });
+
+  it("fires onWriteFailed (not onWriteDone) and returns the translated body when r2.put rejects", async () => {
+    const translator = makeStubTranslator();
+    // R2 client whose GET reports a clean miss but whose PUT throws.
+    // This is the "translator already paid for, then R2 went flaky"
+    // scenario \u2014 the most expensive failure mode to mishandle.
+    const flakyPutR2: R2Client = {
+      async get() {
+        return null;
+      },
+      async put() {
+        throw new Error("R2 unreachable on PUT");
+      },
+      async exists() {
+        return false;
+      },
+      async list() {
+        return [];
+      },
+      async del() {},
+    };
+    const onWriteStart = vi.fn();
+    const onWriteDone = vi.fn();
+    const onWriteFailed = vi.fn();
+
+    const result = await translateOrLoadFromCache(
+      makeOptions({
+        r2: flakyPutR2,
+        translator,
+        events: { onWriteStart, onWriteDone, onWriteFailed },
+      }),
+    );
+
+    // The orchestrator MUST NOT rethrow: the build still gets the
+    // translated bytes for staging, even though caching failed.
+    expect(result.outcome).toBe("miss");
+    expect(result.body).toContain("TR:");
+    // Translator was called (we needed to translate; the PUT failure
+    // happened after, so the translator cost is not avoidable).
+    expect(translator.calls).toBe(1);
+    // Event ordering: start fired (PUT was attempted), failed fired
+    // (with the original error), done did NOT fire.
+    expect(onWriteStart).toHaveBeenCalledTimes(1);
+    expect(onWriteDone).not.toHaveBeenCalled();
+    expect(onWriteFailed).toHaveBeenCalledTimes(1);
+    const failedEvent = onWriteFailed.mock.calls[0]![0] as {
+      key: string;
+      locale: string;
+      bytes: number;
+      error: Error;
+    };
+    expect(failedEvent.key).toBe("i18n/pt-BR/publications/sample.md#abc123.md");
+    expect(failedEvent.locale).toBe("pt-BR");
+    expect(failedEvent.bytes).toBe(Buffer.byteLength(result.body, "utf8"));
+    expect(failedEvent.error).toBeInstanceOf(Error);
+    expect(failedEvent.error.message).toMatch(/R2 unreachable on PUT/);
+  });
+
+  it("does NOT fire write events when r2 is null", async () => {
+    const onWriteStart = vi.fn();
+    const onWriteDone = vi.fn();
+    const result = await translateOrLoadFromCache(
+      makeOptions({
+        r2: null,
+        events: { onWriteStart, onWriteDone },
+      }),
+    );
+
+    expect(result.outcome).toBe("miss");
+    // No r2 means no PUT, which means no write events — the build hook
+    // should never see a "writing to R2" log line in this configuration.
+    expect(onWriteStart).not.toHaveBeenCalled();
+    expect(onWriteDone).not.toHaveBeenCalled();
+  });
+});
+
+describe("translateOrLoadFromCache — glossary-edit invalidation", () => {
+  it("editing one locale's glossary flips that locale to miss while the other stays a hit", async () => {
+    const r2 = makeInMemoryR2();
+    const translator = makeStubTranslator();
+    const sourcePath = "publications/sample.md";
+
+    // Initial glossaries for two locales. Already in normalised form
+    // (doNotTranslate sorted) — that's what `loadGlossaries` produces
+    // in production, so passing pre-sorted arrays mirrors the real
+    // call site rather than testing the loader's normalisation
+    // (which `glossary.test.ts` already pins).
+    const initialPtBR: Glossary = {
+      version: "v1",
+      doNotTranslate: ["Cloudflare", "TLS"],
+      preferredTranslations: { edge: "borda" },
+      notes: "",
+    };
+    const initialJaJP: Glossary = {
+      version: "v1",
+      doNotTranslate: ["Cloudflare", "TLS"],
+      preferredTranslations: {},
+      notes: "",
+    };
+
+    // Replicate the build-hook's key computation: sourceHash folds in
+    // body + frontmatter + per-locale glossaryHash + modelId. Editing
+    // one locale's glossary changes only that locale's hash — hence
+    // only that locale's R2 key — hence only that locale invalidates.
+    function keyFor(locale: string, glossary: Glossary): string {
+      const hash = computeSourceHash({
+        body: SAMPLE_SOURCE,
+        frontmatter: {},
+        glossaryHash: hashGlossary(glossary),
+        modelId: translator.modelId,
+      });
+      return buildR2Key({ locale, sourcePath, hash });
+    }
+
+    // ─── Build #1: cold cache, both locales miss + write back ────
+    const ptBR1Key = keyFor("pt-BR", initialPtBR);
+    const jaJP1Key = keyFor("ja-JP", initialJaJP);
+
+    const ptBR1 = await translateOrLoadFromCache(
+      makeOptions({
+        r2: r2.client,
+        translator,
+        locale: "pt-BR",
+        key: ptBR1Key,
+        glossary: initialPtBR,
+      }),
+    );
+    const jaJP1 = await translateOrLoadFromCache(
+      makeOptions({
+        r2: r2.client,
+        translator,
+        locale: "ja-JP",
+        key: jaJP1Key,
+        glossary: initialJaJP,
+      }),
+    );
+
+    expect(ptBR1.outcome).toBe("miss");
+    expect(jaJP1.outcome).toBe("miss");
+    expect(translator.calls).toBe(2);
+    expect(r2.store.size).toBe(2);
+
+    // ─── Operator edits pt-BR glossary, leaves ja-JP untouched ───
+    const editedPtBR: Glossary = {
+      ...initialPtBR,
+      // Add a single doNotTranslate entry. The list stays sorted to
+      // mirror loadGlossaries' output.
+      doNotTranslate: ["Cloudflare", "QUIC", "TLS"],
+    };
+
+    const ptBR2Key = keyFor("pt-BR", editedPtBR);
+    const jaJP2Key = keyFor("ja-JP", initialJaJP);
+
+    // The contract this test guards: pt-BR's key MUST change, ja-JP's
+    // MUST NOT. If either invariant breaks, the wrong locale gets
+    // invalidated on a glossary edit and the build either re-translates
+    // too much (waste) or too little (stale output).
+    expect(ptBR2Key).not.toBe(ptBR1Key);
+    expect(jaJP2Key).toBe(jaJP1Key);
+
+    // Reset call counters so build #2 assertions are unambiguous.
+    translator.calls = 0;
+    r2.calls.get = 0;
+    r2.calls.put = 0;
+
+    // ─── Build #2: pt-BR misses (new key), ja-JP hits (key stable) ─
+    const ptBR2 = await translateOrLoadFromCache(
+      makeOptions({
+        r2: r2.client,
+        translator,
+        locale: "pt-BR",
+        key: ptBR2Key,
+        glossary: editedPtBR,
+      }),
+    );
+    const jaJP2 = await translateOrLoadFromCache(
+      makeOptions({
+        r2: r2.client,
+        translator,
+        locale: "ja-JP",
+        key: jaJP2Key,
+        glossary: initialJaJP,
+      }),
+    );
+
+    // Acceptance: surgical invalidation. pt-BR re-translated and
+    // re-cached; ja-JP served straight from R2 with no provider call.
+    expect(ptBR2.outcome).toBe("miss");
+    expect(jaJP2.outcome).toBe("hit");
+    expect(translator.calls).toBe(1);
+    expect(r2.calls.put).toBe(1);
+    expect(r2.calls.get).toBe(2);
+
+    // R2 now holds three objects: the original ja-JP (still valid and
+    // just hit), the original pt-BR (orphaned by the glossary edit —
+    // the count-based pruner will reap it on a later build), and the
+    // freshly-written pt-BR keyed by the edited glossary's hash.
+    expect(r2.store.size).toBe(3);
+    expect(r2.store.has(ptBR1Key)).toBe(true);
+    expect(r2.store.has(ptBR2Key)).toBe(true);
+    expect(r2.store.has(jaJP1Key)).toBe(true);
+
+    // ja-JP's served bytes must be byte-identical to what build #1
+    // wrote — that's the whole point of cache stability across an
+    // unrelated locale's glossary edit.
+    expect(jaJP2.body).toBe(jaJP1.body);
   });
 });
 

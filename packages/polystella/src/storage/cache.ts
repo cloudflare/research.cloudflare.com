@@ -61,6 +61,51 @@ export interface TranslateOrLoadOptions {
    * identical headers.
    */
   metadata: Record<string, string>;
+  /**
+   * Optional progress callbacks for the cache-write phase. Both are
+   * no-ops by default and only invoked on the miss path with `r2`
+   * non-null — i.e., when the orchestrator is genuinely about to
+   * persist new bytes. The build hook plugs these in to print
+   * “starting cache write” / “cache write done” log lines so a slow R2
+   * round-trip doesn't look like a frozen build.
+   */
+  events?: CacheEvents;
+}
+
+/**
+ * Progress callbacks for the cache-write phase. Signatures are stable:
+ * callers can rely on `key`, `locale`, and `bytes` being present on
+ * every event. `durationMs` (on `onWriteDone`) is wall-clock elapsed
+ * inside the PUT call, rounded to whole milliseconds for log
+ * readability. Exactly one of `onWriteDone` or `onWriteFailed` fires
+ * per `onWriteStart` — they are mutually exclusive.
+ */
+export interface CacheEvents {
+  onWriteStart?: (event: {
+    key: string;
+    locale: string;
+    bytes: number;
+  }) => void;
+  onWriteDone?: (event: {
+    key: string;
+    locale: string;
+    bytes: number;
+    durationMs: number;
+  }) => void;
+  /**
+   * Fires when the R2 PUT throws. The orchestrator does NOT rethrow:
+   * a failed cache write is a degraded-but-acceptable state because
+   * the translation itself already succeeded and the bytes are
+   * returned to the caller for staging. The build hook uses this to
+   * print a per-file warning so a flaky R2 is visible without
+   * killing the build.
+   */
+  onWriteFailed?: (event: {
+    key: string;
+    locale: string;
+    bytes: number;
+    error: Error;
+  }) => void;
 }
 
 export interface TranslateOrLoadResult {
@@ -100,6 +145,7 @@ export async function translateOrLoadFromCache(
     sourceLocale,
     context,
     metadata,
+    events,
   } = opts;
 
   // 1. Cache lookup. A `null` r2 means the operator opted out of
@@ -129,12 +175,36 @@ export async function translateOrLoadFromCache(
 
   // 3. Write back to R2 when configured. The metadata bag is
   //    intentionally caller-built so the hook and tests stay in sync
-  //    on what gets persisted.
+  //    on what gets persisted. PUT failures are caught here rather
+  //    than propagated: by this point the translator already ran (and
+  //    the operator was already billed for it), so dropping the
+  //    translated bytes on a flaky R2 would compound the cost. We
+  //    surface the failure via `onWriteFailed` and return the bytes
+  //    so the caller can still stage them — the next build will
+  //    retranslate, but only that pair, not the whole corpus.
   if (r2) {
-    await r2.put(key, translated, {
-      contentType: "text/markdown; charset=utf-8",
-      metadata,
-    });
+    const bytes = Buffer.byteLength(translated, "utf8");
+    events?.onWriteStart?.({ key, locale, bytes });
+    const startedAt = Date.now();
+    try {
+      await r2.put(key, translated, {
+        contentType: "text/markdown; charset=utf-8",
+        metadata,
+      });
+      events?.onWriteDone?.({
+        key,
+        locale,
+        bytes,
+        durationMs: Date.now() - startedAt,
+      });
+    } catch (err) {
+      events?.onWriteFailed?.({
+        key,
+        locale,
+        bytes,
+        error: err instanceof Error ? err : new Error(String(err)),
+      });
+    }
   }
 
   return { outcome: "miss", body: translated };
