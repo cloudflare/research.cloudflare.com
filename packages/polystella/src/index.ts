@@ -21,6 +21,13 @@ import {
   type PolyStellaOptions,
   type PolyStellaResolvedOptions,
 } from "./config/options.js";
+import { pathToFileURL } from "node:url";
+import { createMarkdownProcessor } from "@astrojs/markdown-remark";
+import {
+  createRenderer,
+  renderToStaging,
+  type Renderer,
+} from "./rendering/render.js";
 import { parseMarkdown } from "./parsing/parse.js";
 import { createTranslator, type Translator } from "./translation/provider.js";
 import { walkSources } from "./source/walk.js";
@@ -145,7 +152,16 @@ export default function polystella(
         // truth, never injected. `resolveOptions` throws with a
         // copy-pasteable starter block when `i18n` is absent or
         // misconfigured.
-        resolved = resolveOptions(options, config.i18n);
+        // `config.markdown` carries the user's resolved Astro markdown
+        // config (Shiki theme, remark/rehype plugins, gfm setting,
+        // etc.). The rendering module feeds it straight into
+        // `createMarkdownProcessor` so translated content goes through
+        // the same pipeline as source pages.
+        resolved = resolveOptions(
+          options,
+          config.i18n,
+          config.markdown as Record<string, unknown> | undefined,
+        );
         configRoot = config.root;
         // `config.cacheDir` is a URL pointing at `<root>/.astro/` by
         // default. We capture it here because `astro:build:start` (where
@@ -339,6 +355,22 @@ export default function polystella(
           );
         }
 
+        // Construct the markdown processor once per build and wrap it
+        // as a `Renderer`. Reusing the instance lets Shiki share its
+        // highlighter cache across all (file × locale) pairs, turning
+        // the second-and-onwards highlight from ~100ms to ~1ms.
+        // `resolved.markdown` is undefined only in exotic configs that
+        // strip the markdown block out of `astro.config.mjs`; we
+        // tolerate that by falling back to the processor's own defaults
+        // (Astro's bundled remark + Shiki + gfm), matching what Astro
+        // itself does when the config is absent.
+        const markdownProcessor = await createMarkdownProcessor(
+          (resolved.markdown ?? {}) as Parameters<
+            typeof createMarkdownProcessor
+          >[0],
+        );
+        const renderer: Renderer = createRenderer(markdownProcessor);
+
         const sources = await walkSources({
           sourceDir: sourceDirAbs,
           include: resolved.include,
@@ -461,13 +493,18 @@ export default function polystella(
                 relativeSourcePath: source.relativePath,
               });
               if (override !== null) {
-                const stagingPath = path.join(
+                await renderToStaging({
+                  renderer,
                   stagingDir,
                   locale,
-                  source.relativePath,
-                );
-                await mkdir(path.dirname(stagingPath), { recursive: true });
-                await writeFile(stagingPath, override, "utf8");
+                  relativeSourcePath: source.relativePath,
+                  translatedBytes: override,
+                  sourceFileURL: pathToFileURL(source.absolutePath),
+                  onMdxSkip: (rel) =>
+                    logger.warn(
+                      `↷ ${rel} → ${locale}: MDX HTML rendering skipped (frontmatter+body translated; <Content /> will fall back to source-language HTML)`,
+                    ),
+                });
                 counts.override++;
                 touchedPairs.add(
                   encodeTouchedPair(locale, source.relativePath),
@@ -555,14 +592,22 @@ export default function polystella(
 
               // Stage the translated bytes for the route-injection layer.
               // Mirror the source's relative path under the staging root
-              // so locale-aware lookup is a straight join.
-              const stagingPath = path.join(
+              // so locale-aware lookup is a straight join. The renderer
+              // additionally writes `.html` and `.meta.json` sidecars
+              // alongside the `.md`, so consumer pages using `<Content />`
+              // or `entry.rendered.html` see translated output too.
+              await renderToStaging({
+                renderer,
                 stagingDir,
                 locale,
-                source.relativePath,
-              );
-              await mkdir(path.dirname(stagingPath), { recursive: true });
-              await writeFile(stagingPath, result.body, "utf8");
+                relativeSourcePath: source.relativePath,
+                translatedBytes: result.body,
+                sourceFileURL: pathToFileURL(source.absolutePath),
+                onMdxSkip: (rel) =>
+                  logger.warn(
+                    `↷ ${rel} → ${locale}: MDX HTML rendering skipped (frontmatter+body translated; <Content /> will fall back to source-language HTML)`,
+                  ),
+              });
 
               const marker = result.outcome === "hit" ? "●" : "✓";
               logger.info(

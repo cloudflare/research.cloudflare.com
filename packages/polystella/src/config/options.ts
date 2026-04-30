@@ -171,6 +171,16 @@ export const polystellaOptionsSchema = z
   .strict();
 
 export type PolyStellaOptions = z.input<typeof polystellaOptionsSchema>;
+
+/**
+ * Structural type for Astro's resolved markdown config. Defined as
+ * `Record<string, unknown>` to keep this module decoupled from
+ * Astro's internal type surface — `@astrojs/markdown-remark`'s
+ * `createMarkdownProcessor` does its own validation when we hand
+ * this through at the rendering boundary.
+ */
+export type AstroMarkdownLike = Record<string, unknown>;
+
 export type PolyStellaResolvedOptions = z.output<
   typeof polystellaOptionsSchema
 > & {
@@ -178,6 +188,15 @@ export type PolyStellaResolvedOptions = z.output<
   defaultLocale: string;
   /** Target locales, derived from `config.i18n.locales` minus the default. */
   locales: string[];
+  /**
+   * Astro's resolved markdown config. Captured at `astro:config:setup`
+   * and fed to `createMarkdownProcessor` by the rendering module so
+   * translated content runs through the same remark/rehype pipeline,
+   * Shiki theme, and metadata extractors as the source pages.
+   * `undefined` means "no markdown rendering wanted" (the rendering
+   * module short-circuits and skips writing HTML/metadata sidecars).
+   */
+  markdown: AstroMarkdownLike | undefined;
 };
 
 /**
@@ -213,6 +232,7 @@ export interface AstroI18nLike {
 export function resolveOptions(
   raw: unknown,
   astroI18n: AstroI18nLike | undefined,
+  astroMarkdown?: AstroMarkdownLike | undefined,
 ): PolyStellaResolvedOptions {
   const parsed = polystellaOptionsSchema.safeParse(raw);
   const optionIssues = parsed.success
@@ -249,6 +269,7 @@ export function resolveOptions(
     ...parsed.data!,
     defaultLocale,
     locales,
+    markdown: astroMarkdown,
   };
 }
 

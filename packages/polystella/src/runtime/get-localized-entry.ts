@@ -62,17 +62,27 @@ export function normaliseGetLocalizedEntryArgs(
 /**
  * Minimum fields the runtime needs to read off whatever Astro's
  * `getEntry` returned. The helper preserves every other field via
- * spread — `filePath`, `digest`, `rendered`, schema-validated nested
- * objects, etc. — so the consumer sees the exact shape `getEntry`
- * would have given them, with translated values surgically swapped
- * in. Keeping this structural means tests can pass tiny inline
- * fixtures without simulating Astro's full entry shape.
+ * spread — `filePath`, `digest`, schema-validated nested objects,
+ * etc. — so the consumer sees the exact shape `getEntry` would have
+ * given them, with translated values surgically swapped in. Keeping
+ * this structural means tests can pass tiny inline fixtures without
+ * simulating Astro's full entry shape.
+ *
+ * `rendered` is declared explicitly (rather than left to the spread
+ * to round-trip blindly) because the staged-hit path may overlay
+ * it from the sidecar `.html` + `.meta.json` files written by the
+ * build hook's renderer — and overlaying needs the field to be
+ * statically known.
  */
 export interface SourceEntryShape {
   collection: string;
   id: string;
   data: Record<string, unknown>;
   body?: string;
+  rendered?: {
+    html: string;
+    metadata: unknown;
+  };
 }
 
 /**
@@ -213,6 +223,7 @@ export async function resolveLocalizedEntry(
     if (raw === null) continue;
     return mergeStagedOnSource({
       source,
+      rawPath: candidate,
       raw,
       collection,
       slug,
@@ -243,30 +254,30 @@ function withExtensions(
 /**
  * Apply the staged file's translations onto the source entry. The
  * skeleton is the source entry verbatim — preserving every Astro-
- * computed field (refs, dates, assets, rendered HTML, filePath,
- * digest) — and we surgically overlay:
+ * computed field (refs, dates, assets, filePath, digest) — and we
+ * surgically overlay:
  *
  *   - `data[k]` for every `k` listed in the configured translatable
  *     keys for this `<collection>/<slug>` path that is also present
  *     in the staged frontmatter. Keys outside that intersection are
  *     left untouched.
  *   - `body` from the staged file's body (post-translation markdown).
- *
- * Phase 1 punt: `rendered.html` (if present on the source) stays
- * source-language. Pages that render via `body` directly get the
- * translated text; pages using `<Content />` or `set:html=
- * {entry.rendered.html}` get source-language HTML at the locale URL
- * until Phase 2 rewires markdown rendering.
+ *   - `rendered.{html,metadata}` from the sibling `.html` and
+ *     `.meta.json` files (when both exist). The build hook's
+ *     renderer writes them alongside the `.md` for `.md` sources;
+ *     `.mdx` sources skip rendering, so for those the source's
+ *     `rendered` survives the merge intact.
  */
 function mergeStagedOnSource(args: {
   source: SourceEntryShape;
+  rawPath: string;
   raw: string;
   collection: string;
   slug: string;
   locale: string;
   deps: ResolveLocalizedEntryDeps;
 }): LocalizedEntry {
-  const { source, raw, collection, slug, locale, deps } = args;
+  const { source, rawPath, raw, collection, slug, locale, deps } = args;
   const { data: stagedData, body: stagedBody } = splitFrontmatter(raw);
 
   const sourcePath = `${collection}/${slug}`;
@@ -279,8 +290,29 @@ function mergeStagedOnSource(args: {
     }
   }
 
+  // Probe for the sibling `.html` and `.meta.json` files the build
+  // hook's renderer writes alongside the staged `.md`. Strip the
+  // staged file's extension off `rawPath` to get the shared stem.
+  // Both must exist to overlay `rendered`; if either is missing
+  // (e.g. `.mdx` source where the renderer skipped, or older staged
+  // content from before this overlay landed), source's `rendered`
+  // survives the spread untouched.
+  const stagedStem = rawPath.replace(/\.[^./\\]+$/, "");
+  const stagedHtml = deps.readFile(`${stagedStem}.html`);
+  const stagedMetaJson = deps.readFile(`${stagedStem}.meta.json`);
+  const renderedOverlay =
+    stagedHtml !== null && stagedMetaJson !== null
+      ? {
+          rendered: {
+            html: stagedHtml,
+            metadata: JSON.parse(stagedMetaJson) as unknown,
+          },
+        }
+      : {};
+
   return {
     ...source,
+    ...renderedOverlay,
     data: { ...source.data, ...overlay },
     body: stagedBody,
     isLocalized: true,

@@ -39,6 +39,7 @@
     "vitest": "^3.0.0"
   },
   "peerDependencies": {
+    "@astrojs/markdown-remark": "^7.1.0",
     "astro": "^6.0.0"
   }
 }

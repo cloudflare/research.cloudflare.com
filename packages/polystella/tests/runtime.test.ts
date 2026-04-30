@@ -217,7 +217,7 @@ describe("resolveLocalizedEntry — staged hit (merge over source)", () => {
         },
         body: "Identifying knee and elbow points...",
       }),
-      readFile: () => staged,
+      readFile: (p: string) => (p.endsWith(".md") ? staged : null),
       frontmatterRules: { "publications/**": ["title"] },
     });
 
@@ -253,7 +253,7 @@ describe("resolveLocalizedEntry — staged hit (merge over source)", () => {
       "Translated body content.",
     ].join("\n");
     const deps = makeDeps({
-      readFile: () => staged,
+      readFile: (p: string) => (p.endsWith(".md") ? staged : null),
       frontmatterRules: { "publications/**": ["title"] },
     });
 
@@ -281,7 +281,7 @@ describe("resolveLocalizedEntry — staged hit (merge over source)", () => {
         digest: "abc123",
         rendered: { html: "<p>EN HTML</p>", metadata: { headings: [] } },
       }),
-      readFile: () => staged,
+      readFile: (p: string) => (p.endsWith(".md") ? staged : null),
       frontmatterRules: { "publications/**": ["title"] },
     });
 
@@ -315,7 +315,7 @@ describe("resolveLocalizedEntry — staged hit (merge over source)", () => {
       "Body",
     ].join("\n");
     const deps = makeDeps({
-      readFile: () => staged,
+      readFile: (p: string) => (p.endsWith(".md") ? staged : null),
       // Only `title` is translatable — `year` should be ignored.
       frontmatterRules: { "publications/**": ["title"] },
     });
@@ -347,7 +347,7 @@ describe("resolveLocalizedEntry — staged hit (merge over source)", () => {
       "Body",
     ].join("\n");
     const deps = makeDeps({
-      readFile: () => staged,
+      readFile: (p: string) => (p.endsWith(".md") ? staged : null),
       frontmatterRules: { "publications/**": ["title"] },
     });
 
@@ -408,6 +408,204 @@ describe("resolveLocalizedEntry — staged hit (merge over source)", () => {
     expect(readFile).toHaveBeenCalledWith(
       `${STAGING_DIR}/pt-BR/people/foo.md`,
     );
+  });
+});
+
+describe("resolveLocalizedEntry — rendered overlay (Phase 2)", () => {
+  // The build hook's renderer writes `<id>.html` and `<id>.meta.json`
+  // sibling files alongside the staged `.md`. The runtime helper
+  // probes for both after a staged-md hit and overlays
+  // `entry.rendered.{html,metadata}` when both exist. These tests
+  // pin that contract.
+
+  const stagedMd = ["---", 'title: "Olá"', "---", "", "Olá Mundo."].join("\n");
+  const stagedHtml = "<p>Olá Mundo.</p>";
+  const stagedMeta = { headings: [{ depth: 1, slug: "ola", text: "Olá" }] };
+
+  function makeStubReadFile(
+    files: Record<string, string | null>,
+  ): (p: string) => string | null {
+    return (p: string) => (p in files ? files[p] : null);
+  }
+
+  it("overlays rendered.html and metadata when both sidecars exist", async () => {
+    const deps = makeDeps({
+      getEntry: async () => ({
+        id: "foo",
+        collection: "publications",
+        data: { title: "EN" },
+        body: "EN body",
+        rendered: { html: "<p>EN HTML</p>", metadata: { headings: [] } },
+      }),
+      readFile: makeStubReadFile({
+        [`${STAGING_DIR}/pt-BR/publications/foo.md`]: stagedMd,
+        [`${STAGING_DIR}/pt-BR/publications/foo.html`]: stagedHtml,
+        [`${STAGING_DIR}/pt-BR/publications/foo.meta.json`]: JSON.stringify(
+          stagedMeta,
+        ),
+      }),
+      frontmatterRules: { "publications/**": ["title"] },
+    });
+
+    const result = await resolveLocalizedEntry({
+      collection: "publications",
+      slug: "foo",
+      locale: "pt-BR",
+      deps,
+    });
+
+    // Translated HTML overlays source HTML.
+    expect(result?.rendered?.html).toBe(stagedHtml);
+    // Metadata round-trips through JSON.parse — same shape as the
+    // build hook wrote.
+    expect(result?.rendered?.metadata).toEqual(stagedMeta);
+    // Body and data overlays still happen alongside.
+    expect(result?.body).toBe("\nOlá Mundo.");
+    expect(result?.data).toEqual({ title: "Olá" });
+    expect(result?.isLocalized).toBe(true);
+  });
+
+  it("falls through to source's rendered when sidecars are missing (mdx-skip path)", async () => {
+    // The renderer skips writing sidecars on `.mdx` source files;
+    // the `.md` staging path still has translated body+frontmatter,
+    // but no `.html`/`.meta.json`. The runtime should leave the
+    // source's `rendered` untouched so `<Content />` falls back to
+    // source-language HTML.
+    const sourceRendered = {
+      html: "<p>EN HTML</p>",
+      metadata: { headings: [{ depth: 1, slug: "en", text: "EN" }] },
+    };
+    const deps = makeDeps({
+      getEntry: async () => ({
+        id: "foo",
+        collection: "publications",
+        data: { title: "EN" },
+        body: "EN body",
+        rendered: sourceRendered,
+      }),
+      // Only the `.md` exists; `.html` and `.meta.json` return null.
+      readFile: makeStubReadFile({
+        [`${STAGING_DIR}/pt-BR/publications/foo.md`]: stagedMd,
+      }),
+      frontmatterRules: { "publications/**": ["title"] },
+    });
+
+    const result = await resolveLocalizedEntry({
+      collection: "publications",
+      slug: "foo",
+      locale: "pt-BR",
+      deps,
+    });
+
+    // Source's rendered survives the merge intact.
+    expect(result?.rendered).toEqual(sourceRendered);
+    // Body+data overlays still happen — only the rendered overlay
+    // is gated on both sidecars existing.
+    expect(result?.body).toBe("\nOlá Mundo.");
+    expect(result?.data).toEqual({ title: "Olá" });
+    expect(result?.isLocalized).toBe(true);
+  });
+
+  it("does NOT overlay rendered when only .html exists (atomic-pair contract)", async () => {
+    // Defensive: writing `.html` without `.meta.json` would mean a
+    // partial render — the build hook never produces this, but if it
+    // ever did (interrupted build, manual edit), we must not pretend
+    // we have a complete `rendered`. Both halves or neither.
+    const sourceRendered = {
+      html: "<p>EN HTML</p>",
+      metadata: { headings: [] },
+    };
+    const deps = makeDeps({
+      getEntry: async () => ({
+        id: "foo",
+        collection: "publications",
+        data: {},
+        rendered: sourceRendered,
+      }),
+      readFile: makeStubReadFile({
+        [`${STAGING_DIR}/pt-BR/publications/foo.md`]: stagedMd,
+        [`${STAGING_DIR}/pt-BR/publications/foo.html`]: stagedHtml,
+        // No `.meta.json`.
+      }),
+      frontmatterRules: {},
+    });
+
+    const result = await resolveLocalizedEntry({
+      collection: "publications",
+      slug: "foo",
+      locale: "pt-BR",
+      deps,
+    });
+
+    expect(result?.rendered).toEqual(sourceRendered);
+  });
+
+  it("populates rendered on the localized result even when source has no rendered", async () => {
+    // A loader-defined collection (Astro 5+) may produce entries
+    // without a `rendered` field at all. The overlay still applies:
+    // staged sidecars define a rendered for the localized branch
+    // even when source has none.
+    const deps = makeDeps({
+      getEntry: async () => ({
+        id: "foo",
+        collection: "publications",
+        data: {},
+        // No `rendered` key on the source entry.
+      }),
+      readFile: makeStubReadFile({
+        [`${STAGING_DIR}/pt-BR/publications/foo.md`]: stagedMd,
+        [`${STAGING_DIR}/pt-BR/publications/foo.html`]: stagedHtml,
+        [`${STAGING_DIR}/pt-BR/publications/foo.meta.json`]: JSON.stringify(
+          stagedMeta,
+        ),
+      }),
+      frontmatterRules: {},
+    });
+
+    const result = await resolveLocalizedEntry({
+      collection: "publications",
+      slug: "foo",
+      locale: "pt-BR",
+      deps,
+    });
+
+    expect(result?.rendered).toEqual({
+      html: stagedHtml,
+      metadata: stagedMeta,
+    });
+  });
+
+  it("does not probe sidecars on the default-locale path", async () => {
+    // Default locale → source verbatim, no staging probe at all.
+    // The source's `rendered` round-trips untouched and `readFile`
+    // is never consulted. This is important: even if a stale
+    // sidecar happened to live at `<stagingDir>/<defaultLocale>/...`,
+    // the helper must not surface it.
+    const sourceRendered = {
+      html: "<p>EN HTML</p>",
+      metadata: { headings: [] },
+    };
+    const readFile = vi.fn(() => null);
+    const deps = makeDeps({
+      getEntry: async () => ({
+        id: "foo",
+        collection: "publications",
+        data: {},
+        rendered: sourceRendered,
+      }),
+      readFile,
+    });
+
+    const result = await resolveLocalizedEntry({
+      collection: "publications",
+      slug: "foo",
+      locale: DEFAULT_LOCALE,
+      deps,
+    });
+
+    expect(result?.rendered).toEqual(sourceRendered);
+    expect(result?.isLocalized).toBe(false);
+    expect(readFile).not.toHaveBeenCalled();
   });
 });
 
