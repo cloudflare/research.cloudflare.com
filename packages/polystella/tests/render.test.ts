@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  computeBuildEpoch,
+  computeMdHash,
   createRenderer,
   renderToStaging,
   type Renderer,
@@ -30,16 +32,49 @@ import {
  */
 
 const STAGING_DIR = "/abs/staging";
+const BUILD_EPOCH = "epoch-stub-0000";
+const POLYSTELLA_VERSION = "0.1.0";
 
 interface StubFs {
   mkdir: ReturnType<typeof vi.fn>;
   writeFile: ReturnType<typeof vi.fn>;
+  readFile: ReturnType<typeof vi.fn>;
 }
 
-function makeStubFs(): StubFs {
+/**
+ * Default stub fs: no files exist (`readFile` returns null), writes
+ * are no-ops. Tests that need pre-populated content override
+ * `readFile` via `withFiles`.
+ */
+function makeStubFs(
+  files: Record<string, string | null> = {},
+): StubFs {
   return {
     mkdir: vi.fn(async () => undefined),
     writeFile: vi.fn(async () => undefined),
+    readFile: vi.fn(async (p: string) => (p in files ? files[p] : null)),
+  };
+}
+
+/**
+ * Boilerplate-minimiser: every `renderToStaging` call needs the
+ * build epoch + version. Encapsulating them keeps the test bodies
+ * focused on the behaviour under test.
+ */
+function baseArgs(
+  overrides: Partial<Parameters<typeof renderToStaging>[0]> = {},
+) {
+  return {
+    stagingDir: STAGING_DIR,
+    locale: "pt-BR",
+    relativeSourcePath: "publications/Antunes2025.md",
+    translatedBytes: "Body",
+    sourceFileURL: new URL(
+      "file:///abs/source/publications/Antunes2025.md",
+    ),
+    buildEpoch: BUILD_EPOCH,
+    polystellaVersion: POLYSTELLA_VERSION,
+    ...overrides,
   };
 }
 
@@ -62,16 +97,15 @@ describe("renderToStaging — file orchestration", () => {
       metadata: { headings: [{ depth: 1, slug: "ola", text: "Olá" }] },
     });
 
-    await renderToStaging({
+    const outcome = await renderToStaging({
+      ...baseArgs({
+        translatedBytes: '---\ntitle: "Olá"\n---\n\nOlá Mundo.',
+      }),
       renderer,
-      stagingDir: STAGING_DIR,
-      locale: "pt-BR",
-      relativeSourcePath: "publications/Antunes2025.md",
-      translatedBytes: '---\ntitle: "Olá"\n---\n\nOlá Mundo.',
-      sourceFileURL: new URL("file:///abs/source/publications/Antunes2025.md"),
       fs,
     });
 
+    expect(outcome).toBe("rendered");
     expect(fs.mkdir).toHaveBeenCalledWith(
       expect.stringContaining("/abs/staging/pt-BR/publications"),
       { recursive: true },
@@ -91,6 +125,14 @@ describe("renderToStaging — file orchestration", () => {
       '{"headings":[{"depth":1,"slug":"ola","text":"Olá"}]}',
       "utf8",
     );
+    // The render-cache sidecar gets written too. Don't pin the
+    // exact bytes here (renderedAt timestamp varies) — the
+    // dedicated cache tests below cover its content.
+    expect(fs.writeFile).toHaveBeenCalledWith(
+      "/abs/staging/pt-BR/publications/Antunes2025.render-cache.json",
+      expect.any(String),
+      "utf8",
+    );
   });
 
   it("forwards the source fileURL (not the staging path) to the renderer", async () => {
@@ -106,12 +148,8 @@ describe("renderToStaging — file orchestration", () => {
     );
 
     await renderToStaging({
+      ...baseArgs({ translatedBytes: "body", sourceFileURL }),
       renderer,
-      stagingDir: STAGING_DIR,
-      locale: "pt-BR",
-      relativeSourcePath: "publications/Antunes2025.md",
-      translatedBytes: "body",
-      sourceFileURL,
       fs,
     });
 
@@ -127,24 +165,25 @@ describe("renderToStaging — file orchestration", () => {
     const renderer = makeStubRenderer();
     const onMdxSkip = vi.fn();
 
-    await renderToStaging({
+    const outcome = await renderToStaging({
+      ...baseArgs({
+        relativeSourcePath: "posts/foo.mdx",
+        translatedBytes: "---\ntitle: Foo\n---\nBody",
+        sourceFileURL: new URL("file:///abs/source/posts/foo.mdx"),
+      }),
       renderer,
-      stagingDir: STAGING_DIR,
-      locale: "pt-BR",
-      relativeSourcePath: "posts/foo.mdx",
-      translatedBytes: "---\ntitle: Foo\n---\nBody",
-      sourceFileURL: new URL("file:///abs/source/posts/foo.mdx"),
       onMdxSkip,
       fs,
     });
 
+    expect(outcome).toBe("mdx-skip");
     // .md (well, .mdx — same staging filename as source) is written.
     expect(fs.writeFile).toHaveBeenCalledWith(
       "/abs/staging/pt-BR/posts/foo.mdx",
       "---\ntitle: Foo\n---\nBody",
       "utf8",
     );
-    // No .html, no .meta.json.
+    // No .html, no .meta.json, no render-cache.json.
     expect(fs.writeFile).toHaveBeenCalledTimes(1);
     expect(renderer.render).not.toHaveBeenCalled();
     expect(onMdxSkip).toHaveBeenCalledWith("posts/foo.mdx");
@@ -156,16 +195,16 @@ describe("renderToStaging — file orchestration", () => {
     const fs = makeStubFs();
     const renderer = makeStubRenderer();
 
-    await renderToStaging({
+    const outcome = await renderToStaging({
+      ...baseArgs({
+        relativeSourcePath: "posts/Foo.MDX",
+        sourceFileURL: new URL("file:///abs/source/posts/Foo.MDX"),
+      }),
       renderer,
-      stagingDir: STAGING_DIR,
-      locale: "pt-BR",
-      relativeSourcePath: "posts/Foo.MDX",
-      translatedBytes: "Body",
-      sourceFileURL: new URL("file:///abs/source/posts/Foo.MDX"),
       fs,
     });
 
+    expect(outcome).toBe("mdx-skip");
     expect(fs.writeFile).toHaveBeenCalledTimes(1);
     expect(renderer.render).not.toHaveBeenCalled();
   });
@@ -177,16 +216,13 @@ describe("renderToStaging — file orchestration", () => {
     // stages so `entry.body` and `entry.data` overlay correctly.
     const fs = makeStubFs();
 
-    await renderToStaging({
+    const outcome = await renderToStaging({
+      ...baseArgs(),
       renderer: undefined,
-      stagingDir: STAGING_DIR,
-      locale: "pt-BR",
-      relativeSourcePath: "publications/Antunes2025.md",
-      translatedBytes: "Body",
-      sourceFileURL: new URL("file:///abs/source/publications/Antunes2025.md"),
       fs,
     });
 
+    expect(outcome).toBe("no-renderer");
     expect(fs.writeFile).toHaveBeenCalledTimes(1);
     expect(fs.writeFile).toHaveBeenCalledWith(
       "/abs/staging/pt-BR/publications/Antunes2025.md",
@@ -205,12 +241,13 @@ describe("renderToStaging — file orchestration", () => {
     const renderer = makeStubRenderer();
 
     await renderToStaging({
+      ...baseArgs({
+        relativeSourcePath: "deep/nested/dir/foo.md",
+        sourceFileURL: new URL(
+          "file:///abs/source/deep/nested/dir/foo.md",
+        ),
+      }),
       renderer,
-      stagingDir: STAGING_DIR,
-      locale: "pt-BR",
-      relativeSourcePath: "deep/nested/dir/foo.md",
-      translatedBytes: "Body",
-      sourceFileURL: new URL("file:///abs/source/deep/nested/dir/foo.md"),
       fs,
     });
 
@@ -228,12 +265,8 @@ describe("renderToStaging — file orchestration", () => {
     const renderer = makeStubRenderer();
 
     await renderToStaging({
+      ...baseArgs({ locale: "ja-JP" }),
       renderer,
-      stagingDir: STAGING_DIR,
-      locale: "ja-JP",
-      relativeSourcePath: "publications/Antunes2025.md",
-      translatedBytes: "Body",
-      sourceFileURL: new URL("file:///abs/source/publications/Antunes2025.md"),
       fs,
     });
 
@@ -241,6 +274,384 @@ describe("renderToStaging — file orchestration", () => {
       "/abs/staging/ja-JP/publications/Antunes2025.md",
       expect.any(String),
       "utf8",
+    );
+  });
+});
+
+describe("renderToStaging — render cache", () => {
+  // Path constants reused across the matrix below. The naming
+  // convention is fixed by `renderToStaging` (extension stripped,
+  // suffixed). Hard-coding the strings here pins the contract.
+  const MD_PATH = "/abs/staging/pt-BR/publications/Antunes2025.md";
+  const HTML_PATH = "/abs/staging/pt-BR/publications/Antunes2025.html";
+  const META_PATH =
+    "/abs/staging/pt-BR/publications/Antunes2025.meta.json";
+  const CACHE_PATH =
+    "/abs/staging/pt-BR/publications/Antunes2025.render-cache.json";
+
+  const TRANSLATED_BYTES = "---\ntitle: \"Olá\"\n---\n\nOlá Mundo.";
+
+  function makeFreshCacheRecord() {
+    return JSON.stringify({
+      version: 1,
+      mdHash: computeMdHash(TRANSLATED_BYTES),
+      epoch: BUILD_EPOCH,
+      polystellaVersion: POLYSTELLA_VERSION,
+      renderedAt: "2026-04-30T12:00:00.000Z",
+    });
+  }
+
+  it("skips render when cache record + sidecars all match", async () => {
+    // The full happy-path: fresh `.render-cache.json` whose `mdHash`
+    // matches the translated bytes and `epoch` matches the current
+    // build, with both `.html` and `.meta.json` present. Renderer
+    // must NOT be invoked; outcome must be `cache-hit`.
+    const fs = makeStubFs({
+      [CACHE_PATH]: makeFreshCacheRecord(),
+      [HTML_PATH]: "<p>previously rendered</p>",
+      [META_PATH]: '{"headings":[]}',
+    });
+    const renderer = makeStubRenderer();
+
+    const outcome = await renderToStaging({
+      ...baseArgs({ translatedBytes: TRANSLATED_BYTES }),
+      renderer,
+      fs,
+    });
+
+    expect(outcome).toBe("cache-hit");
+    expect(renderer.render).not.toHaveBeenCalled();
+    // The .md is still (re)written every build — it's the cheap
+    // floor of the staging contract and the runtime helper depends
+    // on its content for body/data overlays.
+    expect(fs.writeFile).toHaveBeenCalledWith(
+      MD_PATH,
+      TRANSLATED_BYTES,
+      "utf8",
+    );
+    // No .html, .meta.json, or .render-cache.json writes on a hit.
+    expect(fs.writeFile).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders when mdHash differs from the cached value", async () => {
+    // Translation changed (different bytes) → stored mdHash no
+    // longer matches → must re-render and rewrite the sidecars.
+    const fs = makeStubFs({
+      [CACHE_PATH]: JSON.stringify({
+        version: 1,
+        mdHash: "stale-md-hash",
+        epoch: BUILD_EPOCH,
+        polystellaVersion: POLYSTELLA_VERSION,
+        renderedAt: "2026-04-29T00:00:00.000Z",
+      }),
+      [HTML_PATH]: "<p>stale</p>",
+      [META_PATH]: '{"headings":[]}',
+    });
+    const renderer = makeStubRenderer();
+
+    const outcome = await renderToStaging({
+      ...baseArgs({ translatedBytes: TRANSLATED_BYTES }),
+      renderer,
+      fs,
+    });
+
+    expect(outcome).toBe("rendered");
+    expect(renderer.render).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders when epoch differs from the cached value", async () => {
+    // Same bytes but markdown config (or polystella version)
+    // changed → stored epoch is now stale → must re-render.
+    const fs = makeStubFs({
+      [CACHE_PATH]: JSON.stringify({
+        version: 1,
+        mdHash: computeMdHash(TRANSLATED_BYTES),
+        epoch: "stale-epoch",
+        polystellaVersion: POLYSTELLA_VERSION,
+        renderedAt: "2026-04-29T00:00:00.000Z",
+      }),
+      [HTML_PATH]: "<p>stale</p>",
+      [META_PATH]: '{"headings":[]}',
+    });
+    const renderer = makeStubRenderer();
+
+    const outcome = await renderToStaging({
+      ...baseArgs({ translatedBytes: TRANSLATED_BYTES }),
+      renderer,
+      fs,
+    });
+
+    expect(outcome).toBe("rendered");
+    expect(renderer.render).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders when .html sidecar is missing despite a valid cache record", async () => {
+    // Defensive: a cache record without the corresponding HTML
+    // sidecar is a partial state (manual rm, half-written build).
+    // Treat as miss — we'd rather re-render than hand the runtime
+    // a missing-file probe.
+    const fs = makeStubFs({
+      [CACHE_PATH]: makeFreshCacheRecord(),
+      // [HTML_PATH] omitted → readFile returns null.
+      [META_PATH]: '{"headings":[]}',
+    });
+    const renderer = makeStubRenderer();
+
+    const outcome = await renderToStaging({
+      ...baseArgs({ translatedBytes: TRANSLATED_BYTES }),
+      renderer,
+      fs,
+    });
+
+    expect(outcome).toBe("rendered");
+    expect(renderer.render).toHaveBeenCalledTimes(1);
+  });
+
+  it("renders when .meta.json sidecar is missing despite a valid cache record", async () => {
+    const fs = makeStubFs({
+      [CACHE_PATH]: makeFreshCacheRecord(),
+      [HTML_PATH]: "<p>previously rendered</p>",
+      // [META_PATH] omitted.
+    });
+    const renderer = makeStubRenderer();
+
+    const outcome = await renderToStaging({
+      ...baseArgs({ translatedBytes: TRANSLATED_BYTES }),
+      renderer,
+      fs,
+    });
+
+    expect(outcome).toBe("rendered");
+    expect(renderer.render).toHaveBeenCalledTimes(1);
+  });
+
+  it("treats malformed cache JSON as a miss without throwing", async () => {
+    // A hand-edited or truncated `.render-cache.json` must not
+    // break the build — silently re-render and overwrite.
+    const fs = makeStubFs({
+      [CACHE_PATH]: "{ not valid json",
+      [HTML_PATH]: "<p>x</p>",
+      [META_PATH]: '{"headings":[]}',
+    });
+    const renderer = makeStubRenderer();
+
+    const outcome = await renderToStaging({
+      ...baseArgs({ translatedBytes: TRANSLATED_BYTES }),
+      renderer,
+      fs,
+    });
+
+    expect(outcome).toBe("rendered");
+  });
+
+  it("treats an unrecognised cache version as a miss", async () => {
+    // Forward-compat: when we evolve the sidecar shape (version 2,
+    // 3, …) older builds reading newer sidecars must re-render
+    // rather than blindly trust the foreign shape. Same applies the
+    // other way for newer builds reading older shape.
+    const fs = makeStubFs({
+      [CACHE_PATH]: JSON.stringify({
+        version: 99,
+        mdHash: computeMdHash(TRANSLATED_BYTES),
+        epoch: BUILD_EPOCH,
+      }),
+      [HTML_PATH]: "<p>x</p>",
+      [META_PATH]: '{"headings":[]}',
+    });
+    const renderer = makeStubRenderer();
+
+    const outcome = await renderToStaging({
+      ...baseArgs({ translatedBytes: TRANSLATED_BYTES }),
+      renderer,
+      fs,
+    });
+
+    expect(outcome).toBe("rendered");
+  });
+
+  it("writes a v1 cache record with mdHash + epoch + polystellaVersion on a miss", async () => {
+    // The fresh cache sidecar that gets written must be in the
+    // version-1 shape with all required fields. Future builds will
+    // gate on this exact contract.
+    const fs = makeStubFs();
+    const renderer = makeStubRenderer();
+
+    await renderToStaging({
+      ...baseArgs({ translatedBytes: TRANSLATED_BYTES }),
+      renderer,
+      fs,
+    });
+
+    const cacheCall = fs.writeFile.mock.calls.find(
+      ([p]) => p === CACHE_PATH,
+    );
+    expect(cacheCall).toBeDefined();
+    const cacheBody = JSON.parse(cacheCall![1] as string);
+    expect(cacheBody).toMatchObject({
+      version: 1,
+      mdHash: computeMdHash(TRANSLATED_BYTES),
+      epoch: BUILD_EPOCH,
+      polystellaVersion: POLYSTELLA_VERSION,
+    });
+    expect(cacheBody.renderedAt).toMatch(
+      /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/,
+    );
+  });
+
+  it("does not write a cache sidecar on the .mdx-skip path", async () => {
+    // No render → no cache key. Writing a sidecar for a path that
+    // never produced HTML would be a confusing forensic artefact
+    // and would falsely advertise a cache hit on a future build if
+    // we ever added MDX rendering.
+    const fs = makeStubFs();
+    const renderer = makeStubRenderer();
+
+    await renderToStaging({
+      ...baseArgs({
+        relativeSourcePath: "posts/foo.mdx",
+        sourceFileURL: new URL("file:///abs/source/posts/foo.mdx"),
+      }),
+      renderer,
+      fs,
+    });
+
+    const cacheCall = fs.writeFile.mock.calls.find(([p]) =>
+      String(p).endsWith(".render-cache.json"),
+    );
+    expect(cacheCall).toBeUndefined();
+  });
+});
+
+describe("computeBuildEpoch", () => {
+  it("is idempotent for the same inputs", async () => {
+    const a = computeBuildEpoch(
+      { gfm: true, smartypants: false, shikiConfig: { theme: "github-dark" } },
+      "0.1.0",
+    );
+    const b = computeBuildEpoch(
+      { gfm: true, smartypants: false, shikiConfig: { theme: "github-dark" } },
+      "0.1.0",
+    );
+    expect(a).toBe(b);
+  });
+
+  it("is order-insensitive within the markdown config", async () => {
+    // Reordering top-level keys must not bust the cache — a config
+    // tidy-up that's purely cosmetic should be a no-op here.
+    const a = computeBuildEpoch({ gfm: true, smartypants: false }, "0.1.0");
+    const b = computeBuildEpoch({ smartypants: false, gfm: true }, "0.1.0");
+    expect(a).toBe(b);
+  });
+
+  it("differs when polystellaVersion changes", async () => {
+    // Bumping the package version is the catch-all rendering-
+    // semantics-changed lever: the epoch must move so all sidecars
+    // re-render against the new package logic.
+    const a = computeBuildEpoch({ gfm: true }, "0.1.0");
+    const b = computeBuildEpoch({ gfm: true }, "0.2.0");
+    expect(a).not.toBe(b);
+  });
+
+  it("differs when a tracked Shiki knob changes", async () => {
+    const a = computeBuildEpoch(
+      { shikiConfig: { theme: "github-dark" } },
+      "0.1.0",
+    );
+    const b = computeBuildEpoch(
+      { shikiConfig: { theme: "github-light" } },
+      "0.1.0",
+    );
+    expect(a).not.toBe(b);
+  });
+
+  it("is stable across remarkPlugins changes (deliberate exclusion)", async () => {
+    // Functions don't serialise stably; we deliberately drop them
+    // from the epoch and document `rm -rf .astro/i18n-staging` as
+    // the manual escape hatch when plugin logic changes. This test
+    // pins that contract — if it ever flips, the cache could go
+    // stale-but-believed-fresh on plugin upgrades.
+    const fakePluginA = (() => {
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      return function pluginA() {};
+    })();
+    const fakePluginB = (() => {
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
+      return function pluginB() {};
+    })();
+    const a = computeBuildEpoch(
+      { gfm: true, remarkPlugins: [fakePluginA] },
+      "0.1.0",
+    );
+    const b = computeBuildEpoch(
+      { gfm: true, remarkPlugins: [fakePluginB] },
+      "0.1.0",
+    );
+    expect(a).toBe(b);
+  });
+
+  it("is stable across rehypePlugins changes (deliberate exclusion)", async () => {
+    const a = computeBuildEpoch(
+      { gfm: true, rehypePlugins: [() => undefined] },
+      "0.1.0",
+    );
+    const b = computeBuildEpoch(
+      { gfm: true, rehypePlugins: [() => null] },
+      "0.1.0",
+    );
+    expect(a).toBe(b);
+  });
+
+  it("is stable when shikiConfig.transformers change (deliberate exclusion)", async () => {
+    const a = computeBuildEpoch(
+      {
+        shikiConfig: {
+          theme: "github-dark",
+          transformers: [{ name: "a", code: () => undefined }],
+        },
+      },
+      "0.1.0",
+    );
+    const b = computeBuildEpoch(
+      {
+        shikiConfig: {
+          theme: "github-dark",
+          transformers: [{ name: "b", pre: () => undefined }],
+        },
+      },
+      "0.1.0",
+    );
+    expect(a).toBe(b);
+  });
+
+  it("produces a stable epoch for an undefined markdown config", async () => {
+    // Sites that set `markdown: undefined` (or omit the block) must
+    // still get a deterministic epoch — otherwise the cache would
+    // miss on every build.
+    const a = computeBuildEpoch(undefined, "0.1.0");
+    const b = computeBuildEpoch(undefined, "0.1.0");
+    expect(a).toBe(b);
+    // And it should differ from the empty-object form only if the
+    // version differs — with the same version, both should produce
+    // the same digest because the helper coerces undefined to {}.
+    const c = computeBuildEpoch({}, "0.1.0");
+    expect(a).toBe(c);
+  });
+});
+
+describe("computeMdHash", () => {
+  it("produces the same hash for identical bytes", () => {
+    expect(computeMdHash("hello")).toBe(computeMdHash("hello"));
+  });
+
+  it("produces different hashes for different bytes", () => {
+    expect(computeMdHash("hello")).not.toBe(computeMdHash("hello!"));
+  });
+
+  it("is stable across UTF-8 multibyte content", () => {
+    // Translation output is mostly multibyte. Confirm the hash
+    // doesn't depend on a particular encoding round-trip path.
+    expect(computeMdHash("Olá Mundo 世界")).toBe(
+      computeMdHash("Olá Mundo 世界"),
     );
   });
 });

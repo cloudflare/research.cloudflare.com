@@ -24,9 +24,11 @@ import {
 import { pathToFileURL } from "node:url";
 import { createMarkdownProcessor } from "@astrojs/markdown-remark";
 import {
+  computeBuildEpoch,
   createRenderer,
   renderToStaging,
   type Renderer,
+  type RenderOutcome,
 } from "./rendering/render.js";
 import { parseMarkdown } from "./parsing/parse.js";
 import { createTranslator, type Translator } from "./translation/provider.js";
@@ -371,6 +373,33 @@ export default function polystella(
         );
         const renderer: Renderer = createRenderer(markdownProcessor);
 
+        // Build-config fingerprint for the render cache. Computed
+        // once per build and threaded through every `renderToStaging`
+        // call. Bumps on `polystella` version changes or on tracked
+        // markdown-config knob changes (Shiki theme, gfm, etc.); does
+        // NOT bump on plugin-array or transformer-function changes —
+        // those require `rm -rf .astro/i18n-staging` to invalidate.
+        // See `computeBuildEpoch` in `rendering/render.ts` for the
+        // exact knob set + the rationale for the trade-off.
+        const buildEpoch = computeBuildEpoch(
+          resolved.markdown,
+          POLYSTELLA_VERSION,
+        );
+        logger.debug(`render cache: build epoch ${buildEpoch.slice(0, 12)}…`);
+
+        // Per-pair render outcomes, summed at the close of the build
+        // for a one-line cache-effectiveness signal. `cache-hit`
+        // dominates on warm rebuilds; `rendered` dominates on cold
+        // builds or after an epoch bump. `mdx-skip` and `no-renderer`
+        // surface the volume of pages that bypass HTML rendering
+        // entirely — useful for spotting unintentional opt-outs.
+        const renderCounts: Record<RenderOutcome, number> = {
+          rendered: 0,
+          "cache-hit": 0,
+          "mdx-skip": 0,
+          "no-renderer": 0,
+        };
+
         const sources = await walkSources({
           sourceDir: sourceDirAbs,
           include: resolved.include,
@@ -493,18 +522,21 @@ export default function polystella(
                 relativeSourcePath: source.relativePath,
               });
               if (override !== null) {
-                await renderToStaging({
+                const outcome = await renderToStaging({
                   renderer,
                   stagingDir,
                   locale,
                   relativeSourcePath: source.relativePath,
                   translatedBytes: override,
                   sourceFileURL: pathToFileURL(source.absolutePath),
+                  buildEpoch,
+                  polystellaVersion: POLYSTELLA_VERSION,
                   onMdxSkip: (rel) =>
                     logger.warn(
                       `↷ ${rel} → ${locale}: MDX HTML rendering skipped (frontmatter+body translated; <Content /> will fall back to source-language HTML)`,
                     ),
                 });
+                renderCounts[outcome]++;
                 counts.override++;
                 touchedPairs.add(
                   encodeTouchedPair(locale, source.relativePath),
@@ -596,18 +628,21 @@ export default function polystella(
               // additionally writes `.html` and `.meta.json` sidecars
               // alongside the `.md`, so consumer pages using `<Content />`
               // or `entry.rendered.html` see translated output too.
-              await renderToStaging({
+              const renderOutcome = await renderToStaging({
                 renderer,
                 stagingDir,
                 locale,
                 relativeSourcePath: source.relativePath,
                 translatedBytes: result.body,
                 sourceFileURL: pathToFileURL(source.absolutePath),
+                buildEpoch,
+                polystellaVersion: POLYSTELLA_VERSION,
                 onMdxSkip: (rel) =>
                   logger.warn(
                     `↷ ${rel} → ${locale}: MDX HTML rendering skipped (frontmatter+body translated; <Content /> will fall back to source-language HTML)`,
                   ),
               });
+              renderCounts[renderOutcome]++;
 
               const marker = result.outcome === "hit" ? "●" : "✓";
               logger.info(
@@ -658,6 +693,27 @@ export default function polystella(
               )} (${cacheWritesFailed} failed)`,
             );
           }
+        }
+
+        // Render-cache summary. Suppressed when nothing was rendered
+        // (zero translatable pairs, dry-run, etc.) to keep noise-free
+        // builds noise-free. The "skipped" count rolls up `mdx-skip`
+        // (deferred MDX rendering) and `no-renderer` (consumer
+        // opt-out, currently never produced — guarded for future use).
+        const renderTotal =
+          renderCounts.rendered +
+          renderCounts["cache-hit"] +
+          renderCounts["mdx-skip"] +
+          renderCounts["no-renderer"];
+        if (renderTotal > 0) {
+          const skipped =
+            renderCounts["mdx-skip"] + renderCounts["no-renderer"];
+          const parts = [
+            `${renderCounts["cache-hit"]} hit`,
+            `${renderCounts.rendered} rendered`,
+          ];
+          if (skipped > 0) parts.push(`${skipped} skipped`);
+          logger.info(`render cache: ${parts.join(", ")}`);
         }
 
         // Count-based prune. Walk only the (locale, sourcePath) pairs
