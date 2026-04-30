@@ -26,6 +26,7 @@ import { createTranslator, type Translator } from "./translation/provider.js";
 import { walkSources } from "./source/walk.js";
 import { computeSourceHash } from "./storage/hash.js";
 import { buildR2Key, createR2Client, type R2Client } from "./storage/r2.js";
+import { deriveUrlPattern, generateShimSource } from "./routing/shim.js";
 
 /**
  * Hardcoded for now — read from package.json once the package version
@@ -100,6 +101,12 @@ export {
   type PruneCacheByPairOptions,
   type PruneResult,
 } from "./storage/prune.js";
+export {
+  deriveUrlPattern,
+  generateShimSource,
+  type DerivedUrlPattern,
+  type GenerateShimSourceInput,
+} from "./routing/shim.js";
 
 /**
  * PolyStella — AI-driven content localization for Astro.
@@ -127,8 +134,18 @@ export default function polystella(
   return {
     name: "polystella",
     hooks: {
-      "astro:config:setup": ({ logger, config }) => {
-        resolved = resolveOptions(options);
+      "astro:config:setup": async ({
+        logger,
+        config,
+        injectRoute,
+        updateConfig,
+      }) => {
+        // PolyStella's locale set (defaultLocale + targets) is derived
+        // from Astro's native `config.i18n` block — single source of
+        // truth, never injected. `resolveOptions` throws with a
+        // copy-pasteable starter block when `i18n` is absent or
+        // misconfigured.
+        resolved = resolveOptions(options, config.i18n);
         configRoot = config.root;
         // `config.cacheDir` is a URL pointing at `<root>/.astro/` by
         // default. We capture it here because `astro:build:start` (where
@@ -139,6 +156,105 @@ export default function polystella(
             resolved.defaultLocale
           }, locales=[${resolved.locales.join(", ")}], mode=${resolved.mode}`,
         );
+
+        // Compute the staging dir once and share it with both the
+        // build hook (where translated bytes are written) and the
+        // runtime helper (where they're read at page-render time).
+        // Resolving here keeps the path absolute and stable across
+        // both consumers.
+        const cacheDirPath = fileURLToPath(config.cacheDir);
+        const stagingDir = path.resolve(cacheDirPath, "i18n-staging");
+
+        // Register the `polystella:runtime-config` virtual module.
+        // The runtime helper imports this to learn the staging
+        // location and the default locale at page-render time — those
+        // values are known here at config-setup, but not via
+        // `process.env`, so a Vite-resolved virtual module is the
+        // cleanest way to thread them through. The `\0` prefix on
+        // the resolved id is Vite's convention to signal that other
+        // plugins should leave the module alone.
+        const runtimeConfigSource = [
+          `export const stagingDir = ${JSON.stringify(stagingDir)};`,
+          `export const defaultLocale = ${JSON.stringify(
+            resolved.defaultLocale,
+          )};`,
+          `export const sourceDir = ${JSON.stringify(resolved.sourceDir)};`,
+          // Per-glob translatable-keys map. The runtime uses this to
+          // decide which keys to overlay from the staged frontmatter
+          // onto the schema-validated source entry; keys absent from
+          // this map (e.g. `authors`, `doi`) keep their source-entry
+          // values verbatim, preserving Astro's reference resolution.
+          `export const frontmatter = ${JSON.stringify(resolved.frontmatter)};`,
+          "",
+        ].join("\n");
+        updateConfig({
+          vite: {
+            plugins: [
+              {
+                name: "polystella:runtime-config",
+                resolveId(id: string) {
+                  if (id === "polystella:runtime-config") {
+                    return "\0polystella:runtime-config";
+                  }
+                  return undefined;
+                },
+                load(id: string) {
+                  if (id === "\0polystella:runtime-config") {
+                    return runtimeConfigSource;
+                  }
+                  return undefined;
+                },
+              },
+            ],
+          },
+        });
+
+        // Generate one shim per `routes` entry and inject it under
+        // `/[lang]/<sourcePattern>`. Each shim imports the user's
+        // source page as a child component and runs its own
+        // `getStaticPaths` enumerating non-default locales — see
+        // `routing/shim.ts` for the templates and the rationale.
+        // Skipped entirely when `routes` is empty so a PolyStella
+        // build with no routing yet (the M2–M6 milestones) is a no-op
+        // here.
+        if (resolved.routes.length > 0) {
+          const rootDir = fileURLToPath(config.root);
+          const shimDir = path.resolve(cacheDirPath, "polystella-shims");
+          await mkdir(shimDir, { recursive: true });
+
+          for (let i = 0; i < resolved.routes.length; i++) {
+            const sourceRel = resolved.routes[i]!;
+            const sourceAbs = path.resolve(rootDir, sourceRel);
+            const { pattern, isDynamic } = deriveUrlPattern(sourceRel);
+
+            const shimPath = path.join(shimDir, `route-${i}.astro`);
+            const importPath = path
+              .relative(path.dirname(shimPath), sourceAbs)
+              .replace(/\\/g, "/");
+            await writeFile(
+              shimPath,
+              generateShimSource({
+                relativeImportPath: importPath,
+                isDynamic,
+                locales: resolved.locales,
+              }),
+              "utf8",
+            );
+
+            // Empty `pattern` means the source was an index (or the
+            // homepage); the locale-prefixed pattern collapses to
+            // just `/[lang]` in that case.
+            const injectPattern =
+              pattern === "" ? "/[lang]" : `/[lang]/${pattern}`;
+            injectRoute({
+              pattern: injectPattern,
+              entrypoint: shimPath,
+            });
+            logger.info(
+              `injected localized route: ${injectPattern} → ${sourceRel}`,
+            );
+          }
+        }
       },
 
       "astro:build:start": async ({ logger }) => {

@@ -95,8 +95,14 @@ export function extractSegments(
 /**
  * Resolve which frontmatter keys to translate for `sourcePath`, by
  * unioning the key lists of every matching glob in `rules`.
+ *
+ * Exported because the build-time runtime helper
+ * (`runtime/get-localized-entry.ts`) needs the same path → keys
+ * mapping when overlaying staged frontmatter on top of the source
+ * entry. Keeping a single implementation guarantees the two surfaces
+ * never drift on which keys belong to the translation contract.
  */
-function resolveFrontmatterKeys(
+export function resolveFrontmatterKeys(
   sourcePath: string,
   rules: Record<string, string[]>,
 ): string[] {

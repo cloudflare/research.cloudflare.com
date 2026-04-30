@@ -4,8 +4,10 @@ import { z } from "astro/zod";
  * PolyStella options schema.
  *
  * Validation strategy:
- *   - `defaultLocale` and `locales` are strictly required (the integration
- *     cannot do anything useful without them).
+ *   - `defaultLocale` and `locales` are NOT in this schema — they are
+ *     derived from Astro's native `config.i18n` at `astro:config:setup`
+ *     to keep a single source of truth for the locale set. See
+ *     `resolveOptions` below for the cross-check logic.
  *   - `r2` and `provider` are zod-optional. They become strictly required
  *     at their point of consumption — `provider` once the AI translator
  *     is wired in, `r2` once real cache fetches are wired in — so
@@ -13,10 +15,6 @@ import { z } from "astro/zod";
  *     provisioned.
  *   - All other fields have sensible defaults.
  */
-
-const localeStringSchema = z
-  .string()
-  .min(1, "locale strings must be non-empty");
 
 const r2OptionsSchema = z.object({
   accountId: z.string().min(1, "r2.accountId is required"),
@@ -96,14 +94,10 @@ const glossarySchema = z.union([glossaryFileSchema, glossaryInlineSchema]);
 
 export const polystellaOptionsSchema = z
   .object({
-    // --- Locales (required) ---
-    defaultLocale: localeStringSchema.describe(
-      "Source/canonical language code. Any language is supported; English is the common case.",
-    ),
-    locales: z
-      .array(localeStringSchema)
-      .min(1, "polystella.locales must declare at least one target locale")
-      .describe("Target locales. Does NOT include defaultLocale."),
+    // --- Locales ---
+    // NOT declared here. `defaultLocale` and `locales` are derived from
+    // Astro's `config.i18n` at `astro:config:setup` to avoid two
+    // sources of truth. See `resolveOptions` for the derivation.
 
     // --- Source ---
     sourceDir: z.string().default("./content"),
@@ -174,51 +168,160 @@ export const polystellaOptionsSchema = z
     failOnMissingCredentials: z.boolean().optional(),
     mode: z.enum(["auto", "standalone", "starlight"]).default("auto"),
   })
-  .strict()
-  .superRefine((opts, ctx) => {
-    if (opts.locales.includes(opts.defaultLocale)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["locales"],
-        message: `polystella.locales must NOT include the defaultLocale ("${opts.defaultLocale}"); list only target locales.`,
-      });
-    }
-    const dupes = opts.locales.filter(
-      (locale, i) => opts.locales.indexOf(locale) !== i,
-    );
-    if (dupes.length > 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["locales"],
-        message: `polystella.locales contains duplicates: ${[
-          ...new Set(dupes),
-        ].join(", ")}`,
-      });
-    }
-  });
+  .strict();
 
 export type PolyStellaOptions = z.input<typeof polystellaOptionsSchema>;
 export type PolyStellaResolvedOptions = z.output<
   typeof polystellaOptionsSchema
->;
+> & {
+  /** Source/canonical locale, derived from Astro's `config.i18n.defaultLocale`. */
+  defaultLocale: string;
+  /** Target locales, derived from `config.i18n.locales` minus the default. */
+  locales: string[];
+};
 
 /**
- * Parse + validate user-provided options. Throws a single Error whose
- * message lists every invalid field with its zod path, suitable for
- * surfacing at `astro:config:setup`.
+ * Minimal structural type for the slice of Astro's `i18n` config we
+ * read. Defined locally rather than importing `AstroConfig` so the
+ * schema stays decoupled from Astro's type surface (and so unit tests
+ * can pass plain objects).
  */
-export function resolveOptions(raw: unknown): PolyStellaResolvedOptions {
+export interface AstroI18nLike {
+  defaultLocale: string;
+  locales: ReadonlyArray<string | { path: string; codes?: ReadonlyArray<string> }>;
+  routing?:
+    | "manual"
+    | {
+        prefixDefaultLocale?: boolean;
+        redirectToDefaultLocale?: boolean;
+        fallbackType?: string;
+      };
+}
+
+/**
+ * Parse + validate user-provided options and derive the locale set
+ * from Astro's `config.i18n`. Throws a single Error whose message
+ * surfaces all problems at once — user-options issues from zod, plus
+ * any cross-check failure against `astroI18n` — suitable for surfacing
+ * at `astro:config:setup`.
+ *
+ * Pass `config.i18n` from the integration's `astro:config:setup` hook
+ * as the second argument. If it's `undefined`, the function throws
+ * with a copy-pasteable starter block; PolyStella deliberately does
+ * not write into Astro's config.
+ */
+export function resolveOptions(
+  raw: unknown,
+  astroI18n: AstroI18nLike | undefined,
+): PolyStellaResolvedOptions {
   const parsed = polystellaOptionsSchema.safeParse(raw);
-  if (parsed.success) {
-    return parsed.data;
+  const optionIssues = parsed.success
+    ? []
+    : parsed.error.issues.map((issue) => {
+        const path = issue.path.length > 0 ? issue.path.join(".") : "<root>";
+        return `  • ${path}: ${issue.message}`;
+      });
+
+  const i18nIssues = validateAstroI18n(astroI18n);
+
+  if (optionIssues.length > 0 || i18nIssues.length > 0) {
+    const sections: string[] = [];
+    if (optionIssues.length > 0) {
+      sections.push(`Invalid PolyStella options:\n${optionIssues.join("\n")}`);
+    }
+    if (i18nIssues.length > 0) {
+      sections.push(
+        `Invalid Astro \`i18n\` config (PolyStella derives locales from it):\n${i18nIssues.join("\n")}`,
+      );
+    }
+    throw new Error(
+      `[polystella] configuration error:\n${sections.join("\n\n")}\n\nSee polystella.config.mjs and astro.config.mjs for the full reference.`,
+    );
   }
-  const issues = parsed.error.issues
-    .map((issue) => {
-      const path = issue.path.length > 0 ? issue.path.join(".") : "<root>";
-      return `  • ${path}: ${issue.message}`;
-    })
-    .join("\n");
-  throw new Error(
-    `[polystella] invalid options:\n${issues}\n\nSee polystella.config.mjs (or your project's PolyStella config) for the full options reference.`,
+
+  // Both checks passed: derive the locale fields and merge.
+  const i18n = astroI18n!;
+  const defaultLocale = i18n.defaultLocale;
+  const locales = (i18n.locales as string[]).filter(
+    (locale) => locale !== defaultLocale,
   );
+  return {
+    ...parsed.data!,
+    defaultLocale,
+    locales,
+  };
+}
+
+/**
+ * Cross-check Astro's `i18n` block. Returns a flat list of
+ * human-readable error lines (already prefixed with bullets) suitable
+ * for inclusion in the aggregated `resolveOptions` error message.
+ * Empty array means "this slice of config is acceptable".
+ */
+function validateAstroI18n(i18n: AstroI18nLike | undefined): string[] {
+  if (i18n === undefined) {
+    return [
+      `  • Astro's \`i18n\` config is missing. Add a block like the
+    following to your astro.config.mjs (adjust locales as needed):
+
+        i18n: {
+          defaultLocale: "en",
+          locales: ["en", "pt-BR", "ja-JP"],
+          routing: { prefixDefaultLocale: false },
+        }`,
+    ];
+  }
+
+  const issues: string[] = [];
+
+  if (typeof i18n.defaultLocale !== "string" || i18n.defaultLocale.length === 0) {
+    issues.push(
+      "  • `i18n.defaultLocale` is required and must be a non-empty string.",
+    );
+  }
+
+  if (!Array.isArray(i18n.locales) || i18n.locales.length === 0) {
+    issues.push(
+      "  • `i18n.locales` is required and must declare at least one locale.",
+    );
+  } else {
+    const objectForms = i18n.locales.filter(
+      (entry): entry is { path: string } =>
+        typeof entry === "object" && entry !== null,
+    );
+    if (objectForms.length > 0) {
+      const paths = objectForms.map((e) => e.path).join(", ");
+      issues.push(
+        `  • \`i18n.locales\` contains object-form entries (${paths}). PolyStella v0.1 only supports plain string locales; rewrite them as plain strings (e.g. "pt-BR") and we'll add object-form support in a later milestone.`,
+      );
+    }
+    const stringLocales = i18n.locales.filter(
+      (entry): entry is string => typeof entry === "string",
+    );
+    if (
+      typeof i18n.defaultLocale === "string" &&
+      i18n.defaultLocale.length > 0 &&
+      !stringLocales.includes(i18n.defaultLocale)
+    ) {
+      issues.push(
+        `  • \`i18n.locales\` must include \`defaultLocale\` ("${i18n.defaultLocale}"). Astro's contract is that the default is one of the listed locales; add it.`,
+      );
+    }
+    const dupes = stringLocales.filter(
+      (locale, i) => stringLocales.indexOf(locale) !== i,
+    );
+    if (dupes.length > 0) {
+      issues.push(
+        `  • \`i18n.locales\` contains duplicates: ${[...new Set(dupes)].join(", ")}.`,
+      );
+    }
+  }
+
+  if (i18n.routing === "manual") {
+    issues.push(
+      '  • `i18n.routing: "manual"` is not supported by PolyStella v0.1 (we rely on Astro\'s built-in locale-prefix routing to inject translated routes). Use `routing: { prefixDefaultLocale: false }` (or omit `routing` entirely) for the canonical "existing site adds i18n" setup.',
+    );
+  }
+
+  return issues;
 }

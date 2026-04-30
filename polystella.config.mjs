@@ -13,14 +13,12 @@ import "dotenv/config";
 
 /** @type {import('polystella').PolyStellaOptions} */
 const config = {
-  // ─── Locales (required) ──────────────────────────────────────────────
-  // The source/canonical language. Any language is supported; English is
-  // the common case.
-  defaultLocale: "en",
-
-  // Target locales the integration should produce. MUST NOT include the
-  // value of `defaultLocale`.
-  locales: ["pt-BR", "ja-JP"],
+  // ─── Locales ───────────────────────────────────────────────────
+  // Locale set is configured in `astro.config.mjs` under `i18n` and
+  // read (never written) by PolyStella at `astro:config:setup`. To
+  // change `defaultLocale` or add/remove a target locale, edit the
+  // Astro config; PolyStella picks it up automatically and folds the
+  // resolved set into every cache key.
 
   // ─── Source files ────────────────────────────────────────────────────
   // Where to look for translatable markdown, relative to the Astro
@@ -51,9 +49,13 @@ const config = {
   // frontmatter: {},
 
   // ─── Standalone-mode routing ─────────────────────────────────────────
-  // Glob patterns the integration is allowed to inject `/<locale>/...`
-  // routes for. Empty array means "all routes are eligible".
-  // routes: [],
+  // Source pages PolyStella generates locale-prefixed shims for. Each
+  // entry produces a shim at `<cacheDir>/polystella-shims/route-N.astro`
+  // and an `injectRoute({ pattern: "/[lang]/<sourcePattern>" })` call
+  // at config:setup. Until the source page is migrated to
+  // `getLocalizedEntry` (planned milestone), the locale routes render
+  // source-language content under the locale-prefixed URLs.
+  routes: ["src/pages/[slug].astro"],
 
   // What to render at a translated URL when the underlying page has no
   // translation: fall back to the default-locale page, or 404.

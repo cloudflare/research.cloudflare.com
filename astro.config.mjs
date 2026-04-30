@@ -15,6 +15,15 @@ import polystellaConfig from "./polystella.config.mjs";
 export default defineConfig({
   site: "https://research.cloudflare.com",
   output: "static",
+  // Locale set: source of truth for both Astro routing and PolyStella.
+  // Existing English routes stay at their current paths; non-default
+  // locales mount under `/pt-BR/...` and `/ja-JP/...` once PolyStella's
+  // route injection lands.
+  i18n: {
+    defaultLocale: "en",
+    locales: ["en", "pt-BR", "ja-JP"],
+    routing: { prefixDefaultLocale: false },
+  },
   fonts: [
     {
       provider: fontProviders.local(),
