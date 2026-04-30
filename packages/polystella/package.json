@@ -14,6 +14,10 @@
     "./runtime": {
       "types": "./src/runtime/index.ts",
       "default": "./src/runtime/index.ts"
+    },
+    "./content": {
+      "types": "./src/content/index.ts",
+      "default": "./src/content/index.ts"
     }
   },
   "files": [
@@ -39,7 +43,6 @@
     "vitest": "^3.0.0"
   },
   "peerDependencies": {
-    "@astrojs/markdown-remark": "^7.1.0",
     "astro": "^6.0.0"
   }
 }

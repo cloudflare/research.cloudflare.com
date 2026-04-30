@@ -110,11 +110,11 @@ function createWorkersAITranslator(
           ],
           // Workers AI defaults to a small output cap (typically 256
           // tokens), which truncates a multi-segment translation
-          // mid-string and produces unparseable JSON. 4096 fits well
-          // under llama-3.1-8b-instruct's 8k output ceiling and covers
-          // an abstract-sized batch comfortably; a future config knob
-          // will make this tunable per-provider.
-          max_tokens: 4096,
+          // mid-string and produces unparseable JSON. The resolved
+          // schema default (8192) fits under llama-3.1-8b-instruct's
+          // 8k output ceiling; the operator can override per-provider
+          // via `provider.maxTokens` for unusually long abstracts.
+          max_tokens: provider.maxTokens,
         }),
       });
       if (!res.ok) {
@@ -191,7 +191,7 @@ function createAnthropicTranslator(
         },
         body: JSON.stringify({
           model: modelId,
-          max_tokens: 4096,
+          max_tokens: provider.maxTokens,
           system: systemPrompt,
           messages: [{ role: "user", content: userPrompt }],
         }),

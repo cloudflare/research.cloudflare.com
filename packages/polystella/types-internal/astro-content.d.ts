@@ -34,4 +34,13 @@ declare module "astro:content" {
     collection: string,
     slug: string,
   ): Promise<CollectionEntry | undefined>;
+
+  /**
+   * Astro's `defineCollection`. Real shape is generic over the
+   * loader and schema; we accept `unknown` because the
+   * `polystellaCollections` helper threads opaque collection
+   * config objects through and lets Astro re-validate them when
+   * `astro sync` runs in the consumer project.
+   */
+  export function defineCollection(config: unknown): unknown;
 }

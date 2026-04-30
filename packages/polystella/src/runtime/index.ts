@@ -1,14 +1,6 @@
-import { existsSync, readFileSync } from "node:fs";
-import path from "node:path";
-
 import { getEntry, type CollectionEntry } from "astro:content";
-import {
-  defaultLocale,
-  frontmatter as frontmatterRules,
-  stagingDir,
-} from "polystella:runtime-config";
+import { defaultLocale } from "polystella:runtime-config";
 
-import { resolveFrontmatterKeys } from "../parsing/extract.js";
 import {
   normaliseGetLocalizedEntryArgs,
   resolveLocalizedEntry,
@@ -27,29 +19,28 @@ import {
  *   - `getLocalizedEntry({ collection, id }, locale?)`
  *   - `getLocalizedEntry(collection, id, locale?)`
  *
- * Returns the **schema-validated source entry** intersected with two
- * extension fields (`isLocalized`, `locale`), with translated values
- * from the staging file surgically merged onto `data` and `body` when
- * the requested locale has a hit. Reference fields, dates, and image
- * assets are inherited from Astro's source-entry pipeline — the
- * runtime never reconstructs them — so `entry.data.authors[i]` stays
- * the validated `{ collection, id }` ref the schema produces.
- *
- * Branches:
+ * Resolution model:
  *
  *   - `locale === undefined` / blank / equal to `defaultLocale`:
- *     return the source entry verbatim plus `isLocalized: false`.
- *   - Staged file hit at `<stagingDir>/<locale>/<collection>/<id>.{md,mdx}`:
- *     overlay only the keys configured for translation in
- *     `polystella({ frontmatter })`, replace `body`, set
- *     `isLocalized: true`.
- *   - Staged file miss: same as default-locale path, with the
- *     `isLocalized: false` flag for consumer branching.
+ *     return the source-collection entry verbatim plus
+ *     `isLocalized: false` and `locale: defaultLocale`.
+ *   - Otherwise: dispatch to the per-locale sibling collection
+ *     `<collection>__<locale>` (registered by `polystellaCollections`
+ *     in the user's `content.config.ts`). On hit, return the sibling
+ *     entry with `isLocalized: true`. On miss, fall back to the
+ *     source collection with `isLocalized: false`.
  *
- * Returns `undefined` when the source entry itself doesn't exist —
- * matching `getEntry`'s contract exactly so this helper is a true
- * drop-in. Consumer filters typed `(e): e is NonNullable<typeof e>
- * => e !== undefined` work without modification.
+ * Translated entries flow through Astro's content layer the same way
+ * source entries do — schema validation runs on translations,
+ * `entry.rendered.html` populates from the normal compile pipeline,
+ * MDX components resolve through Vite. The runtime helper is
+ * dispatch-only; it never reads files or merges values itself.
+ *
+ * Returns `undefined` when neither the sibling nor the source entry
+ * exists — matching `getEntry`'s contract exactly so the helper is a
+ * true drop-in. Consumer filters typed
+ * `(e): e is NonNullable<typeof e> => e !== undefined` work without
+ * modification.
  */
 // Collection-aware overloads: when the caller pins a collection name
 // `C`, the entry shape resolves to `CollectionEntry<C>` (with the
@@ -83,24 +74,19 @@ export async function getLocalizedEntry<C extends string>(
     locale,
     deps: {
       defaultLocale,
-      stagingDir,
-      readFile: readFileIfExists,
-      joinPath: path.join,
-      // Astro's CollectionEntry has more fields than the pure
-      // helper's SourceEntryShape declares (`filePath`, `digest`,
+      // Astro's `CollectionEntry` has more fields than the pure
+      // helper's `SourceEntryShape` declares (`filePath`, `digest`,
       // `rendered`, …) — they survive the {...source} spread inside
       // the helper, so the cast at the dep boundary is structural
-      // and lossless.
+      // and lossless. The first arg is widened to `string` because
+      // the dispatcher synthesises `<collection>__<locale>`
+      // collection names that aren't statically known to Astro's
+      // generic `getEntry`.
       getEntry: (c, s) =>
-        getEntry(c, s) as Promise<SourceEntryShape | undefined>,
-      // Fallback to `{}` rather than trusting the virtual module's
-      // shape: a dev server booted against an older virtual-module
-      // export (before this field was threaded through) would
-      // otherwise crash inside `Object.entries(undefined)` on the
-      // first staged-hit lookup. Empty rules ⇒ "no keys
-      // translatable", which is the right degraded behaviour.
-      frontmatterRules: frontmatterRules ?? {},
-      resolveKeys: resolveFrontmatterKeys,
+        (getEntry as (c: string, s: string) => Promise<unknown>)(
+          c,
+          s,
+        ) as Promise<SourceEntryShape | undefined>,
     },
   });
   // The pure helper returns LocalizedEntry against its structural
@@ -114,14 +100,3 @@ export {
   type CollectionEntryRef,
   type LocalizedEntry,
 } from "./get-localized-entry.js";
-
-/**
- * Tiny `existsSync + readFileSync` wrapper. Returning `null` on
- * not-found (rather than throwing) is the contract the pure helper
- * expects from its `readFile` dep — keeps the staging-miss path
- * branch-free in the core logic.
- */
-function readFileIfExists(absolutePath: string): string | null {
-  if (!existsSync(absolutePath)) return null;
-  return readFileSync(absolutePath, "utf8");
-}

@@ -1,6 +1,6 @@
 {
   "extends": "astro/tsconfigs/strict",
-  "include": ["src/**/*", "tests/**/*"],
+  "include": ["src/**/*", "tests/**/*", "types-internal/**/*"],
   "compilerOptions": {
     "noEmit": true,
     "moduleResolution": "bundler"

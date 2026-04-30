@@ -28,7 +28,7 @@ const config = {
   // Glob patterns relative to `sourceDir`. A file is considered for
   // translation if it matches at least one `include` and no `exclude`.
   // include: ["**/*.md", "**/*.mdx"],
-  include: ["publications/Antunes2025.md"],
+  include: ["publications/*.md"],
   // exclude: [],
   //
   // Staged-rollout example — translate publications first:

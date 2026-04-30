@@ -94,6 +94,17 @@ export function buildPrompt(input: BuildPromptInput): BuiltPrompt {
   systemLines.push(
     `Return a single JSON object whose keys are the segment IDs from the user message, and whose values are the translated strings. Output the JSON object ONLY: no preamble, no code fences, no explanation, no surrounding prose. The set of keys in your response MUST equal the set of keys in the user message — do not add, omit, or rename any segment ID.`,
   );
+  // Smaller / older instruct models (notably llama-3.1-8b-instruct)
+  // routinely produce JSON strings with unescaped inner double
+  // quotes when the source text uses them as scare-quotes — e.g.
+  // emitting `"chaves "constrangidas""` instead of
+  // `"chaves \"constrangidas\""`. This breaks `JSON.parse` mid-string
+  // (column ~91) and the per-pair retry usually reproduces the same
+  // bug. Calling the rule out explicitly steers the decoder into
+  // emitting the backslash even in long string values.
+  systemLines.push(
+    `JSON ESCAPING: Every double-quote character (") that appears inside a string VALUE must be escaped as \\". Every backslash (\\) must be escaped as \\\\. Newlines must be escaped as \\n. Do NOT escape characters outside string values (the JSON keys, structural punctuation, the opening/closing braces). When the source text contains scare-quotes, technical terms, or quoted phrases, those quotes must be \\" inside the JSON string, never bare ".`,
+  );
 
   const segmentMap: Record<string, string> = {};
   for (const seg of segments) segmentMap[seg.id] = seg.text;

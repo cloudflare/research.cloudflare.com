@@ -21,16 +21,11 @@ import {
   type PolyStellaOptions,
   type PolyStellaResolvedOptions,
 } from "./config/options.js";
-import { pathToFileURL } from "node:url";
-import { createMarkdownProcessor } from "@astrojs/markdown-remark";
-import {
-  computeBuildEpoch,
-  createRenderer,
-  renderToStaging,
-  type Renderer,
-  type RenderOutcome,
-} from "./rendering/render.js";
 import { parseMarkdown } from "./parsing/parse.js";
+import {
+  rewriteInternalLinks,
+  type RewriteInternalLinksOptions,
+} from "./parsing/rewrite-links.js";
 import { createTranslator, type Translator } from "./translation/provider.js";
 import { walkSources } from "./source/walk.js";
 import { computeSourceHash } from "./storage/hash.js";
@@ -60,6 +55,11 @@ export {
   type LoadGlossariesOptions,
 } from "./glossary/glossary.js";
 export { applyTranslations } from "./parsing/apply.js";
+export {
+  rewriteInternalLinks,
+  rewriteUrlIfInternal,
+  type RewriteInternalLinksOptions,
+} from "./parsing/rewrite-links.js";
 export {
   extractSegments,
   type Segment,
@@ -118,6 +118,38 @@ export {
 } from "./routing/shim.js";
 
 /**
+ * Write translated bytes to the staging directory in the layout
+ * `polystellaCollections` expects: `<stagingDir>/<locale>/<relativeSourcePath>`.
+ *
+ * The convention assumes the source path's first segment is the
+ * collection name (`publications/Antunes2025.md`,
+ * `people/alice.md`), which matches the standard Astro layout where
+ * `glob({ base: "./content/<collection>" })` is the dominant
+ * pattern. When `polystellaCollections` registers the
+ * `<collection>__<locale>` sibling, its loader sees this exact tree
+ * and Astro compiles each entry through the normal pipeline.
+ *
+ * `mkdir({ recursive: true })` is idempotent across (file × locale)
+ * fan-out; we don't bother caching the "directory exists" set since
+ * Node's syscall is cheap and the cache would muddy concurrent
+ * builds.
+ */
+async function writeStagedTranslation(args: {
+  stagingDir: string;
+  locale: string;
+  relativeSourcePath: string;
+  bytes: string;
+}): Promise<void> {
+  const target = path.join(
+    args.stagingDir,
+    args.locale,
+    args.relativeSourcePath,
+  );
+  await mkdir(path.dirname(target), { recursive: true });
+  await writeFile(target, args.bytes, "utf8");
+}
+
+/**
  * PolyStella — AI-driven content localization for Astro.
  *
  * Standalone-mode pilot integration.
@@ -137,8 +169,6 @@ export default function polystella(
   options: PolyStellaOptions,
 ): AstroIntegration {
   let resolved: PolyStellaResolvedOptions | undefined;
-  let configRoot: URL | undefined;
-  let configCacheDir: URL | undefined;
 
   return {
     name: "polystella",
@@ -148,27 +178,14 @@ export default function polystella(
         config,
         injectRoute,
         updateConfig,
+        command,
       }) => {
         // PolyStella's locale set (defaultLocale + targets) is derived
         // from Astro's native `config.i18n` block — single source of
         // truth, never injected. `resolveOptions` throws with a
         // copy-pasteable starter block when `i18n` is absent or
         // misconfigured.
-        // `config.markdown` carries the user's resolved Astro markdown
-        // config (Shiki theme, remark/rehype plugins, gfm setting,
-        // etc.). The rendering module feeds it straight into
-        // `createMarkdownProcessor` so translated content goes through
-        // the same pipeline as source pages.
-        resolved = resolveOptions(
-          options,
-          config.i18n,
-          config.markdown as Record<string, unknown> | undefined,
-        );
-        configRoot = config.root;
-        // `config.cacheDir` is a URL pointing at `<root>/.astro/` by
-        // default. We capture it here because `astro:build:start` (where
-        // the staging writes happen) doesn't expose `config`.
-        configCacheDir = config.cacheDir;
+        resolved = resolveOptions(options, config.i18n);
         logger.info(
           `validated options: defaultLocale=${
             resolved.defaultLocale
@@ -178,31 +195,40 @@ export default function polystella(
         // Compute the staging dir once and share it with both the
         // build hook (where translated bytes are written) and the
         // runtime helper (where they're read at page-render time).
-        // Resolving here keeps the path absolute and stable across
-        // both consumers.
+        //
+        // Anchored at `<root>/.astro/i18n-staging` (project root, NOT
+        // `config.cacheDir`). In Astro 6 `cacheDir` resolves to
+        // `<root>/node_modules/.astro/` by default, but the user's
+        // `polystellaCollections({ stagingDir: ".astro/i18n-staging" })`
+        // (the documented default) reads relative to project root.
+        // Using `cacheDir` here would silently desync writer and
+        // reader paths and the sibling collections would always be
+        // empty.
+        //
+        // `cacheDirPath` is still computed because the polystella-shim
+        // route generator below uses `cacheDir` for the shim source
+        // location — that one is fine because shims are imported via
+        // the path Astro returns from `injectRoute`'s `entrypoint`
+        // arg, never read off disk by a separate reader.
         const cacheDirPath = fileURLToPath(config.cacheDir);
-        const stagingDir = path.resolve(cacheDirPath, "i18n-staging");
+        const rootDirPath = fileURLToPath(config.root);
+        const stagingDir = path.resolve(rootDirPath, ".astro/i18n-staging");
 
         // Register the `polystella:runtime-config` virtual module.
-        // The runtime helper imports this to learn the staging
-        // location and the default locale at page-render time — those
-        // values are known here at config-setup, but not via
+        // The runtime helper imports `defaultLocale` from this module
+        // at page-render time — known at config-setup but not via
         // `process.env`, so a Vite-resolved virtual module is the
-        // cleanest way to thread them through. The `\0` prefix on
-        // the resolved id is Vite's convention to signal that other
+        // cleanest way to thread it through. The `\0` prefix on the
+        // resolved id is Vite's convention to signal that other
         // plugins should leave the module alone.
+        //
+        // The post-pivot runtime is a pure dispatcher (no staging
+        // probes, no frontmatter overlay), so this module ships
+        // exactly one constant.
         const runtimeConfigSource = [
-          `export const stagingDir = ${JSON.stringify(stagingDir)};`,
           `export const defaultLocale = ${JSON.stringify(
             resolved.defaultLocale,
           )};`,
-          `export const sourceDir = ${JSON.stringify(resolved.sourceDir)};`,
-          // Per-glob translatable-keys map. The runtime uses this to
-          // decide which keys to overlay from the staged frontmatter
-          // onto the schema-validated source entry; keys absent from
-          // this map (e.g. `authors`, `doi`) keep their source-entry
-          // values verbatim, preserving Astro's reference resolution.
-          `export const frontmatter = ${JSON.stringify(resolved.frontmatter)};`,
           "",
         ].join("\n");
         updateConfig({
@@ -273,20 +299,26 @@ export default function polystella(
             );
           }
         }
-      },
 
-      "astro:build:start": async ({ logger }) => {
-        if (!resolved || !configRoot || !configCacheDir) return;
+        // Translation pipeline. Runs HERE (in config:setup), not in
+        // `astro:build:start`, because `polystellaCollections` registers
+        // per-locale sibling collections whose loaders read from
+        // `<stagingDir>/<locale>/<collection>/...`. Astro syncs the
+        // content layer between config:setup and build:start — if we
+        // staged translations in build:start, the sibling collections
+        // would have already been synced as empty and the runtime
+        // dispatcher would always fall back to source.
+        //
+        // Gated on `runOn` (default `["build"]`) intersecting Astro's
+        // current `command`. `astro dev` reuses the prior build's
+        // staged content unless the operator opts in via
+        // `runOn: ["build", "dev"]`.
+        if (!resolved.runOn.includes(command as "build" | "dev")) {
+          return;
+        }
 
-        const rootDir = fileURLToPath(configRoot);
+        const rootDir = fileURLToPath(config.root);
         const sourceDirAbs = path.resolve(rootDir, resolved.sourceDir);
-        // Translations land here on every successful (file, locale) pass,
-        // whether they came from the cache or from a fresh translation.
-        // The route-injection layer (M7) will read from this same path.
-        const stagingDir = path.resolve(
-          fileURLToPath(configCacheDir),
-          "i18n-staging",
-        );
 
         // Load all per-locale glossaries up front and pre-compute their
         // hashes. The hash is the same for every (file, locale) pair
@@ -294,7 +326,7 @@ export default function polystella(
         // same glossary content N-files times below.
         const glossaries = await loadGlossaries({
           config: resolved,
-          projectRoot: configRoot,
+          projectRoot: config.root,
         });
         const glossaryHashByLocale = new Map<string, string>();
         for (const locale of resolved.locales) {
@@ -356,49 +388,6 @@ export default function polystella(
             `R2 cache: not configured — translations will not be cached or shared`,
           );
         }
-
-        // Construct the markdown processor once per build and wrap it
-        // as a `Renderer`. Reusing the instance lets Shiki share its
-        // highlighter cache across all (file × locale) pairs, turning
-        // the second-and-onwards highlight from ~100ms to ~1ms.
-        // `resolved.markdown` is undefined only in exotic configs that
-        // strip the markdown block out of `astro.config.mjs`; we
-        // tolerate that by falling back to the processor's own defaults
-        // (Astro's bundled remark + Shiki + gfm), matching what Astro
-        // itself does when the config is absent.
-        const markdownProcessor = await createMarkdownProcessor(
-          (resolved.markdown ?? {}) as Parameters<
-            typeof createMarkdownProcessor
-          >[0],
-        );
-        const renderer: Renderer = createRenderer(markdownProcessor);
-
-        // Build-config fingerprint for the render cache. Computed
-        // once per build and threaded through every `renderToStaging`
-        // call. Bumps on `polystella` version changes or on tracked
-        // markdown-config knob changes (Shiki theme, gfm, etc.); does
-        // NOT bump on plugin-array or transformer-function changes —
-        // those require `rm -rf .astro/i18n-staging` to invalidate.
-        // See `computeBuildEpoch` in `rendering/render.ts` for the
-        // exact knob set + the rationale for the trade-off.
-        const buildEpoch = computeBuildEpoch(
-          resolved.markdown,
-          POLYSTELLA_VERSION,
-        );
-        logger.debug(`render cache: build epoch ${buildEpoch.slice(0, 12)}…`);
-
-        // Per-pair render outcomes, summed at the close of the build
-        // for a one-line cache-effectiveness signal. `cache-hit`
-        // dominates on warm rebuilds; `rendered` dominates on cold
-        // builds or after an epoch bump. `mdx-skip` and `no-renderer`
-        // surface the volume of pages that bypass HTML rendering
-        // entirely — useful for spotting unintentional opt-outs.
-        const renderCounts: Record<RenderOutcome, number> = {
-          rendered: 0,
-          "cache-hit": 0,
-          "mdx-skip": 0,
-          "no-renderer": 0,
-        };
 
         const sources = await walkSources({
           sourceDir: sourceDirAbs,
@@ -489,6 +478,32 @@ export default function polystella(
         let cacheWritesCount = 0;
         let cacheWritesFailed = 0;
         let cacheWritesAnnounced = false;
+
+        // Internal-link rewrite plumbing. Built once per build so the
+        // per-pair loop pays no setup cost. The "all locales" array
+        // includes the default locale because the rewriter needs to
+        // recognise `/${defaultLocale}/...` as already-prefixed (an
+        // operator might author such links by hand to opt out of
+        // rewriting on a case-by-case basis). When
+        // `rewriteInternalLinks` is false we leave the helper unset
+        // and the per-pair loop skips the call entirely.
+        //
+        // Capturing `resolved` into a `const` here so the closure
+        // below sees the post-narrowing non-undefined type without TS
+        // re-widening on every reference.
+        const resolvedConfig = resolved;
+        const allLocalesForRewrite = [
+          resolvedConfig.defaultLocale,
+          ...resolvedConfig.locales,
+        ];
+        const maybeRewrite = (bytes: string, locale: string): string => {
+          if (!resolvedConfig.rewriteInternalLinks) return bytes;
+          const opts: RewriteInternalLinksOptions = {
+            targetLocale: locale,
+            locales: allLocalesForRewrite,
+          };
+          return rewriteInternalLinks(bytes, opts);
+        };
         for (const source of sources) {
           const body = await readFile(source.absolutePath, "utf8");
           const ast = parseMarkdown(body);
@@ -522,26 +537,26 @@ export default function polystella(
                 relativeSourcePath: source.relativePath,
               });
               if (override !== null) {
-                const outcome = await renderToStaging({
-                  renderer,
+                // Run the rewriter on overrides too: an operator's
+                // hand-translated file may legitimately contain raw
+                // internal links that need locale-prefixing for the
+                // built site. Idempotent for already-prefixed URLs.
+                const overrideStaged = maybeRewrite(override, locale);
+                await writeStagedTranslation({
                   stagingDir,
                   locale,
                   relativeSourcePath: source.relativePath,
-                  translatedBytes: override,
-                  sourceFileURL: pathToFileURL(source.absolutePath),
-                  buildEpoch,
-                  polystellaVersion: POLYSTELLA_VERSION,
-                  onMdxSkip: (rel) =>
-                    logger.warn(
-                      `↷ ${rel} → ${locale}: MDX HTML rendering skipped (frontmatter+body translated; <Content /> will fall back to source-language HTML)`,
-                    ),
+                  bytes: overrideStaged,
                 });
-                renderCounts[outcome]++;
                 counts.override++;
                 touchedPairs.add(
                   encodeTouchedPair(locale, source.relativePath),
                 );
-                logger.info(`◆ ${source.relativePath} → ${locale} [override]`);
+                if (resolved.verbose) {
+                  logger.info(
+                    `◆ ${source.relativePath} → ${locale} [override]`,
+                  );
+                }
                 if (resolved.debug.previewDir) {
                   const previewPath = path.resolve(
                     rootDir,
@@ -550,7 +565,7 @@ export default function polystella(
                     source.relativePath,
                   );
                   await mkdir(path.dirname(previewPath), { recursive: true });
-                  await writeFile(previewPath, override, "utf8");
+                  await writeFile(previewPath, overrideStaged, "utf8");
                 }
                 continue;
               }
@@ -622,32 +637,34 @@ export default function polystella(
               counts[result.outcome]++;
               touchedPairs.add(encodeTouchedPair(locale, source.relativePath));
 
-              // Stage the translated bytes for the route-injection layer.
-              // Mirror the source's relative path under the staging root
-              // so locale-aware lookup is a straight join. The renderer
-              // additionally writes `.html` and `.meta.json` sidecars
-              // alongside the `.md`, so consumer pages using `<Content />`
-              // or `entry.rendered.html` see translated output too.
-              const renderOutcome = await renderToStaging({
-                renderer,
+              // Stage the translated bytes for `polystellaCollections` to
+              // pick up. The sibling collection's loader watches
+              // `<stagingDir>/<locale>/<collection>/<rest>` and Astro's
+              // content layer compiles each entry through the normal
+              // pipeline (schema validation, MDX compilation,
+              // `entry.rendered.html`, custom remark/rehype plugins) —
+              // no overlay logic needed at runtime.
+              // Apply internal-link rewriting AFTER the cache layer
+              // returns. This way the cache stores the
+              // translation-only output; toggling
+              // `rewriteInternalLinks` doesn't invalidate cached
+              // bytes, and the rewriter's idempotent guard prevents
+              // double-prefixing on cache hits whose stored bytes
+              // already happen to contain locale-prefixed URLs.
+              const stagedBody = maybeRewrite(result.body, locale);
+              await writeStagedTranslation({
                 stagingDir,
                 locale,
                 relativeSourcePath: source.relativePath,
-                translatedBytes: result.body,
-                sourceFileURL: pathToFileURL(source.absolutePath),
-                buildEpoch,
-                polystellaVersion: POLYSTELLA_VERSION,
-                onMdxSkip: (rel) =>
-                  logger.warn(
-                    `↷ ${rel} → ${locale}: MDX HTML rendering skipped (frontmatter+body translated; <Content /> will fall back to source-language HTML)`,
-                  ),
+                bytes: stagedBody,
               });
-              renderCounts[renderOutcome]++;
 
-              const marker = result.outcome === "hit" ? "●" : "✓";
-              logger.info(
-                `${marker} ${source.relativePath} → ${locale} [${result.outcome}] (${segments.length} segs)`,
-              );
+              if (resolved.verbose) {
+                const marker = result.outcome === "hit" ? "●" : "✓";
+                logger.info(
+                  `${marker} ${source.relativePath} → ${locale} [${result.outcome}] (${segments.length} segs)`,
+                );
+              }
 
               // Optional debug-write: same content as staging but at a
               // user-visible path for inspection. No-op when previewDir
@@ -660,7 +677,7 @@ export default function polystella(
                   source.relativePath,
                 );
                 await mkdir(path.dirname(previewPath), { recursive: true });
-                await writeFile(previewPath, result.body, "utf8");
+                await writeFile(previewPath, stagedBody, "utf8");
               }
             } catch (err) {
               counts.failed++;
@@ -693,27 +710,6 @@ export default function polystella(
               )} (${cacheWritesFailed} failed)`,
             );
           }
-        }
-
-        // Render-cache summary. Suppressed when nothing was rendered
-        // (zero translatable pairs, dry-run, etc.) to keep noise-free
-        // builds noise-free. The "skipped" count rolls up `mdx-skip`
-        // (deferred MDX rendering) and `no-renderer` (consumer
-        // opt-out, currently never produced — guarded for future use).
-        const renderTotal =
-          renderCounts.rendered +
-          renderCounts["cache-hit"] +
-          renderCounts["mdx-skip"] +
-          renderCounts["no-renderer"];
-        if (renderTotal > 0) {
-          const skipped =
-            renderCounts["mdx-skip"] + renderCounts["no-renderer"];
-          const parts = [
-            `${renderCounts["cache-hit"]} hit`,
-            `${renderCounts.rendered} rendered`,
-          ];
-          if (skipped > 0) parts.push(`${skipped} skipped`);
-          logger.info(`render cache: ${parts.join(", ")}`);
         }
 
         // Count-based prune. Walk only the (locale, sourcePath) pairs
@@ -763,3 +759,4 @@ export default function polystella(
     },
   };
 }
+

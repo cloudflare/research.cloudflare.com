@@ -67,6 +67,7 @@ describe("createTranslator", () => {
         accountId: "acct",
         apiToken: "tok",
         model: "@cf/meta/llama-3.1-8b-instruct",
+        maxTokens: 8192,
       },
       "pt-BR",
       { fetchImpl: makeFetchStub({}) },
@@ -80,6 +81,7 @@ describe("createTranslator", () => {
         kind: "anthropic",
         apiKey: "sk-ant-test",
         model: "claude-3-5-haiku-latest",
+        maxTokens: 8192,
       },
       "pt-BR",
       { fetchImpl: makeFetchStub({}) },
@@ -105,6 +107,7 @@ describe("Workers AI translator", () => {
     accountId: "ACCT",
     apiToken: "TOKEN",
     model: "@cf/meta/llama-3.1-8b-instruct",
+    maxTokens: 8192,
   };
 
   it("POSTs to the run endpoint with bearer auth and a chat-style body", async () => {
@@ -231,6 +234,7 @@ describe("Anthropic translator", () => {
     kind: "anthropic" as const,
     apiKey: "sk-ant-test",
     model: "claude-3-5-haiku-latest",
+    maxTokens: 8192,
   };
 
   it("POSTs to /v1/messages with the documented headers and body", async () => {

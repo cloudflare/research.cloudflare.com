@@ -53,6 +53,15 @@ const workersAiProviderSchema = z.object({
     z.string().min(1),
     z.object({ default: z.string().min(1) }).catchall(z.string().min(1)),
   ]),
+  /**
+   * Maximum tokens the model may emit per call. Workers AI defaults to
+   * a small ceiling (~256) which truncates multi-segment translations
+   * mid-string and produces unparseable JSON. Default 8192 fits under
+   * llama-3.1-8b-instruct's 8k output ceiling and qwen2.5-coder-32b's
+   * comparable cap. Bump this for unusually long abstracts; lower it
+   * to constrain runaway output.
+   */
+  maxTokens: z.number().int().positive().default(8192),
 });
 
 const anthropicProviderSchema = z.object({
@@ -62,6 +71,13 @@ const anthropicProviderSchema = z.object({
     z.string().min(1),
     z.object({ default: z.string().min(1) }).catchall(z.string().min(1)),
   ]),
+  /**
+   * Maximum tokens the model may emit per call. Mirrors the
+   * workers-ai ceiling rationale: too small and multi-segment
+   * translations truncate, too large and one runaway call burns
+   * disproportionate spend. Default 8192.
+   */
+  maxTokens: z.number().int().positive().default(8192),
 });
 
 const providerSchema = z.discriminatedUnion("kind", [
@@ -167,19 +183,19 @@ export const polystellaOptionsSchema = z
     runOn: z.array(z.enum(["build", "dev"])).default(["build"]),
     failOnMissingCredentials: z.boolean().optional(),
     mode: z.enum(["auto", "standalone", "starlight"]).default("auto"),
+    /**
+     * When `true`, log a one-line marker for every (file, locale) pair
+     * the build hook processes (cache hits, cache misses, overrides,
+     * failures). When `false` (the default), only the closing summary
+     * and any failures are logged. Recommended on for first-build
+     * debugging and off for steady-state CI builds, where the per-pair
+     * chatter would drown legitimate signal.
+     */
+    verbose: z.boolean().default(false),
   })
   .strict();
 
 export type PolyStellaOptions = z.input<typeof polystellaOptionsSchema>;
-
-/**
- * Structural type for Astro's resolved markdown config. Defined as
- * `Record<string, unknown>` to keep this module decoupled from
- * Astro's internal type surface — `@astrojs/markdown-remark`'s
- * `createMarkdownProcessor` does its own validation when we hand
- * this through at the rendering boundary.
- */
-export type AstroMarkdownLike = Record<string, unknown>;
 
 export type PolyStellaResolvedOptions = z.output<
   typeof polystellaOptionsSchema
@@ -188,15 +204,6 @@ export type PolyStellaResolvedOptions = z.output<
   defaultLocale: string;
   /** Target locales, derived from `config.i18n.locales` minus the default. */
   locales: string[];
-  /**
-   * Astro's resolved markdown config. Captured at `astro:config:setup`
-   * and fed to `createMarkdownProcessor` by the rendering module so
-   * translated content runs through the same remark/rehype pipeline,
-   * Shiki theme, and metadata extractors as the source pages.
-   * `undefined` means "no markdown rendering wanted" (the rendering
-   * module short-circuits and skips writing HTML/metadata sidecars).
-   */
-  markdown: AstroMarkdownLike | undefined;
 };
 
 /**
@@ -232,7 +239,6 @@ export interface AstroI18nLike {
 export function resolveOptions(
   raw: unknown,
   astroI18n: AstroI18nLike | undefined,
-  astroMarkdown?: AstroMarkdownLike | undefined,
 ): PolyStellaResolvedOptions {
   const parsed = polystellaOptionsSchema.safeParse(raw);
   const optionIssues = parsed.success
@@ -269,7 +275,6 @@ export function resolveOptions(
     ...parsed.data!,
     defaultLocale,
     locales,
-    markdown: astroMarkdown,
   };
 }
 
