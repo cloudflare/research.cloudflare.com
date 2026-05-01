@@ -78,8 +78,52 @@ buttonLabel = "Read the Full Article"
 ```
 
 ### People
+All people are located within the [`/content/people`](./content/people) directory.
+
+They must follow this structure:
+
+```markdown
+---
+title: "Person's Name"
+position: "Position"
+author_name: "Person's Name"
+status: "current" | "inactive"
+twitter: "twitter-handle"
+bluesky: "bluesky-handle"
+blog_author: "blog-author"
+avatar: "/images/people/person-name.jpg"
+slug: "person-name"
+type: "active" | "alumni" | "external" | "intern" | "inactive"
+---
+```
+
+Only `active` and `alumni` types are displayed on the team page.
+
+Avatars are stored in the [`/public/images/people`](./public/images/people) directory and should be named after the person's slug.
 
 ### Publications
+All publications are located within the [`/content/publications`](./content/publications) directory.
+
+They must follow this structure:
+
+```markdown
+---
+title: "Publication Name"
+year: year
+location: "Location"
+authors:
+  - author-slug
+url: https://example.com
+doi: doi
+related_interests:
+  - related-interest-slug
+pillar: "fast" | "private" | "safe" | "reliable" | "measurable"
+tags:
+  - tag-slug
+---
+
+Publication content
+```
 
 ### Presentations
 All presentations are located within the [`/content/presentations`](./content/presentations) directory.
@@ -89,19 +133,9 @@ They must follow this structure:
 ```markdown
 ---
 title: "Presentation Name"
-year: 2021
-location: IACR International Conference on Public-Key Cryptography, pp. 261-289. Springer, Cham, 2021.
-authors:
-  - martin-albrecht
-  - alex-davidson
-  - amit-deo
-  - nigel-p-smart
-url: https://example.com
-doi: 10.1007/978-3-030-75248-4_10
-related_interests:
-  - cryptography
-pillar: private
-metaDescription: "Research on constructing the first round-optimal VOPRF protocol secure from lattice hardness assumptions, enabling post-quantum secure verifiable oblivious pseudorandom functions with applications to password authentication and private set intersection."
+youtube: "youtube-url"
+thumbnail: "thumbnail-url"
+year: year
 ---
 
 Presentation content
