@@ -1,9 +1,11 @@
 ---
 title: Mari Galicer
-position: External Collaborator
-avatar: placeholder.png
+position: Director, Product Management
+status: current
+avatar: mari-galicer.png
+blog_author: mari
 slug: mari-galicer
-type: external
+type: active
 ---
 
-External collaborator on Cloudflare Research publications.
+Mari leads product for Cloudflare Research, driving the production-scale deployment of privacy-preserving technologies, cutting-edge cryptography, and emerging internet standards across Cloudflare and the wider Internet.
