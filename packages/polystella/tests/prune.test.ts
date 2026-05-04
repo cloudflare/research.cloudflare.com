@@ -104,11 +104,16 @@ describe("pruneCacheByPair — keep top N by lastModified", () => {
       keepLastN: 2,
     });
 
-    expect(result).toEqual({
+    expect(result).toMatchObject({
       deleted: 3,
       prunedPairs: 1,
       consideredPairs: 1,
     });
+    // `deletedKeys` records the actual keys the pruner DELETE'd
+    // (M9.2 / build report). Same set as the fixture-tracked victims
+    // below; no order constraint because the pruner walks variants
+    // in last-modified order which the fixture doesn't constrain.
+    expect(new Set(result.deletedKeys)).toEqual(new Set(fixture.deleted));
     // The three oldest are gone, in any order — the pruner deletes
     // sequentially but the test asserts on the SET of victims.
     expect(new Set(fixture.deleted)).toEqual(
@@ -173,6 +178,7 @@ describe("pruneCacheByPair — keep top N by lastModified", () => {
 
     expect(result).toEqual({
       deleted: 0,
+      deletedKeys: [],
       prunedPairs: 0,
       consideredPairs: 0,
     });

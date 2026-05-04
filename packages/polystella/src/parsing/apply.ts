@@ -34,12 +34,50 @@ import { inlineSpan, visitTranslatableBlocks } from "./traverse.js";
  *   (`# ` for headings, `- ` for list items, `> ` for blockquotes)
  *   sits outside the splice range and is preserved untouched.
  */
+export interface ApplyTranslationsOptions {
+  /**
+   * Frontmatter keys merged into the translated output unconditionally.
+   *
+   * Used by the integration to inject the AI-translation marker
+   * (`aiTranslated`, `aiTranslationModel`, `aiTranslatedAt`) into
+   * translated entries — see RFC §3.11. Keys here override any
+   * same-named keys already present in the source frontmatter, which
+   * is the right precedence: the operator-facing marker reflects the
+   * artefact this build produced, not whatever stale value the
+   * source happened to carry.
+   *
+   * Behaviour by source shape:
+   *   - Source has frontmatter: additions are merged into the parsed
+   *     YAML alongside any in-place translations, then the whole
+   *     block is re-stringified and spliced back. Pre-existing keys
+   *     not in the additions or translations survive untouched.
+   *   - Source has NO frontmatter: a brand-new `---\n<yaml>\n---`
+   *     block is prepended at the top of the source, with one blank
+   *     line separating it from the body. This keeps the marker
+   *     additions out of the body even on plain-markdown sources.
+   *
+   * Empty object (the default) is a no-op — preserves the prior
+   * "no translations + no frontmatter changes = byte-identical
+   * source" round-trip property the M3 corpus tests rely on.
+   */
+  frontmatterAdditions?: Record<string, unknown>;
+}
+
 export function applyTranslations(
   ast: Root,
   translations: Map<string, string>,
   source: string,
+  options: ApplyTranslationsOptions = {},
 ): string {
-  if (translations.size === 0) {
+  const additions = options.frontmatterAdditions ?? {};
+  const additionKeys = Object.keys(additions);
+  const hasAdditions = additionKeys.length > 0;
+
+  // Round-trip preservation: when nothing has changed (no body
+  // translations, no frontmatter translations, no additions), return
+  // the source verbatim. The corpus identity-round-trip test relies
+  // on this short-circuit.
+  if (translations.size === 0 && !hasAdditions) {
     return source;
   }
 
@@ -64,7 +102,12 @@ export function applyTranslations(
   );
   if (frontmatterNode) {
     const fmTranslations = collectFrontmatterTranslations(translations);
-    if (fmTranslations.size > 0) {
+    // Re-stringify the frontmatter when we have ANY frontmatter work
+    // — translations OR additions OR both. Previously we'd skip the
+    // re-write when only additions were present and there were no
+    // fm translations; that left the marker out. Adding `hasAdditions`
+    // to the gate brings the marker through on every translated file.
+    if (fmTranslations.size > 0 || hasAdditions) {
       const fmSpan = nodeSpan(frontmatterNode);
       if (fmSpan) {
         const data = parseYaml(frontmatterNode.value) as Record<
@@ -73,6 +116,11 @@ export function applyTranslations(
         >;
         for (const [path, translation] of fmTranslations) {
           applyFrontmatterTranslation(data, path, translation);
+        }
+        // Additions overwrite existing same-name keys (RFC §3.11
+        // contract: the marker reflects the current build's output).
+        for (const [key, value] of Object.entries(additions)) {
+          data[key] = value;
         }
         // `yaml` appends a trailing newline; the parsed `value` never
         // includes one, and we want the same shape between `---` markers.
@@ -83,6 +131,15 @@ export function applyTranslations(
         });
       }
     }
+  } else if (hasAdditions) {
+    // No frontmatter in the source, but we have additions to inject.
+    // Prepend a fresh YAML block at offset 0. The trailing `\n\n`
+    // separates the new block from the body so a downstream parser
+    // doesn't see the body's first heading or paragraph fused to the
+    // closing `---`.
+    const newInner = stringifyYaml(additions).replace(/\n+$/, "");
+    const block = `---\n${newInner}\n---\n\n`;
+    edits.push({ start: 0, end: 0, replacement: block });
   }
 
   if (edits.length === 0) {

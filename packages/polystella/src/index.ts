@@ -33,6 +33,17 @@ import {
 import { createTranslator, type Translator } from "./translation/provider.js";
 import { walkSources } from "./source/walk.js";
 import { runWithConcurrency } from "./source/pool.js";
+import {
+  formatDriftIssues,
+  loadAndCheckDrift,
+} from "./ui/drift.js";
+import {
+  computeBuildReportTotals,
+  emitBuildReport,
+  type BuildReport,
+  type BuildReportEntry,
+  type BuildReportPruning,
+} from "./storage/report.js";
 import { computeSourceHash } from "./storage/hash.js";
 import { buildR2Key, createR2Client, type R2Client } from "./storage/r2.js";
 import { DEFAULT_STAGING_DIR } from "./storage/paths.js";
@@ -124,6 +135,16 @@ export {
   type PruneResult,
 } from "./storage/prune.js";
 export {
+  computeBuildReportTotals,
+  emitBuildReport,
+  type BuildReport,
+  type BuildReportEntry,
+  type BuildReportOutcome,
+  type BuildReportPruning,
+  type BuildReportTotals,
+  type EmitBuildReportOptions,
+} from "./storage/report.js";
+export {
   deriveUrlPattern,
   generateShimSource,
   type DerivedUrlPattern,
@@ -182,6 +203,25 @@ export default function polystella(
   options: PolyStellaOptions,
 ): AstroIntegration {
   let resolved: PolyStellaResolvedOptions | undefined;
+
+  // Cross-hook state. `astro:config:setup` does the heavy lifting
+  // (translation, staging, cache writes); `astro:build:done` reads
+  // the accumulated bookkeeping to emit the report. Held in closure
+  // because Astro's hook signatures don't pass arbitrary state
+  // between hooks. Mutable; populated during setup, read at done.
+  const reportState: {
+    startedAt: string;
+    startedAtMs: number;
+    entries: BuildReportEntry[];
+    pruning: BuildReportPruning;
+    glossariesForReport: Record<string, { file: string; sha256: string }>;
+  } = {
+    startedAt: new Date().toISOString(),
+    startedAtMs: Date.now(),
+    entries: [],
+    pruning: { deletedKeys: [], byLocale: {} },
+    glossariesForReport: {},
+  };
 
   return {
     name: "polystella",
@@ -333,6 +373,38 @@ export default function polystella(
           }
         }
 
+        // UI-string drift detection (M8.3). Runs as early as possible
+        // — before the translation loop — so a missing-key list lands
+        // on the first build log line instead of after a multi-minute
+        // translation pass succeeds with stale dictionaries.
+        //
+        // Silent no-op when the default-locale JSON file isn't on
+        // disk: the operator hasn't authored UI strings yet, and we
+        // don't want to force every consumer to stub out empty JSON
+        // files just to satisfy the integration. Activates the moment
+        // `<defaultLocale>.json` exists.
+        //
+        // Drift detection covers ALL declared locales — including the
+        // default — so adding a locale to `i18n.locales` without
+        // creating its JSON file is caught immediately.
+        const allLocalesIncludingDefaultForDrift = [
+          resolved.defaultLocale,
+          ...resolved.locales,
+        ];
+        const driftResult = await loadAndCheckDrift({
+          rootDir: rootDirPath,
+          baseDir: "./src/content/i18n",
+          locales: allLocalesIncludingDefaultForDrift,
+          defaultLocale: resolved.defaultLocale,
+        });
+        if (!driftResult.ok) {
+          throw new Error(
+            `[polystella] UI-strings dictionary drift detected. Every declared locale must have a \`src/content/i18n/<locale>.json\` file with the same key set as the default-locale file (${resolved.defaultLocale}.json):\n${formatDriftIssues(
+              driftResult.issues,
+            )}\n\nFix the listed locales and rebuild. To opt out of drift detection entirely, remove the default-locale JSON file (the integration silently skips drift checks until that file exists).`,
+          );
+        }
+
         // Translation pipeline. Runs HERE (in config:setup), not in
         // `astro:build:start`, because `polystellaCollections` registers
         // per-locale sibling collections whose loaders read from
@@ -377,10 +449,22 @@ export default function polystella(
         const glossaryHashByLocale = new Map<string, string>();
         for (const locale of resolved.locales) {
           const glossary = glossaries.get(locale);
-          glossaryHashByLocale.set(
-            locale,
-            glossary ? hashGlossary(glossary) : EMPTY_GLOSSARY_HASH,
-          );
+          const hash = glossary ? hashGlossary(glossary) : EMPTY_GLOSSARY_HASH;
+          glossaryHashByLocale.set(locale, hash);
+          // Capture for the build report (M9.2). The `file` field
+          // surfaces which YAML produced the hash; the `sha256` is
+          // the canonical content hash so a CI diff over the report
+          // surfaces glossary edits cleanly.
+          if (glossary) {
+            const fileTemplate =
+              resolved.glossary && "file" in resolved.glossary
+                ? resolved.glossary.file
+                : "<inline>";
+            reportState.glossariesForReport[locale] = {
+              file: fileTemplate.replace("{locale}", locale),
+              sha256: hash,
+            };
+          }
         }
         if (glossaries.size > 0) {
           logger.info(
@@ -584,6 +668,40 @@ export default function polystella(
         await runWithConcurrency(sources, cfg.concurrency, async (source) => {
           const body = await readFile(source.absolutePath, "utf8");
           const ast = parseMarkdown(body);
+          // Frontmatter values + AST extraction lifted up to the top
+          // of the worker so all branches (noTranslate-skip, override,
+          // translate, error) can compute the cache key consistently
+          // and push report entries with the same `sourceHash` shape.
+          // The cost is one parse + extract per source even on the
+          // noTranslate branch, which is negligible compared to a
+          // single Workers AI round-trip.
+          const extractOptsForReport = {
+            sourcePath: source.relativePath,
+            frontmatter: cfg.frontmatter,
+          };
+          const fmValuesForReport = selectTranslatableFrontmatter(
+            ast,
+            extractOptsForReport,
+          );
+          // Helper that materialises the (sourceHash, r2Key, modelId)
+          // triple for a given locale. Used at every terminal branch
+          // below to push consistent report entries.
+          const reportKeysFor = (locale: string) => {
+            const modelId = translatorByLocale.get(locale)?.modelId ?? "";
+            const sourceHash = computeSourceHash({
+              body,
+              frontmatter: fmValuesForReport,
+              glossaryHash:
+                glossaryHashByLocale.get(locale) ?? EMPTY_GLOSSARY_HASH,
+              modelId,
+            });
+            const r2Key = buildR2Key({
+              locale,
+              sourcePath: source.relativePath,
+              hash: sourceHash,
+            });
+            return { modelId, sourceHash, r2Key };
+          };
           // Per-entry opt-out (RFC §2.2). When the source's frontmatter
           // has `noTranslate: true`, skip the entire translation loop
           // for this file: no AI call, no R2 write, no staging file
@@ -605,13 +723,29 @@ export default function polystella(
             // Run the override pre-pass for any locale that has a
             // hand-translation; everything else is skipped silently.
             for (const locale of cfg.locales) {
+              const pairStart = Date.now();
+              const { modelId, sourceHash, r2Key } = reportKeysFor(locale);
               const override = await readOverride({
                 rootDir,
                 overridesDir: cfg.overridesDir,
                 locale,
                 relativeSourcePath: source.relativePath,
               });
-              if (override === null) continue;
+              if (override === null) {
+                // No override for this locale on a noTranslate source
+                // — record the deliberate skip in the report so a CI
+                // diff makes the operator's intent visible.
+                reportState.entries.push({
+                  sourcePath: source.relativePath,
+                  locale,
+                  sourceHash,
+                  r2Key,
+                  outcome: "skipped-no-translate",
+                  model: modelId,
+                  durationMs: Date.now() - pairStart,
+                });
+                continue;
+              }
               const overrideStaged = maybeRewrite(override, locale);
               await writeStagedTranslation({
                 stagingDir,
@@ -621,6 +755,15 @@ export default function polystella(
               });
               counts.override++;
               touchedPairs.add(encodeTouchedPair(locale, source.relativePath));
+              reportState.entries.push({
+                sourcePath: source.relativePath,
+                locale,
+                sourceHash,
+                r2Key,
+                outcome: "override",
+                model: modelId,
+                durationMs: Date.now() - pairStart,
+              });
               if (cfg.verbose) {
                 logger.info(
                   `◆ ${source.relativePath} → ${locale} [override, noTranslate-source]`,
@@ -656,6 +799,7 @@ export default function polystella(
           // still be staged.
 
           for (const locale of cfg.locales) {
+            const pairStart = Date.now();
             try {
               // Override pre-pass: a file at
               //   <root>/<overridesDir>/<locale>/<relativeSourcePath>
@@ -687,6 +831,18 @@ export default function polystella(
                 touchedPairs.add(
                   encodeTouchedPair(locale, source.relativePath),
                 );
+                {
+                  const { modelId, sourceHash, r2Key } = reportKeysFor(locale);
+                  reportState.entries.push({
+                    sourcePath: source.relativePath,
+                    locale,
+                    sourceHash,
+                    r2Key,
+                    outcome: "override",
+                    model: modelId,
+                    durationMs: Date.now() - pairStart,
+                  });
+                }
                 if (cfg.verbose) {
                   logger.info(
                     `◆ ${source.relativePath} → ${locale} [override]`,
@@ -723,6 +879,13 @@ export default function polystella(
                 sourcePath: source.relativePath,
                 hash: sourceHash,
               });
+              // ISO-8601 stamp computed once per pair so the
+              // R2-metadata `translated-at` header and the in-bytes
+              // `aiTranslatedAt` marker share the exact same value.
+              // Two-source-of-truth would surface as a confusing
+              // mismatch if anyone diffs the cache against the
+              // staged file.
+              const translatedAt = new Date().toISOString();
               const result = await translateOrLoadFromCache({
                 ast,
                 segments,
@@ -740,9 +903,21 @@ export default function polystella(
                   sourceHash,
                   glossaryHash,
                   modelId: translator.modelId,
-                  translatedAt: new Date().toISOString(),
+                  translatedAt,
                   polystellaVersion: POLYSTELLA_VERSION,
                 }),
+                // AI-translation marker (RFC §3.11). Baked into the
+                // translated bytes BEFORE the R2 PUT so cache hits
+                // on subsequent builds return the marker verbatim
+                // without re-stringifying. `aiTranslatedAt` reflects
+                // the original translation time even on hits, which
+                // is what consumers want for "page first translated
+                // on YYYY-MM-DD" disclaimer copy.
+                frontmatterAdditions: {
+                  aiTranslated: true,
+                  aiTranslationModel: translator.modelId,
+                  aiTranslatedAt: translatedAt,
+                },
                 // Quiet bookkeeping for the global cache-write
                 // bracket. The first write across the whole build
                 // emits the announcement line; subsequent writes
@@ -771,6 +946,15 @@ export default function polystella(
               });
               counts[result.outcome]++;
               touchedPairs.add(encodeTouchedPair(locale, source.relativePath));
+              reportState.entries.push({
+                sourcePath: source.relativePath,
+                locale,
+                sourceHash,
+                r2Key: key,
+                outcome: result.outcome === "hit" ? "cache-hit" : "ai-translated",
+                model: translator.modelId,
+                durationMs: Date.now() - pairStart,
+              });
 
               // Stage the translated bytes for `polystellaCollections` to
               // pick up. The sibling collection's loader watches
@@ -816,11 +1000,21 @@ export default function polystella(
               }
             } catch (err) {
               counts.failed++;
+              const message = (err as Error).message;
               logger.error(
-                `✗ ${source.relativePath} → ${locale}: ${
-                  (err as Error).message
-                }`,
+                `✗ ${source.relativePath} → ${locale}: ${message}`,
               );
+              const { modelId, sourceHash, r2Key } = reportKeysFor(locale);
+              reportState.entries.push({
+                sourcePath: source.relativePath,
+                locale,
+                sourceHash,
+                r2Key,
+                outcome: "error",
+                model: modelId,
+                durationMs: Date.now() - pairStart,
+                errorMessage: message,
+              });
             }
           }
         });
@@ -871,6 +1065,20 @@ export default function polystella(
               touchedPairs,
               keepLastN,
             });
+            // Wire into the build report — keep both the flat key
+            // list (for forensic spelunking) and a per-locale count
+            // (for the at-a-glance "did we prune more than expected
+            // somewhere" check). We re-derive the locale from each
+            // key rather than threading state through the pruner so
+            // the prune module stays focused on R2 operations.
+            reportState.pruning.deletedKeys.push(...pruneResult.deletedKeys);
+            for (const key of pruneResult.deletedKeys) {
+              const localeMatch = /^i18n\/([^/]+)\//.exec(key);
+              if (!localeMatch) continue;
+              const locale = localeMatch[1]!;
+              reportState.pruning.byLocale[locale] =
+                (reportState.pruning.byLocale[locale] ?? 0) + 1;
+            }
             if (pruneResult.deleted > 0) {
               logger.info(
                 `R2 cache: pruned ${pruneResult.deleted} stale variant${
@@ -896,6 +1104,59 @@ export default function polystella(
         logger.info(
           `live: ${counts.hit} hit, ${counts.miss} miss, ${counts.override} override, ${counts.failed} failed${noTranslateSummary}`,
         );
+      },
+      "astro:build:done": async ({ dir, logger }) => {
+        // Emit the build report (M9.2 / RFC §3.9). Runs at the very
+        // end of the build, after Astro itself has populated the
+        // output directory and after PolyStella's prune step has
+        // recorded its deletions into `reportState.pruning`.
+        //
+        // No-op when `resolved` is undefined (the integration was
+        // never configured — shouldn't happen, but defensive) or
+        // when the build hook never ran in `live` mode (e.g. dev
+        // mode without `runOn: ["dev"]`, or `dryRun: true`). In
+        // those cases the entries list is empty and emitting an
+        // empty report just clutters the dist directory.
+        if (!resolved) return;
+        if (reportState.entries.length === 0) return;
+
+        const report: BuildReport = {
+          build: {
+            startedAt: reportState.startedAt,
+            durationMs: Date.now() - reportState.startedAtMs,
+            mode:
+              resolved.mode === "starlight" ? "starlight" : "standalone",
+            polystellaVersion: POLYSTELLA_VERSION,
+          },
+          locales: [resolved.defaultLocale, ...resolved.locales],
+          defaultLocale: resolved.defaultLocale,
+          glossaries: reportState.glossariesForReport,
+          entries: reportState.entries,
+          totals: computeBuildReportTotals(reportState.entries),
+          pruning: reportState.pruning,
+        };
+
+        try {
+          const outDir = fileURLToPath(dir);
+          const reportPath = await emitBuildReport({
+            outDir,
+            report,
+          });
+          logger.info(
+            `i18n build report: ${path.relative(
+              fileURLToPath(resolved ? new URL("./", dir) : dir),
+              reportPath,
+            )} (${report.entries.length} entries, ${
+              report.totals.cacheHits
+            } hit / ${report.totals.aiTranslated} miss / ${
+              report.totals.overrides
+            } override / ${report.totals.errors} error)`,
+          );
+        } catch (err) {
+          logger.warn(
+            `i18n build report: failed to write: ${(err as Error).message}`,
+          );
+        }
       },
     },
   };

@@ -62,6 +62,20 @@ export interface TranslateOrLoadOptions {
    */
   metadata: Record<string, string>;
   /**
+   * Frontmatter keys merged into the translated bytes BEFORE the R2
+   * PUT. The integration uses this to inject the AI-translation
+   * marker (`aiTranslated`, `aiTranslationModel`, `aiTranslatedAt`)
+   * so the marker is part of the cached artefact — cache hits return
+   * the bytes verbatim, which means the marker's `aiTranslatedAt`
+   * stays truthful (it reflects when the translation was originally
+   * produced, not when this build ran).
+   *
+   * Optional; when omitted, no extra keys are merged. RFC §3.11
+   * specifies that override entries leave `aiTranslated` unset, so
+   * the build hook does not pass additions on the override path.
+   */
+  frontmatterAdditions?: Record<string, unknown>;
+  /**
    * Optional progress callbacks for the cache-write phase. Both are
    * no-ops by default and only invoked on the miss path with `r2`
    * non-null — i.e., when the orchestrator is genuinely about to
@@ -146,6 +160,7 @@ export async function translateOrLoadFromCache(
     context,
     metadata,
     events,
+    frontmatterAdditions,
   } = opts;
 
   // 1. Cache lookup. A `null` r2 means the operator opted out of
@@ -162,7 +177,10 @@ export async function translateOrLoadFromCache(
     }
   }
 
-  // 2. Cache miss → translate + apply.
+  // 2. Cache miss → translate + apply. The marker additions
+  //    (`aiTranslated` etc.) are baked into the bytes BEFORE the R2
+  //    PUT so cache hits on later builds return the marker verbatim
+  //    without needing a re-stringify pass.
   const translations = await translateBatch({
     translator,
     segments,
@@ -171,7 +189,9 @@ export async function translateOrLoadFromCache(
     targetLocale: locale,
     context,
   });
-  const translated = applyTranslations(ast, translations, sourceBody);
+  const translated = applyTranslations(ast, translations, sourceBody, {
+    ...(frontmatterAdditions ? { frontmatterAdditions } : {}),
+  });
 
   // 3. Write back to R2 when configured. The metadata bag is
   //    intentionally caller-built so the hook and tests stay in sync

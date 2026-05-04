@@ -232,3 +232,132 @@ describe("applyTranslations — end-to-end with formatted translations", () => {
     expect(output).toBe("- primeiro item\n- second item\n");
   });
 });
+
+describe("applyTranslations — frontmatter additions (AI marker)", () => {
+  // M9.1: the AI-translation marker (`aiTranslated`,
+  // `aiTranslationModel`, `aiTranslatedAt`) is injected via
+  // `frontmatterAdditions`. These tests pin the three shapes the
+  // injector must handle: existing-frontmatter merge, no-frontmatter
+  // prepend, and the empty-additions no-op (round-trip preservation).
+
+  it("merges additions into existing frontmatter alongside translations", () => {
+    const source = [
+      "---",
+      'title: "Hello"',
+      "---",
+      "",
+      "Body.",
+      "",
+    ].join("\n");
+    const ast = parseMarkdown(source);
+    const output = applyTranslations(ast, new Map(), source, {
+      frontmatterAdditions: {
+        aiTranslated: true,
+        aiTranslationModel: "@cf/meta/llama-3.1-8b-instruct",
+        aiTranslatedAt: "2026-04-25T08:13:42.000Z",
+      },
+    });
+    expect(output).toContain("aiTranslated: true");
+    expect(output).toContain(
+      'aiTranslationModel: "@cf/meta/llama-3.1-8b-instruct"',
+    );
+    expect(output).toContain("aiTranslatedAt:");
+    // Existing keys survive.
+    expect(output).toContain('title: Hello');
+    // Body untouched.
+    expect(output).toContain("\nBody.\n");
+  });
+
+  it("prepends a new frontmatter block when source has none", () => {
+    const source = "# Hello\n\nBody.\n";
+    const ast = parseMarkdown(source);
+    const output = applyTranslations(ast, new Map(), source, {
+      frontmatterAdditions: {
+        aiTranslated: true,
+        aiTranslationModel: "@cf/qwen/qwen3-30b-a3b-fp8",
+        aiTranslatedAt: "2026-04-25T08:13:42.000Z",
+      },
+    });
+    expect(output.startsWith("---\n")).toBe(true);
+    expect(output).toContain("aiTranslated: true");
+    expect(output).toContain('aiTranslationModel: "@cf/qwen/qwen3-30b-a3b-fp8"');
+    // Body still present after the inserted block.
+    expect(output).toContain("# Hello\n\nBody.\n");
+  });
+
+  it("additions overwrite same-named keys already in source frontmatter", () => {
+    // RFC §3.11: the marker reflects THIS build's output, so a stale
+    // source-side `aiTranslated: false` must be replaced.
+    const source = [
+      "---",
+      'title: "Hello"',
+      "aiTranslated: false",
+      "---",
+      "",
+      "Body.",
+      "",
+    ].join("\n");
+    const ast = parseMarkdown(source);
+    const output = applyTranslations(ast, new Map(), source, {
+      frontmatterAdditions: { aiTranslated: true },
+    });
+    expect(output).toContain("aiTranslated: true");
+    expect(output).not.toContain("aiTranslated: false");
+  });
+
+  it("merges additions and translations in the same frontmatter block", () => {
+    // M3 already exercises fm:title translation; this asserts that the
+    // addition + translation paths compose correctly.
+    const source = [
+      "---",
+      'title: "Hello"',
+      'metaDescription: "An overview."',
+      "---",
+      "",
+      "Body.",
+      "",
+    ].join("\n");
+    const ast = parseMarkdown(source);
+    const output = applyTranslations(
+      ast,
+      new Map([
+        ["fm:title", "Olá"],
+        ["fm:metaDescription", "Uma visão geral."],
+      ]),
+      source,
+      {
+        frontmatterAdditions: { aiTranslated: true, locale: "pt-BR" },
+      },
+    );
+    expect(output).toContain("title: Olá");
+    expect(output).toContain("metaDescription: Uma visão geral.");
+    expect(output).toContain("aiTranslated: true");
+    expect(output).toContain("locale: pt-BR");
+  });
+
+  it("empty additions object is a no-op (round-trip preserved)", () => {
+    // The corpus identity-round-trip test relies on
+    // `applyTranslations(ast, new Map(), source)` returning source
+    // verbatim. An empty additions object must not break that.
+    const source = [
+      "---",
+      'title: "Hello"',
+      "---",
+      "",
+      "Body.",
+      "",
+    ].join("\n");
+    const ast = parseMarkdown(source);
+    const output = applyTranslations(ast, new Map(), source, {
+      frontmatterAdditions: {},
+    });
+    expect(output).toBe(source);
+  });
+
+  it("no additions option (undefined) is also a no-op", () => {
+    const source = "---\ntitle: Hello\n---\n\nBody.\n";
+    const ast = parseMarkdown(source);
+    const output = applyTranslations(ast, new Map(), source);
+    expect(output).toBe(source);
+  });
+});

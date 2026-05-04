@@ -53,6 +53,12 @@ export interface PruneResult {
   /** Total number of objects deleted across all pairs. */
   deleted: number;
   /**
+   * The actual R2 keys deleted, in the order the pruner DELETE'd
+   * them. Used by the build report (RFC §3.9 / M9.2) so reviewers
+   * can audit retention behaviour. Empty when `deleted` is 0.
+   */
+  deletedKeys: string[];
+  /**
    * Number of (locale, sourcePath) pairs that had at least one object
    * deleted. Pairs whose variant count was already <= `keepLastN`
    * don't contribute to this number.
@@ -95,9 +101,15 @@ export async function pruneCacheByPair(
   opts: PruneCacheByPairOptions,
 ): Promise<PruneResult> {
   if (opts.keepLastN === false) {
-    return { deleted: 0, prunedPairs: 0, consideredPairs: 0 };
+    return {
+      deleted: 0,
+      deletedKeys: [],
+      prunedPairs: 0,
+      consideredPairs: 0,
+    };
   }
   const keep = opts.keepLastN;
+  const deletedKeys: string[] = [];
 
   // Group touched pairs by locale so we can issue one list() per
   // locale prefix rather than one per pair.
@@ -153,11 +165,12 @@ export async function pruneCacheByPair(
       const toDelete = variants.slice(keep);
       for (const entry of toDelete) {
         await opts.r2.del(entry.key);
+        deletedKeys.push(entry.key);
         deleted++;
       }
       prunedPairs++;
     }
   }
 
-  return { deleted, prunedPairs, consideredPairs };
+  return { deleted, deletedKeys, prunedPairs, consideredPairs };
 }

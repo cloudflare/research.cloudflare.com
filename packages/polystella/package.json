@@ -18,7 +18,12 @@
     "./content": {
       "types": "./src/content/index.ts",
       "default": "./src/content/index.ts"
-    }
+    },
+    "./ui": {
+      "types": "./src/ui/index.ts",
+      "default": "./src/ui/index.ts"
+    },
+    "./components/LocalePicker.astro": "./components/LocalePicker.astro"
   },
   "files": [
     "src",
