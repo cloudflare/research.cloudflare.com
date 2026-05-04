@@ -77,7 +77,7 @@ describe("resolveOptions — Astro i18n cross-check failures", () => {
     ).toThrowError(/i18n\.locales` must include `defaultLocale`/);
   });
 
-  it("throws when i18n.locales contains object-form entries (v0.1 limitation)", () => {
+  it("throws when i18n.locales contains object-form entries", () => {
     expect(() =>
       resolveOptions(MINIMAL_USER_OPTS, {
         defaultLocale: "en",
@@ -87,7 +87,7 @@ describe("resolveOptions — Astro i18n cross-check failures", () => {
         ],
       } as AstroI18nLike),
     ).toThrowError(
-      /object-form entries.*PolyStella v0\.1 only supports plain string locales/,
+      /object-form entries.*only supports plain string locales/,
     );
   });
 
@@ -97,9 +97,7 @@ describe("resolveOptions — Astro i18n cross-check failures", () => {
         ...HAPPY_I18N,
         routing: "manual",
       }),
-    ).toThrowError(
-      /routing: "manual"` is not supported by PolyStella v0\.1/,
-    );
+    ).toThrowError(/routing: "manual"` is not supported/);
   });
 
   it("throws when i18n.locales is empty", () => {
@@ -137,13 +135,11 @@ describe("resolveOptions — Astro i18n cross-check failures", () => {
   });
 });
 
-describe("resolveOptions — option-surface cleanup (M7)", () => {
-  it('rejects mode: "starlight" with a v0.2 message', () => {
+describe("resolveOptions — option-surface", () => {
+  it('rejects mode: "starlight"', () => {
     expect(() =>
       resolveOptions({ mode: "starlight" }, HAPPY_I18N),
-    ).toThrowError(
-      /mode: "starlight" is v0\.2 work and not yet supported/,
-    );
+    ).toThrowError(/mode: "starlight" is not yet supported/);
   });
 
   it('accepts mode: "auto" (the default)', () => {

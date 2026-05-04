@@ -1,64 +1,26 @@
 import type { Link, Root } from "mdast";
 import { parseMarkdown } from "./parse.js";
 
-/**
- * Options controlling how internal markdown links are rewritten in
- * translated output.
- */
 export interface RewriteInternalLinksOptions {
-  /**
-   * The locale segment to inject in front of internal links — e.g.
-   * `"pt-BR"` produces `/pt-BR/some/path`. Caller's responsibility to
-   * pass the locale of the file being staged, NOT the visitor's
-   * locale (which doesn't exist at build time).
-   */
+  /** Locale to prefix toward; the locale of the file being staged. */
   targetLocale: string;
-  /**
-   * The full set of locales the site declares (including the default
-   * locale). Used purely to detect already-prefixed URLs so the
-   * rewriter is idempotent — a link that already starts with
-   * `/<knownLocale>/...` is left alone, which keeps a re-translation
-   * pass from producing `/pt-BR/pt-BR/foo`.
-   */
+  /** Full locale set INCLUDING the default; used for idempotency. */
   locales: ReadonlyArray<string>;
 }
 
 /**
- * Rewrite internal markdown links inside `text` to be locale-prefixed.
+ * Locale-prefix internal markdown links in `text`.
  *
- * "Internal" means: any link whose URL is relative or starts with `/`,
- * AND doesn't already start with a known locale prefix, AND isn't an
- * external URL (`http://`, `https://`, protocol-relative `//`),
- * anchor (`#…`), `mailto:`, or `tel:` link.
+ * Re-parses the translation output (rather than reusing the source
+ * AST `applyTranslations` walks) because link nodes live INSIDE the
+ * inline ranges that the applier byte-splices — overlapping edit
+ * lists would clobber each other. Re-parsing gives fresh link
+ * positions in the spliced output.
  *
- * Implementation note — why we re-parse instead of walking the same
- * AST `applyTranslations` already has:
- *
- *   `applyTranslations` produces its output by byte-splicing
- *   translated text into the *block-level* inline ranges of the
- *   source AST. Link nodes live nested INSIDE those inline ranges, so
- *   their byte positions in the source overlap with the spliced
- *   regions — adding URL edits to the same edit list would mean the
- *   block edit clobbers the URL edit (or vice versa) depending on
- *   sort order, and there's no clean ordering that makes both stick.
- *
- *   By re-parsing the translation OUTPUT, we get fresh link
- *   positions that already account for the spliced content. The
- *   second pass is the only pass that needs to know about link
- *   nodes; `applyTranslations` stays oblivious.
- *
- * Implementation note — why we don't `remark-stringify` the rewritten
- * AST:
- *
- *   Same reason `applyTranslations` byte-splices instead of
- *   stringifying: `mdast-util-to-markdown` defensively escapes
- *   characters that round-trip ambiguously, which would change the
- *   output text in ways unrelated to link rewriting. Byte-editing the
- *   URL spans only is safe because the URL portion of an inline link
- *   has a deterministic byte position and no escaping concerns.
- *
- * Returns the rewritten markdown. If no links need rewriting, returns
- * `text` unchanged (same object reference).
+ * Byte-edits URL spans rather than stringifying the AST so we avoid
+ * `mdast-util-to-markdown`'s defensive escaping changing unrelated
+ * text. URL spans have deterministic byte positions and no escaping
+ * concerns of their own.
  */
 export function rewriteInternalLinks(
   text: string,
@@ -118,19 +80,15 @@ export function rewriteUrlIfInternal(
     return null;
   }
 
-  // Idempotency: leave already-locale-prefixed URLs alone. We check
-  // against ALL declared locales (not just `targetLocale`) because a
-  // re-build could otherwise turn `/pt-BR/foo` into
-  // `/pt-BR/pt-BR/foo` if the rewriter ran on already-rewritten
-  // cached content.
+  // Idempotency: leave URLs already prefixed with any declared locale
+  // alone (no `/pt-BR/pt-BR/foo` on re-renders).
   for (const loc of options.locales) {
     if (url === `/${loc}` || url.startsWith(`/${loc}/`)) {
       return null;
     }
   }
 
-  // Split off any fragment / query so the locale prefix lands on the
-  // path, not on the suffix. e.g. `/foo#bar` → `/<locale>/foo#bar`.
+  // Split query/fragment so the prefix lands on the path.
   const suffixMatch = /[?#]/.exec(url);
   const path = suffixMatch ? url.slice(0, suffixMatch.index) : url;
   const suffix = suffixMatch ? url.slice(suffixMatch.index) : "";
@@ -140,9 +98,8 @@ export function rewriteUrlIfInternal(
 }
 
 /**
- * Walk every `link` node in `ast` in DFS order. Skips `linkReference`
- * (reference-style links) and `image` nodes — those have different
- * syntactic shapes and the project's content doesn't use them.
+ * DFS over `link` nodes. Skips `linkReference` and `image` (different
+ * syntactic shapes; not in scope for v0.1's content).
  */
 function visitLinks(ast: Root, visitor: (link: Link) => void): void {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -157,11 +114,7 @@ function visitLinks(ast: Root, visitor: (link: Link) => void): void {
   walk(ast);
 }
 
-/**
- * Pull `start.offset` and `end.offset` out of an mdast node's
- * position. Returns `undefined` when either offset is missing —
- * shouldn't happen on `remark-parse` output but the type allows it.
- */
+/** Pull `start`/`end` offsets off an mdast node's position. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function nodeSpan(node: any): { start: number; end: number } | undefined {
   const start = node.position?.start?.offset;
@@ -171,29 +124,20 @@ function nodeSpan(node: any): { start: number; end: number } | undefined {
 }
 
 /**
- * Given the source slice covering a single inline link
- * (`[text](url)` or `[text](url "title")`), find the byte range of
- * the URL portion *relative to the slice's start*.
+ * Find the URL byte-range inside an inline link slice
+ * (`[text](url)` or `[text](url "title")`). Returns `undefined` for
+ * autolinks and reference-style links, which don't carry an inline
+ * URL we'd want to rewrite.
  *
- * Returns `undefined` if `slice` doesn't look like an inline link —
- * notably autolinks (`<https://...>`) and reference-style links
- * (`[text][ref]`), which don't carry an inline URL we'd want to
- * rewrite anyway.
- *
- * The matcher is deliberately narrow: it pairs the FIRST `]` with the
- * NEAREST following `(` and reads up to the next whitespace or `)`.
  * Markdown's inline-link grammar disallows unescaped `(`/`)` and
  * whitespace inside an unbracketed URL, which is what makes this
- * tractable with a small regex instead of a full URL parser.
+ * tractable with a regex.
  */
 function findUrlSpanInInlineLink(
   slice: string,
 ): { start: number; end: number } | undefined {
-  // Match `[text](url[ "title"])` capturing the URL group's position.
-  // We can't use `^` here because mdast positions on links sometimes
-  // include trailing whitespace (e.g. inside table cells); the
-  // anchored variant occasionally misses real links. Greedy match on
-  // the bracket pair handles nested brackets like `[[1]](/foo)`.
+  // Unanchored match: mdast positions on links sometimes include
+  // trailing whitespace (in table cells), so `^` would miss them.
   const m = /\[(?:[^\]\\]|\\.)*\]\(([^\s)]+)/.exec(slice);
   if (!m) return undefined;
   const urlGroup = m[1];

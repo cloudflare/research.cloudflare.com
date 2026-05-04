@@ -3,62 +3,35 @@ import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 import { inlineSpan, visitTranslatableBlocks } from "./traverse.js";
 
 /**
- * Take an AST that was produced by `parseMarkdown`, a map of
- * `segmentId → translatedText`, and the original source text. Produce a
- * new markdown string with each matching segment replaced by its
- * translation. Untranslated regions are copied verbatim from the source.
+ * Replace translatable segments in `source` with their translations
+ * and return the new markdown.
  *
- * Implementation note — why we splice the source text instead of using
- * `remark-stringify`:
+ * Splices source text rather than using `remark-stringify` because
+ * the stringifier defensively re-escapes characters that round-trip
+ * fine in the source (`[citation]` → `\[citation]`, `S&P` → `S\&P`),
+ * which would break the byte-identical no-translation round-trip
+ * the corpus tests require. Using `position.offset`s from
+ * `remark-parse`, we replace just the spans we care about and copy
+ * untouched characters verbatim.
  *
- *   `remark-stringify` (and its underlying `mdast-util-to-markdown`)
- *   defensively escapes characters in text nodes whose original context
- *   was unambiguous — for example, a `[citation]` typed by the author
- *   becomes `\[citation]` on stringify, and `S&P` becomes `S\&P`. There
- *   is no user-facing knob to disable these escapes, and accepting them
- *   would mean the no-replacement round-trip can never be byte-identical
- *   (which we explicitly require: parsing a doc and applying no
- *   translations must return the source unchanged).
- *
- *   By using mdast `position.offset`s — which `remark-parse` populates
- *   for every node — we can replace just the source spans we care about
- *   (translated body blocks and the frontmatter block) and copy every
- *   untouched character byte-for-byte from the source. The empty-map
- *   case becomes trivially `return source`.
- *
- *   Because both the extractor and the applier target the children's
- *   inline range (not the whole block), a translation may contain its
- *   own inline markdown — `**bold**`, `_italic_`, `` `code` ``, or
- *   `[link](url)` — and those markers re-parse as real Strong /
- *   Emphasis / InlineCode / Link nodes. The block-level prefix
- *   (`# ` for headings, `- ` for list items, `> ` for blockquotes)
- *   sits outside the splice range and is preserved untouched.
+ * Both extractor and applier target the children's inline range (not
+ * the whole block), so translations may contain their own inline
+ * markdown (`**bold**`, `[link](url)`) which re-parses correctly,
+ * while block-level markers (`# `, `- `, `> `) outside the splice
+ * range are preserved.
  */
 export interface ApplyTranslationsOptions {
   /**
-   * Frontmatter keys merged into the translated output unconditionally.
+   * Frontmatter keys merged into the translated output. Used by the
+   * AI-translation marker injection. Keys here override same-named
+   * keys already in the source frontmatter (the marker reflects this
+   * build's output, not stale source state).
    *
-   * Used by the integration to inject the AI-translation marker
-   * (`aiTranslated`, `aiTranslationModel`, `aiTranslatedAt`) into
-   * translated entries — see RFC §3.11. Keys here override any
-   * same-named keys already present in the source frontmatter, which
-   * is the right precedence: the operator-facing marker reflects the
-   * artefact this build produced, not whatever stale value the
-   * source happened to carry.
-   *
-   * Behaviour by source shape:
-   *   - Source has frontmatter: additions are merged into the parsed
-   *     YAML alongside any in-place translations, then the whole
-   *     block is re-stringified and spliced back. Pre-existing keys
-   *     not in the additions or translations survive untouched.
-   *   - Source has NO frontmatter: a brand-new `---\n<yaml>\n---`
-   *     block is prepended at the top of the source, with one blank
-   *     line separating it from the body. This keeps the marker
-   *     additions out of the body even on plain-markdown sources.
-   *
-   * Empty object (the default) is a no-op — preserves the prior
-   * "no translations + no frontmatter changes = byte-identical
-   * source" round-trip property the M3 corpus tests rely on.
+   * - Source has frontmatter: additions merged alongside in-place
+   *   translations; pre-existing un-touched keys survive.
+   * - Source has none: a fresh `---\n<yaml>\n---\n\n` block is
+   *   prepended at offset 0.
+   * - Empty object: no-op (preserves the byte-identical round-trip).
    */
   frontmatterAdditions?: Record<string, unknown>;
 }
@@ -73,25 +46,21 @@ export function applyTranslations(
   const additionKeys = Object.keys(additions);
   const hasAdditions = additionKeys.length > 0;
 
-  // Round-trip preservation: when nothing has changed (no body
-  // translations, no frontmatter translations, no additions), return
-  // the source verbatim. The corpus identity-round-trip test relies
-  // on this short-circuit.
+  // Round-trip short-circuit: nothing changed, return verbatim.
   if (translations.size === 0 && !hasAdditions) {
     return source;
   }
 
-  // Collect every byte-span replacement we want to make. We sort and
-  // apply right-to-left so earlier offsets stay valid while we splice.
+  // Edits are applied right-to-left so earlier offsets stay valid
+  // while we splice.
   const edits: Array<{ start: number; end: number; replacement: string }> = [];
 
   visitTranslatableBlocks(ast, ({ block, id }) => {
     const translation = translations.get(id);
     if (translation === undefined) return;
-    // Inline span (children's range), NOT the whole block. This lets us
-    // splice INTO the block while the heading `#`, list `-`, blockquote
-    // `>` markers stay in place. Same span the extractor used to read
-    // source bytes — symmetry is what makes the round-trip work.
+    // Inline span (children's range), not the whole block — keeps
+    // heading/list/blockquote markers in place. The extractor reads
+    // the same range, so the round-trip works.
     const span = inlineSpan(block);
     if (!span) return;
     edits.push({ ...span, replacement: translation });
@@ -102,11 +71,6 @@ export function applyTranslations(
   );
   if (frontmatterNode) {
     const fmTranslations = collectFrontmatterTranslations(translations);
-    // Re-stringify the frontmatter when we have ANY frontmatter work
-    // — translations OR additions OR both. Previously we'd skip the
-    // re-write when only additions were present and there were no
-    // fm translations; that left the marker out. Adding `hasAdditions`
-    // to the gate brings the marker through on every translated file.
     if (fmTranslations.size > 0 || hasAdditions) {
       const fmSpan = nodeSpan(frontmatterNode);
       if (fmSpan) {
@@ -117,13 +81,12 @@ export function applyTranslations(
         for (const [path, translation] of fmTranslations) {
           applyFrontmatterTranslation(data, path, translation);
         }
-        // Additions overwrite existing same-name keys (RFC §3.11
-        // contract: the marker reflects the current build's output).
+        // Additions overwrite existing same-name keys.
         for (const [key, value] of Object.entries(additions)) {
           data[key] = value;
         }
-        // `yaml` appends a trailing newline; the parsed `value` never
-        // includes one, and we want the same shape between `---` markers.
+        // `yaml` appends a trailing newline; strip so the shape
+        // between `---` markers matches the input.
         const newInner = stringifyYaml(data).replace(/\n+$/, "");
         edits.push({
           ...fmSpan,
@@ -132,11 +95,8 @@ export function applyTranslations(
       }
     }
   } else if (hasAdditions) {
-    // No frontmatter in the source, but we have additions to inject.
-    // Prepend a fresh YAML block at offset 0. The trailing `\n\n`
-    // separates the new block from the body so a downstream parser
-    // doesn't see the body's first heading or paragraph fused to the
-    // closing `---`.
+    // No source frontmatter — prepend a fresh block at offset 0. The
+    // `\n\n` separates the closing `---` from the body.
     const newInner = stringifyYaml(additions).replace(/\n+$/, "");
     const block = `---\n${newInner}\n---\n\n`;
     edits.push({ start: 0, end: 0, replacement: block });
@@ -155,12 +115,7 @@ export function applyTranslations(
   return output;
 }
 
-/**
- * Pull `start.offset` and `end.offset` out of an mdast node's position,
- * if both are present. Returns `undefined` if the node has no position
- * info — which shouldn't happen for nodes produced by `remark-parse`
- * but the type definition allows it.
- */
+/** Pull `start`/`end` offsets off an mdast node's position. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function nodeSpan(node: any): { start: number; end: number } | undefined {
   const start = node.position?.start?.offset;

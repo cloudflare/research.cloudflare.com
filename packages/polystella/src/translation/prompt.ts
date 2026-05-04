@@ -2,15 +2,12 @@ import type { Segment } from "../parsing/extract.js";
 import type { Glossary } from "../glossary/glossary.js";
 
 /**
- * The prompt-construction contract: PolyStella asks the model for a
- * single JSON object whose keys are the segment IDs from the user
- * message and whose values are the translations. Models occasionally
- * wrap that JSON in code fences or a "Here's the JSON:" preamble; the
- * companion `parseResponse` strips those defensively.
+ * Prompt construction. We ask the model for a single JSON object
+ * keyed by segment id; `parseResponse` strips any code-fence /
+ * preamble wrapping defensively.
  *
- * Both functions are pure — no I/O, no provider dependencies — so the
- * "what to ask" / "what to accept" decisions live in one place and can
- * be unit-tested without ever hitting a network.
+ * Pure — no I/O, no provider deps — so prompt and acceptance rules
+ * live in one place and unit-test without a network.
  */
 
 export interface BuildPromptInput {
@@ -18,14 +15,7 @@ export interface BuildPromptInput {
   glossary: Glossary;
   sourceLocale: string;
   targetLocale: string;
-  /**
-   * Optional site- or domain-specific guidance, inserted as a separate
-   * system-prompt line right after the generic role declaration. Use
-   * this for things like "Specialise in technical research content
-   * from the Cloudflare Research portal." or "Use formal, legal-style
-   * register." The string is trimmed; if blank or undefined, no extra
-   * line is emitted, keeping the default prompt fully generic.
-   */
+  /** Optional system-prompt line appended after the generic opener. */
   context?: string;
 }
 
@@ -35,15 +25,9 @@ export interface BuiltPrompt {
 }
 
 /**
- * Assemble the system and user prompts for a single translation batch.
- *
- * The system prompt encodes the translator's role, an optional caller-
- * supplied context line, the source/target languages, the glossary's
- * three rule lists (verbatim terms, preferred translations, free-text
- * notes), and the strict output-format spec.
- *
- * The user prompt is a JSON object mapping segment ID → source text.
- * The model is instructed to return a JSON object with the same keys.
+ * System prompt: role, optional context line, source/target locales,
+ * glossary's three rule lists, output-format spec.
+ * User prompt: JSON object mapping segment id → source text.
  */
 export function buildPrompt(input: BuildPromptInput): BuiltPrompt {
   const { segments, glossary, sourceLocale, targetLocale, context } = input;
@@ -94,14 +78,10 @@ export function buildPrompt(input: BuildPromptInput): BuiltPrompt {
   systemLines.push(
     `Return a single JSON object whose keys are the segment IDs from the user message, and whose values are the translated strings. Output the JSON object ONLY: no preamble, no code fences, no explanation, no surrounding prose. The set of keys in your response MUST equal the set of keys in the user message — do not add, omit, or rename any segment ID.`,
   );
-  // Smaller / older instruct models (notably llama-3.1-8b-instruct)
-  // routinely produce JSON strings with unescaped inner double
-  // quotes when the source text uses them as scare-quotes — e.g.
-  // emitting `"chaves "constrangidas""` instead of
-  // `"chaves \"constrangidas\""`. This breaks `JSON.parse` mid-string
-  // (column ~91) and the per-pair retry usually reproduces the same
-  // bug. Calling the rule out explicitly steers the decoder into
-  // emitting the backslash even in long string values.
+  // Smaller models (notably llama-3.1-8b-instruct) routinely emit
+  // unescaped inner double quotes when the source uses them as
+  // scare-quotes (`"chaves "constrangidas""`), breaking JSON.parse.
+  // Calling the rule out explicitly steers the decoder.
   systemLines.push(
     `JSON ESCAPING: Every double-quote character (") that appears inside a string VALUE must be escaped as \\". Every backslash (\\) must be escaped as \\\\. Newlines must be escaped as \\n. Do NOT escape characters outside string values (the JSON keys, structural punctuation, the opening/closing braces). When the source text contains scare-quotes, technical terms, or quoted phrases, those quotes must be \\" inside the JSON string, never bare ".`,
   );
@@ -122,23 +102,10 @@ export function buildPrompt(input: BuildPromptInput): BuiltPrompt {
 }
 
 /**
- * Parse a model's raw response into a `Map<segmentId, translatedText>`.
- *
- * Defensive against three common model outputs:
- *   - clean JSON,
- *   - JSON wrapped in ```json … ``` (or plain ```) code fences,
- *   - JSON preceded or followed by prose ("Here's the JSON: { … }").
- *
- * Throws (with the raw response, truncated, in the error message) when:
- *   - no JSON object can be located,
- *   - the JSON parses but isn't a plain object,
- *   - any value is non-string,
- *   - the model returned an unexpected segment id, or
- *   - the model omitted any expected segment id.
- *
- * Strict-by-default: the caller can wrap this in a try/catch and fall
- * back to source-as-translation if it wants leniency, but the parser
- * itself never silently drops or invents data.
+ * Parse a model response into `Map<segmentId, translatedText>`.
+ * Tolerant of code-fence wrapping and surrounding prose; strict on
+ * shape and id-set parity. Throws (with the raw response truncated)
+ * on any deviation.
  */
 export function parseResponse(
   rawText: string,
@@ -150,7 +117,7 @@ export function parseResponse(
   try {
     parsed = JSON.parse(cleaned);
   } catch {
-    // Fall back to extracting the first JSON object embedded in prose.
+    // Fall back to extracting the first `{...}` block from prose.
     const first = cleaned.indexOf("{");
     const last = cleaned.lastIndexOf("}");
     if (first === -1 || last <= first) {

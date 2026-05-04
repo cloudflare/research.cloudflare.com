@@ -3,17 +3,13 @@ import { z } from "astro/zod";
 /**
  * PolyStella options schema.
  *
- * Validation strategy:
- *   - `defaultLocale` and `locales` are NOT in this schema — they are
- *     derived from Astro's native `config.i18n` at `astro:config:setup`
- *     to keep a single source of truth for the locale set. See
- *     `resolveOptions` below for the cross-check logic.
- *   - `r2` and `provider` are zod-optional. They become strictly required
- *     at their point of consumption — `provider` once the AI translator
- *     is wired in, `r2` once real cache fetches are wired in — so
- *     dry-run / parse / glossary work can proceed without credentials
- *     provisioned.
- *   - All other fields have sensible defaults.
+ * `defaultLocale` and `locales` are NOT here — they're derived from
+ * Astro's native `config.i18n` at `astro:config:setup` to keep one
+ * source of truth (see `resolveOptions`).
+ *
+ * `r2` and `provider` are zod-optional so dry-run / parse / glossary
+ * work can proceed without credentials provisioned. They're enforced
+ * as required at the point of consumption.
  */
 
 const r2OptionsSchema = z.object({
@@ -45,21 +41,18 @@ const workersAiProviderSchema = z.object({
   apiToken: z.string().min(1, "provider.apiToken is required"),
   endpoint: z.string().url().optional(),
   /**
-   * Either a single model id, or a per-locale map with a `default` key.
-   * The resolved model id is part of the cache key, so changing it
-   * invalidates that locale's cached translations.
+   * Either a single model id, or a per-locale map with a `default`
+   * key. The resolved model id is part of the cache key, so changing
+   * it invalidates that locale's cached translations.
    */
   model: z.union([
     z.string().min(1),
     z.object({ default: z.string().min(1) }).catchall(z.string().min(1)),
   ]),
   /**
-   * Maximum tokens the model may emit per call. Workers AI defaults to
-   * a small ceiling (~256) which truncates multi-segment translations
-   * mid-string and produces unparseable JSON. Default 8192 fits under
-   * llama-3.1-8b-instruct's 8k output ceiling and qwen2.5-coder-32b's
-   * comparable cap. Bump this for unusually long abstracts; lower it
-   * to constrain runaway output.
+   * Max output tokens per call. Workers AI's default ceiling (~256)
+   * truncates multi-segment translations mid-string and breaks JSON
+   * parsing. 8192 fits under llama-3.1-8b's 8k output cap.
    */
   maxTokens: z.number().int().positive().default(8192),
 });
@@ -71,12 +64,7 @@ const anthropicProviderSchema = z.object({
     z.string().min(1),
     z.object({ default: z.string().min(1) }).catchall(z.string().min(1)),
   ]),
-  /**
-   * Maximum tokens the model may emit per call. Mirrors the
-   * workers-ai ceiling rationale: too small and multi-segment
-   * translations truncate, too large and one runaway call burns
-   * disproportionate spend. Default 8192.
-   */
+  /** Max output tokens per call. */
   maxTokens: z.number().int().positive().default(8192),
 });
 
@@ -110,84 +98,60 @@ const glossarySchema = z.union([glossaryFileSchema, glossaryInlineSchema]);
 
 export const polystellaOptionsSchema = z
   .object({
-    // --- Locales ---
-    // NOT declared here. `defaultLocale` and `locales` are derived from
-    // Astro's `config.i18n` at `astro:config:setup` to avoid two
-    // sources of truth. See `resolveOptions` for the derivation.
+    // Locales: NOT here, derived from Astro's `config.i18n`.
 
-    // --- Source ---
     sourceDir: z.string().default("./content"),
     include: z.array(z.string()).default(["**/*.md", "**/*.mdx"]),
     exclude: z.array(z.string()).default([]),
 
-    // --- Per-collection frontmatter rules. Globs against relative source path. ---
+    // Per-collection frontmatter rules; globs against relative source path.
     frontmatter: z.record(z.string(), z.array(z.string())).default({}),
 
-    // --- Standalone-mode routing ---
     routes: z.array(z.string()).default([]),
     noTranslateBehavior: z.enum(["fallback", "404"]).default("fallback"),
     rewriteInternalLinks: z.boolean().default(true),
 
-    // --- Storage (required once real R2 access is wired in) ---
     r2: r2OptionsSchema.optional(),
-
-    // --- Provider (required once the AI translator is wired in) ---
     provider: providerSchema.optional(),
-
-    // --- Glossary ---
     glossary: glossarySchema.optional(),
-
-    // --- Translation overrides (§3.10) ---
     overridesDir: z.string().default("./i18n/overrides"),
 
-    // --- Prompt customisation ---
-    // The package ships a deliberately generic system prompt
-    // ("You are a professional translator."). Sites that want to bias
-    // the model toward a domain (research, marketing, legal, …) can
-    // supply a `context` string here; it's appended as a separate
-    // system-prompt line right after the role declaration. Future
-    // knobs (e.g. extra format rules) will land in this same namespace.
+    /**
+     * Optional site-/domain-specific guidance appended to the generic
+     * "You are a professional translator." opener of every system
+     * prompt.
+     */
     prompt: z
       .object({
         context: z
           .string()
           .optional()
           .describe(
-            "Site-/domain-specific guidance appended to the default 'You are a professional translator.' opener. Example: 'Specialise in technical research content from the Cloudflare Research portal.'",
+            "Site-/domain-specific guidance appended to the default 'You are a professional translator.' opener.",
           ),
       })
       .default({}),
 
-    // --- Debugging / inspection ---
-    // Until the cache + route-injection layers land, translated MDX is
-    // discarded after the build hook logs its preview line. Setting
-    // `debug.previewDir` writes each successful translation to
-    // `<previewDir>/<locale>/<sourceRelativePath>` for human inspection.
-    // Treat the directory as ephemeral — it'll be superseded by the
-    // real cache/output path once that work lands.
+    /**
+     * `debug.previewDir`, when set, writes a copy of each translated
+     * file under `<previewDir>/<locale>/<sourceRelativePath>` for
+     * inspection. Ephemeral.
+     */
     debug: z
       .object({
-        previewDir: z
-          .string()
-          .optional()
-          .describe(
-            "If set, write translated MDX to this directory (one file per locale × source) for inspection. Ephemeral; replaced by the cache layer.",
-          ),
+        previewDir: z.string().optional(),
       })
       .default({}),
 
-    // --- Behavior ---
     fallback: z.enum(["default-locale", "skip"]).default("default-locale"),
     concurrency: z.number().int().positive().default(4),
     dryRun: z.boolean().default(false),
     runOn: z.array(z.enum(["build", "dev"])).default(["build"]),
-    // `mode: "starlight"` is rejected at parse time until v0.2's
-    // Starlight-mode work lands. `auto` (the default) and
-    // `"standalone"` both behave the same in v0.1: register sibling
-    // collections via `polystellaCollections`. Auto-detection
-    // scaffolding for v0.2 will check for `@astrojs/starlight` in the
-    // integration list and route the `docs` / `i18n` collections
-    // through Starlight's native loaders instead.
+    // `auto` and `"standalone"` are equivalent today; both register
+    // sibling collections via `polystellaCollections`. `"starlight"`
+    // is rejected at parse time — it'll auto-detect `@astrojs/starlight`
+    // and route `docs`/`i18n` through Starlight's native loaders when
+    // that work lands.
     mode: z
       .enum(["auto", "standalone", "starlight"])
       .default("auto")
@@ -196,17 +160,13 @@ export const polystellaOptionsSchema = z
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
             message:
-              'mode: "starlight" is v0.2 work and not yet supported. Use "standalone" (or omit `mode` for the default "auto") in v0.1; v0.2 will add per-collection routing through Starlight\'s native i18n for the `docs` and `i18n` collections.',
+              'mode: "starlight" is not yet supported. Use "standalone" or omit `mode` for the default "auto".',
           });
         }
       }),
     /**
-     * When `true`, log a one-line marker for every (file, locale) pair
-     * the build hook processes (cache hits, cache misses, overrides,
-     * failures). When `false` (the default), only the closing summary
-     * and any failures are logged. Recommended on for first-build
-     * debugging and off for steady-state CI builds, where the per-pair
-     * chatter would drown legitimate signal.
+     * When true, log one line per (file, locale) pair processed.
+     * Off by default; only the closing summary and failures log.
      */
     verbose: z.boolean().default(false),
   })
@@ -225,9 +185,8 @@ export type PolyStellaResolvedOptions = z.output<
 
 /**
  * Minimal structural type for the slice of Astro's `i18n` config we
- * read. Defined locally rather than importing `AstroConfig` so the
- * schema stays decoupled from Astro's type surface (and so unit tests
- * can pass plain objects).
+ * read. Defined locally so the schema stays decoupled from Astro's
+ * type surface and tests can pass plain objects.
  */
 export interface AstroI18nLike {
   defaultLocale: string;
@@ -242,16 +201,10 @@ export interface AstroI18nLike {
 }
 
 /**
- * Parse + validate user-provided options and derive the locale set
- * from Astro's `config.i18n`. Throws a single Error whose message
- * surfaces all problems at once — user-options issues from zod, plus
- * any cross-check failure against `astroI18n` — suitable for surfacing
- * at `astro:config:setup`.
- *
- * Pass `config.i18n` from the integration's `astro:config:setup` hook
- * as the second argument. If it's `undefined`, the function throws
- * with a copy-pasteable starter block; PolyStella deliberately does
- * not write into Astro's config.
+ * Parse user options + derive the locale set from Astro's `config.i18n`.
+ * Aggregates all errors (user options + i18n cross-check) into a single
+ * thrown Error so the operator fixes everything in one pass. PolyStella
+ * never writes to Astro's config.
  */
 export function resolveOptions(
   raw: unknown,
@@ -335,7 +288,7 @@ function validateAstroI18n(i18n: AstroI18nLike | undefined): string[] {
     if (objectForms.length > 0) {
       const paths = objectForms.map((e) => e.path).join(", ");
       issues.push(
-        `  • \`i18n.locales\` contains object-form entries (${paths}). PolyStella v0.1 only supports plain string locales; rewrite them as plain strings (e.g. "pt-BR") and we'll add object-form support in a later milestone.`,
+        `  • \`i18n.locales\` contains object-form entries (${paths}). PolyStella only supports plain string locales today; rewrite them as plain strings (e.g. "pt-BR").`,
       );
     }
     const stringLocales = i18n.locales.filter(
@@ -362,7 +315,7 @@ function validateAstroI18n(i18n: AstroI18nLike | undefined): string[] {
 
   if (i18n.routing === "manual") {
     issues.push(
-      '  • `i18n.routing: "manual"` is not supported by PolyStella v0.1 (we rely on Astro\'s built-in locale-prefix routing to inject translated routes). Use `routing: { prefixDefaultLocale: false }` (or omit `routing` entirely) for the canonical "existing site adds i18n" setup.',
+      '  • `i18n.routing: "manual"` is not supported (PolyStella relies on Astro\'s built-in locale-prefix routing). Use `routing: { prefixDefaultLocale: false }` or omit `routing` entirely.',
     );
   }
 

@@ -1,57 +1,36 @@
 /**
  * Runtime UI-string translator.
  *
- * Pages and components call `useTranslations(locale)` to get a
- * `t(key, params?)` function bound to the visitor's locale. The
- * returned function reads from the `i18n` content collection (one
- * entry per locale) populated via `i18nLoader()` in
- * `content.config.ts`.
+ * `useTranslations(locale)` returns a `t(key, params?)` bound to the
+ * visitor's locale. Reads from the `i18n` content collection.
  *
- * Resolution order on missing keys:
- *
- *   1. Requested-locale dictionary — primary path; drift detection
- *      ensures every locale has the same key set, so this hits in
- *      steady state.
- *   2. Default-locale dictionary — defensive fallback. Should never
- *      fire in a build that passed drift detection, but covers the
- *      transient state where a locale's JSON has been edited in-tree
- *      and the build hasn't been rerun yet.
+ * Resolution on missing keys:
+ *   1. Requested-locale dictionary (the steady-state hit; drift
+ *      detection ensures every locale has the same key set).
+ *   2. Default-locale dictionary (defensive — should never fire
+ *      after a clean drift-checked build).
  *   3. The key itself, returned as a string. Last-resort fallback so
- *      a page never crashes on a missing key; surfaces the raw key
- *      in the rendered output instead, which is preferable to an
- *      uncaught exception during render.
+ *      a page never crashes on a missing key.
  *
- * Interpolation uses `{{name}}` placeholders matching Starlight /
- * i18next conventions. Unknown placeholders are left in place
- * (helps spot typos in templates without crashing).
+ * Interpolation uses `{{name}}` placeholders. Unknown placeholders
+ * pass through unchanged so authoring typos surface in the rendered
+ * page rather than silently rendering empty.
  *
- * The pure interpolator and the pure dispatch logic are exported so
- * tests can pin behaviour without going through Astro's content
- * layer.
+ * The pure helpers are exported so tests can pin behaviour without
+ * going through Astro's content layer.
  */
 
-/** Plain interpolation parameters: key → scalar that gets coerced to string. */
+/** Interpolation params: key → scalar coerced to string. */
 export type InterpolateParams = Record<string, string | number | boolean>;
 
 /**
- * Interpolate `{{name}}` placeholders in `template` with values from
- * `params`. Unknown placeholders pass through unchanged (the literal
- * `{{name}}` survives in the output). This is intentional: a missing
- * placeholder during template authoring is more easily caught when
- * the rendered page surfaces the raw `{{name}}` than when it
- * silently renders empty.
- *
- * Pure: no I/O, no global state. Exported for direct unit testing
- * and for consumer code that wants to interpolate an already-
- * resolved template (e.g. from a custom translation source).
+ * Interpolate `{{name}}` placeholders. Word characters only —
+ * `{{user_name}}` works, `{{user.name}}` doesn't. Matches i18next.
  */
 export function interpolate(
   template: string,
   params: InterpolateParams,
 ): string {
-  // Word characters only: `{{user_name}}` works, `{{user.name}}`
-  // doesn't (nested keys aren't part of the v0.1 contract). Matches
-  // i18next's default placeholder grammar.
   return template.replace(/\{\{(\w+)\}\}/g, (match, key: string) => {
     if (key in params) {
       return String(params[key]);
@@ -60,23 +39,11 @@ export function interpolate(
   });
 }
 
-/**
- * The shape `useTranslations` returns. A consumer call like
- * `t("nav.home")` returns the matching string; `t("greeting",
- * { name: "Diogo" })` interpolates parameters in.
- */
 export type TranslateFn = (key: string, params?: InterpolateParams) => string;
 
 /**
- * Build a `t()` function bound to a primary dictionary and an
- * optional fallback dictionary. Pure — no Astro coupling — so tests
- * can exercise the dispatch logic without standing up `getEntry`.
- *
- * Behaviour:
- *   1. If `key` exists in `primary`, use that template.
- *   2. Else if `fallback` exists and contains `key`, use that template.
- *   3. Else return `key` itself.
- * 4. Interpolate `params` if provided.
+ * `t()` bound to a primary + optional fallback dictionary. Pure;
+ * tests exercise this without standing up `getEntry`.
  */
 export function buildTranslateFn(
   primary: Record<string, string>,
@@ -95,12 +62,8 @@ export function buildTranslateFn(
 }
 
 /**
- * What `useTranslations` needs from Astro's content layer at
- * page-render time. Defined as a structural dep so tests can pass a
- * synthetic implementation without booting Astro.
- *
- * Returns the entry's `data` (a flat dict) on hit, or `undefined` on
- * miss. Mirrors Astro's `getEntry` contract.
+ * Astro-content shape we need at page-render time. Structural so
+ * tests can pass synthetic implementations.
  */
 export type GetI18nEntry = (
   locale: string,
@@ -112,14 +75,10 @@ export interface UseTranslationsDeps {
 }
 
 /**
- * Pure core of `useTranslations`. Resolves the primary and fallback
- * dictionaries, then delegates to `buildTranslateFn`. The thin
- * wrapper in `./index.ts` provides Astro-bound deps; tests pass stubs.
- *
- * `locale === undefined` is treated the same as `defaultLocale`:
- * pages that don't have a locale set on `Astro.currentLocale` (e.g.
- * the homepage when `prefixDefaultLocale: false`) get the default
- * locale's strings, which is the expected behaviour.
+ * Pure core of `useTranslations`. `locale === undefined` is treated
+ * as `defaultLocale` so the homepage (where `Astro.currentLocale`
+ * may be unset under `prefixDefaultLocale: false`) gets the default
+ * dictionary.
  */
 export async function resolveTranslations(
   locale: string | undefined,
@@ -129,8 +88,7 @@ export async function resolveTranslations(
   const primaryEntry = await deps.getI18nEntry(effectiveLocale);
   const primary = primaryEntry?.data ?? {};
 
-  // Fallback is only meaningful when the requested locale isn't the
-  // default — there's no fallback to load otherwise.
+  // Fallback only meaningful when the requested locale isn't the default.
   let fallback: Record<string, string> | undefined;
   if (effectiveLocale !== deps.defaultLocale) {
     const fallbackEntry = await deps.getI18nEntry(deps.defaultLocale);

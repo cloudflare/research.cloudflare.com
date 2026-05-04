@@ -6,93 +6,45 @@ import { translateBatch, type Translator } from "../translation/provider.js";
 import type { R2Client } from "./r2.js";
 
 /**
- * Cache-aware translation orchestrator.
+ * Cache-aware translation orchestrator. Single entry point per
+ * (file, locale) pair: R2 GET → on hit return cached bytes; on miss,
+ * translate via the provider, splice via the position-based applier,
+ * PUT back to R2 with metadata.
  *
- * `translateOrLoadFromCache` is the single entry point the build hook
- * calls per (source-file, locale) pair. It encapsulates three concerns
- * the hook used to know about itself:
- *
- *   1. R2 cache lookup: if the keyed object exists, the translated
- *      bytes are reused verbatim — no provider call, no rewrite,
- *      byte-for-byte stable across builds.
- *   2. Translation on miss: build the prompt, hit the provider, parse
- *      the response, and splice translations back into the source
- *      using the same position-based applier the in-memory pipeline
- *      already uses.
- *   3. Cache write-back: on miss, PUT the translated bytes plus a
- *      structured metadata bag so future builds can hit the cache and
- *      operators can audit what produced each cached object.
- *
- * Pulled out of `index.ts` so the cache decision tree is unit-testable
- * with mocked R2 + Translator pairs without spinning up Astro.
+ * Lives separately from `index.ts` so the cache decision tree is
+ * unit-testable with mocked R2 + Translator without booting Astro.
  */
 
-/** Outcome of a single cache-aware translation attempt. */
 export type CacheOutcome = "hit" | "miss";
 
 export interface TranslateOrLoadOptions {
-  /** Parsed mdast root for the source file (used by the applier on miss). */
   ast: Root;
-  /** Segments extracted from `ast` (skipped on hit; consumed on miss). */
   segments: Segment[];
-  /** Original source bytes, needed by the position-based applier. */
   sourceBody: string;
-  /** Target locale, e.g. `"pt-BR"`. */
   locale: string;
-  /** R2 object key produced by `buildR2Key`. */
+  /** R2 key from `buildR2Key`. */
   key: string;
-  /**
-   * R2 client to use for cache lookup + write-back. Pass `null` to
-   * skip the cache entirely (e.g. when no `r2` block is configured);
-   * the call then degenerates to "always translate, never store".
-   */
+  /** `null` skips the cache entirely (always translate, never store). */
   r2: R2Client | null;
-  /** Per-locale Translator (already model-id-resolved). */
   translator: Translator;
-  /** Locale's glossary (or `EMPTY_GLOSSARY` if none). */
   glossary: Glossary;
-  /** Source / canonical locale, e.g. `"en"`. */
   sourceLocale: string;
-  /** Optional caller-supplied prompt context; see `BuildPromptInput.context`. */
   context?: string;
-  /**
-   * Pre-built metadata bag to attach to the cache PUT. Built by
-   * `buildCacheMetadata` so the hook and the test harness produce
-   * identical headers.
-   */
+  /** From `buildCacheMetadata` — kept caller-built for hook/test parity. */
   metadata: Record<string, string>;
   /**
-   * Frontmatter keys merged into the translated bytes BEFORE the R2
-   * PUT. The integration uses this to inject the AI-translation
-   * marker (`aiTranslated`, `aiTranslationModel`, `aiTranslatedAt`)
-   * so the marker is part of the cached artefact — cache hits return
-   * the bytes verbatim, which means the marker's `aiTranslatedAt`
-   * stays truthful (it reflects when the translation was originally
-   * produced, not when this build ran).
-   *
-   * Optional; when omitted, no extra keys are merged. RFC §3.11
-   * specifies that override entries leave `aiTranslated` unset, so
-   * the build hook does not pass additions on the override path.
+   * Frontmatter keys merged into translated bytes BEFORE the R2 PUT
+   * (used for the `aiTranslated*` marker). Baking into cached bytes
+   * keeps `aiTranslatedAt` truthful on later cache hits.
    */
   frontmatterAdditions?: Record<string, unknown>;
-  /**
-   * Optional progress callbacks for the cache-write phase. Both are
-   * no-ops by default and only invoked on the miss path with `r2`
-   * non-null — i.e., when the orchestrator is genuinely about to
-   * persist new bytes. The build hook plugs these in to print
-   * “starting cache write” / “cache write done” log lines so a slow R2
-   * round-trip doesn't look like a frozen build.
-   */
+  /** Cache-write progress hooks; only fire on the miss path with `r2`. */
   events?: CacheEvents;
 }
 
 /**
- * Progress callbacks for the cache-write phase. Signatures are stable:
- * callers can rely on `key`, `locale`, and `bytes` being present on
- * every event. `durationMs` (on `onWriteDone`) is wall-clock elapsed
- * inside the PUT call, rounded to whole milliseconds for log
- * readability. Exactly one of `onWriteDone` or `onWriteFailed` fires
- * per `onWriteStart` — they are mutually exclusive.
+ * Cache-write progress callbacks. Exactly one of `onWriteDone` or
+ * `onWriteFailed` fires per `onWriteStart`.
  */
 export interface CacheEvents {
   onWriteStart?: (event: {
@@ -108,11 +60,8 @@ export interface CacheEvents {
   }) => void;
   /**
    * Fires when the R2 PUT throws. The orchestrator does NOT rethrow:
-   * a failed cache write is a degraded-but-acceptable state because
-   * the translation itself already succeeded and the bytes are
-   * returned to the caller for staging. The build hook uses this to
-   * print a per-file warning so a flaky R2 is visible without
-   * killing the build.
+   * the translator already succeeded and the bytes are returned to
+   * the caller for staging — a flaky R2 shouldn't kill the build.
    */
   onWriteFailed?: (event: {
     key: string;
@@ -124,25 +73,15 @@ export interface CacheEvents {
 
 export interface TranslateOrLoadResult {
   outcome: CacheOutcome;
-  /** The translated MDX bytes, ready to write to staging. */
+  /** Translated MDX bytes, ready to stage. */
   body: string;
-  /**
-   * On hit, the metadata that came back with the cached object (with
-   * `x-amz-meta-` prefix already stripped by the R2 client). Useful
-   * for the build report. Empty record on miss — the canonical
-   * metadata the caller supplied is what got written.
-   */
+  /** On hit, the cached object's metadata (`x-amz-meta-` prefix stripped). */
   cachedMetadata?: Record<string, string>;
 }
 
 /**
- * Try to load `key` from R2; on hit return its bytes, on miss
- * translate + apply + write back to R2 (when configured).
- *
- * Errors propagate: a failing R2 call or a failing translator throws
- * out, letting the caller's per-pair try/catch increment the failure
- * counter and log the diagnostic. We don't paper over either side —
- * a silent fallback would mask real provider/storage outages.
+ * Errors propagate so the caller's per-pair try/catch can log + count
+ * the failure. Silent fallback would mask real provider/storage outages.
  */
 export async function translateOrLoadFromCache(
   opts: TranslateOrLoadOptions,
@@ -163,9 +102,7 @@ export async function translateOrLoadFromCache(
     frontmatterAdditions,
   } = opts;
 
-  // 1. Cache lookup. A `null` r2 means the operator opted out of
-  //    caching; we skip straight to translation so smoke tests can run
-  //    without provisioning R2.
+  // `null` r2 = operator opted out; skip lookup, always translate.
   if (r2) {
     const hit = await r2.get(key);
     if (hit) {
@@ -177,10 +114,8 @@ export async function translateOrLoadFromCache(
     }
   }
 
-  // 2. Cache miss → translate + apply. The marker additions
-  //    (`aiTranslated` etc.) are baked into the bytes BEFORE the R2
-  //    PUT so cache hits on later builds return the marker verbatim
-  //    without needing a re-stringify pass.
+  // Cache miss. Marker additions are baked in BEFORE the PUT so
+  // later cache hits return the marker verbatim.
   const translations = await translateBatch({
     translator,
     segments,
@@ -193,15 +128,11 @@ export async function translateOrLoadFromCache(
     ...(frontmatterAdditions ? { frontmatterAdditions } : {}),
   });
 
-  // 3. Write back to R2 when configured. The metadata bag is
-  //    intentionally caller-built so the hook and tests stay in sync
-  //    on what gets persisted. PUT failures are caught here rather
-  //    than propagated: by this point the translator already ran (and
-  //    the operator was already billed for it), so dropping the
-  //    translated bytes on a flaky R2 would compound the cost. We
-  //    surface the failure via `onWriteFailed` and return the bytes
-  //    so the caller can still stage them — the next build will
-  //    retranslate, but only that pair, not the whole corpus.
+  // PUT failures are caught (not rethrown): translator already ran
+  // and was billed; dropping the bytes would compound the cost. We
+  // surface the failure via `onWriteFailed` and return the bytes so
+  // the caller can still stage them; the next build will retranslate
+  // just that pair.
   if (r2) {
     const bytes = Buffer.byteLength(translated, "utf8");
     events?.onWriteStart?.({ key, locale, bytes });
@@ -241,26 +172,14 @@ export interface BuildCacheMetadataInput {
   glossaryHash: string;
   /** Resolved model id, e.g. `"@cf/meta/llama-3.1-8b-instruct"`. */
   modelId: string;
-  /**
-   * ISO-8601 timestamp for when the translation completed. Caller
-   * supplies it (rather than us calling `new Date()` here) so tests
-   * can pin a deterministic value and the build report can use the
-   * same instant as the cached metadata.
-   */
+  /** ISO-8601. Caller-supplied so tests can pin it deterministic. */
   translatedAt: string;
-  /** PolyStella package version, for forensic traceability. */
   polystellaVersion: string;
 }
 
 /**
- * Assemble the canonical `x-amz-meta-*` bag for a cache write.
- *
- * Keys are kebab-case to match S3/R2 convention (the underlying client
- * lowercases anyway, but consistent shape makes log greps tolerable).
- * Values are always strings; none are nullable. Where an upstream
- * field is genuinely empty (e.g. `glossaryHash` for an unconfigured
- * locale) the empty string is preserved so the metadata schema stays
- * the same across rows.
+ * Build the `x-amz-meta-*` bag for a cache PUT. Keys kebab-case;
+ * empty strings preserved so the metadata schema is uniform.
  */
 export function buildCacheMetadata(
   input: BuildCacheMetadataInput,

@@ -1,112 +1,66 @@
 /**
- * Route-shim generation for the localized routing layer.
- *
- * For every entry in the user's `polystella({ routes })` array we emit
- * a tiny `.astro` shim into the build cache that:
- *   1. Imports the user's source page (relative path baked into the
- *      shim at generation time).
- *   2. Provides its own `getStaticPaths` so the route exists at
- *      `/<locale>/<sourcePattern>` for every non-default locale.
- *   3. Renders the source page as a child component, inheriting
- *      `Astro.currentLocale` and route params from the visited URL.
- *
- * The shim is the *only* file PolyStella writes into the user's build
- * cache. It's regenerated on every build (locales/source paths baked
- * in literally) so a config change is automatically picked up — no
- * stale shim survives a rebuild.
+ * Route-shim generation. For each `routes` entry, emits an `.astro`
+ * shim into the build cache that imports the source page, provides
+ * its own `getStaticPaths` enumerating non-default locales, and
+ * renders the source as a child. Regenerated every build so config
+ * changes take effect immediately.
  */
 
 export interface DerivedUrlPattern {
   /**
-   * Source-page pattern with `src/pages/` prefix and `.astro` suffix
-   * stripped, and any trailing `index` segment removed (so the
-   * homepage at `src/pages/index.astro` becomes `""` and a section
-   * index at `src/pages/people/index.astro` becomes `"people"`).
-   *
-   * The integration prefixes this with `[lang]/` when calling
-   * `injectRoute` to produce e.g. `/[lang]/[slug]`.
+   * URL pattern with `src/pages/` and `.astro` stripped and any
+   * trailing `/index` removed. The integration prefixes with
+   * `[lang]/` for the `injectRoute` call.
    */
   pattern: string;
-  /**
-   * `true` when the source path contains at least one `[param]`
-   * segment (including rest params like `[...slug]`). Determines
-   * whether the shim wraps the source's `getStaticPaths` or simply
-   * enumerates locales.
-   */
+  /** `true` when the source contains at least one `[param]` segment. */
   isDynamic: boolean;
 }
 
 /**
- * Convert a `src/pages/...astro` path into the URL pattern PolyStella
- * routes the locale-prefixed shim under.
- *
- * Examples:
- *   src/pages/[slug].astro          -> { pattern: "[slug]",        isDynamic: true  }
- *   src/pages/people/[slug].astro   -> { pattern: "people/[slug]", isDynamic: true  }
- *   src/pages/about.astro           -> { pattern: "about",         isDynamic: false }
- *   src/pages/index.astro           -> { pattern: "",              isDynamic: false }
- *   src/pages/people/index.astro    -> { pattern: "people",        isDynamic: false }
- *   src/pages/blog/[...slug].astro  -> { pattern: "blog/[...slug]",isDynamic: true  }
- *
- * Path separators are normalised to forward slashes so Windows-style
- * inputs round-trip cleanly.
+ * `src/pages/[slug].astro`         → `{ "[slug]",         dynamic }`
+ * `src/pages/people/[slug].astro`  → `{ "people/[slug]",  dynamic }`
+ * `src/pages/about.astro`          → `{ "about",          static  }`
+ * `src/pages/index.astro`          → `{ "",               static  }`
+ * `src/pages/blog/[...slug].astro` → `{ "blog/[...slug]", dynamic }`
  */
 export function deriveUrlPattern(sourcePath: string): DerivedUrlPattern {
   const normalised = sourcePath.replace(/\\/g, "/").replace(/^\/+/, "");
   const stripped = normalised
     .replace(/^src\/pages\//, "")
     .replace(/\.astro$/, "");
-  // Drop a trailing `/index` (or a bare `index`) — those map to the
-  // section's bare URL, not to an `/index` segment.
+  // Drop a trailing `/index` — section indexes route to the bare URL.
   const pattern = stripped.replace(/(^|\/)index$/, "");
   const isDynamic = /\[[^\]]+\]/.test(pattern);
   return { pattern, isDynamic };
 }
 
 export interface GenerateShimSourceInput {
-  /**
-   * Path that the shim's `import` statement uses to reach the source
-   * page. Should be a path the bundler can resolve relative to the
-   * shim's own location — typically `path.relative(shimDir, sourceAbs)`,
-   * with backslashes normalised to forward slashes for cross-platform
-   * stability of the emitted source.
-   */
+  /** Bundler-resolvable path from `shimDir`; backslashes normalised. */
   relativeImportPath: string;
-  /** Whether the source page declares its own `getStaticPaths`. */
+  /** Whether the source declares its own `getStaticPaths`. */
   isDynamic: boolean;
   /**
-   * Non-default locales the shim should enumerate. The default locale
-   * is deliberately excluded: with `i18n.routing.prefixDefaultLocale:
-   * false` the source page already serves its content at the
-   * unprefixed path, so a `/<defaultLocale>/<slug>` shim would create
-   * a duplicate route.
+   * Non-default locales only. The default locale is excluded —
+   * `prefixDefaultLocale: false` already serves it at the unprefixed
+   * path, so a `/<defaultLocale>/<slug>` shim would duplicate routes.
    */
   locales: ReadonlyArray<string>;
 }
 
 /**
- * Render the `.astro` source for one shim. Pure: no filesystem access,
- * no side effects — the integration writes the returned string to the
- * shim path itself. That keeps this module unit-testable without
- * needing a tmpdir or fs mock.
- *
- * The dynamic and static branches are deliberately separate templates
- * rather than one parameterised string: the Astro compiler is
- * sensitive to top-level shape (especially around `getStaticPaths`
- * being a real `export` declaration the analyser can see), and a
- * conditional template made the output harder to reason about with
- * little code-size payoff.
+ * Pure renderer for the shim source. Dynamic and static branches are
+ * separate templates because Astro's compiler is sensitive to the
+ * top-level shape of `getStaticPaths` and a conditional template
+ * obscured the output without saving code.
  */
 export function generateShimSource(input: GenerateShimSourceInput): string {
   const localesLiteral = JSON.stringify(input.locales);
   const importPath = input.relativeImportPath.replace(/\\/g, "/");
 
-  // The locales literal is inlined directly inside `getStaticPaths`
-  // rather than declared as a module-level `const`. Astro lifts
-  // `getStaticPaths` into its own module for static-path generation
-  // and surrounding module-level declarations don't survive that
-  // lift — a `LOCALES` reference would throw `LOCALES is not defined`
-  // at build time. Inlining is uglier in source but correct.
+  // Locales literal is inlined inside `getStaticPaths` — Astro lifts
+  // it into its own module for static-path generation and module-
+  // level declarations don't survive the lift.
   if (input.isDynamic) {
     return [
       "---",

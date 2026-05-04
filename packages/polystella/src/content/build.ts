@@ -1,64 +1,34 @@
 /**
  * Pure, deps-injected core of the `polystellaCollections` helper.
+ * The wrapper in `./index.ts` imports the real Astro factories and
+ * feeds them in.
  *
- * This module is deliberately free of `astro:content` or
- * `astro/loaders` imports so the test suite can exercise it without
- * Astro's virtual-module resolver. The thin wrapper in
- * `./index.ts` imports the real Astro factories and feeds them in
- * as deps.
- *
- * Why a helper rather than an integration hook: Astro 6 integrations
- * cannot programmatically register content collections — collections
- * must come from `src/content.config.ts`. So PolyStella ships this
- * helper for the user to call from their own content config.
+ * This helper exists because Astro integrations can't programmatically
+ * register content collections — they must come from
+ * `src/content.config.ts`. PolyStella ships this for the user to call
+ * from there.
  *
  * Conventions:
- *
- *   - Sibling-collection naming: `${collection}__${locale}`.
- *     Double-underscore separator is unambiguous (collection names
- *     don't typically contain `__`), avoids hyphen collisions in
- *     BCP-47 locale tags (e.g. `pt-BR`, `zh-Hans`), and keeps the
- *     keys grep-friendly.
- *   - Default loader for omitted entries: `glob({ pattern:
- *     "**\u002F*.{md,mdx}", base: "<stagingDir>/<locale>/<collection>" })`.
- *     Covers the dominant case in real Astro projects (one
- *     directory per collection, markdown or MDX content) without
- *     forcing per-collection metadata for every entry.
- *   - Schemas: translated collections share the source's Zod schema
- *     **by reference**. Translations validate against the same
- *     contract as source content — a real correctness improvement
- *     over the runtime overlay model that bypassed Zod entirely.
- *   - Custom loaders auto-skip with a warning. The `loaderOverrides`
- *     escape hatch covers `file()`-based collections, custom
- *     patterns, and fully-custom factories.
+ *   - Sibling naming: `${collection}__${locale}` (`__` because
+ *     hyphens collide with BCP-47 tags like `pt-BR`).
+ *   - Default sibling loader: `glob({ pattern: "**\/*.{md,mdx}",
+ *     base: "<stagingDir>/<locale>/<collection>" })`.
+ *   - Sibling schemas share the source's Zod schema by reference, so
+ *     translations validate against the same contract.
+ *   - Unrecognised loaders auto-skip with a warning; use
+ *     `loaderOverrides` for `file()`-based or fully-custom collections.
  */
 
 /**
- * Per-collection override telling PolyStella how to construct the
- * sibling loader for a given source collection. The default (no
- * override) is `glob({ pattern: "**\u002F*.{md,mdx}", base: "<stagingDir>/<locale>/<collection>" })`,
- * which suits the common case of one directory per collection
- * containing markdown or MDX files.
- *
- * Variants:
- *
- *   - `glob` — different glob pattern (e.g. `"**\u002F*.markdoc"` or
- *     a more specific path). `base` is always derived from
- *     `<stagingDir>/<locale>/<collection>`; user-controllable
- *     `base` would defeat the staging-layout invariant the build
- *     hook depends on.
- *   - `file` — single-file collections (TOML/YAML/JSON loaded via
- *     Astro's `file()` loader). The build hook stages the
- *     translated file at `<stagingDir>/<locale>/<collection>/<filename>`,
- *     and the sibling loader points at exactly that path.
- *   - `custom` — arbitrary factory. Receives the locale and the
- *     staging base directory; returns a fully-formed
- *     `defineCollection` config. Use for collections with
- *     non-standard loaders that PolyStella can't otherwise model.
- *   - `skip` — explicit opt-out. Equivalent to listing the
- *     collection in `skipLocalize`, but lets the user record a
- *     reason inline next to the loader metadata for future
- *     archaeology.
+ * Per-collection override for sibling loader construction. Variants:
+ *   - `glob` — different glob pattern; `base` is always
+ *     `<stagingDir>/<locale>/<collection>` (the staging-layout
+ *     invariant the build hook depends on).
+ *   - `file` — single-file collections (TOML/YAML/JSON via Astro's
+ *     `file()` loader). The build hook stages to
+ *     `<stagingDir>/<locale>/<collection>/<filename>`.
+ *   - `custom` — arbitrary factory taking `(locale, stagingBase)`.
+ *   - `skip` — explicit opt-out (the `reason` field documents why).
  */
 export type LoaderOverride =
   | { kind: "glob"; pattern: string | string[] }
@@ -70,18 +40,11 @@ export type LoaderOverride =
   | { kind: "skip"; reason?: string };
 
 /**
- * Type-level fan-out: produces the sibling map shape from a source
- * map and a locale union. Each source key `K` becomes `${K}__${L}`
- * for every locale `L` in the union, preserving the source value's
- * type (the sibling shares the same schema by reference).
- *
- * Critically, the siblings are typed with the SAME shape as the
- * source — when Astro's `InferEntrySchema<"publications__pt-BR">`
- * looks up `ContentConfig['collections']["publications__pt-BR"]['schema']`,
- * it sees the publications schema. That's what we want: translated
- * entries validate against the same Zod contract as source entries,
- * and consumer page code gets full schema-aware inference on
- * `entry.data.*`.
+ * Type-level fan-out. Each source key `K` becomes `${K}__${L}` for
+ * every locale `L`, with the source value's type preserved. Astro's
+ * `InferEntrySchema<"publications__pt-BR">` then resolves to the
+ * publications schema, so consumer page code gets full schema-aware
+ * inference on `entry.data.*` for translated entries.
  */
 export type LocaleSiblings<
   TSource extends Record<string, unknown>,
@@ -93,15 +56,9 @@ export type LocaleSiblings<
 };
 
 /**
- * Output shape of `polystellaCollections` / `buildCollections`.
- *
- * The intersection preserves the source's per-collection types AND
- * adds the typed sibling keys, so `ContentConfig['collections'][C]`
- * lookups (used by Astro's `InferEntrySchema`) resolve to the
- * concrete `defineCollection` config rather than `unknown`. This is
- * the difference between consumer code seeing
- * `entry.data.authors: Array<{collection,id}>` (good) and
- * `entry.data.authors: any` (silent type loss).
+ * Source map intersected with typed sibling keys, so
+ * `ContentConfig['collections'][C]` resolves to a concrete
+ * `defineCollection` config rather than `unknown`.
  */
 export type PolystellaCollectionsOutput<
   TSource extends Record<string, unknown>,
@@ -109,85 +66,41 @@ export type PolystellaCollectionsOutput<
 > = TSource & LocaleSiblings<TSource, TLocales>;
 
 /**
- * Public entry-point options for `polystellaCollections`. `source` is
- * the user's collection map (`{ publications, people, ... }`); the
- * helper preserves it verbatim and adds locale-suffixed siblings to
- * the returned object.
- *
- * `TLocales` is inferred from the literal-typed `locales` array the
- * caller passes. Adding `as const` to the array literal is NOT
- * required — TypeScript narrows tuple element types when the
- * destination type is a `readonly T[]` constrained to `string`.
+ * Options for `polystellaCollections`. The helper preserves `source`
+ * verbatim and adds locale-suffixed siblings alongside.
  */
 export interface PolystellaCollectionsOptions<
   TSource extends Record<string, unknown>,
   TLocales extends readonly string[] = readonly string[],
 > {
-  /**
-   * The user's source collections, keyed by collection name. Each
-   * value is the result of `defineCollection({ ... })`. PolyStella
-   * preserves the original entries verbatim — siblings are added
-   * alongside, never substituted in place.
-   */
+  /** User's source collections, keyed by name. */
   source: TSource;
   /**
-   * The list of target locales. Typically mirrors
-   * `i18n.locales` from `astro.config.mjs` minus `defaultLocale`,
-   * but PolyStella does not enforce that — projects may register
-   * siblings for a subset of locales (e.g. progressive rollout).
-   *
-   * Pass `defaultLocale` separately so the helper can filter it out
-   * if the user includes it here by mistake; we do NOT want a
-   * `publications__en` sibling on top of `publications`.
+   * Target locales. Typically mirrors `i18n.locales` from
+   * `astro.config.mjs`. Pass `defaultLocale` separately so the helper
+   * can filter it out — a `publications__en` sibling on top of
+   * `publications` would self-translate.
    */
   locales: TLocales;
   /**
-   * Optional explicit default locale. When set, it's filtered from
-   * `locales` before sibling generation (defensive: easier than
-   * documenting "don't include the default"). Constrained to the
-   * locale union so a typo (`defaultLocale: "pt-Br"` when locales
-   * are `["en", "pt-BR"]`) becomes a TypeScript error rather than a
-   * silent self-translation sibling.
+   * Optional default locale. Constrained to `TLocales[number]` so a
+   * typo becomes a TypeScript error rather than a silent
+   * self-translation sibling.
    */
   defaultLocale?: TLocales[number];
-  /**
-   * Staging directory base, **relative to project root**. Default:
-   * `.astro/i18n-staging`. Must match the integration's staging
-   * dir; PolyStella's build hook derives it from
-   * `config.cacheDir` (also `.astro/` by default), so the default
-   * here lines up by convention.
-   */
+  /** Relative to project root. Default: `.astro/i18n-staging`. */
   stagingDir?: string;
-  /**
-   * Collections to NOT register siblings for. Useful when a
-   * collection contains content that shouldn't be translated —
-   * e.g. tag definitions, slugs, or English-only blog posts. The
-   * source collection is still returned unchanged; only the
-   * locale-suffixed siblings are skipped.
-   */
+  /** Collections to leave un-localised. Source collection is kept; siblings skipped. */
   skipLocalize?: ReadonlyArray<keyof TSource & string>;
-  /**
-   * Per-collection loader overrides. Entries here take precedence
-   * over the default convention. See `LoaderOverride` for variants.
-   */
+  /** Per-collection loader overrides; see `LoaderOverride`. */
   loaderOverrides?: Partial<
     Record<keyof TSource & string, LoaderOverride>
   >;
-  /**
-   * Logger for non-fatal warnings (unrecognized loaders, etc.).
-   * Defaults to `console`. Tests pass a stub to assert on
-   * warning content.
-   */
+  /** Defaults to `console`; tests pass a stub. */
   logger?: { warn: (message: string) => void };
 }
 
-/**
- * Dependency-injected variant of `polystellaCollections` for tests.
- * The public function in `./index.ts` imports the real
- * `defineCollection`, `glob`, `file` from Astro and feeds them in
- * here; tests pass stubs so the suite doesn't need an Astro project
- * on disk.
- */
+/** Deps for the test-friendly variant. The public wrapper feeds Astro's. */
 export interface PolystellaCollectionsDeps {
   defineCollection: (config: unknown) => unknown;
   glob: (opts: { pattern: string | string[]; base: string }) => unknown;
@@ -200,28 +113,14 @@ import {
 } from "../storage/paths.js";
 
 /**
- * Pure, deps-injected core. Iterates `source × locales`, produces
- * sibling collections per the convention or the per-collection
- * override, and returns the merged map.
+ * Iterate `source × locales` and return a map intersecting source
+ * collections with their per-locale siblings. Exported so tests can
+ * pass synthetic deps; production callers go through `./index.ts`.
  *
- * The core is exported (rather than buried inside
- * `polystellaCollections`) so the test file can pass synthetic
- * `defineCollection` / `glob` / `file` stubs and assert on what was
- * called and how. Production callers go through the wrapper in
- * `./index.ts`.
- *
- * The return type is computed as `TSource &
- * LocaleSiblings<TSource, TLocales[number]>` so the consumer's
- * `content.config.ts` exports a strongly-typed `collections` object
- * — critical for Astro's `InferEntrySchema<C>` lookup, which
- * resolves to `any` when `ContentConfig['collections'][C]` is
- * `unknown`. The runtime cast back to `TSource &
- * LocaleSiblings<...>` is structurally lossless: every key the type
- * promises is actually present in the runtime object (the
- * convention path produces a sibling for every non-skipped source
- * key × locale pair) modulo the warn+skip path for unrecognised
- * loaders, which the user can suppress via `skipLocalize` or
- * `loaderOverrides`.
+ * The runtime cast back to `TSource & LocaleSiblings<...>` is
+ * structurally lossless: the convention path produces a sibling for
+ * every non-skipped (source × locale) pair. Unrecognised loaders
+ * warn-and-skip; suppress via `skipLocalize` or `loaderOverrides`.
  */
 export function buildCollections<
   TSource extends Record<string, unknown>,
@@ -240,26 +139,20 @@ export function buildCollections<
     logger = console,
   } = opts;
 
-  // Filter `defaultLocale` out of `locales` defensively. Users who
-  // pass `i18n.locales` directly from astro.config.mjs (which
-  // includes the default by Astro's contract) shouldn't get a
-  // self-translation sibling.
+  // Filter `defaultLocale` out of `locales` defensively (Astro's
+  // contract includes the default in `i18n.locales`; we don't want
+  // a self-translation sibling).
   const targetLocales = defaultLocale
     ? locales.filter((l) => l !== defaultLocale)
     : [...locales];
 
   const skipSet = new Set<string>(skipLocalize);
-  // The destructuring default flattens `loaderOverrides` to `{}` when
-  // the caller omits it; widen the local back to the full
-  // `Record<string, LoaderOverride | undefined>` shape so the
-  // `[collectionName]` lookup below type-checks. The values are still
-  // `LoaderOverride | undefined`, just keyed by an arbitrary string.
+  // Widen back to a string-keyed map for the `[collectionName]` lookup.
   const overrides: Record<string, LoaderOverride | undefined> = {
     ...(loaderOverrides as Record<string, LoaderOverride | undefined>),
   };
 
-  // Start with the source collections verbatim. Sibling collections
-  // are layered on top below; they never replace source entries.
+  // Source collections kept verbatim; siblings layered on top.
   const out: Record<string, unknown> = { ...source };
 
   for (const collectionName of Object.keys(source)) {
@@ -290,12 +183,9 @@ export function buildCollections<
 }
 
 /**
- * Build a single sibling collection for the given `(collectionName,
- * locale)` pair. Returns `null` when the loader can't be derived
- * (custom loader without an override) — caller logs a warning and
- * skips the sibling.
- *
- * Exposed for unit tests; not part of the public surface.
+ * Build a single sibling for `(collectionName, locale)`. Returns
+ * `null` when the loader can't be derived (custom loader without an
+ * override) — caller warns and skips. Exposed for unit tests.
  */
 export function deriveSiblingCollection(args: {
   collectionName: string;
@@ -340,9 +230,7 @@ export function deriveSiblingCollection(args: {
         ...(schema !== undefined ? { schema } : {}),
       });
     }
-    // Exhaustive over the discriminated union; this throw should be
-    // unreachable. If a future LoaderOverride variant lands without a
-    // branch above, surface it loudly rather than silently skipping.
+    // Exhaustiveness guard for future `LoaderOverride` variants.
     throw new Error(
       `[polystella] unrecognized loaderOverride kind for collection "${collectionName}": ${
         (override as { kind: string }).kind
@@ -351,7 +239,7 @@ export function deriveSiblingCollection(args: {
   }
 
   // Convention path: assume a markdown/MDX collection rooted at the
-  // staging base. Covers the vast majority of real-world setups.
+  // staging base.
   const recognised = isRecognisedSourceLoader(sourceCollection);
   if (!recognised) {
     logger.warn(
@@ -370,23 +258,14 @@ export function deriveSiblingCollection(args: {
 }
 
 /**
- * Best-effort sniff of whether a source collection's loader is the
- * built-in `glob()` loader. `glob-loader` is the only loader the
- * convention path can handle automatically — its sibling is just
- * another `glob()` pointed at the staging dir, with the default
- * `**\u002F*.{md,mdx}` pattern.
+ * Recognise the built-in `glob()` loader so the convention path can
+ * derive a sibling automatically. `file-loader` isn't auto-derived
+ * (the sibling needs the file basename, which is closed over in the
+ * source loader); users supply `loaderOverrides.<collection> =
+ * { kind: "file", filename: "..." }` for those.
  *
- * `file-loader` is deliberately NOT auto-derived: the sibling needs
- * the file's basename to construct the staged path, and that's
- * closed over inside the source loader. Users must supply
- * `loaderOverrides.<collection> = { kind: "file", filename: "..." }`
- * to localise file-based collections.
- *
- * False negatives (an unrecognised loader treated as custom) are
- * survivable: the user gets a warning and can supply an override.
- * False positives (a custom loader sniffed as glob) would silently
- * substitute the user's loader for ours, which is worse — so we err
- * on the side of conservative recognition.
+ * Conservative on purpose: a false positive (custom loader sniffed
+ * as glob) would silently substitute our loader for theirs.
  */
 function isRecognisedSourceLoader(sourceCollection: unknown): boolean {
   if (sourceCollection === null || typeof sourceCollection !== "object") {
@@ -399,12 +278,9 @@ function isRecognisedSourceLoader(sourceCollection: unknown): boolean {
 }
 
 /**
- * Pull the `schema` field off the source collection. Astro's
- * `defineCollection` is essentially identity (returns the input
- * config object), so `source.schema` is the schema the user
- * declared. Returning `undefined` for collections without a schema
- * (loader-only) lets the caller omit the field entirely from the
- * sibling config.
+ * Pull `schema` off the source collection. Astro's `defineCollection`
+ * is identity-shaped, so `source.schema` is whatever the user
+ * declared. `undefined` for loader-only collections.
  */
 function readSchema(sourceCollection: unknown): unknown {
   if (sourceCollection === null || typeof sourceCollection !== "object") {

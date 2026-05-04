@@ -234,11 +234,10 @@ describe("applyTranslations — end-to-end with formatted translations", () => {
 });
 
 describe("applyTranslations — frontmatter additions (AI marker)", () => {
-  // M9.1: the AI-translation marker (`aiTranslated`,
-  // `aiTranslationModel`, `aiTranslatedAt`) is injected via
-  // `frontmatterAdditions`. These tests pin the three shapes the
-  // injector must handle: existing-frontmatter merge, no-frontmatter
-  // prepend, and the empty-additions no-op (round-trip preservation).
+  // The AI-translation marker (`aiTranslated`, `aiTranslationModel`,
+  // `aiTranslatedAt`) is injected via `frontmatterAdditions`. These
+  // tests pin the three shapes the injector must handle: existing-
+  // frontmatter merge, no-frontmatter prepend, empty-additions no-op.
 
   it("merges additions into existing frontmatter alongside translations", () => {
     const source = [
@@ -286,7 +285,7 @@ describe("applyTranslations — frontmatter additions (AI marker)", () => {
   });
 
   it("additions overwrite same-named keys already in source frontmatter", () => {
-    // RFC §3.11: the marker reflects THIS build's output, so a stale
+    // The marker reflects this build's output, so a stale
     // source-side `aiTranslated: false` must be replaced.
     const source = [
       "---",
@@ -306,8 +305,8 @@ describe("applyTranslations — frontmatter additions (AI marker)", () => {
   });
 
   it("merges additions and translations in the same frontmatter block", () => {
-    // M3 already exercises fm:title translation; this asserts that the
-    // addition + translation paths compose correctly.
+    // Other tests exercise fm:title translation in isolation; this
+    // asserts that addition + translation paths compose correctly.
     const source = [
       "---",
       'title: "Hello"',

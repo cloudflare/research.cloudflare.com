@@ -10,18 +10,13 @@ import {
 } from "../src/storage/report.js";
 
 /**
- * Tests for the build-report module (M9.2).
- *
  * Two layers:
- *   - `computeBuildReportTotals`: pure aggregator over an entry list.
- *     Asserting the arithmetic here means a future refactor of the
- *     bookkeeping in the build hook has a single place to verify.
- *   - `emitBuildReport`: serialise + write. Tested with a real tmpdir
- *     to exercise the file-write path end-to-end.
+ *   - `computeBuildReportTotals`: pure aggregator over entries.
+ *   - `emitBuildReport`: serialise + write, tested with a real tmpdir.
  *
- * The build-hook integration (which actually populates the report
- * during a build) is exercised via the existing manual smoke flow;
- * unit-level coverage is the totals + emit shape contract.
+ * Build-hook integration (populating the report during a build) is
+ * exercised via the manual smoke flow; this file pins the totals
+ * arithmetic and the on-disk shape.
  */
 
 function makeEntry(

@@ -1,25 +1,15 @@
 import type { Heading, Paragraph, Root, TableCell } from "mdast";
 
 /**
- * AST traversal shared between `extract.ts` and `apply.ts`.
- *
- * Both files MUST iterate translatable blocks in the same order so that
- * the segment IDs they produce line up: the n-th block visited by extract
- * is the same n-th block visited by apply. We achieve that by funnelling
- * all traversal through `visitTranslatableBlocks` here.
+ * AST traversal shared between `extract.ts` and `apply.ts`. Both
+ * MUST iterate translatable blocks in the same order so segment IDs
+ * line up — funnelled through `visitTranslatableBlocks` here.
  */
 
-/**
- * Block-level node types that carry translatable inline text. One
- * segment is produced per occurrence.
- */
+/** Block-level nodes carrying translatable inline text. */
 const TRANSLATABLE_BLOCK_TYPES = new Set(["paragraph", "heading", "tableCell"]);
 
-/**
- * Container node types whose children may contain translatable blocks.
- * We descend into these without producing a segment for the container
- * itself (the container's *children* are what get translated).
- */
+/** Containers we descend into without emitting a segment for the container itself. */
 const RECURSE_INTO_TYPES = new Set([
   "root",
   "blockquote",
@@ -40,9 +30,8 @@ export interface BlockVisit {
 }
 
 /**
- * Visit every translatable block in `ast` in DFS order, in a single pass.
- * Skips code blocks, HTML, thematic breaks, frontmatter, definitions,
- * and other non-translatable structures — they're left untouched.
+ * Visit every translatable block in DFS order. Skips code, HTML,
+ * thematic breaks, frontmatter, definitions — they're left untouched.
  */
 export function visitTranslatableBlocks(
   ast: Root,
@@ -69,27 +58,12 @@ export function visitTranslatableBlocks(
 }
 
 /**
- * Compute the byte-offset span of a block's inline content — i.e., the
- * range that covers the block's children, NOT the block itself.
- *
- * Why "inline" and not "block": for `# Title\n` the block's position
- * covers `0..7` (the whole line including the `#` prefix), but the
- * children's combined position covers only `2..7` (just `Title`). We
- * want the inline range so that:
- *
- *   - `extract.ts` reads `source.slice(span)` and gets just the
- *     translatable content (no `#`, no `>`, no `- `).
- *   - `apply.ts` splices the translation into the same `span`, so
- *     the heading marker / blockquote prefix / list marker outside
- *     the span survives untouched.
- *
- * This symmetry is what gives us the byte-perfect no-replacement
- * round-trip and the "preserve inline formatting in translations"
- * behaviour, without any post-processing.
- *
- * Returns `undefined` if the block has no children or if any of the
- * required offsets are missing — a defensive check; for blocks coming
- * out of `remark-parse` the offsets are always present.
+ * Byte-offset span of a block's CHILDREN (not the block itself).
+ * For `# Title\n`, the block covers `0..7` but the children cover
+ * `2..7` — the inline range. Reading and writing this range
+ * preserves block markers (`#`, `> `, `- `) while letting the inline
+ * content be replaced cleanly. The extract / apply symmetry on this
+ * span is what gives us the byte-perfect round-trip.
  */
 export function inlineSpan(
   block: TranslatableBlock,

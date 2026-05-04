@@ -4,16 +4,13 @@ import { parse as parseYaml } from "yaml";
 import { inlineSpan, visitTranslatableBlocks } from "./traverse.js";
 
 /**
- * A single translatable unit extracted from a source document.
- *
- * IDs are stable: re-running `extractSegments` on the same AST produces
- * the same IDs in the same order. The same IDs are used by `apply.ts`
- * to write translations back at matching positions.
+ * A translatable unit. IDs are stable across re-runs and shared with
+ * `apply.ts` for byte-replacement at matching positions.
  *
  * ID grammar:
- *   body:<n>            n-th translatable block in DFS order
- *   fm:<key>            frontmatter string value at top-level <key>
- *   fm:<key>[<i>]       i-th element of a top-level array of strings
+ *   body:<n>          n-th translatable block in DFS order
+ *   fm:<key>          frontmatter scalar at top-level <key>
+ *   fm:<key>[<i>]     i-th element of a top-level string-array
  */
 export interface Segment {
   id: string;
@@ -21,34 +18,17 @@ export interface Segment {
 }
 
 export interface ExtractOptions {
-  /**
-   * The source file's path relative to `sourceDir`. Used to match
-   * against the `frontmatter` glob rules. Forward slashes regardless of
-   * platform (the same convention `walk.ts` uses).
-   */
+  /** Forward-slash path relative to `sourceDir`. */
   sourcePath: string;
-  /**
-   * Per-glob frontmatter rules. Each glob pattern (matched against
-   * `sourcePath`) maps to a list of frontmatter keys to translate.
-   * Keys not listed for any matching pattern are ignored.
-   */
+  /** Per-glob → translatable frontmatter keys. */
   frontmatter: Record<string, string[]>;
 }
 
 /**
- * Walk `ast` and produce a list of translatable segments. Pure function;
- * does not mutate the AST.
- *
- * Body segments contain the **source markdown** of the block's inline
- * content (formatting markers preserved): a paragraph that contains
- * `**bold**` in the source produces a segment whose text includes the
- * `**...**` markers verbatim. This is what we want to send to a
- * translation model — the model preserves the markers, and `apply.ts`
- * splices the translation back at the exact same byte range, keeping
- * the surrounding block markers (`#`, `> `, `- `) intact.
- *
- * Frontmatter segments contain the parsed YAML scalar value, NOT raw
- * YAML — there's no markdown formatting in frontmatter values.
+ * Body segments preserve inline formatting markers (`**bold**` etc.)
+ * verbatim — the model preserves them and the applier byte-replaces
+ * the same range, keeping block markers (`#`, `> `, `- `) intact.
+ * Frontmatter segments hold parsed YAML scalars.
  */
 export function extractSegments(
   ast: Root,
@@ -112,24 +92,10 @@ export function resolveFrontmatterKeys(
 }
 
 /**
- * Read the per-entry `noTranslate` frontmatter flag.
- *
- * Returns `true` only when the source's frontmatter has a top-level
- * `noTranslate: true` boolean (or `noTranslate: "true"` / `"yes"`
- * string forms — small-case YAML aliases that intent-equivalent and
- * are common in hand-edited frontmatter). Anything else — including
- * a missing frontmatter block, a missing key, a non-boolean truthy
- * value like `noTranslate: 1`, or any other shape — returns `false`.
- *
- * The build hook uses this to decide whether to skip a source from
- * the translation loop entirely (no AI call, no R2 write, no staging
- * file written for non-default locales). The runtime helper later
- * notices the absence of a sibling entry and falls back per the
- * `noTranslateBehavior` policy.
- *
- * Pure: no I/O. Returns `false` if the YAML parser doesn't recognise
- * the input as an object (defensive — `parseYaml` returns `null` for
- * empty frontmatter).
+ * Read the `noTranslate` flag. Returns `true` for boolean `true` and
+ * the string aliases `"true"` / `"yes"` (common in hand-edited YAML);
+ * everything else returns `false`. Build hook uses this to skip the
+ * translation loop entirely.
  */
 export function peekNoTranslate(ast: Root): boolean {
   const frontmatterNode = ast.children.find(
@@ -146,12 +112,6 @@ export function peekNoTranslate(ast: Root): boolean {
   if (parsed === null || typeof parsed !== "object") return false;
   const value = (parsed as Record<string, unknown>).noTranslate;
   if (value === true) return true;
-  // String aliases for the boolean true. Operators editing frontmatter
-  // by hand sometimes write `noTranslate: "true"` (especially after
-  // copying values around in YAML); accepting the common spellings
-  // avoids a confusing "I set the flag and it didn't take" debug
-  // session. Matches YAML 1.1's truthy aliases minus the non-obvious
-  // ones (`on`, `y`) that would risk false positives on real strings.
   if (typeof value === "string") {
     const normalised = value.toLowerCase().trim();
     return normalised === "true" || normalised === "yes";
@@ -160,25 +120,11 @@ export function peekNoTranslate(ast: Root): boolean {
 }
 
 /**
- * Pull the configured translatable-frontmatter values out of a parsed
- * source AST, keyed by the same names the rules use. Returned values
- * are the raw parsed-YAML scalars/arrays/objects without further
- * normalisation; `computeSourceHash` canonicalises them downstream.
- *
- * Exists separately from `extractSegments` because the cache-key
- * hash needs structured `Record<key, value>` data (so reordering or
- * adding non-translatable keys is invisible to the hash), whereas the
- * translation segments are flat `{id, text}` records keyed by
- * `fm:<key>` / `fm:<key>[<i>]`. Keeping the two operations distinct
- * also means the hash captures the value of a translatable key even
- * when the value type isn't itself translatable (e.g. a numeric key
- * we configured to translate but a content editor set to `2025` —
- * the hash still reflects the change so a later edit re-keys the
- * cache).
- *
- * Returns an empty object when the source has no frontmatter, when
- * no rules match `sourcePath`, or when a configured key is absent
- * from the actual frontmatter.
+ * Translatable-frontmatter values keyed by name. Feeds the cache-key
+ * hash directly (separate from `extractSegments`'s flat `{id, text}`
+ * shape so reordering / adding non-translatable keys is invisible to
+ * the hash; non-string values still propagate to the hash so e.g. a
+ * `year: 2025 → 2026` change re-keys the cache).
  */
 export function selectTranslatableFrontmatter(
   ast: Root,

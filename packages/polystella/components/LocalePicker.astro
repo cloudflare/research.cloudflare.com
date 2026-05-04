@@ -1,58 +1,22 @@
 ---
 /**
- * Minimal locale-picker stub.
+ * Minimal locale-picker stub. Unstyled anchor list — CSP-safe (no
+ * inline JS), accessible (`aria-current`, `hreflang`), zero CSS.
  *
- * Renders an unstyled list of anchor links — one per declared
- * locale — that navigate to the same path under the locale's URL
- * prefix. CSP-safe (no inline JavaScript), accessible (anchors with
- * `aria-current` for the active locale), and zero CSS so it slots
- * into any property's design system without fighting it.
- *
- * Intended use: copy this file into your `src/components/` and
- * style it to fit your navigation chrome. The package is happy to
- * keep shipping the original; the copy is the primary lifecycle.
+ * Copy into your `src/components/` and style to fit your nav, or
+ * import as-is.
  *
  *   import LocalePicker from "polystella/components/LocalePicker.astro";
- *   ---
- *   <LocalePicker />
+ *   <LocalePicker localeLabels={{ "pt-BR": "Português" }} />
  *
  * Props (all optional):
+ *   - `class`        — extra class on the wrapping `<nav>`.
+ *   - `label`        — accessible label for the nav.
+ *   - `localeLabels` — locale code → display label map; missing
+ *                      locales fall through to the raw code.
  *
- *   - `class`         — extra class name applied to the wrapping
- *                        `<nav>` so consumers can style without
- *                        forking the file.
- *   - `label`         — accessible label for the `<nav>`. Default
- *                        "Locale picker"; consumers who use
- *                        `<LocalePicker>` more than once on a page
- *                        (or want a localised label) can override.
- *   - `localeLabels`  — record mapping locale code → display label.
- *                        Default uses the raw locale codes
- *                        (`pt-BR`, `ja-JP`); consumers typically
- *                        want human-readable labels (`Português`,
- *                        `日本語`). Missing locales fall through to
- *                        the raw code so a partial map still works.
- *
- * URL-building rules mirror the build-time link rewriter and the
- * `localizedHref` runtime helper:
- *
- *   - The current path's locale prefix (if any) is stripped first
- *     to recover the canonical (default-locale) path.
- *   - The target locale's URL is `/<locale>/<canonical>` for
- *     non-default locales, and the canonical path itself for the
- *     default locale (matching `prefixDefaultLocale: false`, the
- *     v0.1 canonical setup).
- *
- * Source of truth for the locale list: Astro's `astro:config/client`
- * virtual module, populated from the user's `astro.config.mjs i18n`
- * block. Importing through Astro's own typed module (rather than
- * PolyStella's `polystella:runtime-config`) sidesteps a TypeScript
- * resolution bug under `astro check`: PolyStella's virtual-module
- * declaration ships in the package's `types-internal/` and is only
- * visible inside the package's own compilation context, while
- * `astro:config/client` is auto-typed for every Astro consumer. As
- * a side benefit, the picker is now usable as a standalone Astro
- * component — a site that wants the picker without the rest of the
- * translation pipeline can copy this file and have it work.
+ * Reads locales from Astro's `astro:config/client` (the user's
+ * `astro.config.mjs i18n` block)
  */
 import { i18n } from "astro:config/client";
 
@@ -68,28 +32,13 @@ const {
   localeLabels = {},
 } = Astro.props;
 
-// PolyStella validates `astro.config.mjs i18n` at config:setup and
-// hard-fails when it's absent, so this branch is defensive against
-// the picker being copied into a non-i18n site (or imported in a
-// context where Astro's i18n config wasn't set). Render nothing in
-// that case rather than crashing.
+// Defensive: render nothing if `i18n` is absent (picker copied into
+// a non-i18n site).
 const i18nConfig = i18n;
-if (!i18nConfig) {
-  // No-op render. Astro lets us return early from frontmatter; the
-  // template below just sees `normalised` empty.
-}
 
-// Astro's `locales` accepts both plain strings and object-form
-// `{ path, codes }` entries. Object-form lets a single URL prefix
-// (`pt`) cover multiple BCP-47 codes (`pt-BR`, `pt-PT`). Normalise
-// to a uniform shape — `path` for URL building, `code` for
-// `hreflang` and label lookup — so the rest of the component
-// doesn't have to branch.
-//
-// Using `entry.codes?.[0]` for the code on object-form locales
-// picks the first declared code. For sites with multiple codes per
-// path the consumer typically supplies their own labels, so the
-// raw-code fallback only matters as a last resort.
+// `locales` accepts strings OR `{ path, codes }` objects (one URL
+// prefix covering multiple BCP-47 codes). Normalise to `{ path, code }`
+// — `path` for URLs, `code` for `hreflang` and label lookup.
 type LocaleEntry = { path: string; code: string };
 const normalised: LocaleEntry[] = (i18nConfig?.locales ?? []).map((entry) => {
   if (typeof entry === "string") {
@@ -103,12 +52,9 @@ const normalised: LocaleEntry[] = (i18nConfig?.locales ?? []).map((entry) => {
 
 const defaultLocale: string = i18nConfig?.defaultLocale ?? "";
 
-// `prefixDefaultLocale` controls whether the default locale's URLs
-// carry a prefix (`/en/foo`) or live at the root (`/foo`). PolyStella
-// v0.1's canonical setup uses `false` (root for default), but the
-// picker shouldn't break for sites that flipped it. Astro accepts
-// `routing` either as `"manual"` (rejected by PolyStella v0.1) or as
-// an object with `prefixDefaultLocale`.
+// Whether default-locale URLs carry the `/<defaultLocale>` prefix.
+// Canonical setup is `false`; we still handle `true` for sites that
+// flipped it.
 const prefixDefault =
   typeof i18nConfig?.routing === "object" &&
   i18nConfig.routing.prefixDefaultLocale === true;
@@ -117,15 +63,9 @@ const currentLocale = Astro.currentLocale ?? defaultLocale;
 const currentPath = Astro.url.pathname;
 
 /**
- * Canonical (no-locale-prefix) path for the current request. Used
- * to build the per-locale URLs below; mirrors the rule the
- * build-time link rewriter uses, so an existing locale prefix is
- * stripped exactly once before re-prefixing for the target locale.
- *
- * Iterates ALL declared locales (including the default when
- * `prefixDefaultLocale: true`) — so a request currently on
- * `/en/foo` under prefixed mode resolves to canonical `/foo` just
- * like `/pt-BR/foo` would.
+ * Strip any existing locale prefix to recover the canonical path.
+ * Iterates all declared locales (including the default when
+ * `prefixDefaultLocale: true`).
  */
 function canonicalPath(): string {
   for (const { path } of normalised) {

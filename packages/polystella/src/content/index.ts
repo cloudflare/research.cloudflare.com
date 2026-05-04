@@ -1,14 +1,9 @@
 /**
  * `polystellaCollections` — public entry-point for the content-config
- * helper. Imports the real Astro factories (`defineCollection`,
- * `glob`, `file`) and feeds them into the pure core in `./build.ts`.
- *
- * Tests don't import this file (the `astro:content` virtual module
- * doesn't resolve outside Astro's Vite environment); they go
- * directly to `./build.js` and pass synthetic deps.
- *
- * See `./build.ts` for the contract, the conventions, and the
- * options surface.
+ * helper. Imports Astro's real `defineCollection`/`glob`/`file` and
+ * feeds them into the pure core in `./build.ts` (which tests use
+ * directly with synthetic deps, since `astro:content` doesn't
+ * resolve outside Vite).
  */
 
 import { defineCollection as astroDefineCollection } from "astro:content";
@@ -31,18 +26,14 @@ export {
 } from "./build.js";
 
 /**
- * Public helper. Wraps `buildCollections` with the real Astro
- * imports. The result is shaped as `{ ...source, ...siblings }` and
- * is intended to be the right-hand side of `export const collections
- * = ...` in `src/content.config.ts`.
+ * Returns `{ ...source, ...siblings }` — the right-hand side of
+ * `export const collections = ...` in `src/content.config.ts`.
  *
- * The `TLocales` generic is inferred from the literal-typed
- * `locales` array the caller passes; the return type then carries
- * typed sibling keys (e.g. `publications__pt-BR` typed identically
- * to `publications`) so Astro's `InferEntrySchema<C>` resolves to
- * the user's actual schema rather than `any`. Without this, every
- * `entry.data.*` access in consumer pages would silently lose its
- * types.
+ * `TLocales` is inferred from the caller's literal-typed `locales`
+ * array, so sibling keys (`publications__pt-BR` etc.) are typed
+ * identically to the source collection. Without this, every
+ * `entry.data.*` access in consumer pages silently degrades to
+ * `any`.
  */
 export function polystellaCollections<
   TSource extends Record<string, unknown>,

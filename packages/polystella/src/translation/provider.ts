@@ -4,27 +4,14 @@ import type { PolyStellaResolvedOptions } from "../config/options.js";
 import { buildPrompt, parseResponse } from "./prompt.js";
 
 /**
- * Provider abstraction for the translation step.
- *
- * A `Translator` is bound to one (provider, locale) pair. It exposes:
- *   - `modelId`, the resolved model identifier — folded into the cache
- *     key so that switching models invalidates only that locale's
- *     cached translations,
- *   - `translate(systemPrompt, userPrompt)`, which performs one HTTP
- *     round-trip and returns the model's raw text response.
- *
- * Two concrete providers ship today: Workers AI (Cloudflare's
- * `@cf/...` model catalogue) and Anthropic (`claude-...`). Both speak
- * the same prompt-and-JSON-back contract enforced by `prompt.ts`, so
- * the rest of the integration treats them uniformly.
+ * One `Translator` per (provider, locale). Two concrete providers
+ * ship: Workers AI and Anthropic. Both speak the same prompt-and-
+ * JSON-back contract enforced by `prompt.ts`.
  */
 export interface Translator {
-  /** The resolved model id used by this translator (per-locale). */
+  /** Resolved model id (per-locale). Folded into the cache key. */
   readonly modelId: string;
-  /**
-   * Run a translation request. Returns the model's raw text output
-   * (caller passes it to `parseResponse` for validation).
-   */
+  /** Returns the model's raw text; caller validates via `parseResponse`. */
   translate(systemPrompt: string, userPrompt: string): Promise<string>;
 }
 
@@ -34,19 +21,13 @@ type AnthropicConfig = Extract<ProviderConfig, { kind: "anthropic" }>;
 type ModelSpec = WorkersAIConfig["model"];
 
 export interface CreateTranslatorOptions {
-  /**
-   * Optional fetch implementation, used by tests to capture and stub
-   * outbound HTTP. Defaults to the global `fetch` in production.
-   */
+  /** Defaults to global `fetch`; tests pass a stub. */
   fetchImpl?: typeof fetch;
 }
 
 /**
- * Construct a `Translator` for one (provider, locale) pair.
- *
- * Throws on an unknown provider kind. Does NOT validate credentials —
- * the first `translate()` call will surface auth failures from the
- * upstream API with that provider's error message.
+ * Throws on unknown provider kind. Doesn't validate credentials —
+ * auth failures surface from the first `translate()` call.
  */
 export function createTranslator(
   provider: ProviderConfig,
@@ -68,14 +49,12 @@ export function createTranslator(
 }
 
 /**
- * Resolve a (possibly per-locale) model spec to a concrete model id.
+ * Resolve a (possibly per-locale) model spec to a concrete model id:
+ *   "x"                            → "x"
+ *   { default: "X", "ja-JP": "Y" } → locale-keyed lookup, falls to default.
  *
- *   "claude-3-5-sonnet-latest"          → returned as-is
- *   { default: "X", "ja-JP": "Y" }, locale="ja-JP" → "Y"
- *   { default: "X", "ja-JP": "Y" }, locale="pt-BR" → "X"
- *
- * Exported because the cache key needs the resolved id BEFORE we
- * actually call `translate()`.
+ * Exported because the cache key needs the resolved id before
+ * `translate()` runs.
  */
 export function resolveModelId(spec: ModelSpec, locale: string): string {
   if (typeof spec === "string") return spec;
@@ -88,8 +67,6 @@ function createWorkersAITranslator(
   fetchImpl: typeof fetch,
 ): Translator {
   const modelId = resolveModelId(provider.model, locale);
-  // Cloudflare's Workers AI run endpoint embeds the model id directly.
-  // `provider.endpoint` overrides for testing or alternate gateways.
   const endpoint =
     provider.endpoint ??
     `https://api.cloudflare.com/client/v4/accounts/${provider.accountId}/ai/run/${modelId}`;
@@ -108,12 +85,8 @@ function createWorkersAITranslator(
             { role: "system", content: systemPrompt },
             { role: "user", content: userPrompt },
           ],
-          // Workers AI defaults to a small output cap (typically 256
-          // tokens), which truncates a multi-segment translation
-          // mid-string and produces unparseable JSON. The resolved
-          // schema default (8192) fits under llama-3.1-8b-instruct's
-          // 8k output ceiling; the operator can override per-provider
-          // via `provider.maxTokens` for unusually long abstracts.
+          // WAI's default cap (~256 tokens) truncates multi-segment
+          // translations and breaks JSON. Schema default 8192.
           max_tokens: provider.maxTokens,
         }),
       });
@@ -125,26 +98,17 @@ function createWorkersAITranslator(
           }${text ? `\n${text}` : ""}`,
         );
       }
+      // Three response shapes observed in the wild:
+      //   - `result.response` — legacy text-generation envelope.
+      //   - `result.choices[0].message.content` — OpenAI-compatible
+      //     chat-completion (qwen3-30b-a3b-fp8 etc.).
+      //   - `choices[0].message.content` — gateway-flattened variant.
       const data = (await res.json()) as {
         result?: {
           response?: unknown;
-          // OpenAI-compatible chat-completion shape (newer Workers AI
-          // models — observed: @cf/qwen/qwen3-30b-a3b-fp8). The
-          // payload looks like
-          //   { result: { choices: [{ message: { content: "..." } }] } }
-          // and the legacy `result.response` is absent. Documented
-          // alongside the legacy shape on the Workers AI runs API.
-          choices?: Array<{
-            message?: { content?: unknown };
-          }>;
+          choices?: Array<{ message?: { content?: unknown } }>;
         };
-        // Some envelopes flatten `choices` to the top level (rare,
-        // but observed when the WAI request goes through certain
-        // gateway configurations). Treat it as a fallback location
-        // before declaring the shape unknown.
-        choices?: Array<{
-          message?: { content?: unknown };
-        }>;
+        choices?: Array<{ message?: { content?: unknown } }>;
         success?: boolean;
         errors?: unknown[];
       };
@@ -156,13 +120,10 @@ function createWorkersAITranslator(
         );
       }
 
-      // Try each known response shape in turn. We deliberately probe
-      // the legacy `result.response` shape first (most WAI text
-      // models still use it); the OpenAI-compatible chat-completion
-      // shape is the fallback for newer models. A raw `string` in
-      // either location is the model's text answer; a parsed object
-      // is the server-side-parsed JSON some models return when the
-      // prompt asks for JSON.
+      // Probe legacy `result.response` first (most text models),
+      // then chat-completion shapes. Some models pre-parse JSON
+      // server-side and return an object; round-trip via stringify
+      // so `parseResponse` sees a string regardless of provider.
       const candidates: Array<unknown> = [
         data.result?.response,
         data.result?.choices?.[0]?.message?.content,
@@ -171,14 +132,6 @@ function createWorkersAITranslator(
       for (const candidate of candidates) {
         if (typeof candidate === "string") return candidate;
         if (candidate !== null && typeof candidate === "object") {
-          // Some WAI models (observed: @cf/qwen/qwen2.5-coder-32b-instruct)
-          // detect JSON-output prompts and pre-parse the model's
-          // response server-side, returning result.response as an
-          // already-parsed object. Round-trip it through JSON.stringify
-          // so parseResponse sees a string and can validate the
-          // segment-id contract uniformly across providers. Strictly a
-          // win — sidesteps any code-fence/preamble quirks for those
-          // models.
           return JSON.stringify(candidate);
         }
       }
@@ -261,13 +214,9 @@ export interface TranslateBatchOptions {
 }
 
 /**
- * High-level glue: build the prompt, hit the provider, parse the
- * response. The result is a `Map<segmentId, translatedText>` ready to
- * hand to `applyTranslations`.
- *
- * Returns an empty map (and skips the network call) when `segments`
- * is empty — there's nothing to translate, and we shouldn't burn API
- * budget on no-ops.
+ * Build the prompt, call the provider, parse the response. Returns
+ * `Map<segmentId, translatedText>` for `applyTranslations`. Empty
+ * segments → empty map, no network call.
  */
 export async function translateBatch(
   opts: TranslateBatchOptions,

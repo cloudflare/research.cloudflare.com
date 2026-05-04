@@ -1,16 +1,10 @@
 import { S3mini } from "s3mini";
 
 /**
- * R2 client wrapper.
- *
- * Thin wrapper over `s3mini` (https://developers.cloudflare.com/r2/examples/aws/s3mini/)
- * that:
- *
- *   - normalises s3mini's return shapes into our `R2Client` interface,
- *   - constructs bucket-scoped endpoints from `(accountId, bucket)`,
- *   - maps our `metadata: { foo: "bar" }` shape onto the `x-amz-meta-*`
- *     header convention R2 uses for arbitrary user metadata.
- *
+ * Thin wrapper over `s3mini`. Normalises return shapes into
+ * `R2Client`, builds bucket-scoped endpoints from `(accountId,
+ * bucket)`, maps our `metadata: { foo: "bar" }` onto R2's
+ * `x-amz-meta-*` header convention.
  */
 
 export interface R2GetResult {
@@ -70,13 +64,8 @@ export interface R2ConnectionOptions {
 }
 
 /**
- * Build a stable R2 object key from its parts. Format from the engineering
- * plan §6:
- *
- *     i18n/{locale}/{relative-source-path}#{hash}.md
- *
- * The original source path (including its extension) is preserved verbatim
- * so the key is reversible: given a key, you can recover the source path.
+ * Format: `i18n/{locale}/{relative-source-path}#{hash}.md`. The
+ * source path is preserved verbatim so the key is reversible.
  */
 export function buildR2Key({
   locale,
@@ -91,11 +80,7 @@ export function buildR2Key({
   return `i18n/${locale}/${normalisedPath}#${hash}.md`;
 }
 
-/**
- * Construct a stateless R2 client over `s3mini`.
- *
- * The returned client is safe to share across concurrent operations.
- */
+/** Stateless R2 client; safe to share across concurrent operations. */
 export function createR2Client(opts: R2ConnectionOptions): R2Client {
   const baseEndpoint =
     opts.endpoint ?? `https://${opts.accountId}.r2.cloudflarestorage.com`;
@@ -111,9 +96,9 @@ export function createR2Client(opts: R2ConnectionOptions): R2Client {
 
   return {
     async exists(key) {
+      // `objectExists` returns `null` under conditional headers; our
+      // unconditional call treats that as "missing".
       const result = await s3.objectExists(key);
-      // s3mini's `objectExists` can return `null` when used with conditional
-      // headers; for our unconditional call that's effectively "missing".
       return result === true;
     },
 

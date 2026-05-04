@@ -1,52 +1,27 @@
 /**
- * Build-report schema and helpers (RFC §3.9 / M9.2).
+ * Build-report schema and helpers.
  *
  * The integration accumulates one `BuildReportEntry` per
  * (sourcePath, locale) pair the build touches, then emits the full
- * `BuildReport` at `astro:build:done` to `dist/i18n-r2-report.json`.
+ * report at `astro:build:done` to `dist/i18n-r2-report.json`.
  *
- * Why a structured report (rather than just log lines):
- *   - **Audit.** Per-pair record of what was translated, by which
- *     model, against which glossary version. Survives the build log
- *     getting truncated or rotated.
- *   - **Debug.** The `outcome` field explains why a pair didn't
- *     produce fresh AI output (cache hit, override, noTranslate,
- *     skipped, error).
- *   - **CI artefact.** Reviewers can diff the report between PR
- *     builds to confirm changes look right — most fields are stable
- *     across rebuilds, so the noisy fields (durations) cluster at
- *     the bottom of a meaningful diff.
- *   - **Cost tracking.** Token totals support per-build budgeting;
- *     correlate with R2 access logs for end-to-end cost attribution.
- *   - **Rollback aid.** The R2 key for any prior translation is
- *     recoverable from the report — restore by reverting the source
- *     change that produced a different hash.
+ * Used as: an audit trail (what translated when, with which model
+ * and glossary version), a debug aid (the `outcome` field explains
+ * why a pair didn't produce fresh AI output), a CI artefact
+ * (reviewers diff the report between PR builds), a cost-tracking
+ * input (token totals), and a rollback aid (R2 keys for prior
+ * translations).
  *
- * The schema mirrors what RFC §3.9 specified, with two evolutions
- * the implementation forced:
- *   - `pruning` is a separate top-level section (the RFC put it in
- *     the prose; making it an explicit object keeps it queryable).
- *   - `tokens` per entry is optional. The Workers AI provider
- *     doesn't always surface in/out token counts in its response
- *     envelope; we'd rather omit the field than report fabricated
- *     zeros.
- *
- * Pure module: no I/O. The integration calls `emitBuildReport` to
- * write to disk; tests build reports in memory and assert on the
- * shape directly.
+ * Pure module — no I/O at the data layer. `emitBuildReport`
+ * handles disk writes; tests build reports in memory.
  */
 
 import { writeFile, mkdir } from "node:fs/promises";
 import path from "node:path";
 
 /**
- * Outcome categories. The ordering reflects priority for the
- * disambiguation rules:
- *   - `override` wins if a hand-translated file exists.
- *   - `skipped-no-translate` wins if the source has `noTranslate: true`
- *     AND no override is present.
- *   - `cache-hit` / `ai-translated` are the standard paths.
- *   - `error` records a failure that didn't produce staged bytes.
+ * Outcome categories. Precedence: `override` > `skipped-no-translate`
+ * (when no override) > `cache-hit` / `ai-translated` > `error`.
  */
 export type BuildReportOutcome =
   | "cache-hit"
@@ -60,47 +35,29 @@ export interface BuildReportEntry {
   sourcePath: string;
   /** Target locale, e.g. `"pt-BR"`. */
   locale: string;
-  /**
-   * The (file, locale) hash that keys the R2 cache. Always present —
-   * even on `error` outcomes the hash was computed before the
-   * failure (the failure happened during translation or staging,
-   * after hashing).
-   */
+  /** Cache-key hash. Always present, even on `error` outcomes. */
   sourceHash: string;
-  /** Full R2 object key — convenient for spelunking the bucket. */
+  /** Full R2 object key. */
   r2Key: string;
   outcome: BuildReportOutcome;
   /**
-   * Resolved model id used for this pair. On override / skipped /
-   * pre-translation error, this is the model that WOULD have been
-   * used; recording it keeps the field non-nullable and lets a
-   * reviewer see the configuration in effect at the time of build.
+   * Resolved model id. On override / skipped / pre-translation error
+   * this is the model that WOULD have been used — keeps the field
+   * non-nullable and surfaces the config in effect at build time.
    */
   model: string;
-  /** Workers AI / Anthropic token counts when the provider reports them. */
+  /** Provider-reported token counts when available. */
   tokens?: { in: number; out: number };
   /** Wall-clock milliseconds from cache lookup through staging. */
   durationMs: number;
-  /**
-   * On `error` outcome only: the error message. Stack traces are
-   * deliberately omitted — they're noisy for a CI artefact and the
-   * build log carries them with full context.
-   */
+  /** On `error` outcome only. Stack traces stay in the build log. */
   errorMessage?: string;
 }
 
 export interface BuildReportPruning {
-  /**
-   * R2 keys deleted by the count-based pruner this build. Empty
-   * array when no pruning ran (e.g. `keepLastN: false`, or no
-   * touched pairs had stale variants).
-   */
+  /** R2 keys deleted this build. Empty when no pruning ran. */
   deletedKeys: string[];
-  /**
-   * Per-locale count of deletions. Useful for spotting "we
-   * accidentally pruned 200 entries from one locale" kinds of
-   * mistakes at a glance.
-   */
+  /** Per-locale deletion count for at-a-glance auditing. */
   byLocale: Record<string, number>;
 }
 
@@ -110,30 +67,24 @@ export interface BuildReportTotals {
   overrides: number;
   skipped: number;
   errors: number;
-  /** Sum across entries; undefined if no entry reported tokens. */
+  /** Undefined when no entry reported tokens (vs. summed-zero). */
   tokensIn?: number;
-  /** Sum across entries; undefined if no entry reported tokens. */
   tokensOut?: number;
 }
 
 export interface BuildReport {
   build: {
-    /** ISO-8601; pinned at integration setup, not at build:done. */
+    /** ISO-8601 from integration setup. */
     startedAt: string;
-    /** Wall-clock milliseconds from setup-start to build:done. */
+    /** Wall-clock setup-start → build:done. */
     durationMs: number;
-    /** PolyStella mode this build ran in: standalone vs starlight. */
     mode: "standalone" | "starlight";
-    /** Package version that produced the report — debug aid. */
     polystellaVersion: string;
   };
-  /** Full locale set the build covered, INCLUDING the default. */
+  /** Full locale set INCLUDING the default. */
   locales: string[];
   defaultLocale: string;
-  /**
-   * Per-locale glossary metadata. Keys are locales; missing locales
-   * mean no glossary was configured for that locale (legitimate).
-   */
+  /** Per-locale glossary metadata; missing locales = no glossary. */
   glossaries: Record<string, { file: string; sha256: string }>;
   entries: BuildReportEntry[];
   totals: BuildReportTotals;
@@ -141,14 +92,9 @@ export interface BuildReport {
 }
 
 /**
- * Compute totals from a flat entry list. Pure; tests pin the
- * arithmetic so a regression here would be visible in the diff.
- *
- * Tokens are summed only when AT LEAST ONE entry reported them —
- * we don't fabricate zeros for entries the provider didn't
- * instrument, and we don't report `tokensIn: 0` if no entry
- * carried tokens at all (that would imply the build produced no
- * tokens, when the truth is we didn't measure).
+ * Compute totals from a flat entry list. Tokens are summed only when
+ * AT LEAST ONE entry reported them — distinguishes "no entry was
+ * instrumented" from "every entry was 0 tokens".
  */
 export function computeBuildReportTotals(
   entries: ReadonlyArray<BuildReportEntry>,
@@ -208,14 +154,9 @@ export interface EmitBuildReportOptions {
 }
 
 /**
- * Serialise and write the report. Two-space indent for diffability;
- * trailing newline for POSIX-friendly tooling.
- *
- * Uses `mkdir({ recursive: true })` defensively — the report is
- * emitted at `astro:build:done` after Astro itself has written
- * `dist/`, so the directory should exist, but a misconfigured
- * `outDir` (or a future Astro change to the build order) shouldn't
- * surface as an obscure ENOENT.
+ * Serialise and write the report. Two-space indent for diffability,
+ * trailing newline for POSIX tooling. `mkdir({ recursive: true })`
+ * defensively in case the output directory hasn't been created yet.
  */
 export async function emitBuildReport(
   opts: EmitBuildReportOptions,

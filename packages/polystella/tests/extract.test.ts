@@ -262,11 +262,8 @@ describe("selectTranslatableFrontmatter", () => {
     expect(result).toEqual({ metaDescription: "An overview." });
   });
 
-  // The bug-fix test: prior to this round the cache key was always
-  // computed with `frontmatter: {}`, so a metaDescription edit produced
-  // the same hash as the unedited source and the cached translation
-  // was silently reused. Validating end-to-end that the cache key now
-  // reflects translatable-frontmatter changes.
+  // End-to-end: the cache key reflects translatable-frontmatter
+  // changes, so editing e.g. `metaDescription` busts the cache.
   it("changes the cache key when a translatable frontmatter value changes", () => {
     const before = parseMarkdown(docWithFrontmatter);
     const after = parseMarkdown(
