@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { extractSegments } from "../src/parsing/extract.js";
+import {
+  extractSegments,
+  peekNoTranslate,
+  selectTranslatableFrontmatter,
+} from "../src/parsing/extract.js";
 import { parseMarkdown } from "../src/parsing/parse.js";
+import { computeSourceHash } from "../src/storage/hash.js";
 
 const noFrontmatterRules = { sourcePath: "test.md", frontmatter: {} };
 
@@ -194,5 +199,188 @@ describe("extractSegments — frontmatter", () => {
     expect(
       segments.filter((s) => s.id.startsWith("fm:")).map((s) => s.id),
     ).toEqual(["fm:description", "fm:title"]);
+  });
+});
+
+describe("selectTranslatableFrontmatter", () => {
+  const docWithFrontmatter = [
+    "---",
+    'title: "Hello"',
+    'metaDescription: "An overview."',
+    "year: 2025",
+    "tags:",
+    "  - alpha",
+    "  - beta",
+    "---",
+    "",
+    "Body.",
+    "",
+  ].join("\n");
+
+  it("returns an empty object when the source has no frontmatter", () => {
+    const ast = parseMarkdown("# No frontmatter here\n");
+    const result = selectTranslatableFrontmatter(ast, {
+      sourcePath: "publications/x.md",
+      frontmatter: { "publications/**": ["title"] },
+    });
+    expect(result).toEqual({});
+  });
+
+  it("returns an empty object when no glob matches the source path", () => {
+    const ast = parseMarkdown(docWithFrontmatter);
+    const result = selectTranslatableFrontmatter(ast, {
+      sourcePath: "people/alice.md",
+      frontmatter: { "publications/**": ["title", "metaDescription"] },
+    });
+    expect(result).toEqual({});
+  });
+
+  it("returns only the configured keys, even when other keys exist", () => {
+    const ast = parseMarkdown(docWithFrontmatter);
+    const result = selectTranslatableFrontmatter(ast, {
+      sourcePath: "publications/foo.md",
+      frontmatter: { "publications/**": ["metaDescription"] },
+    });
+    expect(result).toEqual({ metaDescription: "An overview." });
+  });
+
+  it("preserves the raw value type (numbers, arrays) so the hash sees changes", () => {
+    const ast = parseMarkdown(docWithFrontmatter);
+    const result = selectTranslatableFrontmatter(ast, {
+      sourcePath: "publications/foo.md",
+      frontmatter: { "publications/**": ["year", "tags"] },
+    });
+    expect(result).toEqual({ year: 2025, tags: ["alpha", "beta"] });
+  });
+
+  it("omits configured keys that are absent from actual frontmatter", () => {
+    const ast = parseMarkdown(docWithFrontmatter);
+    const result = selectTranslatableFrontmatter(ast, {
+      sourcePath: "publications/foo.md",
+      frontmatter: { "publications/**": ["metaDescription", "missing"] },
+    });
+    expect(result).toEqual({ metaDescription: "An overview." });
+  });
+
+  // The bug-fix test: prior to this round the cache key was always
+  // computed with `frontmatter: {}`, so a metaDescription edit produced
+  // the same hash as the unedited source and the cached translation
+  // was silently reused. Validating end-to-end that the cache key now
+  // reflects translatable-frontmatter changes.
+  it("changes the cache key when a translatable frontmatter value changes", () => {
+    const before = parseMarkdown(docWithFrontmatter);
+    const after = parseMarkdown(
+      docWithFrontmatter.replace("An overview.", "An updated overview."),
+    );
+
+    const opts = {
+      sourcePath: "publications/foo.md",
+      frontmatter: { "publications/**": ["metaDescription"] },
+    };
+    const fmBefore = selectTranslatableFrontmatter(before, opts);
+    const fmAfter = selectTranslatableFrontmatter(after, opts);
+
+    const hashBefore = computeSourceHash({
+      body: "Body.",
+      frontmatter: fmBefore,
+      glossaryHash: "g0",
+      modelId: "m",
+    });
+    const hashAfter = computeSourceHash({
+      body: "Body.",
+      frontmatter: fmAfter,
+      glossaryHash: "g0",
+      modelId: "m",
+    });
+
+    expect(hashBefore).not.toBe(hashAfter);
+  });
+
+  it("does NOT change the cache key when a non-translatable frontmatter key changes", () => {
+    const before = parseMarkdown(docWithFrontmatter);
+    const after = parseMarkdown(
+      docWithFrontmatter.replace("year: 2025", "year: 2026"),
+    );
+
+    const opts = {
+      sourcePath: "publications/foo.md",
+      // `year` is intentionally NOT in the rule list — translation
+      // doesn't apply to it, so the cache should stay valid when only
+      // `year` changes.
+      frontmatter: { "publications/**": ["metaDescription"] },
+    };
+    const fmBefore = selectTranslatableFrontmatter(before, opts);
+    const fmAfter = selectTranslatableFrontmatter(after, opts);
+
+    const hashBefore = computeSourceHash({
+      body: "Body.",
+      frontmatter: fmBefore,
+      glossaryHash: "g0",
+      modelId: "m",
+    });
+    const hashAfter = computeSourceHash({
+      body: "Body.",
+      frontmatter: fmAfter,
+      glossaryHash: "g0",
+      modelId: "m",
+    });
+
+    expect(hashBefore).toBe(hashAfter);
+  });
+});
+
+describe("peekNoTranslate", () => {
+  it("returns false for a source with no frontmatter", () => {
+    const ast = parseMarkdown("# No frontmatter\n\nBody.\n");
+    expect(peekNoTranslate(ast)).toBe(false);
+  });
+
+  it("returns false for a source whose frontmatter doesn't set the key", () => {
+    const ast = parseMarkdown('---\ntitle: "Hello"\n---\n\nBody.\n');
+    expect(peekNoTranslate(ast)).toBe(false);
+  });
+
+  it("returns true for `noTranslate: true`", () => {
+    const ast = parseMarkdown(
+      '---\ntitle: "Hello"\nnoTranslate: true\n---\n\nBody.\n',
+    );
+    expect(peekNoTranslate(ast)).toBe(true);
+  });
+
+  it("returns false for `noTranslate: false`", () => {
+    const ast = parseMarkdown(
+      '---\ntitle: "Hello"\nnoTranslate: false\n---\n\nBody.\n',
+    );
+    expect(peekNoTranslate(ast)).toBe(false);
+  });
+
+  it('accepts the string alias `noTranslate: "true"`', () => {
+    const ast = parseMarkdown(
+      '---\ntitle: "Hello"\nnoTranslate: "true"\n---\n\nBody.\n',
+    );
+    expect(peekNoTranslate(ast)).toBe(true);
+  });
+
+  it("accepts the string alias `noTranslate: yes`", () => {
+    const ast = parseMarkdown(
+      '---\ntitle: "Hello"\nnoTranslate: "yes"\n---\n\nBody.\n',
+    );
+    expect(peekNoTranslate(ast)).toBe(true);
+  });
+
+  it("does NOT accept other YAML truthy aliases (avoids false positives on real strings)", () => {
+    // `on` and `y` are YAML 1.1 truthy but commonly appear as real
+    // string values; we limit acceptance to "true" / "yes" only.
+    const astOn = parseMarkdown(
+      '---\ntitle: "Hello"\nnoTranslate: "on"\n---\n\nBody.\n',
+    );
+    expect(peekNoTranslate(astOn)).toBe(false);
+  });
+
+  it("returns false for non-boolean truthy values (e.g. `noTranslate: 1`)", () => {
+    const ast = parseMarkdown(
+      '---\ntitle: "Hello"\nnoTranslate: 1\n---\n\nBody.\n',
+    );
+    expect(peekNoTranslate(ast)).toBe(false);
   });
 });

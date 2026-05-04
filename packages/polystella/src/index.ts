@@ -9,7 +9,11 @@ import {
 } from "./storage/cache.js";
 import { readOverride } from "./source/overrides.js";
 import { encodeTouchedPair, pruneCacheByPair } from "./storage/prune.js";
-import { extractSegments } from "./parsing/extract.js";
+import {
+  extractSegments,
+  peekNoTranslate,
+  selectTranslatableFrontmatter,
+} from "./parsing/extract.js";
 import {
   EMPTY_GLOSSARY,
   EMPTY_GLOSSARY_HASH,
@@ -28,8 +32,10 @@ import {
 } from "./parsing/rewrite-links.js";
 import { createTranslator, type Translator } from "./translation/provider.js";
 import { walkSources } from "./source/walk.js";
+import { runWithConcurrency } from "./source/pool.js";
 import { computeSourceHash } from "./storage/hash.js";
 import { buildR2Key, createR2Client, type R2Client } from "./storage/r2.js";
+import { DEFAULT_STAGING_DIR } from "./storage/paths.js";
 import { deriveUrlPattern, generateShimSource } from "./routing/shim.js";
 
 /**
@@ -62,6 +68,9 @@ export {
 } from "./parsing/rewrite-links.js";
 export {
   extractSegments,
+  peekNoTranslate,
+  resolveFrontmatterKeys,
+  selectTranslatableFrontmatter,
   type Segment,
   type ExtractOptions,
 } from "./parsing/extract.js";
@@ -89,6 +98,10 @@ export {
   type R2ListEntry,
   type R2PutOptions,
 } from "./storage/r2.js";
+export {
+  DEFAULT_STAGING_DIR,
+  DEFAULT_STAGING_GLOB,
+} from "./storage/paths.js";
 export {
   buildCacheMetadata,
   translateOrLoadFromCache,
@@ -212,22 +225,42 @@ export default function polystella(
         // arg, never read off disk by a separate reader.
         const cacheDirPath = fileURLToPath(config.cacheDir);
         const rootDirPath = fileURLToPath(config.root);
-        const stagingDir = path.resolve(rootDirPath, ".astro/i18n-staging");
+        const stagingDir = path.resolve(rootDirPath, DEFAULT_STAGING_DIR);
 
         // Register the `polystella:runtime-config` virtual module.
-        // The runtime helper imports `defaultLocale` from this module
+        // The runtime helpers import the locale set from this module
         // at page-render time — known at config-setup but not via
         // `process.env`, so a Vite-resolved virtual module is the
         // cleanest way to thread it through. The `\0` prefix on the
         // resolved id is Vite's convention to signal that other
         // plugins should leave the module alone.
         //
-        // The post-pivot runtime is a pure dispatcher (no staging
-        // probes, no frontmatter overlay), so this module ships
-        // exactly one constant.
+        // The exports here are exactly the data the runtime needs to
+        // dispatch and link-rewrite without having to read configs
+        // again on the page-render side:
+        //   - `defaultLocale`: source/canonical locale (used by
+        //     `getLocalizedEntry` to decide source vs sibling, and by
+        //     `localizedHref` to no-op on default-locale calls).
+        //   - `locales`: the full set including the default — used
+        //     by `localizedHref` for its idempotency check (so an
+        //     already-prefixed URL isn't double-prefixed on re-render).
+        //   - `fallback`: governs whether `getLocalizedEntry` returns
+        //     source content on a sibling miss (`"default-locale"`)
+        //     or `undefined` so the page 404s (`"skip"`).
+        const allLocalesIncludingDefault = [
+          resolved.defaultLocale,
+          ...resolved.locales,
+        ];
         const runtimeConfigSource = [
           `export const defaultLocale = ${JSON.stringify(
             resolved.defaultLocale,
+          )};`,
+          `export const locales = ${JSON.stringify(
+            allLocalesIncludingDefault,
+          )};`,
+          `export const fallback = ${JSON.stringify(resolved.fallback)};`,
+          `export const noTranslateBehavior = ${JSON.stringify(
+            resolved.noTranslateBehavior,
           )};`,
           "",
         ].join("\n");
@@ -313,7 +346,20 @@ export default function polystella(
         // current `command`. `astro dev` reuses the prior build's
         // staged content unless the operator opts in via
         // `runOn: ["build", "dev"]`.
-        if (!resolved.runOn.includes(command as "build" | "dev")) {
+        //
+        // Explicit narrowing rather than a cast: Astro can pass
+        // commands beyond `"build"` and `"dev"` (e.g. `"sync"`,
+        // `"preview"`) into `astro:config:setup` depending on what
+        // CLI subcommand was invoked. The cast `as "build" | "dev"`
+        // would have those silently fall through to whichever runOn
+        // entry happens to match by string identity, which is
+        // confusing if the operator's `runOn` is `["build"]` and a
+        // `sync` command sneaks past. Narrowing first means anything
+        // unrecognised hits the early-return branch cleanly.
+        if (command !== "build" && command !== "dev") {
+          return;
+        }
+        if (!resolved.runOn.includes(command)) {
           return;
         }
 
@@ -405,14 +451,24 @@ export default function polystella(
         }
 
         // Compute hashes in parallel; we don't fetch anything yet, just log.
+        // We parse and select translatable frontmatter even on the dry-run
+        // pass so the keys we log are the same ones the live pass would
+        // PUT/GET — otherwise a metaDescription edit produces matching
+        // dry-run logs but a cache-busting live hash, which is a confusing
+        // diagnostic split between modes.
         let pairCount = 0;
         await Promise.all(
           sources.map(async (source) => {
             const body = await readFile(source.absolutePath, "utf8");
+            const ast = parseMarkdown(body);
+            const fmValues = selectTranslatableFrontmatter(ast, {
+              sourcePath: source.relativePath,
+              frontmatter: resolved!.frontmatter,
+            });
             for (const locale of resolved!.locales) {
               const hash = computeSourceHash({
                 body,
-                frontmatter: {}, // populated once the parser is wired in
+                frontmatter: fmValues,
                 glossaryHash:
                   glossaryHashByLocale.get(locale) ?? EMPTY_GLOSSARY_HASH,
                 modelId: translatorByLocale.get(locale)?.modelId ?? "",
@@ -446,7 +502,7 @@ export default function polystella(
         if (!liveMode) return;
 
         logger.info(
-          `live: processing ${sources.length} × ${resolved.locales.length} (file, locale) pairs sequentially`,
+          `live: processing ${sources.length} × ${resolved.locales.length} (file, locale) pairs at concurrency ${resolved.concurrency}`,
         );
 
         // Per-pair counters. "hit" = served from cache, no provider
@@ -455,9 +511,9 @@ export default function polystella(
         // under `overridesDir` short-circuited both cache and
         // translator (counted as a hit for cost accounting but tracked
         // separately so the operator sees overrides taking effect).
-        // Sequential per-pair execution keeps the smoke test honest
-        // and avoids hammering the provider; the `concurrency` option
-        // will gate this once parallelism is proven safe end-to-end.
+        // Sources are processed up to `concurrency` in parallel; each
+        // source's per-locale loop stays sequential so we don't
+        // over-fan against a single provider for one document.
         const counts: Record<CacheOutcome | "override" | "failed", number> = {
           hit: 0,
           miss: 0,
@@ -504,23 +560,102 @@ export default function polystella(
           };
           return rewriteInternalLinks(bytes, opts);
         };
-        for (const source of sources) {
+        // Per-source counter so the closing summary can report how many
+        // sources were skipped due to `noTranslate: true` separate from
+        // the per-locale outcome counters below. Useful for the
+        // operator to spot a misnamed flag (e.g. `noTranslated: true`)
+        // when the count looks unexpectedly low.
+        let noTranslateSources = 0;
+        // The per-source body runs as a worker fed by the
+        // `runWithConcurrency` pool. State mutations across workers
+        // (counts, touchedPairs, noTranslateSources, the cache-write
+        // bookkeeping) are JS-object operations that don't need
+        // synchronisation in a single-threaded runtime: increment
+        // order doesn't matter, and nothing reads these values
+        // mid-run. The pool resolves once every source has been
+        // processed; the closing-summary log lines below run after.
+        // Re-bind a non-undefined-typed alias for use inside the pool
+        // worker. `resolved` is narrowed to non-undefined at this
+        // point in the outer scope, but TS widens it back across the
+        // async-closure boundary, which would force us to repeat
+        // `resolved!` everywhere. The capture also keeps the closure's
+        // dependency on the outer state explicit.
+        const cfg = resolved;
+        await runWithConcurrency(sources, cfg.concurrency, async (source) => {
           const body = await readFile(source.absolutePath, "utf8");
           const ast = parseMarkdown(body);
-          const segments = extractSegments(
-            ast,
-            {
-              sourcePath: source.relativePath,
-              frontmatter: resolved.frontmatter,
-            },
-            body,
-          );
+          // Per-entry opt-out (RFC §2.2). When the source's frontmatter
+          // has `noTranslate: true`, skip the entire translation loop
+          // for this file: no AI call, no R2 write, no staging file
+          // written for any non-default locale. The runtime helper
+          // (`getLocalizedEntry`) will subsequently notice the missing
+          // sibling and apply `noTranslateBehavior` — `"fallback"` to
+          // serve source content under the locale URL, or `"404"` to
+          // return undefined and let the page produce a 404.
+          //
+          // A `noTranslate: true` source can still receive an override
+          // (`i18n/overrides/<locale>/<rel>`); overrides are
+          // operator-curated and explicitly opt back in for one
+          // locale at a time. We deliberately don't enforce mutual
+          // exclusion — if both are set, the override wins, which
+          // mirrors the precedence overrides have everywhere else in
+          // the pipeline.
+          if (peekNoTranslate(ast)) {
+            noTranslateSources++;
+            // Run the override pre-pass for any locale that has a
+            // hand-translation; everything else is skipped silently.
+            for (const locale of cfg.locales) {
+              const override = await readOverride({
+                rootDir,
+                overridesDir: cfg.overridesDir,
+                locale,
+                relativeSourcePath: source.relativePath,
+              });
+              if (override === null) continue;
+              const overrideStaged = maybeRewrite(override, locale);
+              await writeStagedTranslation({
+                stagingDir,
+                locale,
+                relativeSourcePath: source.relativePath,
+                bytes: overrideStaged,
+              });
+              counts.override++;
+              touchedPairs.add(encodeTouchedPair(locale, source.relativePath));
+              if (cfg.verbose) {
+                logger.info(
+                  `◆ ${source.relativePath} → ${locale} [override, noTranslate-source]`,
+                );
+              }
+            }
+            if (cfg.verbose) {
+              logger.info(
+                `⊘ ${source.relativePath} [noTranslate=true; skipping AI translation]`,
+              );
+            }
+            // `return` (not `continue`) — we're inside the pool
+            // worker function for this source, not the outer for-loop.
+            // Returns this worker's promise; the pool picks up the
+            // next source.
+            return;
+          }
+          const extractOpts = {
+            sourcePath: source.relativePath,
+            frontmatter: cfg.frontmatter,
+          };
+          const segments = extractSegments(ast, extractOpts, body);
+          // Translatable frontmatter values feed the cache-key hash so
+          // editing e.g. `metaDescription` busts the cache for that
+          // (file, locale) pair. Without this, the prior implementation
+          // hashed `frontmatter: {}` and a metaDescription edit
+          // silently re-used the stale translation. Computed once per
+          // source and reused across the per-locale loop.
+          const fmValues = selectTranslatableFrontmatter(ast, extractOpts);
           // Note: the segments-empty check moved inside the per-locale
           // loop. A source with zero translatable segments may still
           // have manual overrides for some locales, and those should
           // still be staged.
 
-          for (const locale of resolved.locales) {
+          for (const locale of cfg.locales) {
             try {
               // Override pre-pass: a file at
               //   <root>/<overridesDir>/<locale>/<relativeSourcePath>
@@ -532,7 +667,7 @@ export default function polystella(
               // manages by hand, not machine-generated bytes.
               const override = await readOverride({
                 rootDir,
-                overridesDir: resolved.overridesDir,
+                overridesDir: cfg.overridesDir,
                 locale,
                 relativeSourcePath: source.relativePath,
               });
@@ -552,15 +687,15 @@ export default function polystella(
                 touchedPairs.add(
                   encodeTouchedPair(locale, source.relativePath),
                 );
-                if (resolved.verbose) {
+                if (cfg.verbose) {
                   logger.info(
                     `◆ ${source.relativePath} → ${locale} [override]`,
                   );
                 }
-                if (resolved.debug.previewDir) {
+                if (cfg.debug.previewDir) {
                   const previewPath = path.resolve(
                     rootDir,
-                    resolved.debug.previewDir,
+                    cfg.debug.previewDir,
                     locale,
                     source.relativePath,
                   );
@@ -579,7 +714,7 @@ export default function polystella(
                 glossaryHashByLocale.get(locale) ?? EMPTY_GLOSSARY_HASH;
               const sourceHash = computeSourceHash({
                 body,
-                frontmatter: {}, // populated once the parser is wired in
+                frontmatter: fmValues,
                 glossaryHash,
                 modelId: translator.modelId,
               });
@@ -597,8 +732,8 @@ export default function polystella(
                 r2,
                 translator,
                 glossary,
-                sourceLocale: resolved.defaultLocale,
-                context: resolved.prompt.context,
+                sourceLocale: cfg.defaultLocale,
+                context: cfg.prompt.context,
                 metadata: buildCacheMetadata({
                   sourcePath: source.relativePath,
                   locale,
@@ -659,7 +794,7 @@ export default function polystella(
                 bytes: stagedBody,
               });
 
-              if (resolved.verbose) {
+              if (cfg.verbose) {
                 const marker = result.outcome === "hit" ? "●" : "✓";
                 logger.info(
                   `${marker} ${source.relativePath} → ${locale} [${result.outcome}] (${segments.length} segs)`,
@@ -669,10 +804,10 @@ export default function polystella(
               // Optional debug-write: same content as staging but at a
               // user-visible path for inspection. No-op when previewDir
               // is unset.
-              if (resolved.debug.previewDir) {
+              if (cfg.debug.previewDir) {
                 const previewPath = path.resolve(
                   rootDir,
-                  resolved.debug.previewDir,
+                  cfg.debug.previewDir,
                   locale,
                   source.relativePath,
                 );
@@ -688,7 +823,7 @@ export default function polystella(
               );
             }
           }
-        }
+        });
 
         // Closing bracket for the cache-write phase. Stays silent
         // when nothing was written (all hits, or `r2: null`); the
@@ -752,8 +887,14 @@ export default function polystella(
           }
         }
 
+        const noTranslateSummary =
+          noTranslateSources > 0
+            ? `, ${noTranslateSources} noTranslate source${
+                noTranslateSources === 1 ? "" : "s"
+              } skipped`
+            : "";
         logger.info(
-          `live: ${counts.hit} hit, ${counts.miss} miss, ${counts.override} override, ${counts.failed} failed`,
+          `live: ${counts.hit} hit, ${counts.miss} miss, ${counts.override} override, ${counts.failed} failed${noTranslateSummary}`,
         );
       },
     },

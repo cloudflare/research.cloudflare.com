@@ -194,8 +194,10 @@ export interface PolystellaCollectionsDeps {
   file: (path: string) => unknown;
 }
 
-const DEFAULT_STAGING_DIR = ".astro/i18n-staging";
-const DEFAULT_GLOB_PATTERN = "**/*.{md,mdx}";
+import {
+  DEFAULT_STAGING_DIR,
+  DEFAULT_STAGING_GLOB as DEFAULT_GLOB_PATTERN,
+} from "../storage/paths.js";
 
 /**
  * Pure, deps-injected core. Iterates `source × locales`, produces

@@ -181,8 +181,25 @@ export const polystellaOptionsSchema = z
     concurrency: z.number().int().positive().default(4),
     dryRun: z.boolean().default(false),
     runOn: z.array(z.enum(["build", "dev"])).default(["build"]),
-    failOnMissingCredentials: z.boolean().optional(),
-    mode: z.enum(["auto", "standalone", "starlight"]).default("auto"),
+    // `mode: "starlight"` is rejected at parse time until v0.2's
+    // Starlight-mode work lands. `auto` (the default) and
+    // `"standalone"` both behave the same in v0.1: register sibling
+    // collections via `polystellaCollections`. Auto-detection
+    // scaffolding for v0.2 will check for `@astrojs/starlight` in the
+    // integration list and route the `docs` / `i18n` collections
+    // through Starlight's native loaders instead.
+    mode: z
+      .enum(["auto", "standalone", "starlight"])
+      .default("auto")
+      .superRefine((value, ctx) => {
+        if (value === "starlight") {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message:
+              'mode: "starlight" is v0.2 work and not yet supported. Use "standalone" (or omit `mode` for the default "auto") in v0.1; v0.2 will add per-collection routing through Starlight\'s native i18n for the `docs` and `i18n` collections.',
+          });
+        }
+      }),
     /**
      * When `true`, log a one-line marker for every (file, locale) pair
      * the build hook processes (cache hits, cache misses, overrides,

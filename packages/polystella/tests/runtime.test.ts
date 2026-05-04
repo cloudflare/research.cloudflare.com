@@ -313,6 +313,297 @@ describe("resolveLocalizedEntry — cross-locale miss path", () => {
   });
 });
 
+describe("resolveLocalizedEntry — fallback policy", () => {
+  it("default-locale (default): returns source on sibling miss", async () => {
+    const deps = makeDeps({
+      // Explicit default; no `fallback` key → behaves as default-locale.
+      getEntry: makeGetEntry({
+        "publications:foo": {
+          collection: "publications",
+          id: "foo",
+          data: { title: "Source (en)" },
+          body: "Source body.",
+        },
+      }),
+    });
+
+    const result = await resolveLocalizedEntry({
+      collection: "publications",
+      slug: "foo",
+      locale: "pt-BR",
+      deps,
+    });
+
+    expect(result?.isLocalized).toBe(false);
+    expect(result?.locale).toBe(DEFAULT_LOCALE);
+    expect(result?.data.title).toBe("Source (en)");
+  });
+
+  it("default-locale (explicit): returns source on sibling miss", async () => {
+    const deps = makeDeps({
+      fallback: "default-locale",
+      getEntry: makeGetEntry({
+        "publications:foo": {
+          collection: "publications",
+          id: "foo",
+          data: { title: "Source (en)" },
+        },
+      }),
+    });
+
+    const result = await resolveLocalizedEntry({
+      collection: "publications",
+      slug: "foo",
+      locale: "pt-BR",
+      deps,
+    });
+
+    expect(result?.isLocalized).toBe(false);
+  });
+
+  it("skip: returns undefined on sibling miss (so the page 404s)", async () => {
+    const getEntry = vi.fn(async (collection: string) => {
+      if (collection === "publications") {
+        return {
+          collection: "publications",
+          id: "foo",
+          data: { title: "Source (en)" },
+        } as SourceEntryShape;
+      }
+      return undefined;
+    });
+    const deps = makeDeps({ fallback: "skip", getEntry });
+
+    const result = await resolveLocalizedEntry({
+      collection: "publications",
+      slug: "foo",
+      locale: "pt-BR",
+      deps,
+    });
+
+    // Sibling miss + skip = undefined. The dispatcher still reads
+    // source so it can check `noTranslate` (which would override the
+    // fallback policy to fallback-or-404 per noTranslateBehavior).
+    // Two getEntry calls: sibling miss, then source-for-flag-check.
+    expect(result).toBeUndefined();
+    expect(getEntry).toHaveBeenCalledTimes(2);
+    expect(getEntry).toHaveBeenNthCalledWith(1, "publications__pt-BR", "foo");
+    expect(getEntry).toHaveBeenNthCalledWith(2, "publications", "foo");
+  });
+
+  it("skip + 404: short-circuits to undefined without the source lookup", async () => {
+    // When both policies converge on undefined regardless of the
+    // source flag, there's no point reading source. This is the only
+    // combination that gets the optimization.
+    const getEntry = vi.fn(async () => undefined);
+    const deps = makeDeps({
+      fallback: "skip",
+      noTranslateBehavior: "404",
+      getEntry,
+    });
+
+    const result = await resolveLocalizedEntry({
+      collection: "publications",
+      slug: "foo",
+      locale: "pt-BR",
+      deps,
+    });
+
+    expect(result).toBeUndefined();
+    expect(getEntry).toHaveBeenCalledTimes(1);
+    expect(getEntry).toHaveBeenCalledWith("publications__pt-BR", "foo");
+  });
+
+  it("skip: still returns source on the default-locale path", async () => {
+    // `fallback` only governs cross-locale misses. A default-locale
+    // call should always return source content if it exists, even
+    // under `skip`.
+    const deps = makeDeps({
+      fallback: "skip",
+      getEntry: makeGetEntry({
+        "publications:foo": {
+          collection: "publications",
+          id: "foo",
+          data: { title: "Source (en)" },
+        },
+      }),
+    });
+
+    const result = await resolveLocalizedEntry({
+      collection: "publications",
+      slug: "foo",
+      locale: undefined,
+      deps,
+    });
+
+    expect(result).toBeDefined();
+    expect(result?.isLocalized).toBe(false);
+  });
+
+  it("skip: still returns sibling entry on a hit (skip is for misses only)", async () => {
+    const deps = makeDeps({
+      fallback: "skip",
+      getEntry: makeGetEntry({
+        "publications__pt-BR:foo": {
+          collection: "publications__pt-BR",
+          id: "foo",
+          data: { title: "Translated" },
+        },
+      }),
+    });
+
+    const result = await resolveLocalizedEntry({
+      collection: "publications",
+      slug: "foo",
+      locale: "pt-BR",
+      deps,
+    });
+
+    expect(result?.isLocalized).toBe(true);
+    expect(result?.locale).toBe("pt-BR");
+  });
+});
+
+describe("resolveLocalizedEntry — noTranslate flag", () => {
+  // Source entries flagged with `noTranslate: true` skip the
+  // translation loop at build time; the runtime helper sees a sibling
+  // miss and applies `noTranslateBehavior` (which takes precedence
+  // over `fallback` when the flag is set).
+
+  it("noTranslateBehavior: fallback (default): returns source content for flagged entries", async () => {
+    const deps = makeDeps({
+      // No noTranslateBehavior key → defaults to "fallback".
+      getEntry: makeGetEntry({
+        "publications:foo": {
+          collection: "publications",
+          id: "foo",
+          data: { title: "Universal paper", noTranslate: true },
+        },
+      }),
+    });
+
+    const result = await resolveLocalizedEntry({
+      collection: "publications",
+      slug: "foo",
+      locale: "pt-BR",
+      deps,
+    });
+
+    expect(result?.isLocalized).toBe(false);
+    expect(result?.locale).toBe(DEFAULT_LOCALE);
+    expect(result?.data.title).toBe("Universal paper");
+  });
+
+  it("noTranslateBehavior: 404: returns undefined for flagged entries", async () => {
+    const deps = makeDeps({
+      noTranslateBehavior: "404",
+      getEntry: makeGetEntry({
+        "publications:foo": {
+          collection: "publications",
+          id: "foo",
+          data: { title: "Universal paper", noTranslate: true },
+        },
+      }),
+    });
+
+    const result = await resolveLocalizedEntry({
+      collection: "publications",
+      slug: "foo",
+      locale: "pt-BR",
+      deps,
+    });
+
+    expect(result).toBeUndefined();
+  });
+
+  it("noTranslateBehavior overrides fallback: 'fallback' beats 'skip' for flagged entries", async () => {
+    // Operator wants "skip" for general untranslated misses but
+    // explicitly wants flagged entries to render under all locales.
+    // The per-entry policy wins.
+    const deps = makeDeps({
+      fallback: "skip",
+      noTranslateBehavior: "fallback",
+      getEntry: makeGetEntry({
+        "publications:foo": {
+          collection: "publications",
+          id: "foo",
+          data: { title: "Universal paper", noTranslate: true },
+        },
+      }),
+    });
+
+    const result = await resolveLocalizedEntry({
+      collection: "publications",
+      slug: "foo",
+      locale: "pt-BR",
+      deps,
+    });
+
+    expect(result?.isLocalized).toBe(false);
+    expect(result?.data.title).toBe("Universal paper");
+  });
+
+  it("noTranslateBehavior is ignored when the source has no flag", async () => {
+    // The flag-specific policy only kicks in when the source has
+    // `noTranslate: true`. An untouched source falls through to
+    // `fallback` even when noTranslateBehavior is "404".
+    const deps = makeDeps({
+      noTranslateBehavior: "404",
+      // fallback defaults to "default-locale"
+      getEntry: makeGetEntry({
+        "publications:foo": {
+          collection: "publications",
+          id: "foo",
+          data: { title: "Source", noTranslate: false },
+        },
+      }),
+    });
+
+    const result = await resolveLocalizedEntry({
+      collection: "publications",
+      slug: "foo",
+      locale: "pt-BR",
+      deps,
+    });
+
+    expect(result?.isLocalized).toBe(false);
+    expect(result?.data.title).toBe("Source");
+  });
+
+  it("noTranslate flag on a sibling-hit source has no effect (sibling won)", async () => {
+    // The flag is on the SOURCE; if there's a sibling translation,
+    // the dispatcher returns the sibling without consulting source.
+    // Operationally `noTranslate: true` should prevent siblings from
+    // being created (build-time concern), but if a stale sibling
+    // exists in the cache it still wins on hit.
+    const deps = makeDeps({
+      noTranslateBehavior: "404",
+      getEntry: makeGetEntry({
+        "publications__pt-BR:foo": {
+          collection: "publications__pt-BR",
+          id: "foo",
+          data: { title: "Stale translation" },
+        },
+        "publications:foo": {
+          collection: "publications",
+          id: "foo",
+          data: { title: "Source", noTranslate: true },
+        },
+      }),
+    });
+
+    const result = await resolveLocalizedEntry({
+      collection: "publications",
+      slug: "foo",
+      locale: "pt-BR",
+      deps,
+    });
+
+    expect(result?.isLocalized).toBe(true);
+    expect(result?.data.title).toBe("Stale translation");
+  });
+});
+
 describe("resolveLocalizedEntry — fresh-object guarantee", () => {
   it("returns a fresh object (never mutates or aliases the input entry)", async () => {
     // Aliasing the source entry would let consumer code mutate it

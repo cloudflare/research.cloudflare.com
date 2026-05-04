@@ -88,9 +88,20 @@ const config = {
     accountId: process.env.CF_ACCOUNT_ID ?? "",
     apiToken: process.env.WORKERS_AI_API_TOKEN ?? "",
     // …or per-locale, with a `default` fallback:
+    //
+    // Verify all model ids against the live catalog at
+    // https://developers.cloudflare.com/workers-ai/models/ — entries
+    // are added and removed without API breaks. The interim defaults
+    // below are placeholders; M10's bake-off will lock final picks
+    // per locale based on native-speaker review.
     model: {
       default: "@cf/meta/llama-3.1-8b-instruct",
-      "ja-JP": "@cf/qwen/qwen2.5-coder-32b-instruct",
+      // Qwen 3rd-generation MoE, advertised "groundbreaking
+      // multilingual support". Replaces the earlier
+      // `@cf/qwen/qwen2.5-coder-32b-instruct` (a *code-specific*
+      // model — wrong fit for prose translation). Qwen family is
+      // best-in-class for CJK per the RFC's reasoning.
+      "ja-JP": "@cf/qwen/qwen3-30b-a3b-fp8",
     },
     // endpoint: "https://...",            // override the default WAI endpoint
   },

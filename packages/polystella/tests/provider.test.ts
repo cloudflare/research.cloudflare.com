@@ -217,15 +217,117 @@ describe("Workers AI translator", () => {
     expect(JSON.parse(out)).toEqual(parsedPayload);
   });
 
-  it("includes the typeof and dump in the unexpected-shape error", async () => {
+  it("includes the probed-locations message and dump in the unexpected-shape error", async () => {
+    // None of the known shapes hold a usable string/object: legacy
+    // `result.response` is 42 (number), and there's no chat-completion
+    // shape either. The error should call out which fields we tried.
     const fetchStub = makeFetchStub({
       result: { response: 42 },
       success: true,
     });
     const t = createTranslator(provider, "pt-BR", { fetchImpl: fetchStub });
     await expect(t.translate("s", "u")).rejects.toThrow(
-      /unsupported type "number".*"response":42/s,
+      /none of result\.response, result\.choices\[0\]\.message\.content, or choices\[0\]\.message\.content held a usable string or object.*"response":42/s,
     );
+  });
+
+  it("accepts the OpenAI-compatible chat-completion shape (qwen3-30b-a3b-fp8 etc.)", async () => {
+    // Newer Workers AI models (observed: @cf/qwen/qwen3-30b-a3b-fp8)
+    // return responses in the OpenAI chat-completion envelope rather
+    // than the legacy `result.response` field. The translator must
+    // recognise both shapes — operators upgrading models shouldn't
+    // get cryptic "unsupported type undefined" errors.
+    const translatedJson = JSON.stringify({
+      "fm:title": "ハイブリッド公開鍵暗号",
+      "body:0": "このドキュメントでは、HPKEを説明します。",
+    });
+    const fetchStub = makeFetchStub({
+      result: {
+        id: "chatcmpl-abc",
+        object: "chat.completion",
+        created: 1777896071,
+        model: "@cf/qwen/qwen3-30b-a3b-fp8",
+        choices: [
+          {
+            index: 0,
+            message: {
+              role: "assistant",
+              content: translatedJson,
+              refusal: null,
+              tool_calls: [],
+            },
+          },
+        ],
+      },
+      success: true,
+    });
+    const t = createTranslator(provider, "ja-JP", { fetchImpl: fetchStub });
+    const out = await t.translate("s", "u");
+    expect(typeof out).toBe("string");
+    expect(JSON.parse(out)).toEqual({
+      "fm:title": "ハイブリッド公開鍵暗号",
+      "body:0": "このドキュメントでは、HPKEを説明します。",
+    });
+  });
+
+  it("accepts a top-level `choices` array (gateway-flattened envelope)", async () => {
+    // Some gateway configurations strip the `result` wrapper and
+    // surface `choices` at the top level. We probe that location too
+    // as a defensive fallback before raising the unknown-shape error.
+    const translatedJson = '{"fm:title": "テスト"}';
+    const fetchStub = makeFetchStub({
+      choices: [
+        {
+          message: { role: "assistant", content: translatedJson },
+        },
+      ],
+      success: true,
+    });
+    const t = createTranslator(provider, "ja-JP", { fetchImpl: fetchStub });
+    const out = await t.translate("s", "u");
+    expect(JSON.parse(out)).toEqual({ "fm:title": "テスト" });
+  });
+
+  it("accepts a parsed-object content in the chat-completion shape", async () => {
+    // If a model + gateway combination ever auto-parses the JSON
+    // server-side under the chat-completion envelope, the translator
+    // should round-trip via JSON.stringify just like for the legacy
+    // shape. Symmetry across both response paths.
+    const fetchStub = makeFetchStub({
+      result: {
+        choices: [
+          {
+            message: {
+              role: "assistant",
+              content: { "fm:title": "テスト", "body:0": "本文" },
+            },
+          },
+        ],
+      },
+      success: true,
+    });
+    const t = createTranslator(provider, "ja-JP", { fetchImpl: fetchStub });
+    const out = await t.translate("s", "u");
+    expect(JSON.parse(out)).toEqual({ "fm:title": "テスト", "body:0": "本文" });
+  });
+
+  it("prefers legacy `result.response` over chat-completion when both are present", async () => {
+    // If a payload contains both shapes (defensive — shouldn't happen
+    // in practice), prefer the legacy field. This keeps behaviour
+    // stable for any model still using the original envelope even if
+    // the gateway also surfaces a stub `choices` array.
+    const fetchStub = makeFetchStub({
+      result: {
+        response: '{"fm:title": "legacy"}',
+        choices: [
+          { message: { content: '{"fm:title": "should-be-ignored"}' } },
+        ],
+      },
+      success: true,
+    });
+    const t = createTranslator(provider, "ja-JP", { fetchImpl: fetchStub });
+    const out = await t.translate("s", "u");
+    expect(JSON.parse(out)).toEqual({ "fm:title": "legacy" });
   });
 });
 

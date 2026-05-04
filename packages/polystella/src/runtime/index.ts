@@ -1,5 +1,10 @@
 import { getEntry, type CollectionEntry } from "astro:content";
-import { defaultLocale } from "polystella:runtime-config";
+import {
+  defaultLocale,
+  fallback,
+  locales,
+  noTranslateBehavior,
+} from "polystella:runtime-config";
 
 import {
   normaliseGetLocalizedEntryArgs,
@@ -8,6 +13,10 @@ import {
   type LocalizedEntry,
   type SourceEntryShape,
 } from "./get-localized-entry.js";
+import {
+  resolveLocalizedHref,
+  type LocalizedHrefDeps,
+} from "./localized-href.js";
 
 /**
  * Public locale-aware content fetcher.
@@ -74,6 +83,15 @@ export async function getLocalizedEntry<C extends string>(
     locale,
     deps: {
       defaultLocale,
+      // `fallback` is `"default-locale" | "skip"` from the resolved
+      // options. The dispatcher threads it into branch 3 (sibling
+      // miss) so a `"skip"` configuration produces 404s on missing
+      // siblings instead of source-content fallback.
+      fallback,
+      // `noTranslateBehavior` is `"fallback" | "404"`. Takes
+      // precedence over `fallback` when the source has
+      // `noTranslate: true` in its frontmatter.
+      noTranslateBehavior,
       // Astro's `CollectionEntry` has more fields than the pure
       // helper's `SourceEntryShape` declares (`filePath`, `digest`,
       // `rendered`, …) — they survive the {...source} spread inside
@@ -95,8 +113,50 @@ export async function getLocalizedEntry<C extends string>(
   return result as LocalizedEntry<CollectionEntry<C>> | undefined;
 }
 
+/**
+ * Locale-aware URL prefixer for component-level links.
+ *
+ * Drop-in for `<a href={...}>` in `.astro`, React, or any component
+ * surface. Mirrors the URL classification rules of the build-time
+ * markdown link rewriter, so a `<LocalePicker>` and a `[link](url)`
+ * inside a body are kept consistent — one re-renders inside its
+ * locale, the other was already inlined into the locale-staged file.
+ *
+ * Typical use:
+ *
+ *   ---
+ *   import { localizedHref } from "polystella/runtime";
+ *   ---
+ *   <a href={localizedHref("/Smith2017", Astro.currentLocale)}>
+ *     Read Smith 2017
+ *   </a>
+ *
+ * Returns the input href unchanged when:
+ *   - the URL is external (`http://`, `https://`, `//`, `mailto:`,
+ *     `tel:`),
+ *   - the URL is anchor-only (`#section`),
+ *   - the URL is already locale-prefixed (any declared locale),
+ *   - `locale` is missing, blank, or equal to `defaultLocale`.
+ *
+ * Otherwise returns `/{locale}/{path}{?suffix}{#fragment}`.
+ *
+ * The pure core (`resolveLocalizedHref`) is exported as well, in case
+ * a consumer needs to call it with explicit `defaultLocale`/`locales`
+ * deps — e.g. inside an isolated test or a non-Astro environment.
+ */
+export function localizedHref(href: string, locale?: string): string {
+  return resolveLocalizedHref(href, locale, {
+    defaultLocale,
+    locales,
+  });
+}
+
 export {
   normaliseGetLocalizedEntryArgs,
   type CollectionEntryRef,
   type LocalizedEntry,
 } from "./get-localized-entry.js";
+export {
+  resolveLocalizedHref,
+  type LocalizedHrefDeps,
+} from "./localized-href.js";

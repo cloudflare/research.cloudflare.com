@@ -95,12 +95,6 @@ export function extractSegments(
 /**
  * Resolve which frontmatter keys to translate for `sourcePath`, by
  * unioning the key lists of every matching glob in `rules`.
- *
- * Exported because the build-time runtime helper
- * (`runtime/get-localized-entry.ts`) needs the same path → keys
- * mapping when overlaying staged frontmatter on top of the source
- * entry. Keeping a single implementation guarantees the two surfaces
- * never drift on which keys belong to the translation contract.
  */
 export function resolveFrontmatterKeys(
   sourcePath: string,
@@ -115,4 +109,95 @@ export function resolveFrontmatterKeys(
     }
   }
   return [...matched];
+}
+
+/**
+ * Read the per-entry `noTranslate` frontmatter flag.
+ *
+ * Returns `true` only when the source's frontmatter has a top-level
+ * `noTranslate: true` boolean (or `noTranslate: "true"` / `"yes"`
+ * string forms — small-case YAML aliases that intent-equivalent and
+ * are common in hand-edited frontmatter). Anything else — including
+ * a missing frontmatter block, a missing key, a non-boolean truthy
+ * value like `noTranslate: 1`, or any other shape — returns `false`.
+ *
+ * The build hook uses this to decide whether to skip a source from
+ * the translation loop entirely (no AI call, no R2 write, no staging
+ * file written for non-default locales). The runtime helper later
+ * notices the absence of a sibling entry and falls back per the
+ * `noTranslateBehavior` policy.
+ *
+ * Pure: no I/O. Returns `false` if the YAML parser doesn't recognise
+ * the input as an object (defensive — `parseYaml` returns `null` for
+ * empty frontmatter).
+ */
+export function peekNoTranslate(ast: Root): boolean {
+  const frontmatterNode = ast.children.find(
+    (child): child is Yaml => child.type === "yaml",
+  );
+  if (!frontmatterNode) return false;
+
+  let parsed: unknown;
+  try {
+    parsed = parseYaml(frontmatterNode.value);
+  } catch {
+    return false;
+  }
+  if (parsed === null || typeof parsed !== "object") return false;
+  const value = (parsed as Record<string, unknown>).noTranslate;
+  if (value === true) return true;
+  // String aliases for the boolean true. Operators editing frontmatter
+  // by hand sometimes write `noTranslate: "true"` (especially after
+  // copying values around in YAML); accepting the common spellings
+  // avoids a confusing "I set the flag and it didn't take" debug
+  // session. Matches YAML 1.1's truthy aliases minus the non-obvious
+  // ones (`on`, `y`) that would risk false positives on real strings.
+  if (typeof value === "string") {
+    const normalised = value.toLowerCase().trim();
+    return normalised === "true" || normalised === "yes";
+  }
+  return false;
+}
+
+/**
+ * Pull the configured translatable-frontmatter values out of a parsed
+ * source AST, keyed by the same names the rules use. Returned values
+ * are the raw parsed-YAML scalars/arrays/objects without further
+ * normalisation; `computeSourceHash` canonicalises them downstream.
+ *
+ * Exists separately from `extractSegments` because the cache-key
+ * hash needs structured `Record<key, value>` data (so reordering or
+ * adding non-translatable keys is invisible to the hash), whereas the
+ * translation segments are flat `{id, text}` records keyed by
+ * `fm:<key>` / `fm:<key>[<i>]`. Keeping the two operations distinct
+ * also means the hash captures the value of a translatable key even
+ * when the value type isn't itself translatable (e.g. a numeric key
+ * we configured to translate but a content editor set to `2025` —
+ * the hash still reflects the change so a later edit re-keys the
+ * cache).
+ *
+ * Returns an empty object when the source has no frontmatter, when
+ * no rules match `sourcePath`, or when a configured key is absent
+ * from the actual frontmatter.
+ */
+export function selectTranslatableFrontmatter(
+  ast: Root,
+  opts: ExtractOptions,
+): Record<string, unknown> {
+  const frontmatterNode = ast.children.find(
+    (child): child is Yaml => child.type === "yaml",
+  );
+  if (!frontmatterNode) return {};
+
+  const keys = resolveFrontmatterKeys(opts.sourcePath, opts.frontmatter);
+  if (keys.length === 0) return {};
+
+  const data = parseYaml(frontmatterNode.value) as Record<string, unknown>;
+  const result: Record<string, unknown> = {};
+  for (const key of keys) {
+    if (key in data) {
+      result[key] = data[key];
+    }
+  }
+  return result;
 }

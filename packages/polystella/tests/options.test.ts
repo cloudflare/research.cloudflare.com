@@ -136,3 +136,51 @@ describe("resolveOptions — Astro i18n cross-check failures", () => {
     expect(caught!.message).toMatch(/Invalid Astro `i18n` config/);
   });
 });
+
+describe("resolveOptions — option-surface cleanup (M7)", () => {
+  it('rejects mode: "starlight" with a v0.2 message', () => {
+    expect(() =>
+      resolveOptions({ mode: "starlight" }, HAPPY_I18N),
+    ).toThrowError(
+      /mode: "starlight" is v0\.2 work and not yet supported/,
+    );
+  });
+
+  it('accepts mode: "auto" (the default)', () => {
+    const resolved = resolveOptions({ mode: "auto" }, HAPPY_I18N);
+    expect(resolved.mode).toBe("auto");
+  });
+
+  it('accepts mode: "standalone"', () => {
+    const resolved = resolveOptions({ mode: "standalone" }, HAPPY_I18N);
+    expect(resolved.mode).toBe("standalone");
+  });
+
+  it("rejects the removed `failOnMissingCredentials` option (strict schema)", () => {
+    // The schema is strict, so passing the removed option name
+    // surfaces the deprecation as a parse error rather than silently
+    // ignoring it. Operators upgrading from a draft that had the
+    // option get a clear "this is gone" signal.
+    expect(() =>
+      resolveOptions(
+        { failOnMissingCredentials: true } as Record<string, unknown>,
+        HAPPY_I18N,
+      ),
+    ).toThrowError(/failOnMissingCredentials/);
+  });
+
+  it("defaults `concurrency` to 4", () => {
+    const resolved = resolveOptions({}, HAPPY_I18N);
+    expect(resolved.concurrency).toBe(4);
+  });
+
+  it("defaults `fallback` to default-locale", () => {
+    const resolved = resolveOptions({}, HAPPY_I18N);
+    expect(resolved.fallback).toBe("default-locale");
+  });
+
+  it("defaults `noTranslateBehavior` to fallback", () => {
+    const resolved = resolveOptions({}, HAPPY_I18N);
+    expect(resolved.noTranslateBehavior).toBe("fallback");
+  });
+});

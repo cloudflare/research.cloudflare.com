@@ -126,7 +126,25 @@ function createWorkersAITranslator(
         );
       }
       const data = (await res.json()) as {
-        result?: { response?: unknown };
+        result?: {
+          response?: unknown;
+          // OpenAI-compatible chat-completion shape (newer Workers AI
+          // models — observed: @cf/qwen/qwen3-30b-a3b-fp8). The
+          // payload looks like
+          //   { result: { choices: [{ message: { content: "..." } }] } }
+          // and the legacy `result.response` is absent. Documented
+          // alongside the legacy shape on the Workers AI runs API.
+          choices?: Array<{
+            message?: { content?: unknown };
+          }>;
+        };
+        // Some envelopes flatten `choices` to the top level (rare,
+        // but observed when the WAI request goes through certain
+        // gateway configurations). Treat it as a fallback location
+        // before declaring the shape unknown.
+        choices?: Array<{
+          message?: { content?: unknown };
+        }>;
         success?: boolean;
         errors?: unknown[];
       };
@@ -137,26 +155,39 @@ function createWorkersAITranslator(
           )}`,
         );
       }
-      const response = data.result?.response;
 
-      // Standard shape: response is the model's raw text. parseResponse
-      // strips code fences and parses the JSON downstream.
-      if (typeof response === "string") return response;
-
-      // Some WAI models (observed: @cf/qwen/qwen2.5-coder-32b-instruct)
-      // detect JSON-output prompts and pre-parse the model's response
-      // server-side, returning result.response as an already-parsed
-      // object. Round-trip it through JSON.stringify so parseResponse
-      // sees a string and can validate the segment-id contract
-      // uniformly across providers. This is strictly a win — it
-      // sidesteps any code-fence/preamble quirks for those models.
-      if (response !== null && typeof response === "object") {
-        return JSON.stringify(response);
+      // Try each known response shape in turn. We deliberately probe
+      // the legacy `result.response` shape first (most WAI text
+      // models still use it); the OpenAI-compatible chat-completion
+      // shape is the fallback for newer models. A raw `string` in
+      // either location is the model's text answer; a parsed object
+      // is the server-side-parsed JSON some models return when the
+      // prompt asks for JSON.
+      const candidates: Array<unknown> = [
+        data.result?.response,
+        data.result?.choices?.[0]?.message?.content,
+        data.choices?.[0]?.message?.content,
+      ];
+      for (const candidate of candidates) {
+        if (typeof candidate === "string") return candidate;
+        if (candidate !== null && typeof candidate === "object") {
+          // Some WAI models (observed: @cf/qwen/qwen2.5-coder-32b-instruct)
+          // detect JSON-output prompts and pre-parse the model's
+          // response server-side, returning result.response as an
+          // already-parsed object. Round-trip it through JSON.stringify
+          // so parseResponse sees a string and can validate the
+          // segment-id contract uniformly across providers. Strictly a
+          // win — sidesteps any code-fence/preamble quirks for those
+          // models.
+          return JSON.stringify(candidate);
+        }
       }
 
-      // Anything else (null, undefined, number, …) is genuinely
-      // unexpected. Dump the envelope so the operator can see what
-      // came back; caps at ~800 chars to keep build logs readable.
+      // None of the known shapes matched. Dump the envelope so the
+      // operator can see what came back; caps at ~800 chars to keep
+      // build logs readable. The error message is intentionally
+      // explicit about which fields we probed so a future shape
+      // surfaces with a clear "we tried these places" trail.
       const dump = JSON.stringify(data);
       const preview =
         dump.length > 800
@@ -165,7 +196,7 @@ function createWorkersAITranslator(
             }]`
           : dump;
       throw new Error(
-        `[polystella] unexpected Workers AI response shape (model="${modelId}"): result.response missing or of unsupported type "${typeof response}". Raw response was:\n${preview}`,
+        `[polystella] unexpected Workers AI response shape (model="${modelId}"): none of result.response, result.choices[0].message.content, or choices[0].message.content held a usable string or object. Raw response was:\n${preview}`,
       );
     },
   };

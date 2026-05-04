@@ -105,9 +105,65 @@ export type LocalizedEntry<TEntry extends SourceEntryShape = SourceEntryShape> =
     locale: string;
   };
 
+/**
+ * What to do when a cross-locale lookup misses (no
+ * `<collection>__<locale>` sibling entry for `slug`) AND the source
+ * isn't flagged with `noTranslate: true`.
+ *
+ * - `"default-locale"` (default): return the source-collection
+ *   entry with `isLocalized: false`. Page renders source content
+ *   under the locale-prefixed URL — the typical "untranslated yet"
+ *   experience.
+ * - `"skip"`: return `undefined`. Astro produces a 404 for the
+ *   slug at that locale. Use when you'd rather not surface an
+ *   untranslated page at all than serve source content under a
+ *   non-default URL.
+ */
+export type LocalizedFallbackPolicy = "default-locale" | "skip";
+
+/**
+ * What to do when a cross-locale lookup hits the source's
+ * `noTranslate: true` flag (set in the source's frontmatter to opt
+ * out of translation entirely, regardless of glossary or model).
+ *
+ * - `"fallback"` (default): return the source entry with
+ *   `isLocalized: false`. The page renders the source language under
+ *   the locale URL — useful when the source itself is intended to be
+ *   universally readable (an English-only paper at a multilingual
+ *   conference, a code reference, etc.).
+ * - `"404"`: return `undefined`. The page should treat that as a
+ *   404; consumers typically already do for invalid slugs. Pages
+ *   that explicitly want a 404 status can `return new Response(null,
+ *   { status: 404 })` when `getLocalizedEntry` returns `undefined`.
+ *
+ * Distinct from `LocalizedFallbackPolicy`: `fallback` covers the
+ * generic "translation hasn't been generated yet" case, while
+ * `noTranslateBehavior` covers the explicit opt-out. An operator can
+ * configure them independently (e.g. `fallback: "default-locale"`
+ * for general untranslated content, `noTranslateBehavior: "404"` for
+ * pages explicitly marked).
+ */
+export type NoTranslatePolicy = "fallback" | "404";
+
 export interface ResolveLocalizedEntryDeps {
   /** Source/canonical locale, derived from Astro's `i18n.defaultLocale`. */
   defaultLocale: string;
+  /**
+   * Behaviour on cross-locale miss for sources WITHOUT
+   * `noTranslate: true`. Threaded through from the integration's
+   * resolved options via the `polystella:runtime-config` virtual
+   * module. Optional in the dep struct (tests pass plain objects);
+   * the resolver defaults to `"default-locale"` when absent.
+   */
+  fallback?: LocalizedFallbackPolicy;
+  /**
+   * Behaviour on cross-locale miss for sources WITH
+   * `noTranslate: true`. Threaded through the same virtual module.
+   * Defaults to `"fallback"` when absent. Takes precedence over
+   * `fallback` when the source's frontmatter has the flag — operator
+   * intent explicit at the entry level overrides the generic policy.
+   */
+  noTranslateBehavior?: NoTranslatePolicy;
   /**
    * Astro's `getEntry` (or a test stub). The dispatcher calls this
    * twice in the cross-locale path: once for the
@@ -178,14 +234,48 @@ export async function resolveLocalizedEntry(
     return withExtensions(localized, true, locale);
   }
 
-  // Branch 3: sibling miss. Fall back to source with
-  // `isLocalized: false` so a consumer page can render a "translation
-  // pending" affordance if it wants. We deliberately do NOT use the
-  // requested `locale` here — the entry being returned is in the
-  // default locale, and tagging it with the requested locale would
-  // mislead consumer code reading `entry.locale`.
+  // Branch 3: sibling miss. Two policies steer the outcome, in
+  // priority order:
+  //
+  //   1. `noTranslateBehavior` — applies when the source frontmatter
+  //      has `noTranslate: true`. Operator intent at the entry level
+  //      takes precedence over the generic `fallback` policy.
+  //         - `"fallback"` (default): return source with
+  //           `isLocalized: false`.
+  //         - `"404"`: return `undefined`.
+  //      To check the flag we have to read the source entry first.
+  //      That's a single extra `getEntry` call; we'd be calling it
+  //      anyway for the `"default-locale"` branch.
+  //   2. `fallback` — applies when the source is NOT `noTranslate`.
+  //         - `"default-locale"` (default): return source with
+  //           `isLocalized: false`.
+  //         - `"skip"`: return `undefined`.
+  //
+  // Optimization: when both policies converge on `undefined` (skip +
+  // 404), the source-flag value is irrelevant — there's no path to a
+  // non-undefined return. Short-circuit before the second `getEntry`
+  // call so callers configured this way pay just the sibling lookup.
+  // For any other combination we need the source to know which policy
+  // applies, so the source lookup is unavoidable.
+  //
+  // The default-locale branch is deliberately tagged with
+  // `defaultLocale` on the returned entry rather than the requested
+  // locale: the entry being returned is in the default locale, and
+  // tagging it with the requested locale would mislead consumer code
+  // that branches on `entry.locale`.
+  const fallbackPolicy = deps.fallback ?? "default-locale";
+  const noTranslatePolicy = deps.noTranslateBehavior ?? "fallback";
+  if (fallbackPolicy === "skip" && noTranslatePolicy === "404") {
+    return undefined;
+  }
   const source = await deps.getEntry(collection, slug);
   if (source === undefined) return undefined;
+  const isNoTranslate = source.data?.noTranslate === true;
+  if (isNoTranslate) {
+    if (noTranslatePolicy === "404") return undefined;
+    return withExtensions(source, false, deps.defaultLocale);
+  }
+  if (fallbackPolicy === "skip") return undefined;
   return withExtensions(source, false, deps.defaultLocale);
 }
 
