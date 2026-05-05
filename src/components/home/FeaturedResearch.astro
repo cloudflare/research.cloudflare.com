@@ -1,7 +1,9 @@
 ---
-import Icon from "../Icon.astro";
 import SeeMore from "../SeeMore.astro";
 import { getCollection } from "astro:content";
+import { getTranslations } from "polystella/i18n";
+
+const t = await getTranslations(Astro.currentLocale);
 
 const [siteSettings] = await getCollection("site");
 const { title, description, link, buttonLabel } = siteSettings.data.featuredResearch;
@@ -15,9 +17,13 @@ const { title, description, link, buttonLabel } = siteSettings.data.featuredRese
     </picture>
   </div>
   <div class="px-8 md:px-4 lg:px-12 py-10">
-    <div class="font-mono text-sm text-stack mb-4">Featured Research</div>
+    <div class="font-mono text-sm text-stack mb-4">
+      {t("home.featured.label")}
+    </div>
     <a href={link} class="mb-8 block group/link">
-      <h1 class="heading inline group-hover/link:text-blue text-2xl sm:text-3xl lg:text-4xl">{title}</h1>
+      <h1 class="heading inline group-hover/link:text-blue text-2xl sm:text-3xl lg:text-4xl">
+        {title}
+      </h1>
     </a>
     <p>{description}</p>
     <SeeMore href={link}>{buttonLabel}</SeeMore>
