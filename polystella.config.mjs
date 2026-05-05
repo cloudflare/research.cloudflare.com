@@ -55,7 +55,7 @@ const config = {
   // at config:setup. Until the source page is migrated to
   // `getLocalizedEntry` (planned milestone), the locale routes render
   // source-language content under the locale-prefixed URLs.
-  routes: ["src/pages/[slug].astro"],
+  routes: ["src/pages/index.astro", "src/pages/[slug].astro"],
 
   // What to render at a translated URL when the underlying page has no
   // translation: fall back to the default-locale page, or 404.

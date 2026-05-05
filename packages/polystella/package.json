@@ -19,7 +19,7 @@
       "types": "./src/content/index.ts",
       "default": "./src/content/index.ts"
     },
-    "./ui": {
+    "./i18n": {
       "types": "./src/ui/index.ts",
       "default": "./src/ui/index.ts"
     },

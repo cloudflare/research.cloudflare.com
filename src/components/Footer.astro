@@ -1,7 +1,7 @@
 ---
 import { CONSTANTS } from "../lib/constants";
 import Icon from "./Icon.astro";
-import { getTranslations } from "polystella/ui";
+import { getTranslations } from "polystella/i18n";
 
 const t = await getTranslations(Astro.currentLocale);
 ---
@@ -36,17 +36,15 @@ const t = await getTranslations(Astro.currentLocale);
         <hr />
         <ul>
           <li>
-            <a href="/focus/private">{t("footer.focusAreas.morePrivate")}</a>
+            <a href="/focus/private">{t("globals.morePrivate")}</a>
           </li>
-          <li><a href="/focus/safe">{t("footer.focusAreas.safer")}</a></li>
-          <li><a href="/focus/fast">{t("footer.focusAreas.faster")}</a></li>
+          <li><a href="/focus/safe">{t("globals.safer")}</a></li>
+          <li><a href="/focus/fast">{t("globals.faster")}</a></li>
           <li>
-            <a href="/focus/reliable">{t("footer.focusAreas.moreReliable")}</a>
+            <a href="/focus/reliable">{t("globals.moreReliable")}</a>
           </li>
           <li>
-            <a href="/focus/measurable"
-              >{t("footer.focusAreas.moreMeasurable")}</a
-            >
+            <a href="/focus/measurable">{t("globals.moreMeasurable")}</a>
           </li>
         </ul>
       </div>

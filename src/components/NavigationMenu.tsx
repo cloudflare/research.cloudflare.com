@@ -36,27 +36,27 @@ export function NavMenu({ dict }: NavMenuProps) {
           description: t("nav.focusAreas.all.description"),
         },
         {
-          title: t("nav.focusAreas.morePrivate.title"),
+          title: t("globals.morePrivate"),
           href: "/focus/private",
           description: t("nav.focusAreas.morePrivate.description"),
         },
         {
-          title: t("nav.focusAreas.safer.title"),
+          title: t("globals.safer"),
           href: "/focus/safe",
           description: t("nav.focusAreas.safer.description"),
         },
         {
-          title: t("nav.focusAreas.faster.title"),
+          title: t("globals.faster"),
           href: "/focus/fast",
           description: t("nav.focusAreas.faster.description"),
         },
         {
-          title: t("nav.focusAreas.moreReliable.title"),
+          title: t("globals.moreReliable"),
           href: "/focus/reliable",
           description: t("nav.focusAreas.moreReliable.description"),
         },
         {
-          title: t("nav.focusAreas.moreMeasurable.title"),
+          title: t("globals.moreMeasurable"),
           href: "/focus/measurable",
           description: t("nav.focusAreas.moreMeasurable.description"),
         },

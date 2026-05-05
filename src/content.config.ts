@@ -10,7 +10,7 @@ import { z } from "astro/zod";
 
 // 4. Import the PolyStella helpers for dynamic collections and i18n
 import { polystellaCollections } from "polystella/content";
-import { i18nLoader, i18nSchema } from "polystella/ui";
+import { i18nLoader, i18nSchema } from "polystella/i18n";
 
 // 5. Define your collection(s)
 const site = defineCollection({

@@ -1,5 +1,5 @@
 /**
- * `polystella/ui` — public entry point. Four surfaces:
+ * `polystella/i18n` — public entry point. Four surfaces:
  *   - `i18nLoader()` / `i18nSchema()` for `content.config.ts`.
  *   - `getTranslations(locale)` for page-render-time `t()`.
  *   - `getDictionary(locale, prefix?)` to fetch a raw (or filtered)

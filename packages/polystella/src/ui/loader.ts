@@ -5,7 +5,7 @@
  * `src/content/i18n/<locale>.json`, each holding a flat
  * `Record<key, translation>` map. Wire up in `src/content.config.ts`:
  *
- *   import { i18nLoader, i18nSchema } from "polystella/ui";
+ *   import { i18nLoader, i18nSchema } from "polystella/i18n";
  *   const i18n = defineCollection({
  *     loader: i18nLoader(),
  *     schema: i18nSchema(),
