@@ -118,23 +118,44 @@ const i18n = defineCollection({
 //    `<collection>__<locale>` whose loader points at
 //    `.astro/i18n-staging/<locale>/<collection>/<rest>`. The build
 //    hook stages translated content there during `astro build`.
-export const collections = polystellaCollections({
-  source: { site, people, publications, tags, presentations, blog, i18n },
-  // Mirror Astro's `i18n.locales` from astro.config.mjs. The helper
-  // strips `defaultLocale` defensively so we don't register a
-  // self-translation sibling.
-  locales: ["en", "pt-BR", "ja-JP"],
-  defaultLocale: "en",
-  loaderOverrides: {
-    // `site` is TOML-backed. The translation pipeline currently only
-    // understands markdown (and soon MDX) ASTs — running TOML through
-    // the markdown extractor would mangle section headers and
-    // assignments. Skipping until a TOML extractor/applier exists.
-    site: { kind: "skip", reason: "TOML translation not supported yet" },
-    // `blog` uses a custom loader; opting it out so the warning goes
-    // away. Blog posts are English-only by design today.
-    blog: { kind: "skip", reason: "blog posts are English-only" },
-    // this collection is translated manually via the json files in src/content/i18n
-    i18n: { kind: "skip", reason: "i18n collection is defined separately" },
-  },
-});
+export const collections = {
+  i18n,
+  ...polystellaCollections({
+    source: { site, people, publications, tags, presentations, blog },
+    // Mirror Astro's `i18n.locales` from astro.config.mjs. The helper
+    // strips `defaultLocale` defensively so we don't register a
+    // self-translation sibling.
+    locales: ["en", "pt-BR", "ja-JP"],
+    defaultLocale: "en",
+    loaderOverrides: {
+      // `site` is TOML-backed. The translation pipeline currently only
+      // understands markdown (and soon MDX) ASTs — running TOML through
+      // the markdown extractor would mangle section headers and
+      // assignments. Skipping until a TOML extractor/applier exists.
+      site: { kind: "skip", reason: "TOML translation not supported yet" },
+      // `blog` uses a custom loader; opting it out so the warning goes
+      // away. Blog posts are English-only by design today.
+      blog: { kind: "skip", reason: "blog posts are English-only" },
+    },
+  }),
+};
+// export const collections = polystellaCollections({
+//   source: { site, people, publications, tags, presentations, blog, i18n },
+//   // Mirror Astro's `i18n.locales` from astro.config.mjs. The helper
+//   // strips `defaultLocale` defensively so we don't register a
+//   // self-translation sibling.
+//   locales: ["en", "pt-BR", "ja-JP"],
+//   defaultLocale: "en",
+//   loaderOverrides: {
+//     // `site` is TOML-backed. The translation pipeline currently only
+//     // understands markdown (and soon MDX) ASTs — running TOML through
+//     // the markdown extractor would mangle section headers and
+//     // assignments. Skipping until a TOML extractor/applier exists.
+//     site: { kind: "skip", reason: "TOML translation not supported yet" },
+//     // `blog` uses a custom loader; opting it out so the warning goes
+//     // away. Blog posts are English-only by design today.
+//     blog: { kind: "skip", reason: "blog posts are English-only" },
+//     // this collection is translated manually via the json files in src/content/i18n
+//     i18n: { kind: "skip", reason: "i18n collection is defined separately" },
+//   },
+// });

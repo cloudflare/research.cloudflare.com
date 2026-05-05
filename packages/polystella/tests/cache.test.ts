@@ -110,17 +110,17 @@ function makeStubTranslator(modelId = "stub/echo-1"): Translator & {
     calls: 0,
     async translate(_systemPrompt: string, userPrompt: string) {
       t.calls++;
-      // Pull the JSON object out of the user prompt and echo each
-      // segment with a "TR:" prefix. parseResponse will accept this.
-      const start = userPrompt.indexOf("{");
-      const end = userPrompt.lastIndexOf("}");
-      const map = JSON.parse(userPrompt.slice(start, end + 1)) as Record<
-        string,
-        string
-      >;
-      const out: Record<string, string> = {};
-      for (const [id, text] of Object.entries(map)) out[id] = `TR:${text}`;
-      return JSON.stringify(out);
+      // Pull each `@@<id>@@` block out of the user prompt and echo
+      // its content back with a "TR:" prefix in the same marker format.
+      const blocks: string[] = [];
+      const re = /^@@([^@\n]+?)@@\s*\n([\s\S]*?)(?=\n@@|$)/gm;
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(userPrompt)) !== null) {
+        const id = m[1]!.trim();
+        const text = (m[2] ?? "").trim();
+        blocks.push(`@@${id}@@\nTR:${text}`);
+      }
+      return blocks.join("\n\n");
     },
   };
   return t;

@@ -1,20 +1,29 @@
 ---
-import { NavMenu } from "./NavigationMenu"
+import { NavMenu } from "./NavigationMenu";
+import { useTranslations } from "polystella/ui";
+const t = await useTranslations(Astro.currentLocale);
 ---
 
 <div class="flex items-center justify-between py-4 px-3 sm:px-5">
   <div class="shrink-0">
     <a href="/">
       <picture>
-        <source srcset="/images/logo.svg" media="(prefers-color-scheme: dark)" />
-        <img src="/images/logo--light.svg" alt="Cloudflare Research" class="h-8 sm:h-auto" width="191" height="32" />
+        <source
+          srcset="/images/logo.svg"
+          media="(prefers-color-scheme: dark)"
+        />
+        <img
+          src="/images/logo--light.svg"
+          alt="Cloudflare Research"
+          class="h-8 sm:h-auto"
+          width="191"
+          height="32"
+        />
       </picture>
     </a>
   </div>
   <nav class="flex-1 flex justify-end md:justify-end lg:justify-center">
-    <NavMenu client:load />
+    <NavMenu client:load t={t} />
   </nav>
-  <div class="hidden lg:block w-[197px] text-page-text text-right">
-    &nbsp;
-  </div>
+  <div class="hidden lg:block w-[197px] text-page-text text-right">&nbsp;</div>
 </div>

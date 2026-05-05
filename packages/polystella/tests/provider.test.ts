@@ -419,13 +419,16 @@ describe("translateBatch", () => {
   });
 
   it("orchestrates buildPrompt → translate → parseResponse and returns the parsed map", async () => {
-    const expectedJson = JSON.stringify({
-      "fm:title": "Um pedido de desculpas",
-      "body:0": "Pedimos **desculpas** por qualquer inconveniência.",
-    });
+    const markerResponse = [
+      "@@fm:title@@",
+      "Um pedido de desculpas",
+      "",
+      "@@body:0@@",
+      "Pedimos **desculpas** por qualquer inconveniência.",
+    ].join("\n");
     const fakeTranslator: Translator = {
       modelId: "test",
-      translate: vi.fn().mockResolvedValue(expectedJson),
+      translate: vi.fn().mockResolvedValue(markerResponse),
     };
     const out = await translateBatch({
       translator: fakeTranslator,
@@ -439,18 +442,17 @@ describe("translateBatch", () => {
       "Pedimos **desculpas** por qualquer inconveniência.",
     );
     expect(fakeTranslator.translate).toHaveBeenCalledTimes(1);
-    // Sanity: the system + user prompts were both passed in.
     const [systemPrompt, userPrompt] = (
       fakeTranslator.translate as ReturnType<typeof vi.fn>
     ).mock.calls[0]!;
     expect(systemPrompt).toMatch(/professional translator/);
-    expect(userPrompt).toMatch(/fm:title/);
+    expect(userPrompt).toMatch(/@@fm:title@@/);
   });
 
   it("propagates errors from a strict response parse", async () => {
     const fakeTranslator: Translator = {
       modelId: "test",
-      translate: vi.fn().mockResolvedValue("not json at all"),
+      translate: vi.fn().mockResolvedValue("not a marker-delimited response"),
     };
     await expect(
       translateBatch({
@@ -460,6 +462,6 @@ describe("translateBatch", () => {
         sourceLocale: "en",
         targetLocale: "pt-BR",
       }),
-    ).rejects.toThrow(/could not find a JSON object/);
+    ).rejects.toThrow(/no segment markers in the model response/);
   });
 });

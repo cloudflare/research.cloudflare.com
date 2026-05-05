@@ -2,13 +2,32 @@ import type { Segment } from "../parsing/extract.js";
 import type { Glossary } from "../glossary/glossary.js";
 
 /**
- * Prompt construction. We ask the model for a single JSON object
- * keyed by segment id; `parseResponse` strips any code-fence /
- * preamble wrapping defensively.
+ * Prompt construction. We ask the model to emit each translated
+ * segment as a delimited block:
+ *
+ *   @@<segment-id>@@
+ *   <translated text>
+ *
+ * This format replaces an earlier JSON-object protocol. The model
+ * doesn't have to track nested syntax (braces, quotes, escaping),
+ * which both saves output tokens and removes a class of failures
+ * smaller models hit on long Portuguese / CJK content (truncation
+ * before the closing `}`, unescaped scare-quotes inside strings,
+ * etc.). Translated values are taken verbatim between markers, so
+ * literal newlines, quotes, and backslashes pass through without
+ * any escaping rules to follow.
  *
  * Pure — no I/O, no provider deps — so prompt and acceptance rules
  * live in one place and unit-test without a network.
  */
+
+/**
+ * Marker delimiter used in both the user prompt and the parsed
+ * response. `@@` is rare enough in technical/research prose that
+ * collisions inside translated content are practically nil; the
+ * parser still validates that every emitted id is one we asked for.
+ */
+const MARKER = "@@";
 
 export interface BuildPromptInput {
   segments: Segment[];
@@ -24,11 +43,6 @@ export interface BuiltPrompt {
   userPrompt: string;
 }
 
-/**
- * System prompt: role, optional context line, source/target locales,
- * glossary's three rule lists, output-format spec.
- * User prompt: JSON object mapping segment id → source text.
- */
 export function buildPrompt(input: BuildPromptInput): BuiltPrompt {
   const { segments, glossary, sourceLocale, targetLocale, context } = input;
   const sourceName = localeName(sourceLocale);
@@ -76,36 +90,32 @@ export function buildPrompt(input: BuildPromptInput): BuiltPrompt {
   systemLines.push("");
   systemLines.push("OUTPUT FORMAT:");
   systemLines.push(
-    `Return a single JSON object whose keys are the segment IDs from the user message, and whose values are the translated strings. Output the JSON object ONLY: no preamble, no code fences, no explanation, no surrounding prose. The set of keys in your response MUST equal the set of keys in the user message — do not add, omit, or rename any segment ID.`,
-  );
-  // Smaller models (notably llama-3.1-8b-instruct) routinely emit
-  // unescaped inner double quotes when the source uses them as
-  // scare-quotes (`"chaves "constrangidas""`), breaking JSON.parse.
-  // Calling the rule out explicitly steers the decoder.
-  systemLines.push(
-    `JSON ESCAPING: Every double-quote character (") that appears inside a string VALUE must be escaped as \\". Every backslash (\\) must be escaped as \\\\. Newlines must be escaped as \\n. Do NOT escape characters outside string values (the JSON keys, structural punctuation, the opening/closing braces). When the source text contains scare-quotes, technical terms, or quoted phrases, those quotes must be \\" inside the JSON string, never bare ".`,
+    `For each segment in the user message, output a marker line of the form ${MARKER}<segment-id>${MARKER} on its own line, followed by the translated text on subsequent lines. Repeat for every segment id; do not skip any. The set of segment ids in your response MUST equal the set in the user message — do not add, omit, or rename any. Do NOT wrap your output in JSON, code fences, or any other surrounding syntax. Output the markers and translations only.`,
   );
 
-  const segmentMap: Record<string, string> = {};
-  for (const seg of segments) segmentMap[seg.id] = seg.text;
-
-  const userPrompt = [
-    `Translate the following segments to ${targetName}. The keys are segment IDs and must appear unchanged in your response. The values are the source texts to translate.`,
+  const userPromptParts: string[] = [
+    `Translate the following segments to ${targetName}. Each segment is preceded by a marker line ${MARKER}<segment-id>${MARKER}. Output translations in the SAME format with the SAME segment ids — one marker line per segment, then the translation, then a blank line before the next marker.`,
     "",
-    JSON.stringify(segmentMap, null, 2),
-  ].join("\n");
+  ];
+  for (const seg of segments) {
+    userPromptParts.push(`${MARKER}${seg.id}${MARKER}`);
+    userPromptParts.push(seg.text);
+    userPromptParts.push("");
+  }
 
   return {
     systemPrompt: systemLines.join("\n"),
-    userPrompt,
+    userPrompt: userPromptParts.join("\n").trimEnd(),
   };
 }
 
 /**
- * Parse a model response into `Map<segmentId, translatedText>`.
- * Tolerant of code-fence wrapping and surrounding prose; strict on
- * shape and id-set parity. Throws (with the raw response truncated)
- * on any deviation.
+ * Parse a marker-delimited response into `Map<segmentId, translatedText>`.
+ *
+ * Tolerant: strips code-fence wrapping if the model adds one,
+ * accepts surrounding prose before the first marker (treated as
+ * preamble and discarded). Strict on the id set — unknown or
+ * omitted ids throw with a truncated dump for diagnostics.
  */
 export function parseResponse(
   rawText: string,
@@ -113,73 +123,72 @@ export function parseResponse(
 ): Map<string, string> {
   const cleaned = stripCodeFences(rawText.trim());
 
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(cleaned);
-  } catch (rootErr) {
-    // Fall back to extracting the first `{...}` block from prose.
-    const first = cleaned.indexOf("{");
-    const last = cleaned.lastIndexOf("}");
+  // Split on `@@<id>@@` marker lines. The split keeps the captured id
+  // and the content between markers as alternating array elements:
+  //   parts[0]      = preamble (anything before the first marker)
+  //   parts[1]      = first id
+  //   parts[2]      = first content
+  //   parts[3]      = second id
+  //   parts[4]      = second content
+  //   …
+  // Multi-line flag so `^`/`$` match line starts/ends rather than
+  // string ends — the marker has to be on its own line so we don't
+  // mis-detect `@@something@@` if it appears mid-sentence.
+  const markerRe = new RegExp(
+    `^${escapeRegExp(MARKER)}([^@\\n]+?)${escapeRegExp(MARKER)}\\s*$`,
+    "gm",
+  );
+  const parts = cleaned.split(markerRe);
 
-    // Distinguish truncation from "not JSON at all". A response that
-    // opens with `{` but has no closing `}` is almost always the
-    // model getting cut off by its output-token cap mid-string —
-    // separate from malformed JSON or an entirely different shape.
-    if (first !== -1 && last === -1) {
-      throw new Error(
-        `[polystella] model response appears truncated mid-output (opening "{" present, no closing "}"). Total length: ${rawText.length} chars. The model likely hit its output-token limit; raise \`provider.maxTokens\` or split the source into smaller files.\nRaw response was:\n${truncateRaw(rawText)}`,
-      );
-    }
-    if (first === -1) {
-      throw new Error(
-        `[polystella] no JSON object in the model response (no "{" found). Total length: ${rawText.length} chars. The model may have refused to emit JSON or returned only prose.\nRaw response was:\n${truncateRaw(rawText)}`,
-      );
-    }
-    if (last <= first) {
-      throw new Error(
-        `[polystella] could not find a JSON object in the model response (closing "}" before opening "{"). Raw response was:\n${truncateRaw(rawText)}`,
-      );
-    }
-    try {
-      parsed = JSON.parse(cleaned.slice(first, last + 1));
-    } catch (err) {
-      throw new Error(
-        `[polystella] failed to parse JSON from the model response: ${
-          (err as Error).message
-        } (root parse: ${(rootErr as Error).message})\nRaw response was:\n${truncateRaw(rawText)}`,
-      );
-    }
-  }
-
-  if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
-    const kind = Array.isArray(parsed) ? "array" : typeof parsed;
+  if (parts.length < 3) {
     throw new Error(
-      `[polystella] expected a JSON object from the model, got ${kind}. Raw response was:\n${truncateRaw(
-        rawText,
-      )}`,
+      `[polystella] no segment markers in the model response. Expected ${expectedIds.length} markers of the form "${MARKER}<id>${MARKER}". Total length: ${rawText.length} chars.\nRaw response was:\n${truncateRaw(rawText)}`,
     );
   }
 
+  // Every emitted segment shows up as a (id, content) pair. Odd
+  // indices in `parts` are ids; even indices ≥ 2 are the content
+  // immediately following the preceding id.
   const expected = new Set(expectedIds);
   const result = new Map<string, string>();
-  for (const [key, value] of Object.entries(parsed)) {
-    if (!expected.has(key)) {
+  for (let i = 1; i + 1 < parts.length; i += 2) {
+    const id = (parts[i] ?? "").trim();
+    const value = (parts[i + 1] ?? "").trim();
+    if (id.length === 0) continue;
+    if (!expected.has(id)) {
       throw new Error(
-        `[polystella] model returned unexpected segment id "${key}" (not in input)`,
+        `[polystella] model returned unexpected segment id "${id}" (not in input)`,
       );
     }
-    if (typeof value !== "string") {
+    if (value.length === 0) {
       throw new Error(
-        `[polystella] model returned non-string value for segment "${key}" (got ${typeof value})`,
+        `[polystella] model returned an empty translation for segment "${id}"`,
       );
     }
-    result.set(key, value);
+    result.set(id, value);
   }
 
   for (const id of expectedIds) {
     if (!result.has(id)) {
+      // Distinguish truncation (model started but didn't finish all
+      // segments) from a flat-out missing id (model produced markers
+      // for some other ids and skipped this one).
+      const lastEmitted = [...result.keys()].at(-1);
+      const totalCharsInResult = [...result.values()].reduce(
+        (n, v) => n + v.length,
+        0,
+      );
+      const looksTruncated =
+        lastEmitted !== undefined &&
+        rawText.length > totalCharsInResult &&
+        // Model stopped mid-content for the last emitted id (no
+        // marker for the missing id at all).
+        !rawText.includes(`${MARKER}${id}${MARKER}`);
+      const hint = looksTruncated
+        ? ` Response appears truncated after segment "${lastEmitted}" — the model likely hit its output-token limit. Raise \`provider.maxTokens\` or split the source into smaller files.`
+        : "";
       throw new Error(
-        `[polystella] model omitted segment "${id}" from response`,
+        `[polystella] model omitted segment "${id}" from response.${hint}\nRaw response was:\n${truncateRaw(rawText)}`,
       );
     }
   }
@@ -188,17 +197,21 @@ export function parseResponse(
 }
 
 function stripCodeFences(text: string): string {
-  const fenced = /^```(?:json)?\s*\n([\s\S]*?)\n```$/i.exec(text);
+  const fenced = /^```(?:\w+)?\s*\n([\s\S]*?)\n```$/i.exec(text);
   return fenced?.[1]?.trim() ?? text;
 }
 
 function truncateRaw(text: string, max = 2000): string {
   if (text.length <= max) return text;
-  // Show the LAST max/2 chars too — the cutoff point is where
-  // diagnostics matter most, and a head-only window can hide it.
+  // Show head + tail so the cutoff point at the END is visible
+  // alongside the opening structure at the START.
   const headChars = Math.floor(max / 2);
   const tailChars = max - headChars;
   return `${text.slice(0, headChars)}\n... [truncated middle, total length ${text.length}] ...\n${text.slice(-tailChars)}`;
+}
+
+function escapeRegExp(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function localeName(code: string): string {

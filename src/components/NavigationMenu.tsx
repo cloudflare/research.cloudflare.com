@@ -54,7 +54,11 @@ const components: { title: string; href: string; description: string }[] = [
   },
 ];
 
-export function NavMenu() {
+interface NavMenuProps {
+  t: (key: string) => string;
+}
+
+export function NavMenu({ t }: NavMenuProps) {
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [focusAreasOpen, setFocusAreasOpen] = React.useState(false);
@@ -105,7 +109,7 @@ export function NavMenu() {
                   onClick={() => setFocusAreasOpen(!focusAreasOpen)}
                   className="text-lg font-medium text-page-text hover:text-baby-blue-eyes transition-colors w-full text-left flex items-center justify-between"
                 >
-                  Focus Areas
+                  {t("nav.focusAreas")}
                   <span className="text-sm pr-3">
                     {focusAreasOpen ? "−" : "+"}
                   </span>
@@ -137,7 +141,7 @@ export function NavMenu() {
                 className="text-lg font-medium text-page-text hover:text-baby-blue-eyes transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Presentations
+                {t("nav.presentations")}
               </a>
 
               {/* About Section */}
@@ -146,7 +150,7 @@ export function NavMenu() {
                   onClick={() => setAboutOpen(!aboutOpen)}
                   className="text-lg font-medium text-page-text hover:text-baby-blue-eyes transition-colors w-full text-left flex items-center justify-between"
                 >
-                  About Us
+                  {t("nav.aboutUs")}
                   <span className="text-sm pr-3">{aboutOpen ? "−" : "+"}</span>
                 </button>
                 {aboutOpen && (
@@ -156,14 +160,14 @@ export function NavMenu() {
                       className="block text-base font-medium text-page-text hover:text-baby-blue-eyes transition-colors"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      People
+                      {t("nav.people")}
                     </a>
                     <a
                       href="/philosophy"
                       className="block text-base font-medium text-page-text hover:text-baby-blue-eyes transition-colors"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Philosophy
+                      {t("nav.philosophy")}
                     </a>
                   </div>
                 )}
@@ -174,7 +178,7 @@ export function NavMenu() {
                 className="text-lg font-medium text-page-text hover:text-baby-blue-eyes transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Careers
+                {t("nav.careers")}
               </a>
             </nav>
           </div>
@@ -185,7 +189,7 @@ export function NavMenu() {
       <NavigationMenu viewport={isMobile} className="hidden md:flex">
         <NavigationMenuList className="flex-wrap">
           <NavigationMenuItem>
-            <NavigationMenuTrigger>Focus Areas</NavigationMenuTrigger>
+            <NavigationMenuTrigger>{t("nav.focusAreas")}</NavigationMenuTrigger>
             <NavigationMenuContent>
               <ul className="grid gap-2 sm:w-[400px] md:w-[500px] md:grid-cols-2 lg:w-[600px] z-(--z-nav) relative">
                 {components.map((component) => (
@@ -205,16 +209,16 @@ export function NavMenu() {
               asChild
               className={navigationMenuTriggerStyle()}
             >
-              <a href="/presentations">Presentations</a>
+              <a href="/presentations">{t("nav.presentations")}</a>
             </NavigationMenuLink>
           </NavigationMenuItem>
 
           <NavigationMenuItem>
-            <NavigationMenuTrigger>About Us</NavigationMenuTrigger>
+            <NavigationMenuTrigger>{t("nav.aboutUs")}</NavigationMenuTrigger>
             <NavigationMenuContent>
               <ul className="grid gap-2 w-[200px] z-(--z-nav) relative p-2">
-                <ListItem title="People" href="/people" />
-                <ListItem title="Philosophy" href="/philosophy" />
+                <ListItem title={t("nav.people")} href="/people" />
+                <ListItem title={t("nav.philosophy")} href="/philosophy" />
               </ul>
             </NavigationMenuContent>
           </NavigationMenuItem>
@@ -224,7 +228,7 @@ export function NavMenu() {
               asChild
               className={navigationMenuTriggerStyle()}
             >
-              <a href={CONSTANTS.CLOUDFLARE_JOBS}>Careers</a>
+              <a href={CONSTANTS.CLOUDFLARE_JOBS}>{t("nav.careers")}</a>
             </NavigationMenuLink>
           </NavigationMenuItem>
         </NavigationMenuList>

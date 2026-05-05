@@ -15,6 +15,15 @@ const sampleGlossary: Glossary = {
   notes: "Use Brazilian Portuguese spelling.",
 };
 
+/** Helper: build a marker-delimited response for `expectedIds`. */
+function buildMarkerResponse(
+  pairs: ReadonlyArray<[id: string, value: string]>,
+): string {
+  return pairs
+    .map(([id, value]) => `@@${id}@@\n${value}`)
+    .join("\n\n");
+}
+
 describe("buildPrompt", () => {
   it("includes both source and target language names and codes", () => {
     const { systemPrompt } = buildPrompt({
@@ -101,39 +110,55 @@ describe("buildPrompt", () => {
     expect(systemPrompt).not.toMatch(/MUST NOT BE TRANSLATED/);
     expect(systemPrompt).not.toMatch(/PREFERRED TRANSLATIONS/);
     expect(systemPrompt).not.toMatch(/ADDITIONAL NOTES/);
-    // The output-format clause is unconditional and must always appear.
+    // The output-format clause is unconditional.
     expect(systemPrompt).toMatch(/OUTPUT FORMAT/);
   });
 
-  it("places every segment ID and its source text into the user prompt as a JSON object", () => {
+  it("places every segment as a marker block in the user prompt", () => {
     const { userPrompt } = buildPrompt({
       segments: sampleSegments,
       glossary: sampleGlossary,
       sourceLocale: "en",
       targetLocale: "pt-BR",
     });
-    // The user prompt must contain a JSON object literal we can parse.
-    const start = userPrompt.indexOf("{");
-    const end = userPrompt.lastIndexOf("}");
-    expect(start).toBeGreaterThan(-1);
-    const json = JSON.parse(userPrompt.slice(start, end + 1));
-    expect(json).toEqual({
-      "fm:title": "An apology for outdated cryptography",
-      "body:0": "We **regret** any inconvenience caused.",
-    });
+    expect(userPrompt).toContain("@@fm:title@@");
+    expect(userPrompt).toContain("An apology for outdated cryptography");
+    expect(userPrompt).toContain("@@body:0@@");
+    expect(userPrompt).toContain("We **regret** any inconvenience caused.");
   });
 
-  it("instructs the model to return ONLY JSON with the same key set", () => {
+  it("instructs the model to mirror the marker format and id set", () => {
     const { systemPrompt } = buildPrompt({
       segments: sampleSegments,
       glossary: sampleGlossary,
       sourceLocale: "en",
       targetLocale: "pt-BR",
     });
-    expect(systemPrompt).toMatch(/Output the JSON object ONLY/);
-    expect(systemPrompt).toMatch(
-      /MUST equal the set of keys in the user message/,
-    );
+    expect(systemPrompt).toMatch(/marker line/);
+    expect(systemPrompt).toMatch(/MUST equal the set in the user message/);
+    expect(systemPrompt).toMatch(/Do NOT wrap your output in JSON/);
+  });
+
+  it("emits source segments in the same order they were given", () => {
+    // Order matters because the model often mirrors the user-prompt
+    // sequence in its response. A stable input order keeps the
+    // response stable across builds.
+    const segments: Segment[] = [
+      { id: "body:0", text: "first" },
+      { id: "fm:title", text: "second" },
+      { id: "body:1", text: "third" },
+    ];
+    const { userPrompt } = buildPrompt({
+      segments,
+      glossary: EMPTY_GLOSSARY,
+      sourceLocale: "en",
+      targetLocale: "pt-BR",
+    });
+    const idx0 = userPrompt.indexOf("@@body:0@@");
+    const idx1 = userPrompt.indexOf("@@fm:title@@");
+    const idx2 = userPrompt.indexOf("@@body:1@@");
+    expect(idx0).toBeLessThan(idx1);
+    expect(idx1).toBeLessThan(idx2);
   });
 
   it("uses a generic role declaration by default (no domain framing)", () => {
@@ -144,7 +169,6 @@ describe("buildPrompt", () => {
       targetLocale: "pt-BR",
     });
     expect(systemPrompt).toMatch(/^You are a professional translator\.$/m);
-    // The default opener must NOT carry any site-specific framing.
     expect(systemPrompt).not.toMatch(/research/i);
     expect(systemPrompt).not.toMatch(/specialis/i);
   });
@@ -160,7 +184,6 @@ describe("buildPrompt", () => {
     const lines = systemPrompt.split("\n");
     expect(lines[0]).toBe("You are a professional translator.");
     expect(lines[1]).toBe("Specialise in technical research content.");
-    // The source/target line must come after the context, not before.
     const tgtIdx = lines.findIndex((l) => /Translate from/.test(l));
     expect(tgtIdx).toBeGreaterThan(1);
   });
@@ -173,8 +196,6 @@ describe("buildPrompt", () => {
       targetLocale: "pt-BR",
       context: "   \n\t  ",
     });
-    // A whitespace-only context must produce the same prompt as an
-    // omitted one — no stray blank line, no trailing whitespace artifact.
     const omitted = buildPrompt({
       segments: sampleSegments,
       glossary: EMPTY_GLOSSARY,
@@ -197,11 +218,11 @@ describe("buildPrompt", () => {
 describe("parseResponse", () => {
   const expected = ["fm:title", "body:0"];
 
-  it("parses a clean JSON object", () => {
-    const raw = JSON.stringify({
-      "fm:title": "Um pedido de desculpas",
-      "body:0": "Pedimos **desculpas** por qualquer inconveniência.",
-    });
+  it("parses a clean marker-delimited response", () => {
+    const raw = buildMarkerResponse([
+      ["fm:title", "Um pedido de desculpas"],
+      ["body:0", "Pedimos **desculpas** por qualquer inconveniência."],
+    ]);
     const out = parseResponse(raw, expected);
     expect(out.get("fm:title")).toBe("Um pedido de desculpas");
     expect(out.get("body:0")).toBe(
@@ -209,82 +230,137 @@ describe("parseResponse", () => {
     );
   });
 
-  it("strips ```json code fences when the model wraps the output", () => {
+  it("preserves multi-line translated content verbatim", () => {
+    // The marker format shines here vs. JSON: literal newlines pass
+    // through without escaping.
     const raw = [
-      "```json",
-      JSON.stringify({ "fm:title": "T", "body:0": "B" }),
-      "```",
+      "@@fm:title@@",
+      "Title",
+      "",
+      "@@body:0@@",
+      "First line",
+      "Second line",
+      "",
+      "Third line after blank",
     ].join("\n");
+    const out = parseResponse(raw, expected);
+    expect(out.get("body:0")).toBe(
+      "First line\nSecond line\n\nThird line after blank",
+    );
+  });
+
+  it("preserves literal quotes and backslashes verbatim (no escaping needed)", () => {
+    const raw = buildMarkerResponse([
+      ["fm:title", 'A "quoted" title'],
+      ["body:0", "Path: C:\\path\\to\\thing"],
+    ]);
+    const out = parseResponse(raw, expected);
+    expect(out.get("fm:title")).toBe('A "quoted" title');
+    expect(out.get("body:0")).toBe("Path: C:\\path\\to\\thing");
+  });
+
+  it("strips ```text code fences when the model wraps the output", () => {
+    const raw = ["```text", buildMarkerResponse([
+      ["fm:title", "T"],
+      ["body:0", "B"],
+    ]), "```"].join("\n");
     const out = parseResponse(raw, expected);
     expect(out.get("fm:title")).toBe("T");
     expect(out.get("body:0")).toBe("B");
   });
 
   it("strips plain ``` code fences too", () => {
-    const raw = [
-      "```",
-      JSON.stringify({ "fm:title": "T", "body:0": "B" }),
-      "```",
-    ].join("\n");
+    const raw = ["```", buildMarkerResponse([
+      ["fm:title", "T"],
+      ["body:0", "B"],
+    ]), "```"].join("\n");
     const out = parseResponse(raw, expected);
     expect(out.size).toBe(2);
   });
 
-  it("extracts the JSON object from a leading prose preamble", () => {
-    const raw = `Here is the translated JSON object:\n${JSON.stringify({
-      "fm:title": "T",
-      "body:0": "B",
-    })}\n— hope this helps!`;
+  it("ignores leading prose before the first marker", () => {
+    const raw = `Here are the translations:\n\n${buildMarkerResponse([
+      ["fm:title", "T"],
+      ["body:0", "B"],
+    ])}`;
     const out = parseResponse(raw, expected);
     expect(out.get("fm:title")).toBe("T");
   });
 
-  it("throws when no JSON object can be located", () => {
+  it("throws when no markers are present at all", () => {
     expect(() =>
       parseResponse("Sorry, I cannot translate this.", expected),
-    ).toThrow(/no JSON object in the model response/);
+    ).toThrow(/no segment markers in the model response/);
   });
 
-  it("distinguishes truncation (open `{`, no closing `}`) from other parse failures", () => {
-    expect(() =>
-      parseResponse('{"fm:title": "incomplete...', expected),
-    ).toThrow(/truncated mid-output/);
-  });
-
-  it("throws on a syntactically broken JSON object", () => {
-    expect(() =>
-      parseResponse('{"fm:title": "T", "body:0": "B",,}', expected),
-    ).toThrow(/failed to parse JSON|could not find a JSON object/);
-  });
-
-  it("throws when the parsed value is not an object", () => {
-    expect(() => parseResponse("[1, 2, 3]", expected)).toThrow(
-      /expected a JSON object/,
+  it("distinguishes truncation (last segment never finished) with a clear hint", () => {
+    // Model emitted the body:0 marker and content but never produced
+    // the second marker — the last id we requested.
+    const raw = "@@fm:title@@\nT";
+    expect(() => parseResponse(raw, expected)).toThrow(
+      /omitted segment "body:0".*Response appears truncated/s,
     );
   });
 
   it("throws when the model returns an unexpected segment id", () => {
-    const raw = JSON.stringify({
-      "fm:title": "T",
-      "body:0": "B",
-      "body:99": "Surprise!",
-    });
+    const raw = buildMarkerResponse([
+      ["fm:title", "T"],
+      ["body:0", "B"],
+      ["body:99", "Surprise!"],
+    ]);
     expect(() => parseResponse(raw, expected)).toThrow(
       /unexpected segment id "body:99"/,
     );
   });
 
   it("throws when the model omits an expected segment", () => {
-    const raw = JSON.stringify({ "fm:title": "T" });
+    // Model emitted fm:title with content but body:0 with empty
+    // content — a different shape than truncation. Without this
+    // explicit miss, a typo in the id space could be silently
+    // accepted as "translation = empty".
+    const raw = buildMarkerResponse([["fm:title", "T"]]);
     expect(() => parseResponse(raw, expected)).toThrow(
       /omitted segment "body:0"/,
     );
   });
 
-  it("throws when a value is not a string", () => {
-    const raw = JSON.stringify({ "fm:title": 42, "body:0": "B" });
+  it("throws when a translation block is empty", () => {
+    // Marker present but no content between it and the next marker.
+    // Empty translation is meaningless — better to fail loudly than
+    // ship a blank rendered page.
+    const raw = "@@fm:title@@\n\n@@body:0@@\nB";
     expect(() => parseResponse(raw, expected)).toThrow(
-      /non-string value for segment "fm:title"/,
+      /empty translation for segment "fm:title"/,
     );
+  });
+
+  it("trims trailing whitespace from each translation block", () => {
+    const raw = [
+      "@@fm:title@@",
+      "T  ",
+      "",
+      "@@body:0@@",
+      "  B",
+      "",
+    ].join("\n");
+    const out = parseResponse(raw, expected);
+    expect(out.get("fm:title")).toBe("T");
+    expect(out.get("body:0")).toBe("B");
+  });
+
+  it("does not match `@@id@@` appearing mid-line (markers must be standalone)", () => {
+    // A translation that mentions `@@something@@` inline shouldn't
+    // be misread as a new marker. The regex anchors on line starts
+    // so mid-line pseudo-markers stay part of the content.
+    const raw = [
+      "@@fm:title@@",
+      "T (see @@inline@@ note)",
+      "",
+      "@@body:0@@",
+      "B",
+    ].join("\n");
+    const out = parseResponse(raw, expected);
+    expect(out.get("fm:title")).toBe("T (see @@inline@@ note)");
+    expect(out.get("body:0")).toBe("B");
   });
 });
