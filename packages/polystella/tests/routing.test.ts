@@ -166,4 +166,97 @@ describe("generateShimSource", () => {
     });
     expect(source.endsWith("\n")).toBe(true);
   });
+
+  describe("imports option (CSS injection)", () => {
+    // The `imports` field is the linchpin of the styling fix:
+    // without it, shim routes don't get a `<link
+    // rel="stylesheet">` because Astro's per-route CSS injection
+    // doesn't follow CSS through `<SourcePage />`. With it, the
+    // listed CSS files become first-degree imports of the shim
+    // module, and Vite + Astro emit the right link tags.
+
+    it("emits side-effect imports BEFORE the source page import (dynamic template)", () => {
+      const source = generateShimSource({
+        relativeImportPath: "../../src/pages/[slug].astro",
+        isDynamic: true,
+        locales: LOCALES,
+        imports: ["../../src/styles/global.css"],
+      });
+      const cssIdx = source.indexOf('import "../../src/styles/global.css"');
+      const sourceImportIdx = source.indexOf("import SourcePage,");
+      expect(cssIdx).toBeGreaterThan(-1);
+      expect(sourceImportIdx).toBeGreaterThan(-1);
+      // CSS comes first so its module-level side effects are
+      // registered before the source page module loads. Vite
+      // doesn't strictly require this, but a stable order is
+      // diff-friendly across builds.
+      expect(cssIdx).toBeLessThan(sourceImportIdx);
+    });
+
+    it("emits side-effect imports BEFORE the source page import (static template)", () => {
+      const source = generateShimSource({
+        relativeImportPath: "../../src/pages/about.astro",
+        isDynamic: false,
+        locales: LOCALES,
+        imports: ["../../src/styles/global.css"],
+      });
+      const cssIdx = source.indexOf('import "../../src/styles/global.css"');
+      const sourceImportIdx = source.indexOf("import SourcePage from");
+      expect(cssIdx).toBeGreaterThan(-1);
+      expect(sourceImportIdx).toBeGreaterThan(-1);
+      expect(cssIdx).toBeLessThan(sourceImportIdx);
+    });
+
+    it("emits multiple imports in declared order", () => {
+      // For projects with split CSS bundles or per-page stylesheets
+      // the operator may need to inject more than one. Order is
+      // preserved as a documented contract — Vite chunking
+      // determinism leans on it.
+      const source = generateShimSource({
+        relativeImportPath: "../../src/pages/[slug].astro",
+        isDynamic: true,
+        locales: LOCALES,
+        imports: ["../../src/styles/global.css", "../../src/styles/publication.css"],
+      });
+      const firstIdx = source.indexOf('import "../../src/styles/global.css"');
+      const secondIdx = source.indexOf('import "../../src/styles/publication.css"');
+      expect(firstIdx).toBeGreaterThan(-1);
+      expect(secondIdx).toBeGreaterThan(-1);
+      expect(firstIdx).toBeLessThan(secondIdx);
+    });
+
+    it("normalises backslashes in injected import paths", () => {
+      // Symmetric with the source-page import: Windows-style paths
+      // get flipped to forward slashes so the emitted shim is
+      // cross-platform safe.
+      const source = generateShimSource({
+        relativeImportPath: "../../src/pages/[slug].astro",
+        isDynamic: true,
+        locales: LOCALES,
+        imports: ["..\\..\\src\\styles\\global.css"],
+      });
+      expect(source).toContain('import "../../src/styles/global.css"');
+      // No raw backslashes anywhere in the output.
+      expect(source).not.toContain("\\");
+    });
+
+    it("omits the imports section entirely when no imports are supplied", () => {
+      // Back-compat: existing callers that don't pass `imports`
+      // should produce byte-identical output to the pre-feature
+      // shape (no spurious blank lines, no orphan import section).
+      const without = generateShimSource({
+        relativeImportPath: "../../src/pages/about.astro",
+        isDynamic: false,
+        locales: LOCALES,
+      });
+      const withEmpty = generateShimSource({
+        relativeImportPath: "../../src/pages/about.astro",
+        isDynamic: false,
+        locales: LOCALES,
+        imports: [],
+      });
+      expect(withEmpty).toBe(without);
+      expect(without).not.toContain('import "');
+    });
+  });
 });

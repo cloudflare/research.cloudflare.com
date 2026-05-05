@@ -1,4 +1,9 @@
+---
+import { getTranslations } from "polystella/i18n";
+const t = await getTranslations(Astro.currentLocale);
+---
+
 <header class="interior-header">
-  <h1 class="heading">Presentations & Keynotes</h1>
-  <h2 class="subheading">We share our work to promote the widespread deployment of useful ideas and help the industry adopt new innovations.</h2>
+  <h1 class="heading">{t("presentations.heading")}</h1>
+  <h2 class="subheading">{t("presentations.subheading")}</h2>
 </header>

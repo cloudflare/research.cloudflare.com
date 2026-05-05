@@ -111,6 +111,25 @@ const config = {
   // source-language content under the locale-prefixed URLs.
   routes: ["src/pages/index.astro", "src/pages/[slug].astro"],
 
+  // ─── Shim CSS injection ──────────────────────────────────────────────
+  // Astro's per-route `<link rel="stylesheet">` injection follows
+  // CSS dependencies that are direct first-degree imports of the
+  // route's own module. PolyStella's shims import the source page
+  // and render it via `<SourcePage />`, but Astro DOESN'T follow
+  // CSS through that render — so the shim's routes ship to dist/
+  // with no stylesheet link, and translated pages render with no
+  // styles applied.
+  //
+  // Listing CSS files here makes them first-degree imports of every
+  // shim, which lands the right `<link>` in the translated pages'
+  // HTML. Vite groups this codebase's CSS into a single chunk
+  // (everything routes through `src/styles/global.css` via the
+  // BaseLayout chain), so one entry covers all shimmed pages today.
+  // If a future page introduces a CSS file that Vite chunks
+  // separately, list it here too — or use the per-route object
+  // form on `routes` to scope the import.
+  routesImports: ["./src/styles/global.css"],
+
   // What to render at a translated URL when the underlying page has no
   // translation: fall back to the default-locale page, or 404.
   // noTranslateBehavior: "fallback",  // "fallback" | "404"

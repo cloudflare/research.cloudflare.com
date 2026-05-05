@@ -118,7 +118,56 @@ export const polystellaOptionsSchema = z
     // Per-collection frontmatter rules; globs against relative source path.
     frontmatter: z.record(z.string(), z.array(z.string())).default({}),
 
-    routes: z.array(z.string()).default([]),
+    /**
+     * Source pages to inject locale-prefixed shims for. Each entry
+     * is either a bare path string or an object `{ source, imports }`
+     * where `imports` are extra modules (typically CSS) the shim
+     * should pull in.
+     *
+     * Why per-shim imports matter: Astro's per-route `<link
+     * rel="stylesheet">` injection only follows CSS dependencies that
+     * are direct first-degree imports of the route's own module.
+     * When a shim imports a source page (`import SourcePage from
+     * "..."`) and renders it via `<SourcePage />`, the source's
+     * transitive CSS imports (global.css → through layout → through
+     * BaseLayout) compile into Vite chunks correctly, but Astro's
+     * link injection doesn't follow that chain. Result: the shim's
+     * routes render with no styles linked.
+     *
+     * The `imports` field — combined with the top-level
+     * `routesImports` default applied to every shim — fixes this by
+     * making CSS a first-degree import of the shim itself. Vite then
+     * groups CSS chunks per import graph, and Astro emits a `<link>`
+     * to whichever chunk(s) that import resolves into. For Tailwind-
+     * style projects where all CSS lives in one chunk, importing the
+     * single global stylesheet is enough; for projects with split
+     * CSS bundles, list every relevant file.
+     */
+    routes: z
+      .array(
+        z.union([
+          z.string(),
+          z
+            .object({
+              source: z.string(),
+              imports: z.array(z.string()).optional(),
+            })
+            .strict(),
+        ]),
+      )
+      .default([])
+      .transform((arr) =>
+        arr.map((entry) =>
+          typeof entry === "string" ? { source: entry, imports: [] as string[] } : { source: entry.source, imports: entry.imports ?? [] },
+        ),
+      ),
+    /**
+     * Imports threaded into EVERY shim's frontmatter, in addition to
+     * any per-route `imports`. Use this for CSS (or any other module)
+     * that's needed across the entire shim-routed surface — typically
+     * a single global stylesheet.
+     */
+    routesImports: z.array(z.string()).default([]),
     noTranslateBehavior: z.enum(["fallback", "404"]).default("fallback"),
     rewriteInternalLinks: z.boolean().default(true),
 

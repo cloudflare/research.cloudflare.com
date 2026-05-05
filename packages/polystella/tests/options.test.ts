@@ -164,3 +164,103 @@ describe("resolveOptions — option-surface", () => {
     expect(resolved.noTranslateBehavior).toBe("fallback");
   });
 });
+
+describe("resolveOptions — routes normalisation", () => {
+  // The `routes` field accepts either bare strings (`"src/pages/x.astro"`)
+  // or full objects (`{ source, imports }`) so the user can opt into
+  // per-route shim CSS imports incrementally. The schema normalises
+  // both shapes to the object form so the integration's shim-creation
+  // loop has one shape to consume.
+
+  it("normalises bare-string entries to { source, imports: [] }", () => {
+    const resolved = resolveOptions({ routes: ["src/pages/index.astro", "src/pages/[slug].astro"] }, HAPPY_I18N);
+    expect(resolved.routes).toEqual([
+      { source: "src/pages/index.astro", imports: [] },
+      { source: "src/pages/[slug].astro", imports: [] },
+    ]);
+  });
+
+  it("preserves object-form entries with imports", () => {
+    const resolved = resolveOptions(
+      {
+        routes: [
+          {
+            source: "src/pages/[slug].astro",
+            imports: ["./src/styles/global.css"],
+          },
+        ],
+      },
+      HAPPY_I18N,
+    );
+    expect(resolved.routes).toEqual([
+      {
+        source: "src/pages/[slug].astro",
+        imports: ["./src/styles/global.css"],
+      },
+    ]);
+  });
+
+  it("treats object-form entries without `imports` as having an empty list", () => {
+    const resolved = resolveOptions({ routes: [{ source: "src/pages/about.astro" }] }, HAPPY_I18N);
+    expect(resolved.routes).toEqual([{ source: "src/pages/about.astro", imports: [] }]);
+  });
+
+  it("supports mixed bare-string + object-form in the same array", () => {
+    const resolved = resolveOptions(
+      {
+        routes: [
+          "src/pages/index.astro",
+          {
+            source: "src/pages/[slug].astro",
+            imports: ["./src/styles/global.css"],
+          },
+        ],
+      },
+      HAPPY_I18N,
+    );
+    expect(resolved.routes).toEqual([
+      { source: "src/pages/index.astro", imports: [] },
+      {
+        source: "src/pages/[slug].astro",
+        imports: ["./src/styles/global.css"],
+      },
+    ]);
+  });
+
+  it("rejects object-form entries with unknown keys (strict schema)", () => {
+    // zod's union surfaces a generic `Invalid input` for the route
+    // entry when neither the bare-string nor the strict-object
+    // variant matches. The exact wording isn't load-bearing — what
+    // matters is that the operator gets a configuration error
+    // pointed at `routes.0` rather than silent acceptance of a
+    // typo'd field name.
+    expect(() =>
+      resolveOptions(
+        {
+          routes: [
+            {
+              source: "src/pages/x.astro",
+              importz: ["./typo.css"], // typo of `imports`
+            },
+          ],
+        } as Record<string, unknown>,
+        HAPPY_I18N,
+      ),
+    ).toThrowError(/routes\.0/);
+  });
+
+  it("defaults `routesImports` to an empty array", () => {
+    const resolved = resolveOptions({}, HAPPY_I18N);
+    expect(resolved.routesImports).toEqual([]);
+  });
+
+  it("accepts a `routesImports` list", () => {
+    const resolved = resolveOptions(
+      {
+        routesImports: ["./src/styles/global.css"],
+      },
+      HAPPY_I18N,
+    );
+    expect(resolved.routesImports).toEqual(["./src/styles/global.css"]);
+  });
+});

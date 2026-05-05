@@ -5,35 +5,38 @@ import Section from "@/components/Section.astro";
 import PersonCard from "@/components/PersonCard.astro";
 import AlumniCard from "@/components/AlumniCard.astro";
 import { cn } from "@/lib/utils";
-import { getCollection } from 'astro:content';
+import { getCollection } from "astro:content";
+import { getTranslations } from "polystella/i18n";
+const t = await getTranslations(Astro.currentLocale);
 
 // get all people from the content collection
-const activePeople = await getCollection('people', ({ data }) => data.type === 'active');
-const alumni = await getCollection('people', ({ data }) => data.type === 'alumni');
+const activePeople = await getCollection("people", ({ data }) => data.type === "active");
+const alumni = await getCollection("people", ({ data }) => data.type === "alumni");
 ---
 
-<InteriorLayout metaTitle="People" metaDescription="Meet the scientists, engineers, and researchers at Cloudflare. Learn from the diverse team of experts dedicated to advancing internet security, privacy, and performance through innovative research and real-world implementation.">
+<InteriorLayout metaTitle={t("people.heading")} metaDescription={t("people.metaDescription")}>
   <HeaderPeople />
 
   <Section>
-    <div class={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 person-grid",
-      "[&>article]:p-8")}>
-      {activePeople.map(person =>(
-        <PersonCard image={person.data.avatar} name={person.data.title} role={person.data.position} slug={person.data.slug} />
-      ))}
+    <div class={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 person-grid", "[&>article]:p-8")}>
+      {
+        activePeople.map((person) => (
+          <PersonCard image={person.data.avatar} name={person.data.title} role={person.data.position} slug={person.data.slug} />
+        ))
+      }
     </div>
   </Section>
 
   <Section>
     <div class="border-b-2 border-page-border">
-      <h2 class="px-8 py-4 uppercase font-mono">Alumni</h2>
+      <h2 class="px-8 py-4 uppercase font-mono">{t("people.alumni")}</h2>
     </div>
-    <div class={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 person-grid",
-      "[&>article]:p-8")}>
-      {alumni.map(person =>(
-        <AlumniCard image={person.data.avatar} name={person.data.title} role={person.data.position} slug={person.data.slug} />
-      ))}
+    <div class={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 person-grid", "[&>article]:p-8")}>
+      {
+        alumni.map((person) => (
+          <AlumniCard image={person.data.avatar} name={person.data.title} role={person.data.position} slug={person.data.slug} />
+        ))
+      }
     </div>
   </Section>
-
 </InteriorLayout>

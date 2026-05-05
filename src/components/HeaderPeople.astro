@@ -1,4 +1,9 @@
+---
+import { getTranslations } from "polystella/i18n";
+const t = await getTranslations(Astro.currentLocale);
+---
+
 <header class="interior-header">
-  <h1 class="heading">People</h1>
-  <h2 class="subheading">Meet the Cloudflare Research team</h2>
+  <h1 class="heading">{t("people.heading")}</h1>
+  <h2 class="subheading">{t("people.subheading")}</h2>
 </header>

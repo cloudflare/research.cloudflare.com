@@ -119,6 +119,21 @@ Branch resolution is `--branch` flag → `WORKERS_CI_BRANCH` env → `git rev-pa
 
 Both `pnpm translate ...` and the explicit `pnpm translate -- ...` (POSIX `--` separator) forms work; pnpm forwards the trailing args either way.
 
+### Shim CSS imports
+
+Translated routes are emitted via PolyStella's shim system: a small `.astro` file in `node_modules/.astro/polystella-shims/route-N.astro` imports the source page and renders it under a locale-prefixed pattern (`/[lang]/<slug>`). Astro's per-route `<link rel="stylesheet">` injection follows direct first-degree CSS imports of the route's own module — but it does NOT follow CSS through `<SourcePage />` rendered as a child component. Without intervention, every translated route would ship to `dist/` with no stylesheet link, rendering as raw HTML in the browser.
+
+`polystella.config.mjs` solves this with `routesImports: ["./src/styles/global.css"]`. The listed CSS files become side-effect imports at the top of every shim's frontmatter, putting them in the shim's direct module graph. Vite groups CSS by module graph, and Astro emits the right `<link>` tags. For per-route exceptions, `routes` also accepts the object form:
+
+```js
+routes: [
+  "src/pages/index.astro",
+  { source: "src/pages/[slug].astro", imports: ["./src/styles/publication.css"] },
+],
+```
+
+This codebase ships all CSS in a single Vite chunk (everything routes through `BaseLayout` → `global.css`), so the global `routesImports` entry covers all shimmed pages. If a future page introduces a CSS file Vite chunks separately, add it to the relevant route's `imports` or to the global `routesImports`.
+
 ### Local staging cache
 
 After every translation pass (build, dev, or CLI), the orchestrator persists a small JSON index at `<root>/.astro/i18n-staging/.polystella-index.json` mapping `<locale>::<sourcePath>` to the source hash that was last staged. On the next run, any pair whose source hash matches the index entry — and whose staged file is still on disk — short-circuits before R2 is queried. The build report records these as `local-skipped` so you can see how much work the cache saved.

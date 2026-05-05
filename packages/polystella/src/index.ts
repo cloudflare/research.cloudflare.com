@@ -204,19 +204,44 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
           const shimDir = path.resolve(cacheDirPath, "polystella-shims");
           await mkdir(shimDir, { recursive: true });
 
+          // Resolve global `routesImports` once — the same set is
+          // applied to every shim, deduped against per-route extras
+          // at emission time so the user can list a path in both
+          // places without producing a duplicate import line.
+          const globalImportsAbs = resolved.routesImports.map((p) => path.resolve(rootDirPath, p));
+
           for (let i = 0; i < resolved.routes.length; i++) {
-            const sourceRel = resolved.routes[i]!;
+            const route = resolved.routes[i]!;
+            const sourceRel = route.source;
             const sourceAbs = path.resolve(rootDirPath, sourceRel);
             const { pattern, isDynamic } = deriveUrlPattern(sourceRel);
 
             const shimPath = path.join(shimDir, `route-${i}.astro`);
-            const importPath = path.relative(path.dirname(shimPath), sourceAbs).replace(/\\/g, "/");
+            const shimDirOfFile = path.dirname(shimPath);
+            const importPath = path.relative(shimDirOfFile, sourceAbs).replace(/\\/g, "/");
+
+            // Combine global + per-route imports, resolve each to an
+            // absolute path, then convert to a path relative to the
+            // shim file. Dedupe by absolute path so a shared global
+            // file listed in both `routesImports` and the route's
+            // `imports` only emits one import line.
+            const perRouteAbs = route.imports.map((p) => path.resolve(rootDirPath, p));
+            const allAbs = [...globalImportsAbs, ...perRouteAbs];
+            const seen = new Set<string>();
+            const importPaths: string[] = [];
+            for (const abs of allAbs) {
+              if (seen.has(abs)) continue;
+              seen.add(abs);
+              importPaths.push(path.relative(shimDirOfFile, abs).replace(/\\/g, "/"));
+            }
+
             await writeFile(
               shimPath,
               generateShimSource({
                 relativeImportPath: importPath,
                 isDynamic,
                 locales: resolved.locales,
+                imports: importPaths,
               }),
               "utf8",
             );
@@ -229,7 +254,11 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
               pattern: injectPattern,
               entrypoint: shimPath,
             });
-            logger.info(`injected localized route: ${injectPattern} → ${sourceRel}`);
+            logger.info(
+              `injected localized route: ${injectPattern} → ${sourceRel}${
+                importPaths.length > 0 ? ` (with ${importPaths.length} extra import${importPaths.length === 1 ? "" : "s"})` : ""
+              }`,
+            );
           }
         }
 

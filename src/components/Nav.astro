@@ -1,24 +1,15 @@
 ---
 import { NavMenu } from "./NavigationMenu";
 import { getDictionary } from "polystella/i18n";
-const dict = await getDictionary(Astro.currentLocale, "nav");
+const dict = await getDictionary(Astro.currentLocale);
 ---
 
 <div class="flex items-center justify-between py-4 px-3 sm:px-5">
   <div class="shrink-0">
     <a href="/">
       <picture>
-        <source
-          srcset="/images/logo.svg"
-          media="(prefers-color-scheme: dark)"
-        />
-        <img
-          src="/images/logo--light.svg"
-          alt="Cloudflare Research"
-          class="h-8 sm:h-auto"
-          width="191"
-          height="32"
-        />
+        <source srcset="/images/logo.svg" media="(prefers-color-scheme: dark)" />
+        <img src="/images/logo--light.svg" alt="Cloudflare Research" class="h-8 sm:h-auto" width="191" height="32" />
       </picture>
     </a>
   </div>
