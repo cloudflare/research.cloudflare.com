@@ -29,6 +29,20 @@ const htmlContent = person.rendered?.html || '';
 const personPublications = await getCollection('publications', (pub) => {
   return pub.data.authors?.some(author => author.id === slug);
 });
+
+// Get all blog posts where this person is the author
+const personBlogPosts = await getCollection('blog', (post) => {
+  return post.data.author?.id === slug;
+});
+
+console.log({ personBlogPosts });
+
+// Combine and sort by date descending
+const allContent = [...personPublications, ...personBlogPosts].sort((a, b) => {
+  const dateA = a.data.date ? new Date(a.data.date).getTime() : 0;
+  const dateB = b.data.date ? new Date(b.data.date).getTime() : 0;
+  return dateB - dateA;
+});
 ---
 
 <InteriorLayout metaTitle={person.data.title}>
@@ -57,6 +71,6 @@ const personPublications = await getCollection('publications', (pub) => {
       </div>
     </NarrowContent>
 
-    <div class="border-t border-page-border"><ArticleGrid publications={personPublications} showFilters={false} /></div>
+    <div class="border-t border-page-border"><ArticleGrid publications={allContent} showFilters={false} /></div>
   </Section>
 </InteriorLayout>
