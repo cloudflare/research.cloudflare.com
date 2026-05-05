@@ -1,9 +1,9 @@
 ---
 import { CONSTANTS } from "../lib/constants";
 import Icon from "./Icon.astro";
-import { useTranslations } from "polystella/ui";
+import { getTranslations } from "polystella/ui";
 
-const t = await useTranslations(Astro.currentLocale);
+const t = await getTranslations(Astro.currentLocale);
 ---
 
 <footer class="pt-11">

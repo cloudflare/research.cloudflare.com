@@ -14,55 +14,55 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { CONSTANTS } from "@/lib/constants";
-
-const components: { title: string; href: string; description: string }[] = [
-  {
-    title: "All Focus Areas",
-    href: "/focus",
-    description:
-      "Driving innovation across five key areas to create a faster, safer, more private, reliable, and measurable Internet.",
-  },
-  {
-    title: "More Private",
-    href: "/focus/private",
-    description:
-      "Developing privacy-preserving systems and protocols that protect users while enabling a more secure and trustworthy Internet.",
-  },
-  {
-    title: "Safer",
-    href: "/focus/safe",
-    description:
-      "Creating production-quality security defenses that address network interference and ensure safe, reliable global connectivity.",
-  },
-  {
-    title: "Faster",
-    href: "/focus/fast",
-    description:
-      "Advancing distributed systems and caching technologies that minimize latency and accelerate the global Internet.",
-  },
-  {
-    title: "More Reliable",
-    href: "/focus/reliable",
-    description:
-      "Building robust distributed systems and time synchronization protocols that ensure the Internet remains stable and available at scale.",
-  },
-  {
-    title: "More Measurable",
-    href: "/focus/measurable",
-    description:
-      "Promoting accountability in Internet infrastructure through open standards like Certificate Transparency and tools that make critical systems verifiable.",
-  },
-];
+import { useTranslations } from "polystella/react";
 
 interface NavMenuProps {
-  t: (key: string) => string;
+  dict: Record<string, string>;
 }
 
-export function NavMenu({ t }: NavMenuProps) {
+export function NavMenu({ dict }: NavMenuProps) {
+  const t = useTranslations(dict);
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [focusAreasOpen, setFocusAreasOpen] = React.useState(false);
   const [aboutOpen, setAboutOpen] = React.useState(false);
+
+  const components: { title: string; href: string; description: string }[] =
+    React.useMemo(
+      () => [
+        {
+          title: t("nav.focusAreas.all.title"),
+          href: "/focus",
+          description: t("nav.focusAreas.all.description"),
+        },
+        {
+          title: t("nav.focusAreas.morePrivate.title"),
+          href: "/focus/private",
+          description: t("nav.focusAreas.morePrivate.description"),
+        },
+        {
+          title: t("nav.focusAreas.safer.title"),
+          href: "/focus/safe",
+          description: t("nav.focusAreas.safer.description"),
+        },
+        {
+          title: t("nav.focusAreas.faster.title"),
+          href: "/focus/fast",
+          description: t("nav.focusAreas.faster.description"),
+        },
+        {
+          title: t("nav.focusAreas.moreReliable.title"),
+          href: "/focus/reliable",
+          description: t("nav.focusAreas.moreReliable.description"),
+        },
+        {
+          title: t("nav.focusAreas.moreMeasurable.title"),
+          href: "/focus/measurable",
+          description: t("nav.focusAreas.moreMeasurable.description"),
+        },
+      ],
+      [t],
+    );
 
   // Lock body scroll when mobile menu is open
   React.useEffect(() => {

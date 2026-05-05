@@ -1,7 +1,7 @@
 ---
 import { NavMenu } from "./NavigationMenu";
-import { useTranslations } from "polystella/ui";
-const t = await useTranslations(Astro.currentLocale);
+import { getDictionary } from "polystella/ui";
+const dict = await getDictionary(Astro.currentLocale, "nav");
 ---
 
 <div class="flex items-center justify-between py-4 px-3 sm:px-5">
@@ -23,7 +23,7 @@ const t = await useTranslations(Astro.currentLocale);
     </a>
   </div>
   <nav class="flex-1 flex justify-end md:justify-end lg:justify-center">
-    <NavMenu client:load t={t} />
+    <NavMenu client:load dict={dict} />
   </nav>
   <div class="hidden lg:block w-[197px] text-page-text text-right">&nbsp;</div>
 </div>

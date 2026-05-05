@@ -23,6 +23,10 @@
       "types": "./src/ui/index.ts",
       "default": "./src/ui/index.ts"
     },
+    "./react": {
+      "types": "./src/react/index.ts",
+      "default": "./src/react/index.ts"
+    },
     "./components/LocalePicker.astro": "./components/LocalePicker.astro"
   },
   "files": [

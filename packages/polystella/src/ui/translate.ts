@@ -1,7 +1,7 @@
 /**
  * Runtime UI-string translator.
  *
- * `useTranslations(locale)` returns a `t(key, params?)` bound to the
+ * `getTranslations(locale)` returns a `t(key, params?)` bound to the
  * visitor's locale. Reads from the `i18n` content collection.
  *
  * Resolution on missing keys:
@@ -75,7 +75,7 @@ export interface UseTranslationsDeps {
 }
 
 /**
- * Pure core of `useTranslations`. `locale === undefined` is treated
+ * Pure core of `getTranslations`. `locale === undefined` is treated
  * as `defaultLocale` so the homepage (where `Astro.currentLocale`
  * may be unset under `prefixDefaultLocale: false`) gets the default
  * dictionary.

@@ -15,7 +15,7 @@ import {
  *   - `resolveTranslations`: glue that fetches dictionaries via an
  *     injected `getI18nEntry` and binds the dispatcher.
  *
- * The Astro-bound public wrapper (`useTranslations` in
+ * The Astro-bound public wrapper (`getTranslations` in
  * `src/ui/index.ts`) is just `resolveTranslations` with Astro's
  * `getEntry` and the default-locale virtual-module export. Testing
  * the pure layers here covers the runtime contract without booting
