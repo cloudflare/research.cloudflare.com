@@ -116,15 +116,28 @@ export function parseResponse(
   let parsed: unknown;
   try {
     parsed = JSON.parse(cleaned);
-  } catch {
+  } catch (rootErr) {
     // Fall back to extracting the first `{...}` block from prose.
     const first = cleaned.indexOf("{");
     const last = cleaned.lastIndexOf("}");
-    if (first === -1 || last <= first) {
+
+    // Distinguish truncation from "not JSON at all". A response that
+    // opens with `{` but has no closing `}` is almost always the
+    // model getting cut off by its output-token cap mid-string —
+    // separate from malformed JSON or an entirely different shape.
+    if (first !== -1 && last === -1) {
       throw new Error(
-        `[polystella] could not find a JSON object in the model response. Raw response was:\n${truncateRaw(
-          rawText,
-        )}`,
+        `[polystella] model response appears truncated mid-output (opening "{" present, no closing "}"). Total length: ${rawText.length} chars. The model likely hit its output-token limit; raise \`provider.maxTokens\` or split the source into smaller files.\nRaw response was:\n${truncateRaw(rawText)}`,
+      );
+    }
+    if (first === -1) {
+      throw new Error(
+        `[polystella] no JSON object in the model response (no "{" found). Total length: ${rawText.length} chars. The model may have refused to emit JSON or returned only prose.\nRaw response was:\n${truncateRaw(rawText)}`,
+      );
+    }
+    if (last <= first) {
+      throw new Error(
+        `[polystella] could not find a JSON object in the model response (closing "}" before opening "{"). Raw response was:\n${truncateRaw(rawText)}`,
       );
     }
     try {
@@ -133,7 +146,7 @@ export function parseResponse(
       throw new Error(
         `[polystella] failed to parse JSON from the model response: ${
           (err as Error).message
-        }\nRaw response was:\n${truncateRaw(rawText)}`,
+        } (root parse: ${(rootErr as Error).message})\nRaw response was:\n${truncateRaw(rawText)}`,
       );
     }
   }
@@ -179,9 +192,13 @@ function stripCodeFences(text: string): string {
   return fenced?.[1]?.trim() ?? text;
 }
 
-function truncateRaw(text: string, max = 500): string {
+function truncateRaw(text: string, max = 2000): string {
   if (text.length <= max) return text;
-  return `${text.slice(0, max)}\n... [truncated, total length ${text.length}]`;
+  // Show the LAST max/2 chars too — the cutoff point is where
+  // diagnostics matter most, and a head-only window can hide it.
+  const headChars = Math.floor(max / 2);
+  const tailChars = max - headChars;
+  return `${text.slice(0, headChars)}\n... [truncated middle, total length ${text.length}] ...\n${text.slice(-tailChars)}`;
 }
 
 function localeName(code: string): string {

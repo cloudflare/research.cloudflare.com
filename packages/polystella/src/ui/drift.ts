@@ -73,12 +73,8 @@ export function checkI18nDrift(input: DriftCheckInput): DriftCheckResult {
       continue;
     }
     const localeKeys = new Set(Object.keys(localeDict));
-    const missing = [...defaultKeys]
-      .filter((k) => !localeKeys.has(k))
-      .sort();
-    const extra = [...localeKeys]
-      .filter((k) => !defaultKeys.has(k))
-      .sort();
+    const missing = [...defaultKeys].filter((k) => !localeKeys.has(k)).sort();
+    const extra = [...localeKeys].filter((k) => !defaultKeys.has(k)).sort();
     if (missing.length > 0 || extra.length > 0) {
       issues.push({
         locale,
@@ -113,16 +109,14 @@ export function formatDriftIssues(issues: ReadonlyArray<DriftIssue>): string {
     }
     if (issue.missing.length > 0) {
       lines.push(
-        `  • Missing keys in ${issue.locale}.json: ${issue.missing.join(
-          ", ",
-        )}`,
+        `  • Missing keys in ${issue.locale}.json: ${issue.missing.join(", ")}`,
       );
     }
     if (issue.extra.length > 0) {
       lines.push(
-        `  • Extra keys in ${issue.locale}.json (not in default-locale file): ${issue.extra.join(
-          ", ",
-        )}`,
+        `  • Extra keys in ${
+          issue.locale
+        }.json (not in default-locale file): ${issue.extra.join(", ")}`,
       );
     }
   }
@@ -149,11 +143,7 @@ export async function loadAndCheckDrift(
 ): Promise<DriftCheckResult> {
   const dictionaries: Record<string, Record<string, string>> = {};
   for (const locale of opts.locales) {
-    const filePath = path.resolve(
-      opts.rootDir,
-      opts.baseDir,
-      `${locale}.json`,
-    );
+    const filePath = path.resolve(opts.rootDir, opts.baseDir, `${locale}.json`);
     let raw: string;
     try {
       raw = await readFile(filePath, "utf8");
@@ -173,7 +163,11 @@ export async function loadAndCheckDrift(
         }`,
       );
     }
-    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
+    if (
+      parsed === null ||
+      typeof parsed !== "object" ||
+      Array.isArray(parsed)
+    ) {
       throw new Error(
         `[polystella] UI-strings file at ${filePath} must be a JSON object of string→string entries (got ${
           Array.isArray(parsed) ? "array" : typeof parsed

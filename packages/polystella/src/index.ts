@@ -33,10 +33,7 @@ import {
 import { createTranslator, type Translator } from "./translation/provider.js";
 import { walkSources } from "./source/walk.js";
 import { runWithConcurrency } from "./source/pool.js";
-import {
-  formatDriftIssues,
-  loadAndCheckDrift,
-} from "./ui/drift.js";
+import { formatDriftIssues, loadAndCheckDrift } from "./ui/drift.js";
 import {
   computeBuildReportTotals,
   emitBuildReport,
@@ -106,10 +103,7 @@ export {
   type R2ListEntry,
   type R2PutOptions,
 } from "./storage/r2.js";
-export {
-  DEFAULT_STAGING_DIR,
-  DEFAULT_STAGING_GLOB,
-} from "./storage/paths.js";
+export { DEFAULT_STAGING_DIR, DEFAULT_STAGING_GLOB } from "./storage/paths.js";
 export {
   buildCacheMetadata,
   translateOrLoadFromCache,
@@ -342,7 +336,9 @@ export default function polystella(
         });
         if (!driftResult.ok) {
           throw new Error(
-            `[polystella] UI-strings dictionary drift detected. Every declared locale must have a \`src/content/i18n/<locale>.json\` file with the same key set as the default-locale file (${resolved.defaultLocale}.json):\n${formatDriftIssues(
+            `[polystella] UI-strings dictionary drift detected. Every declared locale must have a \`src/content/i18n/<locale>.json\` file with the same key set as the default-locale file (${
+              resolved.defaultLocale
+            }.json):\n${formatDriftIssues(
               driftResult.issues,
             )}\n\nFix the listed locales and rebuild. To opt out of drift detection entirely, remove the default-locale JSON file (the integration silently skips drift checks until that file exists).`,
           );
@@ -395,9 +391,7 @@ export default function polystella(
         }
         if (glossaries.size > 0) {
           logger.info(
-            `loaded glossaries for: ${[...glossaries.keys()]
-              .sort()
-              .join(", ")}`,
+            `loaded glossaries for: ${[...glossaries.keys()].sort().join(", ")}`,
           );
         }
 
@@ -780,7 +774,8 @@ export default function polystella(
                 locale,
                 sourceHash,
                 r2Key: key,
-                outcome: result.outcome === "hit" ? "cache-hit" : "ai-translated",
+                outcome:
+                  result.outcome === "hit" ? "cache-hit" : "ai-translated",
                 model: translator.modelId,
                 durationMs: Date.now() - pairStart,
               });
@@ -819,9 +814,7 @@ export default function polystella(
             } catch (err) {
               counts.failed++;
               const message = (err as Error).message;
-              logger.error(
-                `✗ ${source.relativePath} → ${locale}: ${message}`,
-              );
+              logger.error(`✗ ${source.relativePath} → ${locale}: ${message}`);
               const { modelId, sourceHash, r2Key } = reportKeysFor(locale);
               reportState.entries.push({
                 sourcePath: source.relativePath,
@@ -926,8 +919,7 @@ export default function polystella(
           build: {
             startedAt: reportState.startedAt,
             durationMs: Date.now() - reportState.startedAtMs,
-            mode:
-              resolved.mode === "starlight" ? "starlight" : "standalone",
+            mode: resolved.mode === "starlight" ? "starlight" : "standalone",
             polystellaVersion: POLYSTELLA_VERSION,
           },
           locales: [resolved.defaultLocale, ...resolved.locales],
@@ -959,4 +951,3 @@ export default function polystella(
     },
   };
 }
-

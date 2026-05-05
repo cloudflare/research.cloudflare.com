@@ -157,11 +157,7 @@ export async function resolveLocalizedEntry(
 ): Promise<LocalizedEntry | undefined> {
   const { collection, slug, locale, deps } = input;
 
-  if (
-    locale === undefined ||
-    locale === "" ||
-    locale === deps.defaultLocale
-  ) {
+  if (locale === undefined || locale === "" || locale === deps.defaultLocale) {
     const source = await deps.getEntry(collection, slug);
     if (source === undefined) return undefined;
     return withExtensions(source, false, deps.defaultLocale);

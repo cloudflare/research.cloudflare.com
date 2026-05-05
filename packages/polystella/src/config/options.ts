@@ -190,7 +190,9 @@ export type PolyStellaResolvedOptions = z.output<
  */
 export interface AstroI18nLike {
   defaultLocale: string;
-  locales: ReadonlyArray<string | { path: string; codes?: ReadonlyArray<string> }>;
+  locales: ReadonlyArray<
+    string | { path: string; codes?: ReadonlyArray<string> }
+  >;
   routing?:
     | "manual"
     | {
@@ -227,11 +229,15 @@ export function resolveOptions(
     }
     if (i18nIssues.length > 0) {
       sections.push(
-        `Invalid Astro \`i18n\` config (PolyStella derives locales from it):\n${i18nIssues.join("\n")}`,
+        `Invalid Astro \`i18n\` config (PolyStella derives locales from it):\n${i18nIssues.join(
+          "\n",
+        )}`,
       );
     }
     throw new Error(
-      `[polystella] configuration error:\n${sections.join("\n\n")}\n\nSee polystella.config.mjs and astro.config.mjs for the full reference.`,
+      `[polystella] configuration error:\n${sections.join(
+        "\n\n",
+      )}\n\nSee polystella.config.mjs and astro.config.mjs for the full reference.`,
     );
   }
 
@@ -270,7 +276,10 @@ function validateAstroI18n(i18n: AstroI18nLike | undefined): string[] {
 
   const issues: string[] = [];
 
-  if (typeof i18n.defaultLocale !== "string" || i18n.defaultLocale.length === 0) {
+  if (
+    typeof i18n.defaultLocale !== "string" ||
+    i18n.defaultLocale.length === 0
+  ) {
     issues.push(
       "  • `i18n.defaultLocale` is required and must be a non-empty string.",
     );
@@ -308,7 +317,9 @@ function validateAstroI18n(i18n: AstroI18nLike | undefined): string[] {
     );
     if (dupes.length > 0) {
       issues.push(
-        `  • \`i18n.locales\` contains duplicates: ${[...new Set(dupes)].join(", ")}.`,
+        `  • \`i18n.locales\` contains duplicates: ${[...new Set(dupes)].join(
+          ", ",
+        )}.`,
       );
     }
   }

@@ -19,17 +19,14 @@ import {
   i18nSchema as i18nSchemaCore,
   type I18nLoaderOptions,
 } from "./loader.js";
-import {
-  resolveTranslations,
-  type TranslateFn,
-} from "./translate.js";
+import { resolveTranslations, type TranslateFn } from "./translate.js";
 
 /**
  * Astro content-collection loader for the `i18n` collection. Mirrors
  * Starlight's `i18nLoader()` shape. Defaults: `./src/content/i18n`,
  * `**\/*.json`.
  */
-export function i18nLoader(options: I18nLoaderOptions = {}): unknown {
+export function i18nLoader(options: I18nLoaderOptions = {}) {
   return buildI18nLoader({ glob: astroGlob }, options);
 }
 

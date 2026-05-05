@@ -462,9 +462,9 @@ describe("buildCollections — custom-loader auto-skip", () => {
 describe("buildCollections — empty inputs", () => {
   it("returns an empty object when source is empty", () => {
     const { deps } = makeDeps();
-    expect(
-      buildCollections({ source: {}, locales: ["pt-BR"] }, deps),
-    ).toEqual({});
+    expect(buildCollections({ source: {}, locales: ["pt-BR"] }, deps)).toEqual(
+      {},
+    );
   });
 
   it("returns source verbatim when locales is empty (no siblings)", () => {

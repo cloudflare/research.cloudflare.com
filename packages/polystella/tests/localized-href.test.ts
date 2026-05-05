@@ -55,7 +55,9 @@ describe("resolveLocalizedHref — external URLs left alone", () => {
 
 describe("resolveLocalizedHref — anchors and fragments", () => {
   it("leaves anchor-only hrefs unchanged", () => {
-    expect(resolveLocalizedHref("#section-1", "pt-BR", DEPS)).toBe("#section-1");
+    expect(resolveLocalizedHref("#section-1", "pt-BR", DEPS)).toBe(
+      "#section-1",
+    );
   });
 
   it("preserves the fragment after the locale prefix", () => {
@@ -71,9 +73,9 @@ describe("resolveLocalizedHref — anchors and fragments", () => {
   });
 
   it("preserves both query and fragment", () => {
-    expect(
-      resolveLocalizedHref("/search?q=privacy#hits", "pt-BR", DEPS),
-    ).toBe("/pt-BR/search?q=privacy#hits");
+    expect(resolveLocalizedHref("/search?q=privacy#hits", "pt-BR", DEPS)).toBe(
+      "/pt-BR/search?q=privacy#hits",
+    );
   });
 });
 

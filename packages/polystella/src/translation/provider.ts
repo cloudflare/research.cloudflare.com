@@ -42,9 +42,7 @@ export function createTranslator(
     return createAnthropicTranslator(provider, locale, fetchImpl);
   }
   throw new Error(
-    `[polystella] unknown provider kind: ${
-      (provider as { kind: string }).kind
-    }`,
+    `[polystella] unknown provider kind: ${(provider as { kind: string }).kind}`,
   );
 }
 

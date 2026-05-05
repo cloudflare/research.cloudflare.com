@@ -240,14 +240,7 @@ describe("applyTranslations — frontmatter additions (AI marker)", () => {
   // frontmatter merge, no-frontmatter prepend, empty-additions no-op.
 
   it("merges additions into existing frontmatter alongside translations", () => {
-    const source = [
-      "---",
-      'title: "Hello"',
-      "---",
-      "",
-      "Body.",
-      "",
-    ].join("\n");
+    const source = ["---", 'title: "Hello"', "---", "", "Body.", ""].join("\n");
     const ast = parseMarkdown(source);
     const output = applyTranslations(ast, new Map(), source, {
       frontmatterAdditions: {
@@ -262,7 +255,7 @@ describe("applyTranslations — frontmatter additions (AI marker)", () => {
     );
     expect(output).toContain("aiTranslatedAt:");
     // Existing keys survive.
-    expect(output).toContain('title: Hello');
+    expect(output).toContain("title: Hello");
     // Body untouched.
     expect(output).toContain("\nBody.\n");
   });
@@ -279,7 +272,9 @@ describe("applyTranslations — frontmatter additions (AI marker)", () => {
     });
     expect(output.startsWith("---\n")).toBe(true);
     expect(output).toContain("aiTranslated: true");
-    expect(output).toContain('aiTranslationModel: "@cf/qwen/qwen3-30b-a3b-fp8"');
+    expect(output).toContain(
+      'aiTranslationModel: "@cf/qwen/qwen3-30b-a3b-fp8"',
+    );
     // Body still present after the inserted block.
     expect(output).toContain("# Hello\n\nBody.\n");
   });
@@ -338,14 +333,7 @@ describe("applyTranslations — frontmatter additions (AI marker)", () => {
     // The corpus identity-round-trip test relies on
     // `applyTranslations(ast, new Map(), source)` returning source
     // verbatim. An empty additions object must not break that.
-    const source = [
-      "---",
-      'title: "Hello"',
-      "---",
-      "",
-      "Body.",
-      "",
-    ].join("\n");
+    const source = ["---", 'title: "Hello"', "---", "", "Body.", ""].join("\n");
     const ast = parseMarkdown(source);
     const output = applyTranslations(ast, new Map(), source, {
       frontmatterAdditions: {},

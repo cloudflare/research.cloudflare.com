@@ -30,9 +30,7 @@ describe("interpolate", () => {
   });
 
   it("coerces number params to strings", () => {
-    expect(interpolate("{{count}} results", { count: 42 })).toBe(
-      "42 results",
-    );
+    expect(interpolate("{{count}} results", { count: 42 })).toBe("42 results");
   });
 
   it("coerces boolean params to strings", () => {
@@ -51,9 +49,9 @@ describe("interpolate", () => {
   });
 
   it("repeats the same placeholder when it appears multiple times", () => {
-    expect(
-      interpolate("{{x}}, {{x}}, {{x}}", { x: "Doug" }),
-    ).toBe("Doug, Doug, Doug");
+    expect(interpolate("{{x}}, {{x}}, {{x}}", { x: "Doug" })).toBe(
+      "Doug, Doug, Doug",
+    );
   });
 
   it("leaves unknown placeholders in place (helps catch typos in templates)", () => {
@@ -66,9 +64,9 @@ describe("interpolate", () => {
     // `{{user.name}}` is NOT supported in v0.1; the dot makes it not
     // match the `\w+` placeholder grammar, so it survives unchanged.
     // The flat-dictionary contract precludes nested keys anyway.
-    expect(
-      interpolate("Welcome {{user.name}}", { "user.name": "Diogo" }),
-    ).toBe("Welcome {{user.name}}");
+    expect(interpolate("Welcome {{user.name}}", { "user.name": "Diogo" })).toBe(
+      "Welcome {{user.name}}",
+    );
   });
 
   it("returns the template unchanged when no placeholders match", () => {
@@ -101,10 +99,7 @@ describe("buildTranslateFn", () => {
   });
 
   it("interpolates against the fallback dictionary too", () => {
-    const t = buildTranslateFn(
-      {},
-      { greeting: "Hello, {{name}}!" },
-    );
+    const t = buildTranslateFn({}, { greeting: "Hello, {{name}}!" });
     expect(t("greeting", { name: "Diogo" })).toBe("Hello, Diogo!");
   });
 

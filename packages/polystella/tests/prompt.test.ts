@@ -242,7 +242,13 @@ describe("parseResponse", () => {
   it("throws when no JSON object can be located", () => {
     expect(() =>
       parseResponse("Sorry, I cannot translate this.", expected),
-    ).toThrow(/could not find a JSON object/);
+    ).toThrow(/no JSON object in the model response/);
+  });
+
+  it("distinguishes truncation (open `{`, no closing `}`) from other parse failures", () => {
+    expect(() =>
+      parseResponse('{"fm:title": "incomplete...', expected),
+    ).toThrow(/truncated mid-output/);
   });
 
   it("throws on a syntactically broken JSON object", () => {

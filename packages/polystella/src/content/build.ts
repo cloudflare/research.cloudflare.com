@@ -93,9 +93,7 @@ export interface PolystellaCollectionsOptions<
   /** Collections to leave un-localised. Source collection is kept; siblings skipped. */
   skipLocalize?: ReadonlyArray<keyof TSource & string>;
   /** Per-collection loader overrides; see `LoaderOverride`. */
-  loaderOverrides?: Partial<
-    Record<keyof TSource & string, LoaderOverride>
-  >;
+  loaderOverrides?: Partial<Record<keyof TSource & string, LoaderOverride>>;
   /** Defaults to `console`; tests pass a stub. */
   logger?: { warn: (message: string) => void };
 }

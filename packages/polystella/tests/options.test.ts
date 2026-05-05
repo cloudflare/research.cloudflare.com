@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  resolveOptions,
-  type AstroI18nLike,
-} from "../src/config/options.js";
+import { resolveOptions, type AstroI18nLike } from "../src/config/options.js";
 
 /**
  * Contract tests for the locale derivation introduced when PolyStella
@@ -81,14 +78,9 @@ describe("resolveOptions — Astro i18n cross-check failures", () => {
     expect(() =>
       resolveOptions(MINIMAL_USER_OPTS, {
         defaultLocale: "en",
-        locales: [
-          "en",
-          { path: "pt", codes: ["pt-BR", "pt-PT"] },
-        ],
+        locales: ["en", { path: "pt", codes: ["pt-BR", "pt-PT"] }],
       } as AstroI18nLike),
-    ).toThrowError(
-      /object-form entries.*only supports plain string locales/,
-    );
+    ).toThrowError(/object-form entries.*only supports plain string locales/);
   });
 
   it('rejects routing: "manual"', () => {

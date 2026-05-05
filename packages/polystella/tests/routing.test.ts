@@ -1,9 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  deriveUrlPattern,
-  generateShimSource,
-} from "../src/routing/shim.js";
+import { deriveUrlPattern, generateShimSource } from "../src/routing/shim.js";
 
 /**
  * Pure-helper tests for the route-shim layer.
@@ -118,9 +115,7 @@ describe("generateShimSource", () => {
     // absence is part of the contract.
     expect(source).not.toContain("sourceGetStaticPaths");
     expect(source).toContain('const locales = ["pt-BR","ja-JP"];');
-    expect(source).toContain(
-      "locales.map((lang) => ({ params: { lang } }))",
-    );
+    expect(source).toContain("locales.map((lang) => ({ params: { lang } }))");
     expect(source).toContain("<SourcePage />");
   });
 

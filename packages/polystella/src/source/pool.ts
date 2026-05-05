@@ -23,7 +23,5 @@ export async function runWithConcurrency<T>(
     }
   }
 
-  await Promise.all(
-    Array.from({ length: safeConcurrency }, () => runner()),
-  );
+  await Promise.all(Array.from({ length: safeConcurrency }, () => runner()));
 }

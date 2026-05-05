@@ -8,15 +8,11 @@ import { blogLoader } from "./loaders/blog";
 // 3. Import Zod
 import { z } from "astro/zod";
 
-// 4. Import the PolyStella content-config helper. It fans the source
-//    collections out into per-locale siblings (e.g. `publications__pt-BR`)
-//    so translated content flows through Astro's content layer the
-//    same way source content does — schema validation, MDX
-//    compilation, `entry.rendered.html`, custom remark/rehype plugins
-//    all work natively on translations.
+// 4. Import the PolyStella helpers for dynamic collections and i18n
 import { polystellaCollections } from "polystella/content";
+import { i18nLoader, i18nSchema } from "polystella/ui";
 
-// 4. Define your collection(s)
+// 5. Define your collection(s)
 const site = defineCollection({
   loader: file("./content/site.toml"),
   schema: z.object({
@@ -110,7 +106,12 @@ const blog = defineCollection({
   }),
 });
 
-// 5. Export a single `collections` object to register your collection(s).
+const i18n = defineCollection({
+  loader: i18nLoader(),
+  schema: i18nSchema(),
+});
+
+// 6. Export a single `collections` object to register your collection(s).
 //    `polystellaCollections` returns the source collections verbatim
 //    plus, for each `(collection, locale)` pair where the collection
 //    is not skipped, a sibling collection named
@@ -118,7 +119,7 @@ const blog = defineCollection({
 //    `.astro/i18n-staging/<locale>/<collection>/<rest>`. The build
 //    hook stages translated content there during `astro build`.
 export const collections = polystellaCollections({
-  source: { site, people, publications, tags, presentations, blog },
+  source: { site, people, publications, tags, presentations, blog, i18n },
   // Mirror Astro's `i18n.locales` from astro.config.mjs. The helper
   // strips `defaultLocale` defensively so we don't register a
   // self-translation sibling.
@@ -133,5 +134,7 @@ export const collections = polystellaCollections({
     // `blog` uses a custom loader; opting it out so the warning goes
     // away. Blog posts are English-only by design today.
     blog: { kind: "skip", reason: "blog posts are English-only" },
+    // this collection is translated manually via the json files in src/content/i18n
+    i18n: { kind: "skip", reason: "i18n collection is defined separately" },
   },
 });

@@ -125,10 +125,12 @@ describe("pruneCacheByPair — keep top N by lastModified", () => {
       ]),
     );
     // The two newest survive.
-    expect(fixture.store.has("i18n/pt-BR/publications/sample.md#hash5.md"))
-      .toBe(true);
-    expect(fixture.store.has("i18n/pt-BR/publications/sample.md#hash4.md"))
-      .toBe(true);
+    expect(
+      fixture.store.has("i18n/pt-BR/publications/sample.md#hash5.md"),
+    ).toBe(true);
+    expect(
+      fixture.store.has("i18n/pt-BR/publications/sample.md#hash4.md"),
+    ).toBe(true);
   });
 
   it("is a no-op when variant count <= keepLastN", async () => {
@@ -253,12 +255,10 @@ describe("pruneCacheByPair — scoping", () => {
   it("issues exactly one list() call per touched locale (batched), not one per pair", async () => {
     // 5 sourcePaths under pt-BR, all touched. Pruner should call
     // r2.list("i18n/pt-BR/") exactly once.
-    const listSpy = vi.fn(
-      async (prefix: string): Promise<R2ListEntry[]> => {
-        if (prefix !== "i18n/pt-BR/") return [];
-        return [];
-      },
-    );
+    const listSpy = vi.fn(async (prefix: string): Promise<R2ListEntry[]> => {
+      if (prefix !== "i18n/pt-BR/") return [];
+      return [];
+    });
     const r2: R2Client = {
       async exists() {
         return false;

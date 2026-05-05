@@ -177,10 +177,7 @@ describe("resolveLocalizedEntry — cross-locale hit path", () => {
     });
 
     expect(getEntry).toHaveBeenCalledTimes(1);
-    expect(getEntry).toHaveBeenCalledWith(
-      "publications__pt-BR",
-      "antunes2025",
-    );
+    expect(getEntry).toHaveBeenCalledWith("publications__pt-BR", "antunes2025");
   });
 
   it("preserves Astro-computed fields (filePath, digest, rendered) from the sibling entry", async () => {
@@ -202,8 +199,7 @@ describe("resolveLocalizedEntry — cross-locale hit path", () => {
     };
     const deps = makeDeps({
       getEntry: makeGetEntry({
-        "publications__pt-BR:antunes2025":
-          localizedFixture as SourceEntryShape,
+        "publications__pt-BR:antunes2025": localizedFixture as SourceEntryShape,
       }),
     });
 

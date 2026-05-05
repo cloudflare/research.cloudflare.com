@@ -1,32 +1,53 @@
 ---
 import { CONSTANTS } from "../lib/constants";
 import Icon from "./Icon.astro";
+import { useTranslations } from "polystella/ui";
+
+const t = await useTranslations(Astro.currentLocale);
 ---
 
 <footer class="pt-11">
   <!-- Main footer content -->
   <div class="pb-[60px] px-8">
-    <nav class="grid grid-cols-1 gap-20 sm:grid-cols-3 xl:grid-cols-[250px_1fr_1fr_1fr_1.1fr] gap-x-8">
+    <nav
+      class="grid grid-cols-1 gap-20 sm:grid-cols-3 xl:grid-cols-[250px_1fr_1fr_1fr_1.1fr] gap-x-8"
+    >
       <!-- Logo section -->
       <div class="sm:row-span-2 xl:row-span-1">
         <a href="/">
           <picture>
-            <source srcset="/images/logo.svg" media="(prefers-color-scheme: dark)" />
-            <img src="/images/logo--light.svg" alt="Cloudflare Research" width="197" height="53" />
+            <source
+              srcset="/images/logo.svg"
+              media="(prefers-color-scheme: dark)"
+            />
+            <img
+              src="/images/logo--light.svg"
+              alt="Cloudflare Research"
+              width="197"
+              height="53"
+            />
           </picture>
         </a>
       </div>
 
       <!-- Focus Areas -->
       <div>
-        <h3>Focus Areas</h3>
+        <h3>{t("footer.focusAreas")}</h3>
         <hr />
         <ul>
-          <li><a href="/focus/private">More Private</a></li>
-          <li><a href="/focus/safe">Safer</a></li>
-          <li><a href="/focus/fast">Faster</a></li>
-          <li><a href="/focus/reliable">More Reliable</a></li>
-          <li><a href="/focus/measurable">More Measurable</a></li>
+          <li>
+            <a href="/focus/private">{t("footer.focusAreas.morePrivate")}</a>
+          </li>
+          <li><a href="/focus/safe">{t("footer.focusAreas.safer")}</a></li>
+          <li><a href="/focus/fast">{t("footer.focusAreas.faster")}</a></li>
+          <li>
+            <a href="/focus/reliable">{t("footer.focusAreas.moreReliable")}</a>
+          </li>
+          <li>
+            <a href="/focus/measurable"
+              >{t("footer.focusAreas.moreMeasurable")}</a
+            >
+          </li>
         </ul>
       </div>
 
@@ -55,19 +76,38 @@ import Icon from "./Icon.astro";
         <hr />
         <ul>
           <li>
-            <a href={CONSTANTS.CLOUDFLARE_CAREERS} target="_blank" rel="noopener noreferrer" class="text-page-text-muted text-base hover:text-page-text transition-colors group/footer">
+            <a
+              href={CONSTANTS.CLOUDFLARE_CAREERS}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-page-text-muted text-base hover:text-page-text transition-colors group/footer"
+            >
               <span class="inline">Careers in Research</span>
               <Icon id="arrowUpRight" class="inline external-arrow" />
-            </a></li>
+            </a>
+          </li>
           <li>
-            <a href={CONSTANTS.CLOUDFLARE_JOBS} target="_blank" rel="noopener noreferrer" class="text-page-text-muted text-base hover:text-page-text transition-colors group/footer">
+            <a
+              href={CONSTANTS.CLOUDFLARE_JOBS}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-page-text-muted text-base hover:text-page-text transition-colors group/footer"
+            >
               <span class="inline">All Open Roles at Cloudflare</span>
               <Icon id="arrowUpRight" class="inline external-arrow" />
             </a>
           </li>
           <li>
-            <a href={CONSTANTS.CLOUDFLARE_CAREERS} target="_blank" rel="noopener noreferrer" class="text-page-text-muted text-base hover:text-page-text transition-colors group/footer">
-              Working at Cloudflare<Icon id="arrowUpRight" class="inline external-arrow" />
+            <a
+              href={CONSTANTS.CLOUDFLARE_CAREERS}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-page-text-muted text-base hover:text-page-text transition-colors group/footer"
+            >
+              Working at Cloudflare<Icon
+                id="arrowUpRight"
+                class="inline external-arrow"
+              />
             </a>
           </li>
         </ul>
@@ -76,14 +116,17 @@ import Icon from "./Icon.astro";
   </div>
 
   <!-- Legal -->
-  <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center sm:gap-4 text-page-text-muted border-t border-page-border pt-4 pb-5 px-8
-    [&_a]:text-page-text-muted [&_a]:text-sm] [&_a:hover]:text-page-text [&_a:hover]:underline
-  ">
+  <div
+    class="flex flex-col sm:flex-row sm:justify-between sm:items-center sm:gap-4 text-page-text-muted border-t border-page-border pt-4 pb-5 px-8
+    [&_a]:text-page-text-muted [&_a]:text-sm] [&_a:hover]:text-page-text [&_a:hover]:underline"
+  >
     <div class="text-left">
       Copyright &copy;{new Date().getFullYear()}.
     </div>
     <div class="text-left sm:text-right">
-      <a href={CONSTANTS.PRIVACY_POLICY}>Privacy Policy</a> . <a href={CONSTANTS.TERMS_OF_SERVICE}>Terms of Service</a> . <a href={CONSTANTS.GDPR}>GDPR</a>
+      <a href={CONSTANTS.PRIVACY_POLICY}>Privacy Policy</a> . <a
+        href={CONSTANTS.TERMS_OF_SERVICE}>Terms of Service</a
+      > . <a href={CONSTANTS.GDPR}>GDPR</a>
     </div>
   </div>
 </footer>

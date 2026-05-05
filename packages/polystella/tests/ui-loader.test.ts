@@ -45,10 +45,7 @@ describe("buildI18nLoader", () => {
 
   it("propagates both custom base and pattern", () => {
     const glob = vi.fn();
-    buildI18nLoader(
-      { glob },
-      { base: "./i18n", pattern: "ui/*.json" },
-    );
+    buildI18nLoader({ glob }, { base: "./i18n", pattern: "ui/*.json" });
     expect(glob).toHaveBeenCalledWith({
       base: "./i18n",
       pattern: "ui/*.json",
@@ -93,15 +90,9 @@ describe("i18nSchema", () => {
 
   it("rejects non-string values", () => {
     const schema = i18nSchema();
-    expect(
-      schema.safeParse({ "nav.home": 42 }).success,
-    ).toBe(false);
-    expect(
-      schema.safeParse({ "nav.home": null }).success,
-    ).toBe(false);
-    expect(
-      schema.safeParse({ "nav.home": ["a", "b"] }).success,
-    ).toBe(false);
+    expect(schema.safeParse({ "nav.home": 42 }).success).toBe(false);
+    expect(schema.safeParse({ "nav.home": null }).success).toBe(false);
+    expect(schema.safeParse({ "nav.home": ["a", "b"] }).success).toBe(false);
   });
 
   it("rejects nested objects (flat dictionary contract)", () => {

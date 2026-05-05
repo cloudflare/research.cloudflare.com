@@ -79,9 +79,7 @@ describe("rewriteUrlIfInternal", () => {
     // `/pt-BRX/foo` shares a prefix with `/pt-BR` but isn't actually
     // locale-prefixed. The matcher requires `/<locale>` followed by
     // either end-of-string or `/`, so this should still rewrite.
-    expect(rewriteUrlIfInternal("/pt-BRX/foo", opts)).toBe(
-      "/pt-BR/pt-BRX/foo",
-    );
+    expect(rewriteUrlIfInternal("/pt-BRX/foo", opts)).toBe("/pt-BR/pt-BRX/foo");
   });
 });
 
@@ -251,12 +249,9 @@ describe("rewriteInternalLinks", () => {
     ].join("\n");
     const output = rewriteInternalLinks(input, opts);
     expect(output).toBe(
-      [
-        "| Col | Link |",
-        "| --- | ---- |",
-        "| a   | [x](/pt-BR/x) |",
-        "",
-      ].join("\n"),
+      ["| Col | Link |", "| --- | ---- |", "| a   | [x](/pt-BR/x) |", ""].join(
+        "\n",
+      ),
     );
   });
 });
