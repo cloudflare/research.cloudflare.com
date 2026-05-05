@@ -229,13 +229,16 @@ describe("runTranslationPass — staging output", () => {
     });
     expect(first.counts.miss).toBe(1);
     expect(first.counts.hit).toBe(0);
+    expect(first.counts.localSkipped).toBe(0);
     expect(translator.calls).toBe(1);
 
-    // Reset translator counter; store retains the bytes.
+    // Reset translator + R2 call counters; store retains the bytes
+    // and the staging index file.
     translator.calls = 0;
+    r2.calls.get = 0;
 
-    // Second run on the same input — every pair must be a hit and
-    // the translator MUST NOT be called.
+    // Second run on the same input + same staging dir — the local
+    // staging index short-circuits the pair before any R2 call.
     const second = await runTranslationPass({
       resolved,
       rootDir,
@@ -245,9 +248,13 @@ describe("runTranslationPass — staging output", () => {
       r2Override: r2.client,
       translatorOverrides: overrides,
     });
-    expect(second.counts.hit).toBe(1);
+    expect(second.counts.localSkipped).toBe(1);
+    expect(second.counts.hit).toBe(0);
     expect(second.counts.miss).toBe(0);
     expect(translator.calls).toBe(0);
+    // Crucially: zero R2 GETs on the second run. The whole point of
+    // the local cache is to avoid the round-trip when nothing changed.
+    expect(r2.calls.get).toBe(0);
   });
 });
 
@@ -306,9 +313,16 @@ describe("runTranslationPass — branch-isolation knobs", () => {
   });
 
   it("readFallbackPrefixes lets a preview run reuse main's cache without writing", async () => {
-    const { rootDir, stagingDir } = await makeProjectFixture({
+    // Seed run uses one staging dir (`<root>/.astro/i18n-staging`),
+    // preview run uses a SEPARATE staging dir to simulate a fresh
+    // CI checkout where the preview build doesn't see main's local
+    // cache index. Otherwise the local-cache layer would short-
+    // circuit the pair before R2 is ever queried, defeating the
+    // point of testing the R2 fallback path.
+    const { rootDir, stagingDir: seedStagingDir } = await makeProjectFixture({
       files: { "content/publications/sample.md": SAMPLE_MD },
     });
+    const previewStagingDir = path.join(rootDir, ".astro", "preview-staging");
     const r2 = makeInMemoryR2();
     const translator = makeStubTranslator("stub/m1");
 
@@ -343,7 +357,7 @@ describe("runTranslationPass — branch-isolation knobs", () => {
     const seed = await runTranslationPass({
       resolved: productionResolved,
       rootDir,
-      stagingDir,
+      stagingDir: seedStagingDir,
       logger: NULL_LOGGER,
       polystellaVersion: "0.2.0",
       r2Override: r2.client,
@@ -376,7 +390,7 @@ describe("runTranslationPass — branch-isolation knobs", () => {
     const previewResult = await runTranslationPass({
       resolved: previewResolved,
       rootDir,
-      stagingDir,
+      stagingDir: previewStagingDir,
       logger: NULL_LOGGER,
       polystellaVersion: "0.2.0",
       r2Override: r2.client,
@@ -384,10 +398,163 @@ describe("runTranslationPass — branch-isolation knobs", () => {
     });
     expect(previewResult.counts.hit).toBe(1);
     expect(previewResult.counts.miss).toBe(0);
+    expect(previewResult.counts.localSkipped).toBe(0);
     expect(translator.calls).toBe(0);
     // No new objects written — readOnly + cache hit means no PUTs
     // anywhere, ever.
     expect(r2.store.size).toBe(1);
+  });
+});
+
+describe("runTranslationPass — local staging index", () => {
+  // The local index sits at `<stagingDir>/.polystella-index.json`
+  // and short-circuits unchanged pairs before they touch R2 or the
+  // translator. Three behaviours to pin:
+  //   1. Second run with same source = local-skipped (no R2, no
+  //      translator).
+  //   2. Edited source on a second run = invalidates the index
+  //      entry and re-translates.
+  //   3. Missing staged file (deleted out-of-band) = treats the
+  //      index entry as stale and re-fetches.
+
+  it("a second run with edited source invalidates the index and re-translates", async () => {
+    const { rootDir, stagingDir } = await makeProjectFixture({
+      files: { "content/publications/sample.md": SAMPLE_MD },
+    });
+    const r2 = makeInMemoryR2();
+    const translator = makeStubTranslator("stub/m1");
+    const resolved = resolveOptions({ sourceDir: "./content", include: ["**/*.md"] }, { defaultLocale: "en", locales: ["en", "pt-BR"] });
+    resolved.provider = {
+      kind: "workers-ai",
+      accountId: "fake",
+      apiToken: "fake",
+      model: "stub/m1",
+      maxTokens: 8192,
+    };
+    const overrides = new Map<string, Translator>([["pt-BR", translator]]);
+
+    await runTranslationPass({
+      resolved,
+      rootDir,
+      stagingDir,
+      logger: NULL_LOGGER,
+      polystellaVersion: "0.2.0",
+      r2Override: r2.client,
+      translatorOverrides: overrides,
+    });
+    expect(translator.calls).toBe(1);
+    translator.calls = 0;
+
+    // Edit the source file. The new content hash mismatches the
+    // index entry's hash → skip path declines, R2 GET fires (miss
+    // because the new hash isn't in R2 either) → translator runs.
+    const edited = SAMPLE_MD.replace("First paragraph.", "Edited paragraph.");
+    await writeFile(path.join(rootDir, "content/publications/sample.md"), edited, "utf8");
+
+    const second = await runTranslationPass({
+      resolved,
+      rootDir,
+      stagingDir,
+      logger: NULL_LOGGER,
+      polystellaVersion: "0.2.0",
+      r2Override: r2.client,
+      translatorOverrides: overrides,
+    });
+    expect(second.counts.localSkipped).toBe(0);
+    expect(second.counts.miss).toBe(1);
+    expect(translator.calls).toBe(1);
+    // The edited staged file reflects the new content.
+    const stagedAfter = await readFile(path.join(stagingDir, "pt-BR", "publications/sample.md"), "utf8");
+    expect(stagedAfter).toContain("TR:Edited paragraph");
+  });
+
+  it("a missing staged file forces a re-fetch even if the index has an entry", async () => {
+    // Operator may have done `rm <stagingDir>/<locale>/<file>`
+    // out-of-band (or it got clobbered by a partial extract). The
+    // index entry alone doesn't mean the file is on disk — the
+    // skip path stats the staged file before short-circuiting.
+    const { rootDir, stagingDir } = await makeProjectFixture({
+      files: { "content/publications/sample.md": SAMPLE_MD },
+    });
+    const r2 = makeInMemoryR2();
+    const translator = makeStubTranslator("stub/m1");
+    const resolved = resolveOptions({ sourceDir: "./content", include: ["**/*.md"] }, { defaultLocale: "en", locales: ["en", "pt-BR"] });
+    resolved.provider = {
+      kind: "workers-ai",
+      accountId: "fake",
+      apiToken: "fake",
+      model: "stub/m1",
+      maxTokens: 8192,
+    };
+    const overrides = new Map<string, Translator>([["pt-BR", translator]]);
+
+    await runTranslationPass({
+      resolved,
+      rootDir,
+      stagingDir,
+      logger: NULL_LOGGER,
+      polystellaVersion: "0.2.0",
+      r2Override: r2.client,
+      translatorOverrides: overrides,
+    });
+    translator.calls = 0;
+
+    // Delete the staged file but leave the index entry.
+    const { rm } = await import("node:fs/promises");
+    await rm(path.join(stagingDir, "pt-BR", "publications/sample.md"));
+
+    const second = await runTranslationPass({
+      resolved,
+      rootDir,
+      stagingDir,
+      logger: NULL_LOGGER,
+      polystellaVersion: "0.2.0",
+      r2Override: r2.client,
+      translatorOverrides: overrides,
+    });
+    // R2 has the bytes, so this is a cache hit (not a translator
+    // call), but it's NOT a local-skip — the staging file was
+    // missing and had to be re-staged from R2.
+    expect(second.counts.localSkipped).toBe(0);
+    expect(second.counts.hit).toBe(1);
+    expect(translator.calls).toBe(0);
+    // The staged file is back.
+    const stagedAfter = await readFile(path.join(stagingDir, "pt-BR", "publications/sample.md"), "utf8");
+    expect(stagedAfter).toContain("TR:");
+  });
+
+  it("persists the index across multiple runs (the third run skips again)", async () => {
+    const { rootDir, stagingDir } = await makeProjectFixture({
+      files: { "content/publications/sample.md": SAMPLE_MD },
+    });
+    const r2 = makeInMemoryR2();
+    const translator = makeStubTranslator("stub/m1");
+    const resolved = resolveOptions({ sourceDir: "./content", include: ["**/*.md"] }, { defaultLocale: "en", locales: ["en", "pt-BR"] });
+    resolved.provider = {
+      kind: "workers-ai",
+      accountId: "fake",
+      apiToken: "fake",
+      model: "stub/m1",
+      maxTokens: 8192,
+    };
+    const overrides = new Map<string, Translator>([["pt-BR", translator]]);
+
+    // Three consecutive identical runs.
+    for (let i = 0; i < 3; i++) {
+      await runTranslationPass({
+        resolved,
+        rootDir,
+        stagingDir,
+        logger: NULL_LOGGER,
+        polystellaVersion: "0.2.0",
+        r2Override: r2.client,
+        translatorOverrides: overrides,
+      });
+    }
+    // Translator was called exactly once (run 1). Runs 2 and 3 hit
+    // the local-skip path — meaning the index is being persisted
+    // and re-read across invocations.
+    expect(translator.calls).toBe(1);
   });
 });
 

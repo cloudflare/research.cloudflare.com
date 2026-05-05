@@ -12,6 +12,13 @@ import { runWithConcurrency } from "../source/pool.js";
 import { walkSources } from "../source/walk.js";
 import { buildCacheMetadata, translateOrLoadFromCache, type CacheOutcome } from "../storage/cache.js";
 import { computeSourceHash } from "../storage/hash.js";
+import {
+  localCacheKey,
+  readLocalCacheIndex,
+  stagedFileExists,
+  writeLocalCacheIndex,
+  type LocalCacheEntry,
+} from "../storage/local-cache.js";
 import { encodeTouchedPair, pruneCacheByPair } from "../storage/prune.js";
 import { buildR2Key, createR2Client, type R2Client } from "../storage/r2.js";
 import type { BuildReportEntry, BuildReportPruning } from "../storage/report.js";
@@ -97,6 +104,12 @@ export interface RunTranslationCounts {
   miss: number;
   override: number;
   failed: number;
+  /**
+   * Pairs short-circuited by the on-disk staging index (matching
+   * source hash + staged file present, no R2 GET issued). Distinct
+   * from `hit` so reports and logs can quantify R2 traffic saved.
+   */
+  localSkipped: number;
 }
 
 export interface RunTranslationResult {
@@ -183,6 +196,7 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
     miss: 0,
     override: 0,
     failed: 0,
+    localSkipped: 0,
   };
   let noTranslateSources = 0;
 
@@ -341,6 +355,25 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
   logger.info(
     `live: processing ${sources.length} × ${resolved.locales.length} (file, locale) pairs at concurrency ${resolved.concurrency}`,
   );
+
+  // On-disk staging index. Captures the source hash of every pair
+  // we last staged at `<stagingDir>/<locale>/<source>` so the next
+  // run can short-circuit unchanged pairs (no R2 GET, no staging
+  // write). The index is loaded ONCE up front; per-pair workers
+  // both read from it (skip-decision) and write to a separate
+  // `nextLocalCacheIndex` Map that we persist at the end.
+  //
+  // Reading from `localCacheIndex` and writing to
+  // `nextLocalCacheIndex` keeps the skip decision deterministic for
+  // the duration of the run (a worker won't accidentally observe
+  // another worker's just-written entry as a "skip me" signal).
+  // Each pair's key is unique so there's no contention on the
+  // write side.
+  const localCacheIndex = await readLocalCacheIndex(stagingDir);
+  const nextLocalCacheIndex = new Map<string, LocalCacheEntry>();
+  if (localCacheIndex.size > 0) {
+    logger.debug(`local staging index: ${localCacheIndex.size} entries from previous run`);
+  }
 
   // Cache-write bookkeeping. Single "starting writes…" line on the
   // first PUT and a single closing summary, so per-write chatter
@@ -524,6 +557,41 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
           hash: sourceHash,
           prefix: resolved.r2?.prefix,
         });
+
+        // Local-cache skip: if the on-disk index already records
+        // this exact source hash for this (locale, source) pair AND
+        // the staged file is still on disk, skip the R2 GET and the
+        // staging write entirely. The hash folds in body +
+        // frontmatter + glossary + model, so a match means the
+        // staged file IS the right translation.
+        //
+        // We still record an entry (with `local-skipped`) and add
+        // to `touchedPairs` so the prune step considers this pair
+        // alive (otherwise repeated unchanged builds would let the
+        // pruner gradually evict R2 variants the build wants to
+        // keep).
+        const lcKey = localCacheKey(locale, source.relativePath);
+        const cachedLocal = localCacheIndex.get(lcKey);
+        if (cachedLocal?.hash === sourceHash && (await stagedFileExists(stagingDir, locale, source.relativePath))) {
+          counts.localSkipped++;
+          touchedPairs.add(encodeTouchedPair(locale, source.relativePath));
+          entries.push({
+            sourcePath: source.relativePath,
+            locale,
+            sourceHash,
+            r2Key: key,
+            outcome: "local-skipped",
+            model: translator.modelId,
+            durationMs: Date.now() - pairStart,
+          });
+          // Carry the entry forward so a later run skips it again.
+          nextLocalCacheIndex.set(lcKey, cachedLocal);
+          if (resolved.verbose) {
+            logger.info(`▷ ${source.relativePath} → ${locale} [local-skipped] (${segments.length} segs)`);
+          }
+          continue;
+        }
+
         const fallbackKeys = buildFallbackKeys({
           resolved,
           locale,
@@ -605,6 +673,14 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
           locale,
           relativeSourcePath: source.relativePath,
           bytes: stagedBody,
+        });
+        // Record the staged hash so the next run can skip this pair
+        // when the source is unchanged. We store AFTER the staging
+        // write so a crashed build (write threw) doesn't leave a
+        // "we have this staged" claim that contradicts disk state.
+        nextLocalCacheIndex.set(lcKey, {
+          hash: sourceHash,
+          stagedAt: translatedAt,
         });
 
         if (resolved.verbose) {
@@ -703,9 +779,22 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
     }
   }
 
+  // Persist the local staging index. Failures here are non-fatal:
+  // the staged files are already on disk, and a missing/stale index
+  // just means the next run does a full pass (which it would have
+  // done anyway pre-optimisation).
+  try {
+    await writeLocalCacheIndex(stagingDir, nextLocalCacheIndex);
+  } catch (err) {
+    logger.warn(`local staging index: failed to write: ${(err as Error).message}`);
+  }
+
   const noTranslateSummary =
     noTranslateSources > 0 ? `, ${noTranslateSources} noTranslate source${noTranslateSources === 1 ? "" : "s"} skipped` : "";
-  logger.info(`live: ${counts.hit} hit, ${counts.miss} miss, ${counts.override} override, ${counts.failed} failed${noTranslateSummary}`);
+  const localSkipSummary = counts.localSkipped > 0 ? `, ${counts.localSkipped} local-skipped` : "";
+  logger.info(
+    `live: ${counts.hit} hit, ${counts.miss} miss, ${counts.override} override, ${counts.failed} failed${localSkipSummary}${noTranslateSummary}`,
+  );
 
   return {
     entries,

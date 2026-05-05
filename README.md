@@ -101,7 +101,9 @@ Locale-aware content is translated by [PolyStella](./packages/polystella/), a wo
 
 ### Running translations standalone
 
-The translation pipeline normally runs as part of `astro build` in CI. Locally, `pnpm build` and `pnpm dev` are read-only against R2 (see _Branch-isolated cache_ below) — you read main's translations but cannot write to the cache. To actually translate new content into R2 from a developer's machine, use the standalone CLI:
+The translation pipeline normally runs as part of `astro build` in CI. Locally, `pnpm build` and `pnpm dev` are read-only against R2 (see _Branch-isolated cache_ below) — you read main's translations but cannot write to the cache. Repeat local builds are fast: a per-pair on-disk index at `.astro/i18n-staging/.polystella-index.json` short-circuits unchanged content so a second consecutive build does zero R2 round-trips and zero translator calls.
+
+To actually translate new content into R2 from a developer's machine, use the standalone CLI:
 
 ```sh
 pnpm translate                                   # writes to current git branch's preview prefix (auto-detected)
@@ -116,6 +118,19 @@ pnpm translate --report ./tmp/report.json       # emit the build report to a cus
 Branch resolution is `--branch` flag → `WORKERS_CI_BRANCH` env → `git rev-parse HEAD`. If git is unavailable or HEAD is detached, the CLI errors with a hint to pass `--branch` explicitly. Run `pnpm translate --help` for the full flag list.
 
 Both `pnpm translate ...` and the explicit `pnpm translate -- ...` (POSIX `--` separator) forms work; pnpm forwards the trailing args either way.
+
+### Local staging cache
+
+After every translation pass (build, dev, or CLI), the orchestrator persists a small JSON index at `<root>/.astro/i18n-staging/.polystella-index.json` mapping `<locale>::<sourcePath>` to the source hash that was last staged. On the next run, any pair whose source hash matches the index entry — and whose staged file is still on disk — short-circuits before R2 is queried. The build report records these as `local-skipped` so you can see how much work the cache saved.
+
+The cache is content-addressed (the source hash folds in body, frontmatter, glossary, and model id), so any change to those re-translates automatically. To force a full re-translate, delete the index file or the entire staging directory:
+
+```sh
+rm .astro/i18n-staging/.polystella-index.json    # re-fetch on next run, keep staged files on disk
+rm -rf .astro/i18n-staging/                       # full reset; next run repopulates from R2
+```
+
+The index is gitignored (it lives under `.astro/`).
 
 ### Branch-isolated cache
 

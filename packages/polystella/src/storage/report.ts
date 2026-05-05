@@ -23,7 +23,17 @@ import path from "node:path";
  * Outcome categories. Precedence: `override` > `skipped-no-translate`
  * (when no override) > `cache-hit` / `ai-translated` > `error`.
  */
-export type BuildReportOutcome = "cache-hit" | "ai-translated" | "override" | "skipped-no-translate" | "error";
+/**
+ * Outcome categories.
+ *
+ * `local-skipped` records that the on-disk staging index already had
+ * a matching source-hash entry and the staged file was present, so
+ * the run skipped the R2 GET and the staging write. Functionally a
+ * cache hit at the filesystem-local layer (vs. `cache-hit` which is
+ * R2-side); tracked separately so build reports can quantify how
+ * much R2 traffic the local cache saved.
+ */
+export type BuildReportOutcome = "cache-hit" | "ai-translated" | "override" | "skipped-no-translate" | "local-skipped" | "error";
 
 export interface BuildReportEntry {
   /** Source-relative path, normalised to forward slashes. */
@@ -61,6 +71,13 @@ export interface BuildReportTotals {
   aiTranslated: number;
   overrides: number;
   skipped: number;
+  /**
+   * Pairs the run skipped via the on-disk staging index — staged
+   * file already current, no R2 GET needed. Separate from
+   * `cacheHits` (which counts R2-side hits) so reports can
+   * distinguish "saved an R2 round-trip" from "R2 reused".
+   */
+  localSkipped: number;
   errors: number;
   /** Undefined when no entry reported tokens (vs. summed-zero). */
   tokensIn?: number;
@@ -96,6 +113,7 @@ export function computeBuildReportTotals(entries: ReadonlyArray<BuildReportEntry
   let aiTranslated = 0;
   let overrides = 0;
   let skipped = 0;
+  let localSkipped = 0;
   let errors = 0;
   let tokensIn = 0;
   let tokensOut = 0;
@@ -114,6 +132,9 @@ export function computeBuildReportTotals(entries: ReadonlyArray<BuildReportEntry
       case "skipped-no-translate":
         skipped++;
         break;
+      case "local-skipped":
+        localSkipped++;
+        break;
       case "error":
         errors++;
         break;
@@ -129,6 +150,7 @@ export function computeBuildReportTotals(entries: ReadonlyArray<BuildReportEntry
     aiTranslated,
     overrides,
     skipped,
+    localSkipped,
     errors,
   };
   if (anyTokens) {

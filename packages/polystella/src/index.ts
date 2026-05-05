@@ -76,6 +76,14 @@ export {
 export { readOverride, resolveOverridePath, type ReadOverrideOptions } from "./source/overrides.js";
 export { pruneCacheByPair, encodeTouchedPair, decodeTouchedPair, type PruneCacheByPairOptions, type PruneResult } from "./storage/prune.js";
 export {
+  LOCAL_CACHE_INDEX_FILENAME,
+  localCacheKey,
+  readLocalCacheIndex,
+  stagedFileExists,
+  writeLocalCacheIndex,
+  type LocalCacheEntry,
+} from "./storage/local-cache.js";
+export {
   computeBuildReportTotals,
   emitBuildReport,
   type BuildReport,

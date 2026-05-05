@@ -34,6 +34,7 @@ describe("computeBuildReportTotals", () => {
       aiTranslated: 0,
       overrides: 0,
       skipped: 0,
+      localSkipped: 0,
       errors: 0,
     });
   });
@@ -45,6 +46,9 @@ describe("computeBuildReportTotals", () => {
       makeEntry({ outcome: "ai-translated" }),
       makeEntry({ outcome: "override" }),
       makeEntry({ outcome: "skipped-no-translate" }),
+      makeEntry({ outcome: "local-skipped" }),
+      makeEntry({ outcome: "local-skipped" }),
+      makeEntry({ outcome: "local-skipped" }),
       makeEntry({ outcome: "error", errorMessage: "boom" }),
     ];
     expect(computeBuildReportTotals(entries)).toEqual({
@@ -52,6 +56,7 @@ describe("computeBuildReportTotals", () => {
       aiTranslated: 1,
       overrides: 1,
       skipped: 1,
+      localSkipped: 3,
       errors: 1,
     });
   });
@@ -107,6 +112,7 @@ describe("emitBuildReport", () => {
         aiTranslated: 1,
         overrides: 0,
         skipped: 0,
+        localSkipped: 0,
         errors: 0,
         tokensIn: 100,
         tokensOut: 200,
