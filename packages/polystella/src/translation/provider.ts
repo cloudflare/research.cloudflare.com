@@ -29,11 +29,7 @@ export interface CreateTranslatorOptions {
  * Throws on unknown provider kind. Doesn't validate credentials —
  * auth failures surface from the first `translate()` call.
  */
-export function createTranslator(
-  provider: ProviderConfig,
-  locale: string,
-  options: CreateTranslatorOptions = {},
-): Translator {
+export function createTranslator(provider: ProviderConfig, locale: string, options: CreateTranslatorOptions = {}): Translator {
   const fetchImpl = options.fetchImpl ?? fetch;
   if (provider.kind === "workers-ai") {
     return createWorkersAITranslator(provider, locale, fetchImpl);
@@ -41,9 +37,7 @@ export function createTranslator(
   if (provider.kind === "anthropic") {
     return createAnthropicTranslator(provider, locale, fetchImpl);
   }
-  throw new Error(
-    `[polystella] unknown provider kind: ${(provider as { kind: string }).kind}`,
-  );
+  throw new Error(`[polystella] unknown provider kind: ${(provider as { kind: string }).kind}`);
 }
 
 /**
@@ -59,15 +53,9 @@ export function resolveModelId(spec: ModelSpec, locale: string): string {
   return spec[locale] ?? spec.default;
 }
 
-function createWorkersAITranslator(
-  provider: WorkersAIConfig,
-  locale: string,
-  fetchImpl: typeof fetch,
-): Translator {
+function createWorkersAITranslator(provider: WorkersAIConfig, locale: string, fetchImpl: typeof fetch): Translator {
   const modelId = resolveModelId(provider.model, locale);
-  const endpoint =
-    provider.endpoint ??
-    `https://api.cloudflare.com/client/v4/accounts/${provider.accountId}/ai/run/${modelId}`;
+  const endpoint = provider.endpoint ?? `https://api.cloudflare.com/client/v4/accounts/${provider.accountId}/ai/run/${modelId}`;
 
   return {
     modelId,
@@ -90,11 +78,7 @@ function createWorkersAITranslator(
       });
       if (!res.ok) {
         const text = await res.text().catch(() => "");
-        throw new Error(
-          `[polystella] Workers AI request failed: ${res.status} ${
-            res.statusText
-          }${text ? `\n${text}` : ""}`,
-        );
+        throw new Error(`[polystella] Workers AI request failed: ${res.status} ${res.statusText}${text ? `\n${text}` : ""}`);
       }
       // Three response shapes observed in the wild:
       //   - `result.response` — legacy text-generation envelope.
@@ -111,11 +95,7 @@ function createWorkersAITranslator(
         errors?: unknown[];
       };
       if (data.success === false) {
-        throw new Error(
-          `[polystella] Workers AI returned errors: ${JSON.stringify(
-            data.errors ?? [],
-          )}`,
-        );
+        throw new Error(`[polystella] Workers AI returned errors: ${JSON.stringify(data.errors ?? [])}`);
       }
 
       // Probe legacy `result.response` first (most text models),
@@ -140,12 +120,7 @@ function createWorkersAITranslator(
       // explicit about which fields we probed so a future shape
       // surfaces with a clear "we tried these places" trail.
       const dump = JSON.stringify(data);
-      const preview =
-        dump.length > 800
-          ? `${dump.slice(0, 800)}\n... [truncated, total length ${
-              dump.length
-            }]`
-          : dump;
+      const preview = dump.length > 800 ? `${dump.slice(0, 800)}\n... [truncated, total length ${dump.length}]` : dump;
       throw new Error(
         `[polystella] unexpected Workers AI response shape (model="${modelId}"): none of result.response, result.choices[0].message.content, or choices[0].message.content held a usable string or object. Raw response was:\n${preview}`,
       );
@@ -153,11 +128,7 @@ function createWorkersAITranslator(
   };
 }
 
-function createAnthropicTranslator(
-  provider: AnthropicConfig,
-  locale: string,
-  fetchImpl: typeof fetch,
-): Translator {
+function createAnthropicTranslator(provider: AnthropicConfig, locale: string, fetchImpl: typeof fetch): Translator {
   const modelId = resolveModelId(provider.model, locale);
   const endpoint = "https://api.anthropic.com/v1/messages";
 
@@ -180,11 +151,7 @@ function createAnthropicTranslator(
       });
       if (!res.ok) {
         const text = await res.text().catch(() => "");
-        throw new Error(
-          `[polystella] Anthropic request failed: ${res.status} ${
-            res.statusText
-          }${text ? `\n${text}` : ""}`,
-        );
+        throw new Error(`[polystella] Anthropic request failed: ${res.status} ${res.statusText}${text ? `\n${text}` : ""}`);
       }
       const data = (await res.json()) as {
         content?: Array<{ type?: string; text?: string }>;
@@ -192,9 +159,7 @@ function createAnthropicTranslator(
       const textBlock = data.content?.find((b) => b.type === "text");
       const text = textBlock?.text;
       if (typeof text !== "string") {
-        throw new Error(
-          `[polystella] unexpected Anthropic response shape: no text content block`,
-        );
+        throw new Error(`[polystella] unexpected Anthropic response shape: no text content block`);
       }
       return text;
     },
@@ -216,17 +181,8 @@ export interface TranslateBatchOptions {
  * `Map<segmentId, translatedText>` for `applyTranslations`. Empty
  * segments → empty map, no network call.
  */
-export async function translateBatch(
-  opts: TranslateBatchOptions,
-): Promise<Map<string, string>> {
-  const {
-    translator,
-    segments,
-    glossary,
-    sourceLocale,
-    targetLocale,
-    context,
-  } = opts;
+export async function translateBatch(opts: TranslateBatchOptions): Promise<Map<string, string>> {
+  const { translator, segments, glossary, sourceLocale, targetLocale, context } = opts;
   if (segments.length === 0) return new Map();
 
   const { systemPrompt, userPrompt } = buildPrompt({

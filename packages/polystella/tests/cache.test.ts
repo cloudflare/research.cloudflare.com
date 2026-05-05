@@ -1,22 +1,10 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  buildCacheMetadata,
-  translateOrLoadFromCache,
-  type TranslateOrLoadOptions,
-} from "../src/storage/cache.js";
+import { buildCacheMetadata, translateOrLoadFromCache, type TranslateOrLoadOptions } from "../src/storage/cache.js";
 import { extractSegments } from "../src/parsing/extract.js";
-import {
-  EMPTY_GLOSSARY,
-  hashGlossary,
-  type Glossary,
-} from "../src/glossary/glossary.js";
+import { EMPTY_GLOSSARY, hashGlossary, type Glossary } from "../src/glossary/glossary.js";
 import { computeSourceHash } from "../src/storage/hash.js";
 import { parseMarkdown } from "../src/parsing/parse.js";
-import {
-  buildR2Key,
-  type R2Client,
-  type R2GetResult,
-} from "../src/storage/r2.js";
+import { buildR2Key, type R2Client, type R2GetResult } from "../src/storage/r2.js";
 import type { Translator } from "../src/translation/provider.js";
 
 /**
@@ -66,8 +54,7 @@ function makeInMemoryR2() {
     },
     async put(key, body, opts) {
       calls.put++;
-      const bytes =
-        typeof body === "string" ? new TextEncoder().encode(body) : body;
+      const bytes = typeof body === "string" ? new TextEncoder().encode(body) : body;
       store.set(key, {
         body: bytes,
         metadata: { ...(opts?.metadata ?? {}) },
@@ -126,16 +113,9 @@ function makeStubTranslator(modelId = "stub/echo-1"): Translator & {
   return t;
 }
 
-const SAMPLE_SOURCE = [
-  "---",
-  "title: Hello",
-  "---",
-  "",
-  "First paragraph with **bold** and *italic*.",
-  "",
-  "Second paragraph.",
-  "",
-].join("\n");
+const SAMPLE_SOURCE = ["---", "title: Hello", "---", "", "First paragraph with **bold** and *italic*.", "", "Second paragraph.", ""].join(
+  "\n",
+);
 
 /** Build a fresh set of orchestrator inputs per test to keep cases isolated. */
 function makeOptions(
@@ -144,11 +124,7 @@ function makeOptions(
   },
 ): TranslateOrLoadOptions {
   const ast = parseMarkdown(SAMPLE_SOURCE);
-  const segments = extractSegments(
-    ast,
-    { sourcePath: "publications/sample.md", frontmatter: {} },
-    SAMPLE_SOURCE,
-  );
+  const segments = extractSegments(ast, { sourcePath: "publications/sample.md", frontmatter: {} }, SAMPLE_SOURCE);
   const translator = overrides.translator ?? makeStubTranslator();
   return {
     ast,
@@ -179,9 +155,7 @@ describe("translateOrLoadFromCache — miss-then-hit sequence", () => {
     const translator = makeStubTranslator();
 
     // ─── Build #1 ─────────────────────────────────────────────────
-    const first = await translateOrLoadFromCache(
-      makeOptions({ r2: r2.client, translator }),
-    );
+    const first = await translateOrLoadFromCache(makeOptions({ r2: r2.client, translator }));
 
     expect(first.outcome).toBe("miss");
     // Translator was hit exactly once.
@@ -191,9 +165,7 @@ describe("translateOrLoadFromCache — miss-then-hit sequence", () => {
     expect(r2.calls.put).toBe(1);
     // The translated body landed in the in-memory store.
     expect(r2.store.size).toBe(1);
-    expect(r2.store.has("i18n/pt-BR/publications/sample.md#abc123.md")).toBe(
-      true,
-    );
+    expect(r2.store.has("i18n/pt-BR/publications/sample.md#abc123.md")).toBe(true);
     // The body came back as a string ready for staging writes.
     expect(typeof first.body).toBe("string");
     expect(first.body).toContain("TR:");
@@ -205,9 +177,7 @@ describe("translateOrLoadFromCache — miss-then-hit sequence", () => {
     r2.calls.put = 0;
     translator.calls = 0;
 
-    const second = await translateOrLoadFromCache(
-      makeOptions({ r2: r2.client, translator }),
-    );
+    const second = await translateOrLoadFromCache(makeOptions({ r2: r2.client, translator }));
 
     // Acceptance criterion: cache hit, no translator call, no PUT.
     expect(second.outcome).toBe("hit");
@@ -230,9 +200,7 @@ describe("translateOrLoadFromCache — miss-then-hit sequence", () => {
 describe("translateOrLoadFromCache — fallback paths", () => {
   it("treats `r2: null` as 'always translate, never store'", async () => {
     const translator = makeStubTranslator();
-    const result = await translateOrLoadFromCache(
-      makeOptions({ r2: null, translator }),
-    );
+    const result = await translateOrLoadFromCache(makeOptions({ r2: null, translator }));
     expect(result.outcome).toBe("miss");
     expect(translator.calls).toBe(1);
     expect(result.body).toContain("TR:");
@@ -257,9 +225,7 @@ describe("translateOrLoadFromCache — fallback paths", () => {
       translate: vi.fn().mockRejectedValue(new Error("should not be called")),
     };
 
-    const result = await translateOrLoadFromCache(
-      makeOptions({ r2: r2.client, translator: explodingTranslator }),
-    );
+    const result = await translateOrLoadFromCache(makeOptions({ r2: r2.client, translator: explodingTranslator }));
 
     expect(result.outcome).toBe("hit");
     expect(result.body).toBe(cachedBody);
@@ -273,11 +239,7 @@ describe("translateOrLoadFromCache — fallback paths", () => {
       modelId: "stub/echo-1",
       translate: vi.fn().mockRejectedValue(new Error("provider boom")),
     };
-    await expect(
-      translateOrLoadFromCache(
-        makeOptions({ r2: r2.client, translator: angry }),
-      ),
-    ).rejects.toThrow(/provider boom/);
+    await expect(translateOrLoadFromCache(makeOptions({ r2: r2.client, translator: angry }))).rejects.toThrow(/provider boom/);
     // Failed translation must NOT produce a PUT.
     expect(r2.calls.put).toBe(0);
   });
@@ -297,9 +259,7 @@ describe("translateOrLoadFromCache — fallback paths", () => {
       },
       async del() {},
     };
-    await expect(
-      translateOrLoadFromCache(makeOptions({ r2: flakyR2, translator })),
-    ).rejects.toThrow(/R2 unreachable/);
+    await expect(translateOrLoadFromCache(makeOptions({ r2: flakyR2, translator }))).rejects.toThrow(/R2 unreachable/);
     expect(translator.calls).toBe(0);
   });
 });
@@ -585,9 +545,7 @@ describe("translateOrLoadFromCache — metadata", () => {
       translatedAt: "2026-04-29T12:00:00.000Z",
       polystellaVersion: "0.1.0",
     });
-    await translateOrLoadFromCache(
-      makeOptions({ r2: r2.client, metadata: meta }),
-    );
+    await translateOrLoadFromCache(makeOptions({ r2: r2.client, metadata: meta }));
     const stored = r2.store.get("i18n/pt-BR/publications/sample.md#abc123.md");
     expect(stored).toBeDefined();
     expect(stored!.metadata).toEqual(meta);
@@ -598,11 +556,236 @@ describe("translateOrLoadFromCache — metadata", () => {
     const key = "i18n/ja-JP/publications/sample.md#abc123.md";
     const japaneseBody = "膝点と肘点の検出。\n";
     await r2.client.put(key, japaneseBody);
-    const result = await translateOrLoadFromCache(
-      makeOptions({ r2: r2.client, locale: "ja-JP", key }),
-    );
+    const result = await translateOrLoadFromCache(makeOptions({ r2: r2.client, locale: "ja-JP", key }));
     expect(result.outcome).toBe("hit");
     expect(result.body).toBe(japaneseBody);
+  });
+});
+
+describe("translateOrLoadFromCache — readOnly mode", () => {
+  // readOnly is the knob preview-branch builds use to consume the
+  // production cache without polluting it. It MUST NOT skip
+  // translation (the build still needs translated bytes for staging),
+  // but it MUST skip the post-translation PUT so production's cache
+  // is never written from a non-main branch.
+
+  it("skips the PUT after a miss-translate but still returns translated bytes", async () => {
+    const r2 = makeInMemoryR2();
+    const translator = makeStubTranslator();
+    const result = await translateOrLoadFromCache(makeOptions({ r2: r2.client, translator, readOnly: true }));
+
+    // The translator was billed (cache miss → unavoidable) and the
+    // build gets bytes for staging.
+    expect(result.outcome).toBe("miss");
+    expect(translator.calls).toBe(1);
+    expect(result.body).toContain("TR:");
+
+    // Crucially: NO PUT, NO write events, store is untouched.
+    expect(r2.calls.put).toBe(0);
+    expect(r2.store.size).toBe(0);
+  });
+
+  it("does not fire write events in readOnly mode", async () => {
+    const r2 = makeInMemoryR2();
+    const onWriteStart = vi.fn();
+    const onWriteDone = vi.fn();
+    const onWriteFailed = vi.fn();
+    await translateOrLoadFromCache(
+      makeOptions({
+        r2: r2.client,
+        readOnly: true,
+        events: { onWriteStart, onWriteDone, onWriteFailed },
+      }),
+    );
+    expect(onWriteStart).not.toHaveBeenCalled();
+    expect(onWriteDone).not.toHaveBeenCalled();
+    expect(onWriteFailed).not.toHaveBeenCalled();
+  });
+
+  it("still serves cache hits in readOnly mode (read path is unaffected)", async () => {
+    const r2 = makeInMemoryR2();
+    const key = "i18n/pt-BR/publications/sample.md#abc123.md";
+    await r2.client.put(key, "# cached body\n", {
+      metadata: { "source-path": "publications/sample.md" },
+    });
+    r2.calls.put = 0;
+
+    const result = await translateOrLoadFromCache(makeOptions({ r2: r2.client, readOnly: true }));
+
+    expect(result.outcome).toBe("hit");
+    expect(result.body).toBe("# cached body\n");
+    expect(r2.calls.put).toBe(0);
+  });
+});
+
+describe("translateOrLoadFromCache — fallback keys (branch isolation)", () => {
+  // Fallback keys let a preview build read main's translations on a
+  // miss against its own private prefix. The contract: walk
+  // `fallbackKeys` in order, first hit wins, NEVER write back, NEVER
+  // promote across prefixes.
+
+  it("returns a fallback hit when the primary key misses", async () => {
+    const r2 = makeInMemoryR2();
+    const primaryKey = "previews/feat-x/i18n/pt-BR/publications/sample.md#abc123.md";
+    const fallbackKey = "i18n/pt-BR/publications/sample.md#abc123.md";
+
+    // Pre-populate ONLY the fallback (main) prefix with a previously-
+    // translated body — simulates a PR build that hasn't yet seen
+    // this content.
+    await r2.client.put(fallbackKey, "# main's translation\n", {
+      metadata: { "source-path": "publications/sample.md", origin: "main" },
+    });
+    r2.calls.get = 0;
+    r2.calls.put = 0;
+
+    const translator = makeStubTranslator();
+    const result = await translateOrLoadFromCache(
+      makeOptions({
+        r2: r2.client,
+        translator,
+        key: primaryKey,
+        fallbackKeys: [fallbackKey],
+      }),
+    );
+
+    // Hit, no translation, fallback key reported as the source.
+    expect(result.outcome).toBe("hit");
+    expect(result.body).toBe("# main's translation\n");
+    expect(result.hitKey).toBe(fallbackKey);
+    expect(translator.calls).toBe(0);
+
+    // Two GETs: one against primary (miss), one against fallback (hit).
+    expect(r2.calls.get).toBe(2);
+    // No PUT — fallback hits MUST NOT be promoted to the primary
+    // prefix. Cross-prefix copies would silently mirror main's
+    // bytes under previews/, blurring the isolation boundary.
+    expect(r2.calls.put).toBe(0);
+  });
+
+  it("walks fallbacks in order; first hit wins", async () => {
+    const r2 = makeInMemoryR2();
+    const primaryKey = "tier-c/pt-BR/foo.md#h.md";
+    const tierAKey = "tier-a/pt-BR/foo.md#h.md";
+    const tierBKey = "tier-b/pt-BR/foo.md#h.md";
+
+    // Populate both A and B; the walker must return A and never
+    // call get(B).
+    await r2.client.put(tierAKey, "# from A\n");
+    await r2.client.put(tierBKey, "# from B\n");
+    r2.calls.get = 0;
+
+    // Spy via wrapping the client to record exact key order.
+    const seenGets: string[] = [];
+    const wrappedClient = {
+      ...r2.client,
+      async get(k: string) {
+        seenGets.push(k);
+        return r2.client.get(k);
+      },
+    };
+
+    const result = await translateOrLoadFromCache(
+      makeOptions({
+        r2: wrappedClient,
+        key: primaryKey,
+        fallbackKeys: [tierAKey, tierBKey],
+      }),
+    );
+
+    expect(result.outcome).toBe("hit");
+    expect(result.body).toBe("# from A\n");
+    expect(result.hitKey).toBe(tierAKey);
+    // GETs in declared order; tier-b never queried because A hit.
+    expect(seenGets).toEqual([primaryKey, tierAKey]);
+  });
+
+  it("falls through to translate when both primary and all fallbacks miss", async () => {
+    const r2 = makeInMemoryR2();
+    const translator = makeStubTranslator();
+    const result = await translateOrLoadFromCache(
+      makeOptions({
+        r2: r2.client,
+        translator,
+        key: "previews/feat-x/i18n/pt-BR/publications/sample.md#abc123.md",
+        fallbackKeys: ["tier-a/pt-BR/publications/sample.md#abc123.md", "i18n/pt-BR/publications/sample.md#abc123.md"],
+      }),
+    );
+
+    expect(result.outcome).toBe("miss");
+    expect(translator.calls).toBe(1);
+    // 1 primary + 2 fallback GETs, all misses, then a PUT against
+    // the primary key (only).
+    expect(r2.calls.get).toBe(3);
+    expect(r2.calls.put).toBe(1);
+    // PUT landed under the primary prefix, not any fallback.
+    expect(r2.store.has("previews/feat-x/i18n/pt-BR/publications/sample.md#abc123.md")).toBe(true);
+    expect(r2.store.has("i18n/pt-BR/publications/sample.md#abc123.md")).toBe(false);
+  });
+
+  it("ignores a fallback key that is byte-identical to the primary (avoids redundant GET)", async () => {
+    // Defensive: a misconfigured fallback that duplicates the primary
+    // would otherwise issue a second GET against the same key. The
+    // skip is silent because this can legitimately happen mid-config-
+    // refactor and shouldn't flag.
+    const r2 = makeInMemoryR2();
+    const translator = makeStubTranslator();
+    const key = "i18n/pt-BR/publications/sample.md#abc123.md";
+
+    const result = await translateOrLoadFromCache(
+      makeOptions({
+        r2: r2.client,
+        translator,
+        key,
+        fallbackKeys: [key],
+      }),
+    );
+    expect(result.outcome).toBe("miss");
+    // Only ONE GET — the duplicate fallback was skipped, not
+    // re-issued.
+    expect(r2.calls.get).toBe(1);
+  });
+
+  it("readOnly + fallbackKeys: hits propagate, misses translate without writing", async () => {
+    // The full preview-build configuration: read main on fallback,
+    // never write to either prefix. Smoke-tests that the two flags
+    // compose correctly.
+    const r2 = makeInMemoryR2();
+    const translator = makeStubTranslator();
+
+    // First call: empty cache, full miss → translates, no PUT.
+    const first = await translateOrLoadFromCache(
+      makeOptions({
+        r2: r2.client,
+        translator,
+        readOnly: true,
+        key: "previews/feat-x/i18n/pt-BR/publications/sample.md#abc123.md",
+        fallbackKeys: ["i18n/pt-BR/publications/sample.md#abc123.md"],
+      }),
+    );
+    expect(first.outcome).toBe("miss");
+    expect(translator.calls).toBe(1);
+    expect(r2.store.size).toBe(0);
+
+    // Pre-populate main's prefix; second call should fallback-hit
+    // without invoking the translator.
+    await r2.client.put("i18n/pt-BR/publications/sample.md#abc123.md", "# main's translation\n");
+    translator.calls = 0;
+    r2.calls.put = 0;
+
+    const second = await translateOrLoadFromCache(
+      makeOptions({
+        r2: r2.client,
+        translator,
+        readOnly: true,
+        key: "previews/feat-x/i18n/pt-BR/publications/sample.md#abc123.md",
+        fallbackKeys: ["i18n/pt-BR/publications/sample.md#abc123.md"],
+      }),
+    );
+    expect(second.outcome).toBe("hit");
+    expect(second.body).toBe("# main's translation\n");
+    expect(second.hitKey).toBe("i18n/pt-BR/publications/sample.md#abc123.md");
+    expect(translator.calls).toBe(0);
+    expect(r2.calls.put).toBe(0);
   });
 });
 
@@ -644,15 +827,7 @@ describe("buildCacheMetadata", () => {
     // The schema is intentionally fixed-shape so the build report can
     // assume every row carries every field.
     expect(Object.keys(meta).sort()).toEqual(
-      [
-        "glossary-hash",
-        "locale",
-        "model-id",
-        "polystella-version",
-        "source-hash",
-        "source-path",
-        "translated-at",
-      ].sort(),
+      ["glossary-hash", "locale", "model-id", "polystella-version", "source-hash", "source-path", "translated-at"].sort(),
     );
   });
 });

@@ -1,6 +1,5 @@
 export const linkDescriptions = Object.freeze({
-  private:
-    "Access publications and insights on privacy-preserving technologies and the protocols securing the future of digital privacy.",
+  private: "Access publications and insights on privacy-preserving technologies and the protocols securing the future of digital privacy.",
   safe: "Access publications and tools focused on network security, anti-censorship technologies, and modern cryptographic defenses.",
   fast: "Access publications and insights on high-speed connectivity, HTTP/3, and the future of optimized internet infrastructure.",
   reliable:

@@ -16,11 +16,7 @@ import { glob as astroGlob } from "astro/loaders";
 import { getEntry } from "astro:content";
 import { defaultLocale } from "polystella:runtime-config";
 
-import {
-  buildI18nLoader,
-  i18nSchema as i18nSchemaCore,
-  type I18nLoaderOptions,
-} from "./loader.js";
+import { buildI18nLoader, i18nSchema as i18nSchemaCore, type I18nLoaderOptions } from "./loader.js";
 import { resolveTranslations, type TranslateFn } from "./translate.js";
 
 /**
@@ -36,19 +32,15 @@ export { i18nSchemaCore as i18nSchema };
 export type { I18nLoaderOptions, I18nEntryData } from "./loader.js";
 
 /** Widened `getEntry` that normalises locale casing. */
-async function getI18nEntry(
-  loc: string,
-): Promise<{ data: Record<string, string> } | undefined> {
+async function getI18nEntry(loc: string): Promise<{ data: Record<string, string> } | undefined> {
   // Astro's glob loader lowercases entry IDs, but
   // `Astro.currentLocale` preserves the original case from
   // `astro.config.mjs` (e.g. "pt-BR"). Normalise so the lookup
   // matches.
-  return (
-    getEntry as (
-      collection: string,
-      slug: string,
-    ) => Promise<{ data: Record<string, string> } | undefined>
-  )("i18n", loc.toLowerCase());
+  return (getEntry as (collection: string, slug: string) => Promise<{ data: Record<string, string> } | undefined>)(
+    "i18n",
+    loc.toLowerCase(),
+  );
 }
 
 /**
@@ -61,9 +53,7 @@ async function getI18nEntry(
  * Falls back to the default-locale dictionary on missing keys, then
  * to the literal key. Collection name is fixed to `"i18n"`.
  */
-export async function getTranslations(
-  locale: string | undefined,
-): Promise<TranslateFn> {
+export async function getTranslations(locale: string | undefined): Promise<TranslateFn> {
   return resolveTranslations(locale, {
     defaultLocale,
     getI18nEntry,
@@ -82,10 +72,7 @@ export async function getTranslations(
  * are included — keeps the serialised payload small for components
  * that only need a subset of the dictionary.
  */
-export async function getDictionary(
-  locale: string | undefined,
-  prefix?: string,
-): Promise<Record<string, string>> {
+export async function getDictionary(locale: string | undefined, prefix?: string): Promise<Record<string, string>> {
   const effectiveLocale = locale ?? defaultLocale;
   const entry = await getI18nEntry(effectiveLocale);
   const dict = entry?.data ?? {};

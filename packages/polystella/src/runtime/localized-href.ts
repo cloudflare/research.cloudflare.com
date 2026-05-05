@@ -21,11 +21,7 @@ export interface LocalizedHrefDeps {
 }
 
 /** `locale` is the target; typically `Astro.currentLocale`. */
-export function resolveLocalizedHref(
-  href: string,
-  locale: string | undefined,
-  deps: LocalizedHrefDeps,
-): string {
+export function resolveLocalizedHref(href: string, locale: string | undefined, deps: LocalizedHrefDeps): string {
   if (href.length === 0) return href;
 
   // External / anchor / protocol bail-out. Order mirrors the

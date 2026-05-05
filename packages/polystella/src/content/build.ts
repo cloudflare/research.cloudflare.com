@@ -46,13 +46,8 @@ export type LoaderOverride =
  * publications schema, so consumer page code gets full schema-aware
  * inference on `entry.data.*` for translated entries.
  */
-export type LocaleSiblings<
-  TSource extends Record<string, unknown>,
-  TLocales extends string,
-> = {
-  [K in keyof TSource as K extends string
-    ? `${K}__${TLocales}`
-    : never]: TSource[K];
+export type LocaleSiblings<TSource extends Record<string, unknown>, TLocales extends string> = {
+  [K in keyof TSource as K extends string ? `${K}__${TLocales}` : never]: TSource[K];
 };
 
 /**
@@ -60,10 +55,8 @@ export type LocaleSiblings<
  * `ContentConfig['collections'][C]` resolves to a concrete
  * `defineCollection` config rather than `unknown`.
  */
-export type PolystellaCollectionsOutput<
-  TSource extends Record<string, unknown>,
-  TLocales extends string,
-> = TSource & LocaleSiblings<TSource, TLocales>;
+export type PolystellaCollectionsOutput<TSource extends Record<string, unknown>, TLocales extends string> = TSource &
+  LocaleSiblings<TSource, TLocales>;
 
 /**
  * Options for `polystellaCollections`. The helper preserves `source`
@@ -105,10 +98,7 @@ export interface PolystellaCollectionsDeps {
   file: (path: string) => unknown;
 }
 
-import {
-  DEFAULT_STAGING_DIR,
-  DEFAULT_STAGING_GLOB as DEFAULT_GLOB_PATTERN,
-} from "../storage/paths.js";
+import { DEFAULT_STAGING_DIR, DEFAULT_STAGING_GLOB as DEFAULT_GLOB_PATTERN } from "../storage/paths.js";
 
 /**
  * Iterate `source × locales` and return a map intersecting source
@@ -120,10 +110,7 @@ import {
  * every non-skipped (source × locale) pair. Unrecognised loaders
  * warn-and-skip; suppress via `skipLocalize` or `loaderOverrides`.
  */
-export function buildCollections<
-  TSource extends Record<string, unknown>,
-  TLocales extends readonly string[],
->(
+export function buildCollections<TSource extends Record<string, unknown>, TLocales extends readonly string[]>(
   opts: PolystellaCollectionsOptions<TSource, TLocales>,
   deps: PolystellaCollectionsDeps,
 ): PolystellaCollectionsOutput<TSource, TLocales[number]> {
@@ -140,9 +127,7 @@ export function buildCollections<
   // Filter `defaultLocale` out of `locales` defensively (Astro's
   // contract includes the default in `i18n.locales`; we don't want
   // a self-translation sibling).
-  const targetLocales = defaultLocale
-    ? locales.filter((l) => l !== defaultLocale)
-    : [...locales];
+  const targetLocales = defaultLocale ? locales.filter((l) => l !== defaultLocale) : [...locales];
 
   const skipSet = new Set<string>(skipLocalize);
   // Widen back to a string-keyed map for the `[collectionName]` lookup.
@@ -194,15 +179,7 @@ export function deriveSiblingCollection(args: {
   deps: PolystellaCollectionsDeps;
   logger: { warn: (message: string) => void };
 }): unknown | null {
-  const {
-    collectionName,
-    sourceCollection,
-    locale,
-    stagingDir,
-    override,
-    deps,
-    logger,
-  } = args;
+  const { collectionName, sourceCollection, locale, stagingDir, override, deps, logger } = args;
 
   const stagingBase = `${stagingDir}/${locale}/${collectionName}`;
   const schema = readSchema(sourceCollection);
@@ -230,9 +207,7 @@ export function deriveSiblingCollection(args: {
     }
     // Exhaustiveness guard for future `LoaderOverride` variants.
     throw new Error(
-      `[polystella] unrecognized loaderOverride kind for collection "${collectionName}": ${
-        (override as { kind: string }).kind
-      }`,
+      `[polystella] unrecognized loaderOverride kind for collection "${collectionName}": ${(override as { kind: string }).kind}`,
     );
   }
 

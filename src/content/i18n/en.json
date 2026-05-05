@@ -9,6 +9,7 @@
   "globals.blog": "blog",
   "globals.video": "video",
   "globals.presentation": "presentation",
+  "globals.view": "View",
   "globals.seeMore": "See More",
   "globals.viewAll": "View All",
 
@@ -63,7 +64,6 @@
   "publication.contributors": "Contributors",
   "publication.details": "Details",
   "publication.abstract": "Abstract",
-  "publication.view": "View",
 
   "people.heading": "People",
   "people.subheading": "Meet the Cloudflare Research team",

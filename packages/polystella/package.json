@@ -1,11 +1,14 @@
 {
   "name": "polystella",
-  "version": "0.0.1",
+  "version": "0.2.0",
   "type": "module",
   "private": true,
   "description": "AI-driven content localization for Astro (build-time markdown translation, R2-cached).",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
+  "bin": {
+    "polystella-translate": "./src/cli.ts"
+  },
   "exports": {
     ".": {
       "types": "./src/index.ts",
@@ -20,8 +23,8 @@
       "default": "./src/content/index.ts"
     },
     "./i18n": {
-      "types": "./src/ui/index.ts",
-      "default": "./src/ui/index.ts"
+      "types": "./src/i18n/index.ts",
+      "default": "./src/i18n/index.ts"
     },
     "./react": {
       "types": "./src/react/index.ts",

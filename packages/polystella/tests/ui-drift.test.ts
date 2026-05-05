@@ -2,11 +2,7 @@ import { describe, expect, it } from "vitest";
 import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
-import {
-  checkI18nDrift,
-  formatDriftIssues,
-  loadAndCheckDrift,
-} from "../src/ui/drift.js";
+import { checkI18nDrift, formatDriftIssues, loadAndCheckDrift } from "../src/i18n/drift.js";
 
 /**
  * Tests for the drift-detection helpers — both the pure
@@ -155,16 +151,12 @@ describe("formatDriftIssues", () => {
   });
 
   it("formats missing-keys lines per locale", () => {
-    const out = formatDriftIssues([
-      { locale: "pt-BR", missing: ["a", "b"], extra: [], missingFile: false },
-    ]);
+    const out = formatDriftIssues([{ locale: "pt-BR", missing: ["a", "b"], extra: [], missingFile: false }]);
     expect(out).toContain("Missing keys in pt-BR.json: a, b");
   });
 
   it("formats extra-keys lines per locale", () => {
-    const out = formatDriftIssues([
-      { locale: "pt-BR", missing: [], extra: ["stale"], missingFile: false },
-    ]);
+    const out = formatDriftIssues([{ locale: "pt-BR", missing: [], extra: ["stale"], missingFile: false }]);
     expect(out).toContain("Extra keys in pt-BR.json");
     expect(out).toContain("stale");
   });
@@ -195,9 +187,7 @@ describe("formatDriftIssues", () => {
 });
 
 describe("loadAndCheckDrift — disk", () => {
-  async function makeFixture(
-    files: Record<string, string>,
-  ): Promise<{ rootDir: string; baseDir: string }> {
+  async function makeFixture(files: Record<string, string>): Promise<{ rootDir: string; baseDir: string }> {
     const rootDir = await mkdtemp(path.join(os.tmpdir(), "polystella-drift-"));
     const baseDir = "src/content/i18n";
     const absBase = path.join(rootDir, baseDir);

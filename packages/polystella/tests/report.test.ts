@@ -2,12 +2,7 @@ import { describe, expect, it } from "vitest";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
-import {
-  computeBuildReportTotals,
-  emitBuildReport,
-  type BuildReport,
-  type BuildReportEntry,
-} from "../src/storage/report.js";
+import { computeBuildReportTotals, emitBuildReport, type BuildReport, type BuildReportEntry } from "../src/storage/report.js";
 
 /**
  * Two layers:
@@ -19,9 +14,7 @@ import {
  * arithmetic and the on-disk shape.
  */
 
-function makeEntry(
-  overrides: Partial<BuildReportEntry> = {},
-): BuildReportEntry {
+function makeEntry(overrides: Partial<BuildReportEntry> = {}): BuildReportEntry {
   return {
     sourcePath: "publications/foo.md",
     locale: "pt-BR",
@@ -77,10 +70,7 @@ describe("computeBuildReportTotals", () => {
   });
 
   it("omits token totals entirely when no entry reports them", () => {
-    const noTokens = computeBuildReportTotals([
-      makeEntry({ outcome: "cache-hit" }),
-      makeEntry({ outcome: "override" }),
-    ]);
+    const noTokens = computeBuildReportTotals([makeEntry({ outcome: "cache-hit" }), makeEntry({ outcome: "override" })]);
     expect(noTokens.tokensIn).toBeUndefined();
     expect(noTokens.tokensOut).toBeUndefined();
   });

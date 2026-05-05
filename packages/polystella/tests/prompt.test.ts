@@ -16,12 +16,8 @@ const sampleGlossary: Glossary = {
 };
 
 /** Helper: build a marker-delimited response for `expectedIds`. */
-function buildMarkerResponse(
-  pairs: ReadonlyArray<[id: string, value: string]>,
-): string {
-  return pairs
-    .map(([id, value]) => `@@${id}@@\n${value}`)
-    .join("\n\n");
+function buildMarkerResponse(pairs: ReadonlyArray<[id: string, value: string]>): string {
+  return pairs.map(([id, value]) => `@@${id}@@\n${value}`).join("\n\n");
 }
 
 describe("buildPrompt", () => {
@@ -225,28 +221,15 @@ describe("parseResponse", () => {
     ]);
     const out = parseResponse(raw, expected);
     expect(out.get("fm:title")).toBe("Um pedido de desculpas");
-    expect(out.get("body:0")).toBe(
-      "Pedimos **desculpas** por qualquer inconveniência.",
-    );
+    expect(out.get("body:0")).toBe("Pedimos **desculpas** por qualquer inconveniência.");
   });
 
   it("preserves multi-line translated content verbatim", () => {
     // The marker format shines here vs. JSON: literal newlines pass
     // through without escaping.
-    const raw = [
-      "@@fm:title@@",
-      "Title",
-      "",
-      "@@body:0@@",
-      "First line",
-      "Second line",
-      "",
-      "Third line after blank",
-    ].join("\n");
+    const raw = ["@@fm:title@@", "Title", "", "@@body:0@@", "First line", "Second line", "", "Third line after blank"].join("\n");
     const out = parseResponse(raw, expected);
-    expect(out.get("body:0")).toBe(
-      "First line\nSecond line\n\nThird line after blank",
-    );
+    expect(out.get("body:0")).toBe("First line\nSecond line\n\nThird line after blank");
   });
 
   it("preserves literal quotes and backslashes verbatim (no escaping needed)", () => {
@@ -260,20 +243,28 @@ describe("parseResponse", () => {
   });
 
   it("strips ```text code fences when the model wraps the output", () => {
-    const raw = ["```text", buildMarkerResponse([
-      ["fm:title", "T"],
-      ["body:0", "B"],
-    ]), "```"].join("\n");
+    const raw = [
+      "```text",
+      buildMarkerResponse([
+        ["fm:title", "T"],
+        ["body:0", "B"],
+      ]),
+      "```",
+    ].join("\n");
     const out = parseResponse(raw, expected);
     expect(out.get("fm:title")).toBe("T");
     expect(out.get("body:0")).toBe("B");
   });
 
   it("strips plain ``` code fences too", () => {
-    const raw = ["```", buildMarkerResponse([
-      ["fm:title", "T"],
-      ["body:0", "B"],
-    ]), "```"].join("\n");
+    const raw = [
+      "```",
+      buildMarkerResponse([
+        ["fm:title", "T"],
+        ["body:0", "B"],
+      ]),
+      "```",
+    ].join("\n");
     const out = parseResponse(raw, expected);
     expect(out.size).toBe(2);
   });
@@ -288,18 +279,14 @@ describe("parseResponse", () => {
   });
 
   it("throws when no markers are present at all", () => {
-    expect(() =>
-      parseResponse("Sorry, I cannot translate this.", expected),
-    ).toThrow(/no segment markers in the model response/);
+    expect(() => parseResponse("Sorry, I cannot translate this.", expected)).toThrow(/no segment markers in the model response/);
   });
 
   it("distinguishes truncation (last segment never finished) with a clear hint", () => {
     // Model emitted the body:0 marker and content but never produced
     // the second marker — the last id we requested.
     const raw = "@@fm:title@@\nT";
-    expect(() => parseResponse(raw, expected)).toThrow(
-      /omitted segment "body:0".*Response appears truncated/s,
-    );
+    expect(() => parseResponse(raw, expected)).toThrow(/omitted segment "body:0".*Response appears truncated/s);
   });
 
   it("throws when the model returns an unexpected segment id", () => {
@@ -308,9 +295,7 @@ describe("parseResponse", () => {
       ["body:0", "B"],
       ["body:99", "Surprise!"],
     ]);
-    expect(() => parseResponse(raw, expected)).toThrow(
-      /unexpected segment id "body:99"/,
-    );
+    expect(() => parseResponse(raw, expected)).toThrow(/unexpected segment id "body:99"/);
   });
 
   it("throws when the model omits an expected segment", () => {
@@ -319,9 +304,7 @@ describe("parseResponse", () => {
     // explicit miss, a typo in the id space could be silently
     // accepted as "translation = empty".
     const raw = buildMarkerResponse([["fm:title", "T"]]);
-    expect(() => parseResponse(raw, expected)).toThrow(
-      /omitted segment "body:0"/,
-    );
+    expect(() => parseResponse(raw, expected)).toThrow(/omitted segment "body:0"/);
   });
 
   it("throws when a translation block is empty", () => {
@@ -329,20 +312,11 @@ describe("parseResponse", () => {
     // Empty translation is meaningless — better to fail loudly than
     // ship a blank rendered page.
     const raw = "@@fm:title@@\n\n@@body:0@@\nB";
-    expect(() => parseResponse(raw, expected)).toThrow(
-      /empty translation for segment "fm:title"/,
-    );
+    expect(() => parseResponse(raw, expected)).toThrow(/empty translation for segment "fm:title"/);
   });
 
   it("trims trailing whitespace from each translation block", () => {
-    const raw = [
-      "@@fm:title@@",
-      "T  ",
-      "",
-      "@@body:0@@",
-      "  B",
-      "",
-    ].join("\n");
+    const raw = ["@@fm:title@@", "T  ", "", "@@body:0@@", "  B", ""].join("\n");
     const out = parseResponse(raw, expected);
     expect(out.get("fm:title")).toBe("T");
     expect(out.get("body:0")).toBe("B");
@@ -352,13 +326,7 @@ describe("parseResponse", () => {
     // A translation that mentions `@@something@@` inline shouldn't
     // be misread as a new marker. The regex anchors on line starts
     // so mid-line pseudo-markers stay part of the content.
-    const raw = [
-      "@@fm:title@@",
-      "T (see @@inline@@ note)",
-      "",
-      "@@body:0@@",
-      "B",
-    ].join("\n");
+    const raw = ["@@fm:title@@", "T (see @@inline@@ note)", "", "@@body:0@@", "B"].join("\n");
     const out = parseResponse(raw, expected);
     expect(out.get("fm:title")).toBe("T (see @@inline@@ note)");
     expect(out.get("body:0")).toBe("B");

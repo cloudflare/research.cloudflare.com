@@ -59,16 +59,7 @@ const tags = defineCollection({
     name: z.string(),
     slug: z.string(),
     description: z.string().optional(),
-    color: z.enum([
-      "blue",
-      "purple",
-      "green",
-      "orange",
-      "white",
-      "red",
-      "yellow",
-      "pink",
-    ]),
+    color: z.enum(["blue", "purple", "green", "orange", "white", "red", "yellow", "pink"]),
   }),
 });
 
@@ -83,9 +74,7 @@ const publications = defineCollection({
     url: z.string().optional(),
     doi: z.string().optional(),
     related_interests: z.array(z.string()).optional(),
-    pillar: z
-      .enum(["private", "safe", "fast", "reliable", "measurable"])
-      .optional(),
+    pillar: z.enum(["private", "safe", "fast", "reliable", "measurable"]).optional(),
     tags: z.array(reference("tags")).optional(),
   }),
 });
@@ -99,9 +88,7 @@ const blog = defineCollection({
     excerpt: z.string(),
     image: z.string().optional(),
     author: reference("people").optional(),
-    pillar: z
-      .enum(["private", "safe", "fast", "reliable", "measurable"])
-      .optional(),
+    pillar: z.enum(["private", "safe", "fast", "reliable", "measurable"]).optional(),
     tags: z.array(reference("tags")).optional(),
   }),
 });

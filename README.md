@@ -47,14 +47,16 @@ The website for Cloudflare Research, showcasing our work in building a better In
 
 All commands are run from the root of the project:
 
-| Command           | Action                                               |
-| :---------------- | :--------------------------------------------------- |
-| `npm install`     | Installs dependencies                                |
-| `npm run dev`     | Starts local dev server at `localhost:4321`          |
-| `npm run build`   | Build your production site to `./dist/`              |
-| `npm run preview` | Preview your build locally, before deploying         |
-| `npm run icons`   | Generate SVG sprite from icons in `/other/svg-icons` |
-| `npm run ui`      | Add shadcn/ui components                             |
+| Command              | Action                                                                                        |
+| :------------------- | :-------------------------------------------------------------------------------------------- |
+| `pnpm install`       | Installs dependencies                                                                         |
+| `pnpm dev`           | Starts local dev server at `localhost:4321`                                                   |
+| `pnpm build`         | Build your production site to `./dist/`                                                       |
+| `pnpm preview`       | Preview your build locally, before deploying                                                  |
+| `pnpm icons`         | Generate SVG sprite from icons in `/other/svg-icons`                                          |
+| `pnpm ui`            | Add shadcn/ui components                                                                      |
+| `pnpm translate`     | Run the PolyStella translation pipeline standalone (no Astro build). See _Translation_ below. |
+| `pnpm translate:dry` | Same as `translate` but skips the provider + R2 writes; only prints planned R2 keys.          |
 
 ## 📝 Content Management
 
@@ -93,6 +95,54 @@ The site is fully responsive with:
 - Responsive typography and spacing
 - Touch-friendly interactive elements
 
+## 🌐 Translation (PolyStella)
+
+Locale-aware content is translated by [PolyStella](./packages/polystella/), a workspace-local Astro integration. Translations are computed by Workers AI and cached in an R2 bucket; on subsequent builds, unchanged content hits the cache and the provider is never called.
+
+### Running translations standalone
+
+The translation pipeline normally runs as part of `astro build` in CI. Locally, `pnpm build` and `pnpm dev` are read-only against R2 (see _Branch-isolated cache_ below) — you read main's translations but cannot write to the cache. To actually translate new content into R2 from a developer's machine, use the standalone CLI:
+
+```sh
+pnpm translate                                   # writes to current git branch's preview prefix (auto-detected)
+pnpm translate:dry                               # preview the planned R2 keys; no provider/R2 calls
+pnpm translate --branch my-feature               # target previews/my-feature/i18n/ regardless of git checkout
+pnpm translate --branch main --locale ja-JP      # re-translate one locale into production's prefix (loud, explicit)
+pnpm translate --file 'publications/foo.md'     # restrict to a single source file
+pnpm translate --prefix 'custom/i18n/'          # direct r2.prefix override (escape hatch)
+pnpm translate --report ./tmp/report.json       # emit the build report to a custom path
+```
+
+Branch resolution is `--branch` flag → `WORKERS_CI_BRANCH` env → `git rev-parse HEAD`. If git is unavailable or HEAD is detached, the CLI errors with a hint to pass `--branch` explicitly. Run `pnpm translate --help` for the full flag list.
+
+Both `pnpm translate ...` and the explicit `pnpm translate -- ...` (POSIX `--` separator) forms work; pnpm forwards the trailing args either way.
+
+### Branch-isolated cache
+
+`polystella.config.mjs` dispatches the R2 configuration based on two env-var signals:
+
+- `WORKERS_CI_BRANCH` — set automatically by Cloudflare Workers Builds in CI. Unset in any local shell.
+- `POLYSTELLA_CLI=1` — set by `cli.ts` before the config loads. Marks an explicit `pnpm translate` invocation.
+
+Three resulting modes:
+
+| Mode               | Detection                                 | `r2.prefix`                         | `r2.readFallbackPrefixes` | `r2.readOnly` | Behaviour                                                                                                                                                              |
+| :----------------- | :---------------------------------------- | :---------------------------------- | :------------------------ | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Local build        | neither env var set                       | `i18n/`                             | _(none)_                  | `true`        | `pnpm build` / `pnpm dev` reads main's cache; on miss, translates locally and stages without writing to R2. A developer's machine can never overwrite production data. |
+| CI build (main)    | `WORKERS_CI_BRANCH=main`                  | `i18n/`                             | _(none)_                  | `false`       | Production cache; the sole writer of `i18n/`.                                                                                                                          |
+| CI build (preview) | `WORKERS_CI_BRANCH=<other>`               | `previews/<sanitized-branch>/i18n/` | `["i18n/"]`               | `false`       | Preview cache; reads main's translations on miss, only writes its own variants under `previews/`.                                                                      |
+| Explicit CLI       | `POLYSTELLA_CLI=1` + branch-from-anywhere | as above (per resolved branch)      | as above                  | `false`       | `pnpm translate` writes to R2 per the branch's prefix. Branch resolution: `--branch` flag → `WORKERS_CI_BRANCH` env → `git rev-parse HEAD`.                            |
+
+Branch names containing `/`, `.`, `+`, or other non-alphanumeric characters are sanitized to a single flat segment — `diogo/polystella-v1` becomes `previews/diogo-polystella-v1/i18n/`. Sanitization rule (`[^a-zA-Z0-9_-]+` → `-`, trim leading/trailing `-`) lives in `polystella.config.mjs`.
+
+Per-branch isolation means a PR build can re-translate edited files without polluting production's cache, while still reusing main's bytes for unchanged content (no double-translation cost). Local builds never write at all; the explicit CLI is the only way to populate non-main caches from outside CI.
+
+### R2 lifecycle (operator action)
+
+Configure a lifecycle rule on the `research-i18n-cache` bucket to expire objects under `previews/` after 30 days. This bounds storage cost as PRs come and go without requiring an explicit cleanup step on PR close. Production's `i18n/` prefix is exempt (no lifecycle rule there).
+
+The polystella package itself prunes within its configured `prefix` only, so a preview build can never accidentally evict production variants — the lifecycle rule handles cross-build cleanup of orphan preview prefixes.
+
 ## 🚢 Deployment
 
-The site is deployed on Cloudflare Workers with automatic deployments (via Workers Builds) from the main branch.
+The site is deployed on Cloudflare Workers with automatic deployments (via Workers Builds) from the main branch. PR previews are built and deployed automatically; their translation pass uses the branch-isolated cache described under _Translation_ above.

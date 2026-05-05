@@ -27,10 +27,7 @@ export type InterpolateParams = Record<string, string | number | boolean>;
  * Interpolate `{{name}}` placeholders. Word characters only —
  * `{{user_name}}` works, `{{user.name}}` doesn't. Matches i18next.
  */
-export function interpolate(
-  template: string,
-  params: InterpolateParams,
-): string {
+export function interpolate(template: string, params: InterpolateParams): string {
   return template.replace(/\{\{(\w+)\}\}/g, (match, key: string) => {
     if (key in params) {
       return String(params[key]);
@@ -45,10 +42,7 @@ export type TranslateFn = (key: string, params?: InterpolateParams) => string;
  * `t()` bound to a primary + optional fallback dictionary. Pure;
  * tests exercise this without standing up `getEntry`.
  */
-export function buildTranslateFn(
-  primary: Record<string, string>,
-  fallback?: Record<string, string>,
-): TranslateFn {
+export function buildTranslateFn(primary: Record<string, string>, fallback?: Record<string, string>): TranslateFn {
   return function t(key, params) {
     let raw = primary[key];
     if (raw === undefined && fallback) {
@@ -65,9 +59,7 @@ export function buildTranslateFn(
  * Astro-content shape we need at page-render time. Structural so
  * tests can pass synthetic implementations.
  */
-export type GetI18nEntry = (
-  locale: string,
-) => Promise<{ data: Record<string, string> } | undefined>;
+export type GetI18nEntry = (locale: string) => Promise<{ data: Record<string, string> } | undefined>;
 
 export interface UseTranslationsDeps {
   defaultLocale: string;
@@ -80,10 +72,7 @@ export interface UseTranslationsDeps {
  * may be unset under `prefixDefaultLocale: false`) gets the default
  * dictionary.
  */
-export async function resolveTranslations(
-  locale: string | undefined,
-  deps: UseTranslationsDeps,
-): Promise<TranslateFn> {
+export async function resolveTranslations(locale: string | undefined, deps: UseTranslationsDeps): Promise<TranslateFn> {
   const effectiveLocale = locale ?? deps.defaultLocale;
   const primaryEntry = await deps.getI18nEntry(effectiveLocale);
   const primary = primaryEntry?.data ?? {};

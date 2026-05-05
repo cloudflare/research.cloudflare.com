@@ -84,9 +84,7 @@ describe("generateShimSource", () => {
     // Imports both the default render and the source's getStaticPaths;
     // a missing import here would silently leave Astro unable to
     // enumerate paths and the build would emit zero localized routes.
-    expect(source).toContain(
-      `import SourcePage, { getStaticPaths as sourceGetStaticPaths } from "../../src/pages/[slug].astro"`,
-    );
+    expect(source).toContain(`import SourcePage, { getStaticPaths as sourceGetStaticPaths } from "../../src/pages/[slug].astro"`);
     // Locales are declared inside `getStaticPaths` (not at module
     // scope) because Astro lifts `getStaticPaths` into its own
     // module for static-path generation, and surrounding
@@ -107,9 +105,7 @@ describe("generateShimSource", () => {
       isDynamic: false,
       locales: LOCALES,
     });
-    expect(source).toContain(
-      `import SourcePage from "../../src/pages/about.astro"`,
-    );
+    expect(source).toContain(`import SourcePage from "../../src/pages/about.astro"`);
     // Static pages don't import sourceGetStaticPaths — that import
     // would fail when the source page has no such export, so its
     // absence is part of the contract.

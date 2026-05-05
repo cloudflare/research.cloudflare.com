@@ -99,25 +99,17 @@ export function formatDriftIssues(issues: ReadonlyArray<DriftIssue>): string {
   const lines: string[] = [];
   for (const issue of issues) {
     if (issue.missingFile) {
-      lines.push(
-        `  • ${issue.locale}: file is missing. Create it and copy these keys (values are placeholders for translation):`,
-      );
+      lines.push(`  • ${issue.locale}: file is missing. Create it and copy these keys (values are placeholders for translation):`);
       for (const key of issue.missing) {
         lines.push(`      "${key}": ""`);
       }
       continue;
     }
     if (issue.missing.length > 0) {
-      lines.push(
-        `  • Missing keys in ${issue.locale}.json: ${issue.missing.join(", ")}`,
-      );
+      lines.push(`  • Missing keys in ${issue.locale}.json: ${issue.missing.join(", ")}`);
     }
     if (issue.extra.length > 0) {
-      lines.push(
-        `  • Extra keys in ${
-          issue.locale
-        }.json (not in default-locale file): ${issue.extra.join(", ")}`,
-      );
+      lines.push(`  • Extra keys in ${issue.locale}.json (not in default-locale file): ${issue.extra.join(", ")}`);
     }
   }
   return lines.join("\n");
@@ -138,9 +130,7 @@ export interface LoadAndCheckDriftOptions {
   defaultLocale: string;
 }
 
-export async function loadAndCheckDrift(
-  opts: LoadAndCheckDriftOptions,
-): Promise<DriftCheckResult> {
+export async function loadAndCheckDrift(opts: LoadAndCheckDriftOptions): Promise<DriftCheckResult> {
   const dictionaries: Record<string, Record<string, string>> = {};
   for (const locale of opts.locales) {
     const filePath = path.resolve(opts.rootDir, opts.baseDir, `${locale}.json`);
@@ -157,17 +147,9 @@ export async function loadAndCheckDrift(
     try {
       parsed = JSON.parse(raw);
     } catch (err) {
-      throw new Error(
-        `[polystella] failed to parse UI-strings JSON at ${filePath}: ${
-          (err as Error).message
-        }`,
-      );
+      throw new Error(`[polystella] failed to parse UI-strings JSON at ${filePath}: ${(err as Error).message}`);
     }
-    if (
-      parsed === null ||
-      typeof parsed !== "object" ||
-      Array.isArray(parsed)
-    ) {
+    if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
       throw new Error(
         `[polystella] UI-strings file at ${filePath} must be a JSON object of string→string entries (got ${
           Array.isArray(parsed) ? "array" : typeof parsed

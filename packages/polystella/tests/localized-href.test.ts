@@ -1,8 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  resolveLocalizedHref,
-  type LocalizedHrefDeps,
-} from "../src/runtime/localized-href.js";
+import { resolveLocalizedHref, type LocalizedHrefDeps } from "../src/runtime/localized-href.js";
 
 /**
  * Tests for the pure `localizedHref` helper. Mirrors the URL
@@ -21,9 +18,7 @@ const DEPS: LocalizedHrefDeps = {
 
 describe("resolveLocalizedHref — short-circuit branches", () => {
   it("returns href unchanged when locale is undefined", () => {
-    expect(resolveLocalizedHref("/Smith2017", undefined, DEPS)).toBe(
-      "/Smith2017",
-    );
+    expect(resolveLocalizedHref("/Smith2017", undefined, DEPS)).toBe("/Smith2017");
   });
 
   it("returns href unchanged when locale is the empty string", () => {
@@ -55,52 +50,38 @@ describe("resolveLocalizedHref — external URLs left alone", () => {
 
 describe("resolveLocalizedHref — anchors and fragments", () => {
   it("leaves anchor-only hrefs unchanged", () => {
-    expect(resolveLocalizedHref("#section-1", "pt-BR", DEPS)).toBe(
-      "#section-1",
-    );
+    expect(resolveLocalizedHref("#section-1", "pt-BR", DEPS)).toBe("#section-1");
   });
 
   it("preserves the fragment after the locale prefix", () => {
-    expect(resolveLocalizedHref("/Smith2017#methods", "pt-BR", DEPS)).toBe(
-      "/pt-BR/Smith2017#methods",
-    );
+    expect(resolveLocalizedHref("/Smith2017#methods", "pt-BR", DEPS)).toBe("/pt-BR/Smith2017#methods");
   });
 
   it("preserves the query string after the locale prefix", () => {
-    expect(resolveLocalizedHref("/search?q=privacy", "pt-BR", DEPS)).toBe(
-      "/pt-BR/search?q=privacy",
-    );
+    expect(resolveLocalizedHref("/search?q=privacy", "pt-BR", DEPS)).toBe("/pt-BR/search?q=privacy");
   });
 
   it("preserves both query and fragment", () => {
-    expect(resolveLocalizedHref("/search?q=privacy#hits", "pt-BR", DEPS)).toBe(
-      "/pt-BR/search?q=privacy#hits",
-    );
+    expect(resolveLocalizedHref("/search?q=privacy#hits", "pt-BR", DEPS)).toBe("/pt-BR/search?q=privacy#hits");
   });
 });
 
 describe("resolveLocalizedHref — idempotency on already-prefixed URLs", () => {
   it("leaves a URL prefixed with the target locale alone", () => {
-    expect(resolveLocalizedHref("/pt-BR/Smith2017", "pt-BR", DEPS)).toBe(
-      "/pt-BR/Smith2017",
-    );
+    expect(resolveLocalizedHref("/pt-BR/Smith2017", "pt-BR", DEPS)).toBe("/pt-BR/Smith2017");
   });
 
   it("leaves a URL prefixed with a *different* declared locale alone", () => {
     // A page rendered under pt-BR that contains a deliberate link to
     // the ja-JP version of another article shouldn't get
     // double-prefixed to `/pt-BR/ja-JP/...`.
-    expect(resolveLocalizedHref("/ja-JP/Smith2017", "pt-BR", DEPS)).toBe(
-      "/ja-JP/Smith2017",
-    );
+    expect(resolveLocalizedHref("/ja-JP/Smith2017", "pt-BR", DEPS)).toBe("/ja-JP/Smith2017");
   });
 
   it("leaves a URL prefixed with the default locale alone", () => {
     // Operators sometimes author `/en/...` paths explicitly to opt
     // out of locale-prefixing. Treat as already-prefixed.
-    expect(resolveLocalizedHref("/en/Smith2017", "pt-BR", DEPS)).toBe(
-      "/en/Smith2017",
-    );
+    expect(resolveLocalizedHref("/en/Smith2017", "pt-BR", DEPS)).toBe("/en/Smith2017");
   });
 
   it("treats a bare `/{locale}` (no trailing slash) as already prefixed", () => {
@@ -110,35 +91,25 @@ describe("resolveLocalizedHref — idempotency on already-prefixed URLs", () => 
   it("does NOT confuse a path that starts with locale-like text", () => {
     // `/pt-BR-foo` is NOT `/pt-BR/foo`; the path starts with text that
     // looks like the locale but isn't followed by `/`. Normal prefix.
-    expect(resolveLocalizedHref("/pt-BR-foo", "pt-BR", DEPS)).toBe(
-      "/pt-BR/pt-BR-foo",
-    );
+    expect(resolveLocalizedHref("/pt-BR-foo", "pt-BR", DEPS)).toBe("/pt-BR/pt-BR-foo");
   });
 });
 
 describe("resolveLocalizedHref — happy path prefixing", () => {
   it("prefixes a leading-slash internal path", () => {
-    expect(resolveLocalizedHref("/Smith2017", "pt-BR", DEPS)).toBe(
-      "/pt-BR/Smith2017",
-    );
+    expect(resolveLocalizedHref("/Smith2017", "pt-BR", DEPS)).toBe("/pt-BR/Smith2017");
   });
 
   it("prefixes a relative path (no leading slash) with one slash", () => {
-    expect(resolveLocalizedHref("Smith2017", "pt-BR", DEPS)).toBe(
-      "/pt-BR/Smith2017",
-    );
+    expect(resolveLocalizedHref("Smith2017", "pt-BR", DEPS)).toBe("/pt-BR/Smith2017");
   });
 
   it("preserves nested paths", () => {
-    expect(resolveLocalizedHref("/people/alex-davidson", "pt-BR", DEPS)).toBe(
-      "/pt-BR/people/alex-davidson",
-    );
+    expect(resolveLocalizedHref("/people/alex-davidson", "pt-BR", DEPS)).toBe("/pt-BR/people/alex-davidson");
   });
 
   it("uses ja-JP as the prefix when locale is ja-JP", () => {
-    expect(resolveLocalizedHref("/Smith2017", "ja-JP", DEPS)).toBe(
-      "/ja-JP/Smith2017",
-    );
+    expect(resolveLocalizedHref("/Smith2017", "ja-JP", DEPS)).toBe("/ja-JP/Smith2017");
   });
 
   it("works with an unfamiliar (not-in-locales) locale string", () => {

@@ -32,16 +32,12 @@ export default defineConfig({
       options: {
         variants: [
           {
-            src: [
-              "./src/assets/fonts/Inter/Inter-VariableFont_opsz,wght.woff2",
-            ],
+            src: ["./src/assets/fonts/Inter/Inter-VariableFont_opsz,wght.woff2"],
             weight: "100 900",
             style: "normal",
           },
           {
-            src: [
-              "./src/assets/fonts/Inter/Inter-Italic-VariableFont_opsz,wght.woff2",
-            ],
+            src: ["./src/assets/fonts/Inter/Inter-Italic-VariableFont_opsz,wght.woff2"],
             weight: "100 900",
             style: "italic",
           },
@@ -55,16 +51,12 @@ export default defineConfig({
       options: {
         variants: [
           {
-            src: [
-              "./src/assets/fonts/Roboto_Mono/RobotoMono-VariableFont_wght.woff2",
-            ],
+            src: ["./src/assets/fonts/Roboto_Mono/RobotoMono-VariableFont_wght.woff2"],
             weight: "100 700",
             style: "normal",
           },
           {
-            src: [
-              "./src/assets/fonts/Roboto_Mono/RobotoMono-Italic-VariableFont_wght.woff2",
-            ],
+            src: ["./src/assets/fonts/Roboto_Mono/RobotoMono-Italic-VariableFont_wght.woff2"],
             weight: "100 700",
             style: "italic",
           },

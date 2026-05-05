@@ -1,24 +1,21 @@
 import { useState, useEffect } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
-const toggleButtonVariants = cva(
-  "font-medium text-base py-2 px-[18px] rounded-full border",
-  {
-    variants: {
-      variant: {
-        toggledOff: "border-page-border text-page-text",
-        yellow: "text-badge-yellow-text border-badge-yellow-text",
-        blue: "text-badge-blue-text border-badge-blue-text bg-badge-blue-bg",
-        red: "text-badge-red-text border-badge-red-text",
-        green: "text-badge-green-text border-badge-green-text",
-        purple: "text-badge-purple-text border-badge-purple-text",
-      },
-    },
-    defaultVariants: {
-      variant: "toggledOff",
+const toggleButtonVariants = cva("font-medium text-base py-2 px-[18px] rounded-full border", {
+  variants: {
+    variant: {
+      toggledOff: "border-page-border text-page-text",
+      yellow: "text-badge-yellow-text border-badge-yellow-text",
+      blue: "text-badge-blue-text border-badge-blue-text bg-badge-blue-bg",
+      red: "text-badge-red-text border-badge-red-text",
+      green: "text-badge-green-text border-badge-green-text",
+      purple: "text-badge-purple-text border-badge-purple-text",
     },
   },
-);
+  defaultVariants: {
+    variant: "toggledOff",
+  },
+});
 
 const ToggleButton = ({
   children,

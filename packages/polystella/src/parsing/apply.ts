@@ -66,18 +66,13 @@ export function applyTranslations(
     edits.push({ ...span, replacement: translation });
   });
 
-  const frontmatterNode = ast.children.find(
-    (child): child is Yaml => child.type === "yaml",
-  );
+  const frontmatterNode = ast.children.find((child): child is Yaml => child.type === "yaml");
   if (frontmatterNode) {
     const fmTranslations = collectFrontmatterTranslations(translations);
     if (fmTranslations.size > 0 || hasAdditions) {
       const fmSpan = nodeSpan(frontmatterNode);
       if (fmSpan) {
-        const data = parseYaml(frontmatterNode.value) as Record<
-          string,
-          unknown
-        >;
+        const data = parseYaml(frontmatterNode.value) as Record<string, unknown>;
         for (const [path, translation] of fmTranslations) {
           applyFrontmatterTranslation(data, path, translation);
         }
@@ -109,8 +104,7 @@ export function applyTranslations(
   edits.sort((a, b) => b.start - a.start);
   let output = source;
   for (const edit of edits) {
-    output =
-      output.slice(0, edit.start) + edit.replacement + output.slice(edit.end);
+    output = output.slice(0, edit.start) + edit.replacement + output.slice(edit.end);
   }
   return output;
 }
@@ -128,9 +122,7 @@ function nodeSpan(node: any): { start: number; end: number } | undefined {
  * Pull `fm:*` entries out of the translations map, returning a new map
  * keyed by the path-after-`fm:` (e.g. `title`, `tags[0]`).
  */
-function collectFrontmatterTranslations(
-  translations: Map<string, string>,
-): Map<string, string> {
+function collectFrontmatterTranslations(translations: Map<string, string>): Map<string, string> {
   const fm = new Map<string, string>();
   for (const [id, value] of translations) {
     if (id.startsWith("fm:")) {
@@ -144,11 +136,7 @@ function collectFrontmatterTranslations(
  * Apply a single frontmatter translation. `path` is either `key` (top-
  * level scalar) or `key[i]` (i-th element of a top-level array).
  */
-function applyFrontmatterTranslation(
-  data: Record<string, unknown>,
-  path: string,
-  translation: string,
-): void {
+function applyFrontmatterTranslation(data: Record<string, unknown>, path: string, translation: string): void {
   const arrayMatch = /^([^[]+)\[(\d+)\]$/.exec(path);
   if (arrayMatch) {
     const key = arrayMatch[1]!;

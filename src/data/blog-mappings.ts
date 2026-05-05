@@ -5,16 +5,14 @@ export interface BlogMapping {
 }
 
 export const blogMappings: Record<string, BlogMapping> = {
-  "http://blog.cloudflare.com/react2shell-rsc-vulnerabilities-exploitation-threat-brief":
-    {
-      pillar: "safe",
-      tags: ["security", "vulnerabilities"],
-    },
-  "http://blog.cloudflare.com/fresh-insights-from-old-data-corroborating-reports-of-turkmenistan-ip":
-    {
-      pillar: "measurable",
-      tags: ["censorship", "measurement"],
-    },
+  "http://blog.cloudflare.com/react2shell-rsc-vulnerabilities-exploitation-threat-brief": {
+    pillar: "safe",
+    tags: ["security", "vulnerabilities"],
+  },
+  "http://blog.cloudflare.com/fresh-insights-from-old-data-corroborating-reports-of-turkmenistan-ip": {
+    pillar: "measurable",
+    tags: ["censorship", "measurement"],
+  },
   "http://blog.cloudflare.com/agent-registry": {
     pillar: "private",
     tags: ["privacy", "bots"],
@@ -31,21 +29,18 @@ export const blogMappings: Record<string, BlogMapping> = {
     pillar: "measurable",
     tags: ["measurement", "IPv4"],
   },
-  "http://blog.cloudflare.com/how-to-build-your-own-vpn-or-the-history-of-warp":
-    {
-      pillar: "private",
-      tags: ["VPN", "privacy"],
-    },
-  "http://blog.cloudflare.com/defending-quic-from-acknowledgement-based-ddos-attacks":
-    {
-      pillar: "safe",
-      tags: ["security", "DDoS", "quic"],
-    },
-  "http://blog.cloudflare.com/so-long-and-thanks-for-all-the-fish-how-to-escape-the-linux-networking-stack":
-    {
-      pillar: "fast",
-      tags: ["performance", "networking"],
-    },
+  "http://blog.cloudflare.com/how-to-build-your-own-vpn-or-the-history-of-warp": {
+    pillar: "private",
+    tags: ["VPN", "privacy"],
+  },
+  "http://blog.cloudflare.com/defending-quic-from-acknowledgement-based-ddos-attacks": {
+    pillar: "safe",
+    tags: ["security", "DDoS", "quic"],
+  },
+  "http://blog.cloudflare.com/so-long-and-thanks-for-all-the-fish-how-to-escape-the-linux-networking-stack": {
+    pillar: "fast",
+    tags: ["performance", "networking"],
+  },
   "http://blog.cloudflare.com/pq-2025": {
     pillar: "private",
     tags: ["post-quantum", "cryptography"],
@@ -74,20 +69,18 @@ export const blogMappings: Record<string, BlogMapping> = {
     pillar: "measurable",
     tags: ["measurement", "analytics"],
   },
-  "http://blog.cloudflare.com/internet-measurement-resilience-transparency-week":
-    {
-      pillar: "measurable",
-      tags: ["measurement", "transparency"],
-    },
+  "http://blog.cloudflare.com/internet-measurement-resilience-transparency-week": {
+    pillar: "measurable",
+    tags: ["measurement", "transparency"],
+  },
   "http://blog.cloudflare.com/how-does-cloudflares-speed-test-really-work": {
     pillar: "fast",
     tags: ["performance", "measurement"],
   },
-  "http://blog.cloudflare.com/improving-the-trustworthiness-of-javascript-on-the-web":
-    {
-      pillar: "safe",
-      tags: ["security", "javascript"],
-    },
+  "http://blog.cloudflare.com/improving-the-trustworthiness-of-javascript-on-the-web": {
+    pillar: "safe",
+    tags: ["security", "javascript"],
+  },
   "http://blog.cloudflare.com/automatically-secure": {
     pillar: "safe",
     tags: ["security", "automation"],
@@ -100,11 +93,10 @@ export const blogMappings: Record<string, BlogMapping> = {
     pillar: "private",
     tags: ["cryptography", "bots"],
   },
-  "http://blog.cloudflare.com/orange-me2eets-we-made-an-end-to-end-encrypted-video-calling-app-and-it-was":
-    {
-      pillar: "private",
-      tags: ["encryption", "privacy"],
-    },
+  "http://blog.cloudflare.com/orange-me2eets-we-made-an-end-to-end-encrypted-video-calling-app-and-it-was": {
+    pillar: "private",
+    tags: ["encryption", "privacy"],
+  },
   "http://blog.cloudflare.com/web-bot-auth": {
     pillar: "safe",
     tags: ["security", "bots"],
@@ -113,25 +105,22 @@ export const blogMappings: Record<string, BlogMapping> = {
     pillar: "safe",
     tags: ["security", "certificates"],
   },
-  "http://blog.cloudflare.com/open-sourcing-openpubkey-ssh-opkssh-integrating-single-sign-on-with-ssh":
-    {
-      pillar: "safe",
-      tags: ["security", "SSH"],
-    },
+  "http://blog.cloudflare.com/open-sourcing-openpubkey-ssh-opkssh-integrating-single-sign-on-with-ssh": {
+    pillar: "safe",
+    tags: ["security", "SSH"],
+  },
   "http://blog.cloudflare.com/lattice-crypto-primer": {
     pillar: "private",
     tags: ["cryptography", "post-quantum"],
   },
-  "http://blog.cloudflare.com/https-only-for-cloudflare-apis-shutting-the-door-on-cleartext-traffic":
-    {
-      pillar: "safe",
-      tags: ["security", "encryption"],
-    },
-  "http://blog.cloudflare.com/an-early-look-at-cryptographic-watermarks-for-ai-generated-content":
-    {
-      pillar: "private",
-      tags: ["cryptography", "AI"],
-    },
+  "http://blog.cloudflare.com/https-only-for-cloudflare-apis-shutting-the-door-on-cleartext-traffic": {
+    pillar: "safe",
+    tags: ["security", "encryption"],
+  },
+  "http://blog.cloudflare.com/an-early-look-at-cryptographic-watermarks-for-ai-generated-content": {
+    pillar: "private",
+    tags: ["cryptography", "AI"],
+  },
   "http://blog.cloudflare.com/post-quantum-zero-trust": {
     pillar: "private",
     tags: ["post-quantum", "zero-trust"],
@@ -168,11 +157,10 @@ export const blogMappings: Record<string, BlogMapping> = {
     pillar: "private",
     tags: ["post-quantum", "standards"],
   },
-  "http://blog.cloudflare.com/introducing-automatic-ssl-tls-securing-and-simplifying-origin-connectivity":
-    {
-      pillar: "safe",
-      tags: ["security", "SSL"],
-    },
+  "http://blog.cloudflare.com/introducing-automatic-ssl-tls-securing-and-simplifying-origin-connectivity": {
+    pillar: "safe",
+    tags: ["security", "SSL"],
+  },
   "http://blog.cloudflare.com/harnessing-office-chaos": {
     pillar: "private",
     tags: ["cryptography", "randomness"],
@@ -185,11 +173,10 @@ export const blogMappings: Record<string, BlogMapping> = {
     pillar: "private",
     tags: ["privacy", "standards"],
   },
-  "http://blog.cloudflare.com/have-your-data-and-hide-it-too-an-introduction-to-differential-privacy":
-    {
-      pillar: "private",
-      tags: ["privacy", "differential-privacy"],
-    },
+  "http://blog.cloudflare.com/have-your-data-and-hide-it-too-an-introduction-to-differential-privacy": {
+    pillar: "private",
+    tags: ["privacy", "differential-privacy"],
+  },
   "http://blog.cloudflare.com/birthday-week-2023-wrap-up": {
     pillar: "measurable",
     tags: ["announcements"],
@@ -210,11 +197,10 @@ export const blogMappings: Record<string, BlogMapping> = {
     pillar: "private",
     tags: ["privacy", "measurement"],
   },
-  "http://blog.cloudflare.com/connection-coalescing-with-origin-frames-fewer-dns-queries-fewer-connections":
-    {
-      pillar: "fast",
-      tags: ["performance", "optimization"],
-    },
+  "http://blog.cloudflare.com/connection-coalescing-with-origin-frames-fewer-dns-queries-fewer-connections": {
+    pillar: "fast",
+    tags: ["performance", "optimization"],
+  },
   "http://blog.cloudflare.com/post-quantum-crypto-should-be-free": {
     pillar: "private",
     tags: ["post-quantum", "cryptography"],
@@ -227,11 +213,10 @@ export const blogMappings: Record<string, BlogMapping> = {
     pillar: "safe",
     tags: ["security", "key-management"],
   },
-  "http://blog.cloudflare.com/stronger-than-a-promise-proving-oblivious-http-privacy-properties":
-    {
-      pillar: "private",
-      tags: ["privacy", "cryptography"],
-    },
+  "http://blog.cloudflare.com/stronger-than-a-promise-proving-oblivious-http-privacy-properties": {
+    pillar: "private",
+    tags: ["privacy", "cryptography"],
+  },
   "http://blog.cloudflare.com/post-quantum-for-all": {
     pillar: "private",
     tags: ["post-quantum", "cryptography"],
@@ -352,11 +337,10 @@ export const blogMappings: Record<string, BlogMapping> = {
     pillar: "reliable",
     tags: ["infrastructure", "key-management"],
   },
-  "http://blog.cloudflare.com/privacy-preserving-compromised-credential-checking":
-    {
-      pillar: "private",
-      tags: ["privacy", "security"],
-    },
+  "http://blog.cloudflare.com/privacy-preserving-compromised-credential-checking": {
+    pillar: "private",
+    tags: ["privacy", "security"],
+  },
   "http://blog.cloudflare.com/addressing-agility": {
     pillar: "reliable",
     tags: ["networking", "infrastructure"],

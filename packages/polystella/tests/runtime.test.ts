@@ -27,17 +27,13 @@ const DEFAULT_LOCALE = "en";
  * map (keyed by `<collection>:<slug>`). Returns `undefined` for
  * keys not in the map, matching Astro's missing-entry sentinel.
  */
-function makeGetEntry(
-  entries: Record<string, SourceEntryShape>,
-): ReturnType<typeof vi.fn> {
+function makeGetEntry(entries: Record<string, SourceEntryShape>): ReturnType<typeof vi.fn> {
   return vi.fn(async (collection: string, slug: string) => {
     return entries[`${collection}:${slug}`];
   });
 }
 
-function makeDeps(
-  overrides: Partial<ResolveLocalizedEntryDeps> = {},
-): ResolveLocalizedEntryDeps {
+function makeDeps(overrides: Partial<ResolveLocalizedEntryDeps> = {}): ResolveLocalizedEntryDeps {
   return {
     defaultLocale: DEFAULT_LOCALE,
     // Default: source entry exists for any (collection, slug). Tests
@@ -632,9 +628,7 @@ describe("resolveLocalizedEntry — fresh-object guarantee", () => {
 
 describe("normaliseGetLocalizedEntryArgs — overload dispatch", () => {
   it("disambiguates the (collection, id, locale) tuple form", () => {
-    expect(
-      normaliseGetLocalizedEntryArgs("publications", "foo", "pt-BR"),
-    ).toEqual({
+    expect(normaliseGetLocalizedEntryArgs("publications", "foo", "pt-BR")).toEqual({
       collection: "publications",
       id: "foo",
       locale: "pt-BR",
@@ -642,13 +636,7 @@ describe("normaliseGetLocalizedEntryArgs — overload dispatch", () => {
   });
 
   it("disambiguates the ({ collection, id }, locale) ref form", () => {
-    expect(
-      normaliseGetLocalizedEntryArgs(
-        { collection: "publications", id: "foo" },
-        "pt-BR",
-        undefined,
-      ),
-    ).toEqual({
+    expect(normaliseGetLocalizedEntryArgs({ collection: "publications", id: "foo" }, "pt-BR", undefined)).toEqual({
       collection: "publications",
       id: "foo",
       locale: "pt-BR",
@@ -660,13 +648,7 @@ describe("normaliseGetLocalizedEntryArgs — overload dispatch", () => {
     // `getLocalizedEntry(ref, locale, somethingElse)` shouldn't get
     // the wrong locale. The dispatch picks `idOrLocale` as the
     // locale and silently drops the third arg.
-    expect(
-      normaliseGetLocalizedEntryArgs(
-        { collection: "publications", id: "foo" },
-        "pt-BR",
-        "spurious",
-      ),
-    ).toEqual({
+    expect(normaliseGetLocalizedEntryArgs({ collection: "publications", id: "foo" }, "pt-BR", "spurious")).toEqual({
       collection: "publications",
       id: "foo",
       locale: "pt-BR",
@@ -674,9 +656,7 @@ describe("normaliseGetLocalizedEntryArgs — overload dispatch", () => {
   });
 
   it("allows omitted locale on the tuple form (returns locale=undefined)", () => {
-    expect(
-      normaliseGetLocalizedEntryArgs("publications", "foo", undefined),
-    ).toEqual({
+    expect(normaliseGetLocalizedEntryArgs("publications", "foo", undefined)).toEqual({
       collection: "publications",
       id: "foo",
       locale: undefined,
@@ -684,13 +664,7 @@ describe("normaliseGetLocalizedEntryArgs — overload dispatch", () => {
   });
 
   it("allows omitted locale on the ref form (returns locale=undefined)", () => {
-    expect(
-      normaliseGetLocalizedEntryArgs(
-        { collection: "publications", id: "foo" },
-        undefined,
-        undefined,
-      ),
-    ).toEqual({
+    expect(normaliseGetLocalizedEntryArgs({ collection: "publications", id: "foo" }, undefined, undefined)).toEqual({
       collection: "publications",
       id: "foo",
       locale: undefined,
@@ -701,8 +675,8 @@ describe("normaliseGetLocalizedEntryArgs — overload dispatch", () => {
     // Prevent silent miscalls like
     // `getLocalizedEntry("publications", undefined, "pt-BR")` from
     // looking up the wrong slug.
-    expect(() =>
-      normaliseGetLocalizedEntryArgs("publications", undefined, "pt-BR"),
-    ).toThrowError(/`id` is required when the first argument is a string/);
+    expect(() => normaliseGetLocalizedEntryArgs("publications", undefined, "pt-BR")).toThrowError(
+      /`id` is required when the first argument is a string/,
+    );
   });
 });

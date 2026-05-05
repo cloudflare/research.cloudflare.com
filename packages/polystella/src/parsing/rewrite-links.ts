@@ -22,10 +22,7 @@ export interface RewriteInternalLinksOptions {
  * text. URL spans have deterministic byte positions and no escaping
  * concerns of their own.
  */
-export function rewriteInternalLinks(
-  text: string,
-  options: RewriteInternalLinksOptions,
-): string {
+export function rewriteInternalLinks(text: string, options: RewriteInternalLinksOptions): string {
   const ast = parseMarkdown(text);
   const edits: Array<{ start: number; end: number; replacement: string }> = [];
 
@@ -50,8 +47,7 @@ export function rewriteInternalLinks(
   edits.sort((a, b) => b.start - a.start);
   let output = text;
   for (const edit of edits) {
-    output =
-      output.slice(0, edit.start) + edit.replacement + output.slice(edit.end);
+    output = output.slice(0, edit.start) + edit.replacement + output.slice(edit.end);
   }
   return output;
 }
@@ -64,10 +60,7 @@ export function rewriteInternalLinks(
  * Exported for unit testing the URL classification rules without
  * needing a full markdown parse.
  */
-export function rewriteUrlIfInternal(
-  url: string,
-  options: RewriteInternalLinksOptions,
-): string | null {
+export function rewriteUrlIfInternal(url: string, options: RewriteInternalLinksOptions): string | null {
   if (url.length === 0) return null;
   if (
     url.startsWith("http://") ||
@@ -133,9 +126,7 @@ function nodeSpan(node: any): { start: number; end: number } | undefined {
  * whitespace inside an unbracketed URL, which is what makes this
  * tractable with a regex.
  */
-function findUrlSpanInInlineLink(
-  slice: string,
-): { start: number; end: number } | undefined {
+function findUrlSpanInInlineLink(slice: string): { start: number; end: number } | undefined {
   // Unanchored match: mdast positions on links sometimes include
   // trailing whitespace (in table cells), so `^` would miss them.
   const m = /\[(?:[^\]\\]|\\.)*\]\(([^\s)]+)/.exec(slice);

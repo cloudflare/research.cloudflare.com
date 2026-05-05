@@ -19,11 +19,7 @@ describe("applyTranslations", () => {
   it("replaces a body segment when a translation is provided for its ID", () => {
     const source = "Hello world.\n\nAnother paragraph.\n";
     const ast = parseMarkdown(source);
-    const output = applyTranslations(
-      ast,
-      new Map([["body:0", "Olá mundo."]]),
-      source,
-    );
+    const output = applyTranslations(ast, new Map([["body:0", "Olá mundo."]]), source);
 
     expect(output).toContain("Olá mundo.");
     expect(output).not.toContain("Hello world.");
@@ -33,11 +29,7 @@ describe("applyTranslations", () => {
   it("leaves untranslated segments untouched (partial translation works)", () => {
     const source = "# Title\n\nBody.\n";
     const ast = parseMarkdown(source);
-    const output = applyTranslations(
-      ast,
-      new Map([["body:1", "Corpo."]]),
-      source,
-    );
+    const output = applyTranslations(ast, new Map([["body:1", "Corpo."]]), source);
 
     expect(output).toContain("Title");
     expect(output).toContain("Corpo.");
@@ -45,44 +37,18 @@ describe("applyTranslations", () => {
   });
 
   it("rewrites top-level frontmatter string values", () => {
-    const source = [
-      "---",
-      'title: "Hello"',
-      'description: "A doc."',
-      "---",
-      "",
-      "Body.",
-      "",
-    ].join("\n");
+    const source = ["---", 'title: "Hello"', 'description: "A doc."', "---", "", "Body.", ""].join("\n");
     const ast = parseMarkdown(source);
-    const output = applyTranslations(
-      ast,
-      new Map([["fm:title", "Olá"]]),
-      source,
-    );
+    const output = applyTranslations(ast, new Map([["fm:title", "Olá"]]), source);
 
     expect(output).toMatch(/title:\s*Olá/);
     expect(output).toMatch(/description:\s*A doc\./);
   });
 
   it("rewrites a single element of a frontmatter string-array", () => {
-    const source = [
-      "---",
-      "tags:",
-      "  - alpha",
-      "  - beta",
-      "  - gamma",
-      "---",
-      "",
-      "Body.",
-      "",
-    ].join("\n");
+    const source = ["---", "tags:", "  - alpha", "  - beta", "  - gamma", "---", "", "Body.", ""].join("\n");
     const ast = parseMarkdown(source);
-    const output = applyTranslations(
-      ast,
-      new Map([["fm:tags[1]", "BETA"]]),
-      source,
-    );
+    const output = applyTranslations(ast, new Map([["fm:tags[1]", "BETA"]]), source);
 
     expect(output).toContain("alpha");
     expect(output).toContain("BETA");
@@ -120,13 +86,7 @@ describe("applyTranslations — end-to-end with formatted translations", () => {
     const ast = parseMarkdown(source);
     const segments = extractSegments(ast, noOpts, source);
 
-    const output = applyTranslations(
-      ast,
-      new Map([
-        [segments[0]!.id, "Este artigo apresenta um **novo** algoritmo."],
-      ]),
-      source,
-    );
+    const output = applyTranslations(ast, new Map([[segments[0]!.id, "Este artigo apresenta um **novo** algoritmo."]]), source);
 
     expect(output).toContain("**novo**");
 
@@ -145,16 +105,7 @@ describe("applyTranslations — end-to-end with formatted translations", () => {
     const ast = parseMarkdown(source);
     const segments = extractSegments(ast, noOpts, source);
 
-    const output = applyTranslations(
-      ast,
-      new Map([
-        [
-          segments[0]!.id,
-          "_Itálico_ e `código` e [link](https://example.com).",
-        ],
-      ]),
-      source,
-    );
+    const output = applyTranslations(ast, new Map([[segments[0]!.id, "_Itálico_ e `código` e [link](https://example.com)."]]), source);
 
     const reparsed = parseMarkdown(output);
     const paragraph = reparsed.children[0] as Paragraph;
@@ -172,26 +123,15 @@ describe("applyTranslations — end-to-end with formatted translations", () => {
     const ast = parseMarkdown(source);
     const segments = extractSegments(ast, noOpts, source);
 
-    expect(segments[0]!.text).toBe(
-      "We use **VOPRFs** to construct _verifiable_ tokens.",
-    );
+    expect(segments[0]!.text).toBe("We use **VOPRFs** to construct _verifiable_ tokens.");
 
-    const translation =
-      "Usamos **VOPRFs** para construir tokens _verificáveis_.";
-    const output = applyTranslations(
-      ast,
-      new Map([[segments[0]!.id, translation]]),
-      source,
-    );
+    const translation = "Usamos **VOPRFs** para construir tokens _verificáveis_.";
+    const output = applyTranslations(ast, new Map([[segments[0]!.id, translation]]), source);
 
     const reparsed = parseMarkdown(output);
     const paragraph = reparsed.children[0] as Paragraph;
-    const strongChildren = paragraph.children.filter(
-      (c) => c.type === "strong",
-    );
-    const emphasisChildren = paragraph.children.filter(
-      (c) => c.type === "emphasis",
-    );
+    const strongChildren = paragraph.children.filter((c) => c.type === "strong");
+    const emphasisChildren = paragraph.children.filter((c) => c.type === "emphasis");
 
     expect(strongChildren).toHaveLength(1);
     expect(emphasisChildren).toHaveLength(1);
@@ -207,11 +147,7 @@ describe("applyTranslations — end-to-end with formatted translations", () => {
     // First body segment should be the heading text.
     expect(segments[0]).toEqual({ id: "body:0", text: "Original Title" });
 
-    const output = applyTranslations(
-      ast,
-      new Map([["body:0", "Translated Title"]]),
-      source,
-    );
+    const output = applyTranslations(ast, new Map([["body:0", "Translated Title"]]), source);
 
     expect(output).toContain("# Translated Title\n");
     expect(output).toContain("\nBody.\n");
@@ -223,11 +159,7 @@ describe("applyTranslations — end-to-end with formatted translations", () => {
     const ast = parseMarkdown(source);
     const segments = extractSegments(ast, noOpts, source);
 
-    const output = applyTranslations(
-      ast,
-      new Map([["body:0", "primeiro item"]]),
-      source,
-    );
+    const output = applyTranslations(ast, new Map([["body:0", "primeiro item"]]), source);
 
     expect(output).toBe("- primeiro item\n- second item\n");
   });
@@ -250,9 +182,7 @@ describe("applyTranslations — frontmatter additions (AI marker)", () => {
       },
     });
     expect(output).toContain("aiTranslated: true");
-    expect(output).toContain(
-      'aiTranslationModel: "@cf/meta/llama-3.1-8b-instruct"',
-    );
+    expect(output).toContain('aiTranslationModel: "@cf/meta/llama-3.1-8b-instruct"');
     expect(output).toContain("aiTranslatedAt:");
     // Existing keys survive.
     expect(output).toContain("title: Hello");
@@ -272,9 +202,7 @@ describe("applyTranslations — frontmatter additions (AI marker)", () => {
     });
     expect(output.startsWith("---\n")).toBe(true);
     expect(output).toContain("aiTranslated: true");
-    expect(output).toContain(
-      'aiTranslationModel: "@cf/qwen/qwen3-30b-a3b-fp8"',
-    );
+    expect(output).toContain('aiTranslationModel: "@cf/qwen/qwen3-30b-a3b-fp8"');
     // Body still present after the inserted block.
     expect(output).toContain("# Hello\n\nBody.\n");
   });
@@ -282,15 +210,7 @@ describe("applyTranslations — frontmatter additions (AI marker)", () => {
   it("additions overwrite same-named keys already in source frontmatter", () => {
     // The marker reflects this build's output, so a stale
     // source-side `aiTranslated: false` must be replaced.
-    const source = [
-      "---",
-      'title: "Hello"',
-      "aiTranslated: false",
-      "---",
-      "",
-      "Body.",
-      "",
-    ].join("\n");
+    const source = ["---", 'title: "Hello"', "aiTranslated: false", "---", "", "Body.", ""].join("\n");
     const ast = parseMarkdown(source);
     const output = applyTranslations(ast, new Map(), source, {
       frontmatterAdditions: { aiTranslated: true },
@@ -302,15 +222,7 @@ describe("applyTranslations — frontmatter additions (AI marker)", () => {
   it("merges additions and translations in the same frontmatter block", () => {
     // Other tests exercise fm:title translation in isolation; this
     // asserts that addition + translation paths compose correctly.
-    const source = [
-      "---",
-      'title: "Hello"',
-      'metaDescription: "An overview."',
-      "---",
-      "",
-      "Body.",
-      "",
-    ].join("\n");
+    const source = ["---", 'title: "Hello"', 'metaDescription: "An overview."', "---", "", "Body.", ""].join("\n");
     const ast = parseMarkdown(source);
     const output = applyTranslations(
       ast,

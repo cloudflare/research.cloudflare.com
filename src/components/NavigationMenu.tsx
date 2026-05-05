@@ -27,42 +27,41 @@ export function NavMenu({ dict }: NavMenuProps) {
   const [focusAreasOpen, setFocusAreasOpen] = React.useState(false);
   const [aboutOpen, setAboutOpen] = React.useState(false);
 
-  const components: { title: string; href: string; description: string }[] =
-    React.useMemo(
-      () => [
-        {
-          title: t("nav.focusAreas.all.title"),
-          href: "/focus",
-          description: t("nav.focusAreas.all.description"),
-        },
-        {
-          title: t("globals.morePrivate"),
-          href: "/focus/private",
-          description: t("nav.focusAreas.morePrivate.description"),
-        },
-        {
-          title: t("globals.safer"),
-          href: "/focus/safe",
-          description: t("nav.focusAreas.safer.description"),
-        },
-        {
-          title: t("globals.faster"),
-          href: "/focus/fast",
-          description: t("nav.focusAreas.faster.description"),
-        },
-        {
-          title: t("globals.moreReliable"),
-          href: "/focus/reliable",
-          description: t("nav.focusAreas.moreReliable.description"),
-        },
-        {
-          title: t("globals.moreMeasurable"),
-          href: "/focus/measurable",
-          description: t("nav.focusAreas.moreMeasurable.description"),
-        },
-      ],
-      [t],
-    );
+  const components: { title: string; href: string; description: string }[] = React.useMemo(
+    () => [
+      {
+        title: t("nav.focusAreas.all.title"),
+        href: "/focus",
+        description: t("nav.focusAreas.all.description"),
+      },
+      {
+        title: t("globals.morePrivate"),
+        href: "/focus/private",
+        description: t("nav.focusAreas.morePrivate.description"),
+      },
+      {
+        title: t("globals.safer"),
+        href: "/focus/safe",
+        description: t("nav.focusAreas.safer.description"),
+      },
+      {
+        title: t("globals.faster"),
+        href: "/focus/fast",
+        description: t("nav.focusAreas.faster.description"),
+      },
+      {
+        title: t("globals.moreReliable"),
+        href: "/focus/reliable",
+        description: t("nav.focusAreas.moreReliable.description"),
+      },
+      {
+        title: t("globals.moreMeasurable"),
+        href: "/focus/measurable",
+        description: t("nav.focusAreas.moreMeasurable.description"),
+      },
+    ],
+    [t],
+  );
 
   // Lock body scroll when mobile menu is open
   React.useEffect(() => {
@@ -110,9 +109,7 @@ export function NavMenu({ dict }: NavMenuProps) {
                   className="text-lg font-medium text-page-text hover:text-baby-blue-eyes transition-colors w-full text-left flex items-center justify-between"
                 >
                   {t("nav.focusAreas")}
-                  <span className="text-sm pr-3">
-                    {focusAreasOpen ? "−" : "+"}
-                  </span>
+                  <span className="text-sm pr-3">{focusAreasOpen ? "−" : "+"}</span>
                 </button>
                 {focusAreasOpen && (
                   <div className="mt-4 space-y-4 pl-4">
@@ -123,12 +120,8 @@ export function NavMenu({ dict }: NavMenuProps) {
                         className="block mobile-nav-text"
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        <div className="text-base font-medium text-page-text">
-                          {component.title}
-                        </div>
-                        <p className="text-sm text-page-text-muted mt-1">
-                          {component.description}
-                        </p>
+                        <div className="text-base font-medium text-page-text">{component.title}</div>
+                        <p className="text-sm text-page-text-muted mt-1">{component.description}</p>
                       </a>
                     ))}
                   </div>
@@ -193,11 +186,7 @@ export function NavMenu({ dict }: NavMenuProps) {
             <NavigationMenuContent>
               <ul className="grid gap-2 sm:w-[400px] md:w-[500px] md:grid-cols-2 lg:w-[600px] z-(--z-nav) relative">
                 {components.map((component) => (
-                  <ListItem
-                    key={component.title}
-                    title={component.title}
-                    href={component.href}
-                  >
+                  <ListItem key={component.title} title={component.title} href={component.href}>
                     {component.description}
                   </ListItem>
                 ))}
@@ -205,10 +194,7 @@ export function NavMenu({ dict }: NavMenuProps) {
             </NavigationMenuContent>
           </NavigationMenuItem>
           <NavigationMenuItem>
-            <NavigationMenuLink
-              asChild
-              className={navigationMenuTriggerStyle()}
-            >
+            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
               <a href="/presentations">{t("nav.presentations")}</a>
             </NavigationMenuLink>
           </NavigationMenuItem>
@@ -224,10 +210,7 @@ export function NavMenu({ dict }: NavMenuProps) {
           </NavigationMenuItem>
 
           <NavigationMenuItem>
-            <NavigationMenuLink
-              asChild
-              className={navigationMenuTriggerStyle()}
-            >
+            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
               <a href={CONSTANTS.CLOUDFLARE_JOBS}>{t("nav.careers")}</a>
             </NavigationMenuLink>
           </NavigationMenuItem>
@@ -237,24 +220,13 @@ export function NavMenu({ dict }: NavMenuProps) {
   );
 }
 
-function ListItem({
-  title,
-  children,
-  href,
-  ...props
-}: React.ComponentPropsWithoutRef<"li"> & { href: string }) {
+function ListItem({ title, children, href, ...props }: React.ComponentPropsWithoutRef<"li"> & { href: string }) {
   return (
     <li {...props}>
       <NavigationMenuLink asChild>
         <a href={href} className="group/subnav subnav">
-          <div className="text-sm leading-none font-medium subnav-title">
-            {title}
-          </div>
-          {children && (
-            <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
-              {children}
-            </p>
-          )}
+          <div className="text-sm leading-none font-medium subnav-title">{title}</div>
+          {children && <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">{children}</p>}
         </a>
       </NavigationMenuLink>
     </li>

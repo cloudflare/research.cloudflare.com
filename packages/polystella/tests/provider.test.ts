@@ -1,22 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Segment } from "../src/parsing/extract.js";
 import { EMPTY_GLOSSARY } from "../src/glossary/glossary.js";
-import {
-  createTranslator,
-  resolveModelId,
-  translateBatch,
-  type Translator,
-} from "../src/translation/provider.js";
+import { createTranslator, resolveModelId, translateBatch, type Translator } from "../src/translation/provider.js";
 
 /**
  * Build a fetch stub that returns a single canned response. Each test
  * builds its own so we can assert on the request and tailor the
  * response without state leaking between cases.
  */
-function makeFetchStub(
-  body: unknown,
-  init: { status?: number; statusText?: string; rawText?: string } = {},
-) {
+function makeFetchStub(body: unknown, init: { status?: number; statusText?: string; rawText?: string } = {}) {
   const responseBody = init.rawText ?? JSON.stringify(body);
   return vi.fn().mockResolvedValue(
     new Response(responseBody, {
@@ -29,9 +21,7 @@ function makeFetchStub(
 
 describe("resolveModelId", () => {
   it("returns a string spec verbatim", () => {
-    expect(resolveModelId("@cf/meta/llama-3.1-8b-instruct", "pt-BR")).toBe(
-      "@cf/meta/llama-3.1-8b-instruct",
-    );
+    expect(resolveModelId("@cf/meta/llama-3.1-8b-instruct", "pt-BR")).toBe("@cf/meta/llama-3.1-8b-instruct");
   });
 
   it("looks up the locale in a per-locale map", () => {
@@ -90,14 +80,9 @@ describe("createTranslator", () => {
   });
 
   it("throws on an unknown provider kind", () => {
-    expect(() =>
-      createTranslator(
-        { kind: "unknown" } as unknown as Parameters<
-          typeof createTranslator
-        >[0],
-        "pt-BR",
-      ),
-    ).toThrow(/unknown provider kind/);
+    expect(() => createTranslator({ kind: "unknown" } as unknown as Parameters<typeof createTranslator>[0], "pt-BR")).toThrow(
+      /unknown provider kind/,
+    );
   });
 });
 
@@ -120,9 +105,7 @@ describe("Workers AI translator", () => {
 
     expect(fetchStub).toHaveBeenCalledTimes(1);
     const [url, init] = fetchStub.mock.calls[0]!;
-    expect(url).toBe(
-      "https://api.cloudflare.com/client/v4/accounts/ACCT/ai/run/@cf/meta/llama-3.1-8b-instruct",
-    );
+    expect(url).toBe("https://api.cloudflare.com/client/v4/accounts/ACCT/ai/run/@cf/meta/llama-3.1-8b-instruct");
     expect(init?.method).toBe("POST");
     const headers = init?.headers as Record<string, string>;
     expect(headers.Authorization).toBe("Bearer TOKEN");
@@ -145,11 +128,7 @@ describe("Workers AI translator", () => {
       result: { response: "OK" },
       success: true,
     });
-    const t = createTranslator(
-      { ...provider, endpoint: "https://gateway.example/run" },
-      "pt-BR",
-      { fetchImpl: fetchStub },
-    );
+    const t = createTranslator({ ...provider, endpoint: "https://gateway.example/run" }, "pt-BR", { fetchImpl: fetchStub });
     await t.translate("s", "u");
     expect(fetchStub.mock.calls[0]![0]).toBe("https://gateway.example/run");
   });
@@ -173,9 +152,7 @@ describe("Workers AI translator", () => {
       },
     );
     const t = createTranslator(provider, "pt-BR", { fetchImpl: fetchStub });
-    await expect(t.translate("s", "u")).rejects.toThrow(
-      /Workers AI request failed: 500 Internal Server Error/,
-    );
+    await expect(t.translate("s", "u")).rejects.toThrow(/Workers AI request failed: 500 Internal Server Error/);
   });
 
   it("throws when success === false", async () => {
@@ -185,17 +162,13 @@ describe("Workers AI translator", () => {
       errors: [{ message: "auth failed" }],
     });
     const t = createTranslator(provider, "pt-BR", { fetchImpl: fetchStub });
-    await expect(t.translate("s", "u")).rejects.toThrow(
-      /Workers AI returned errors/,
-    );
+    await expect(t.translate("s", "u")).rejects.toThrow(/Workers AI returned errors/);
   });
 
   it("throws when the response shape is unexpected", async () => {
     const fetchStub = makeFetchStub({ result: {}, success: true });
     const t = createTranslator(provider, "pt-BR", { fetchImpl: fetchStub });
-    await expect(t.translate("s", "u")).rejects.toThrow(
-      /unexpected Workers AI response shape/,
-    );
+    await expect(t.translate("s", "u")).rejects.toThrow(/unexpected Workers AI response shape/);
   });
 
   it("accepts an already-parsed-object response and stringifies it", async () => {
@@ -319,9 +292,7 @@ describe("Workers AI translator", () => {
     const fetchStub = makeFetchStub({
       result: {
         response: '{"fm:title": "legacy"}',
-        choices: [
-          { message: { content: '{"fm:title": "should-be-ignored"}' } },
-        ],
+        choices: [{ message: { content: '{"fm:title": "should-be-ignored"}' } }],
       },
       success: true,
     });
@@ -380,9 +351,7 @@ describe("Anthropic translator", () => {
       },
     );
     const t = createTranslator(provider, "pt-BR", { fetchImpl: fetchStub });
-    await expect(t.translate("s", "u")).rejects.toThrow(
-      /Anthropic request failed: 401 Unauthorized/,
-    );
+    await expect(t.translate("s", "u")).rejects.toThrow(/Anthropic request failed: 401 Unauthorized/);
   });
 
   it("throws when the response has no text content", async () => {
@@ -390,9 +359,7 @@ describe("Anthropic translator", () => {
       content: [{ type: "tool_use", id: "x" }],
     });
     const t = createTranslator(provider, "pt-BR", { fetchImpl: fetchStub });
-    await expect(t.translate("s", "u")).rejects.toThrow(
-      /unexpected Anthropic response shape/,
-    );
+    await expect(t.translate("s", "u")).rejects.toThrow(/unexpected Anthropic response shape/);
   });
 });
 
@@ -438,13 +405,9 @@ describe("translateBatch", () => {
       targetLocale: "pt-BR",
     });
     expect(out.get("fm:title")).toBe("Um pedido de desculpas");
-    expect(out.get("body:0")).toBe(
-      "Pedimos **desculpas** por qualquer inconveniência.",
-    );
+    expect(out.get("body:0")).toBe("Pedimos **desculpas** por qualquer inconveniência.");
     expect(fakeTranslator.translate).toHaveBeenCalledTimes(1);
-    const [systemPrompt, userPrompt] = (
-      fakeTranslator.translate as ReturnType<typeof vi.fn>
-    ).mock.calls[0]!;
+    const [systemPrompt, userPrompt] = (fakeTranslator.translate as ReturnType<typeof vi.fn>).mock.calls[0]!;
     expect(systemPrompt).toMatch(/professional translator/);
     expect(userPrompt).toMatch(/@@fm:title@@/);
   });

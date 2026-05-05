@@ -42,10 +42,7 @@ describe("resolveOptions — locale derivation from Astro's i18n config", () => 
   });
 
   it("merges the rest of the user-supplied options through unchanged", () => {
-    const resolved = resolveOptions(
-      { sourceDir: "./custom-content", overridesDir: "./custom-overrides" },
-      HAPPY_I18N,
-    );
+    const resolved = resolveOptions({ sourceDir: "./custom-content", overridesDir: "./custom-overrides" }, HAPPY_I18N);
     expect(resolved.sourceDir).toBe("./custom-content");
     expect(resolved.overridesDir).toBe("./custom-overrides");
     // Sanity: derivation didn't clobber the rest of the resolved shape.
@@ -129,9 +126,7 @@ describe("resolveOptions — Astro i18n cross-check failures", () => {
 
 describe("resolveOptions — option-surface", () => {
   it('rejects mode: "starlight"', () => {
-    expect(() =>
-      resolveOptions({ mode: "starlight" }, HAPPY_I18N),
-    ).toThrowError(/mode: "starlight" is not yet supported/);
+    expect(() => resolveOptions({ mode: "starlight" }, HAPPY_I18N)).toThrowError(/mode: "starlight" is not yet supported/);
   });
 
   it('accepts mode: "auto" (the default)', () => {
@@ -149,12 +144,9 @@ describe("resolveOptions — option-surface", () => {
     // surfaces the deprecation as a parse error rather than silently
     // ignoring it. Operators upgrading from a draft that had the
     // option get a clear "this is gone" signal.
-    expect(() =>
-      resolveOptions(
-        { failOnMissingCredentials: true } as Record<string, unknown>,
-        HAPPY_I18N,
-      ),
-    ).toThrowError(/failOnMissingCredentials/);
+    expect(() => resolveOptions({ failOnMissingCredentials: true } as Record<string, unknown>, HAPPY_I18N)).toThrowError(
+      /failOnMissingCredentials/,
+    );
   });
 
   it("defaults `concurrency` to 4", () => {

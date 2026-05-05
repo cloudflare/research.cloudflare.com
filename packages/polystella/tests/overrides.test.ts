@@ -17,18 +17,9 @@ beforeAll(async () => {
   await mkdir(path.join(ovDir, "pt-BR", "publications"), { recursive: true });
   await mkdir(path.join(ovDir, "pt-BR", "blog"), { recursive: true });
   await mkdir(path.join(ovDir, "pt-BR", "nested", "dir"), { recursive: true });
-  await writeFile(
-    path.join(ovDir, "pt-BR", "publications", "sample.md"),
-    "# Override pt-BR\n\nHand-edited.\n",
-  );
-  await writeFile(
-    path.join(ovDir, "pt-BR", "blog", "article.mdx"),
-    "# Override mdx\n\nWith JSX bits.\n",
-  );
-  await writeFile(
-    path.join(ovDir, "pt-BR", "nested", "dir", "deep.md"),
-    "# Deep override\n",
-  );
+  await writeFile(path.join(ovDir, "pt-BR", "publications", "sample.md"), "# Override pt-BR\n\nHand-edited.\n");
+  await writeFile(path.join(ovDir, "pt-BR", "blog", "article.mdx"), "# Override mdx\n\nWith JSX bits.\n");
+  await writeFile(path.join(ovDir, "pt-BR", "nested", "dir", "deep.md"), "# Deep override\n");
 });
 
 afterAll(async () => {
@@ -91,13 +82,7 @@ describe("readOverride", () => {
   it("propagates non-ENOENT errors (e.g. EACCES) instead of swallowing them", async () => {
     // Create a file we can't read. Skip on platforms where chmod is a
     // no-op (e.g. Windows in CI) — the assertion would be flaky there.
-    const restrictedDir = path.join(
-      rootDir,
-      "i18n",
-      "overrides",
-      "pt-BR",
-      "restricted",
-    );
+    const restrictedDir = path.join(rootDir, "i18n", "overrides", "pt-BR", "restricted");
     await mkdir(restrictedDir, { recursive: true });
     const restrictedFile = path.join(restrictedDir, "secret.md");
     await writeFile(restrictedFile, "shh");

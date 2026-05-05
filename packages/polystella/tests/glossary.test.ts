@@ -3,22 +3,14 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import {
-  EMPTY_GLOSSARY,
-  EMPTY_GLOSSARY_HASH,
-  hashGlossary,
-  loadGlossaries,
-  type Glossary,
-} from "../src/glossary/glossary.js";
+import { EMPTY_GLOSSARY, EMPTY_GLOSSARY_HASH, hashGlossary, loadGlossaries, type Glossary } from "../src/glossary/glossary.js";
 import type { PolyStellaResolvedOptions } from "../src/config/options.js";
 
 /**
  * Build a minimal `PolyStellaResolvedOptions` with sensible defaults so
  * each test can override only the fields it cares about.
  */
-function makeConfig(
-  overrides: Partial<PolyStellaResolvedOptions> = {},
-): PolyStellaResolvedOptions {
+function makeConfig(overrides: Partial<PolyStellaResolvedOptions> = {}): PolyStellaResolvedOptions {
   return {
     defaultLocale: "en",
     locales: ["pt-BR", "ja-JP"],
@@ -80,13 +72,7 @@ describe("loadGlossaries", () => {
     );
     writeFileSync(
       path.join(tmpDir, "i18n/glossary/ja-JP.yaml"),
-      [
-        'version: "2025-04"',
-        "doNotTranslate:",
-        "  - Cloudflare",
-        "preferredTranslations:",
-        "  edge: エッジ",
-      ].join("\n"),
+      ['version: "2025-04"', "doNotTranslate:", "  - Cloudflare", "preferredTranslations:", "  edge: エッジ"].join("\n"),
       { flag: "wx" },
     );
 
@@ -111,11 +97,7 @@ describe("loadGlossaries", () => {
   });
 
   it("silently skips locales whose glossary file does not exist", async () => {
-    writeFileSync(
-      path.join(tmpDir, "i18n/glossary/pt-BR.yaml"),
-      "doNotTranslate:\n  - Cloudflare",
-      { flag: "wx" },
-    );
+    writeFileSync(path.join(tmpDir, "i18n/glossary/pt-BR.yaml"), "doNotTranslate:\n  - Cloudflare", { flag: "wx" });
 
     const result = await loadGlossaries({
       config: makeConfig({
@@ -154,13 +136,7 @@ describe("loadGlossaries", () => {
   it("normalises doNotTranslate by de-duping and sorting", async () => {
     writeFileSync(
       path.join(tmpDir, "i18n/glossary/pt-BR.yaml"),
-      [
-        "doNotTranslate:",
-        "  - Workers",
-        "  - Cloudflare",
-        "  - Workers",
-        "  - R2",
-      ].join("\n"),
+      ["doNotTranslate:", "  - Workers", "  - Cloudflare", "  - Workers", "  - R2"].join("\n"),
       { flag: "wx" },
     );
 
@@ -172,11 +148,7 @@ describe("loadGlossaries", () => {
       projectRoot,
     });
 
-    expect(result.get("pt-BR")!.doNotTranslate).toEqual([
-      "Cloudflare",
-      "R2",
-      "Workers",
-    ]);
+    expect(result.get("pt-BR")!.doNotTranslate).toEqual(["Cloudflare", "R2", "Workers"]);
   });
 
   it("throws a clear error when glossary.file is missing the {locale} placeholder", async () => {
@@ -210,11 +182,7 @@ describe("loadGlossaries", () => {
   });
 
   it("throws when a glossary YAML cannot be parsed", async () => {
-    writeFileSync(
-      path.join(tmpDir, "i18n/glossary/pt-BR.yaml"),
-      "doNotTranslate:\n  - [unclosed bracket",
-      { flag: "wx" },
-    );
+    writeFileSync(path.join(tmpDir, "i18n/glossary/pt-BR.yaml"), "doNotTranslate:\n  - [unclosed bracket", { flag: "wx" });
 
     await expect(
       loadGlossaries({
@@ -273,9 +241,7 @@ describe("hashGlossary", () => {
   });
 
   it("differs when the version changes", () => {
-    expect(hashGlossary(sample)).not.toBe(
-      hashGlossary({ ...sample, version: "2025-05" }),
-    );
+    expect(hashGlossary(sample)).not.toBe(hashGlossary({ ...sample, version: "2025-05" }));
   });
 
   it("differs when doNotTranslate gains a new entry", () => {
@@ -300,9 +266,7 @@ describe("hashGlossary", () => {
   });
 
   it("differs when notes change", () => {
-    expect(hashGlossary(sample)).not.toBe(
-      hashGlossary({ ...sample, notes: "different notes" }),
-    );
+    expect(hashGlossary(sample)).not.toBe(hashGlossary({ ...sample, notes: "different notes" }));
   });
 
   it("EMPTY_GLOSSARY_HASH equals hashGlossary(EMPTY_GLOSSARY)", () => {

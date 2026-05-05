@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  rewriteInternalLinks,
-  rewriteUrlIfInternal,
-  type RewriteInternalLinksOptions,
-} from "../src/parsing/rewrite-links.js";
+import { rewriteInternalLinks, rewriteUrlIfInternal, type RewriteInternalLinksOptions } from "../src/parsing/rewrite-links.js";
 
 const opts: RewriteInternalLinksOptions = {
   targetLocale: "pt-BR",
@@ -22,21 +18,15 @@ describe("rewriteUrlIfInternal", () => {
   });
 
   it("preserves a query string when rewriting", () => {
-    expect(rewriteUrlIfInternal("/foo?ref=home", opts)).toBe(
-      "/pt-BR/foo?ref=home",
-    );
+    expect(rewriteUrlIfInternal("/foo?ref=home", opts)).toBe("/pt-BR/foo?ref=home");
   });
 
   it("preserves a fragment when rewriting", () => {
-    expect(rewriteUrlIfInternal("/foo#section", opts)).toBe(
-      "/pt-BR/foo#section",
-    );
+    expect(rewriteUrlIfInternal("/foo#section", opts)).toBe("/pt-BR/foo#section");
   });
 
   it("preserves both query and fragment when rewriting", () => {
-    expect(rewriteUrlIfInternal("/foo?ref=home#section", opts)).toBe(
-      "/pt-BR/foo?ref=home#section",
-    );
+    expect(rewriteUrlIfInternal("/foo?ref=home#section", opts)).toBe("/pt-BR/foo?ref=home#section");
   });
 
   it("leaves http(s) URLs untouched", () => {
@@ -93,18 +83,13 @@ describe("rewriteInternalLinks", () => {
   it("rewrites multiple links in a single paragraph", () => {
     const input = "Read [intro](/intro) then [advanced](/advanced).";
     const output = rewriteInternalLinks(input, opts);
-    expect(output).toBe(
-      "Read [intro](/pt-BR/intro) then [advanced](/pt-BR/advanced).",
-    );
+    expect(output).toBe("Read [intro](/pt-BR/intro) then [advanced](/pt-BR/advanced).");
   });
 
   it("preserves external links untouched alongside rewritten internal ones", () => {
-    const input =
-      "See [the spec](https://example.com/spec) and [the README](/readme).";
+    const input = "See [the spec](https://example.com/spec) and [the README](/readme).";
     const output = rewriteInternalLinks(input, opts);
-    expect(output).toBe(
-      "See [the spec](https://example.com/spec) and [the README](/pt-BR/readme).",
-    );
+    expect(output).toBe("See [the spec](https://example.com/spec) and [the README](/pt-BR/readme).");
   });
 
   it("preserves the markdown structure (headings, lists, blockquotes)", () => {
@@ -136,33 +121,15 @@ describe("rewriteInternalLinks", () => {
     // `code` node. A regex-based rewriter would be tempted to rewrite
     // anything that LOOKS like a link inside the code; the AST-based
     // walker correctly ignores it.
-    const input = [
-      "Real link: [foo](/foo)",
-      "",
-      "```",
-      "Not a link: [bar](/bar)",
-      "```",
-      "",
-    ].join("\n");
+    const input = ["Real link: [foo](/foo)", "", "```", "Not a link: [bar](/bar)", "```", ""].join("\n");
     const output = rewriteInternalLinks(input, opts);
-    expect(output).toBe(
-      [
-        "Real link: [foo](/pt-BR/foo)",
-        "",
-        "```",
-        "Not a link: [bar](/bar)",
-        "```",
-        "",
-      ].join("\n"),
-    );
+    expect(output).toBe(["Real link: [foo](/pt-BR/foo)", "", "```", "Not a link: [bar](/bar)", "```", ""].join("\n"));
   });
 
   it("does not touch URLs inside inline code", () => {
     const input = "Use `[foo](/foo)` like this, but [bar](/bar) is real.";
     const output = rewriteInternalLinks(input, opts);
-    expect(output).toBe(
-      "Use `[foo](/foo)` like this, but [bar](/pt-BR/bar) is real.",
-    );
+    expect(output).toBe("Use `[foo](/foo)` like this, but [bar](/pt-BR/bar) is real.");
   });
 
   it("leaves autolinks (`<https://...>`) untouched", () => {
@@ -178,8 +145,7 @@ describe("rewriteInternalLinks", () => {
   });
 
   it("returns the input unchanged when every link is external", () => {
-    const input =
-      "Mixed [external](https://x.com) [mailto](mailto:a@b.c) [tel](tel:+1) [anchor](#s) links.";
+    const input = "Mixed [external](https://x.com) [mailto](mailto:a@b.c) [tel](tel:+1) [anchor](#s) links.";
     const output = rewriteInternalLinks(input, opts);
     expect(output).toBe(input);
   });
@@ -217,41 +183,14 @@ describe("rewriteInternalLinks", () => {
   it("preserves frontmatter unchanged", () => {
     // Frontmatter is YAML, not markdown link syntax. Even if a value
     // happens to look like a URL, the rewriter shouldn't touch it.
-    const input = [
-      "---",
-      'title: "Hello"',
-      "url: /not-a-link",
-      "---",
-      "",
-      "Body with [real link](/real).",
-      "",
-    ].join("\n");
+    const input = ["---", 'title: "Hello"', "url: /not-a-link", "---", "", "Body with [real link](/real).", ""].join("\n");
     const output = rewriteInternalLinks(input, opts);
-    expect(output).toBe(
-      [
-        "---",
-        'title: "Hello"',
-        "url: /not-a-link",
-        "---",
-        "",
-        "Body with [real link](/pt-BR/real).",
-        "",
-      ].join("\n"),
-    );
+    expect(output).toBe(["---", 'title: "Hello"', "url: /not-a-link", "---", "", "Body with [real link](/pt-BR/real).", ""].join("\n"));
   });
 
   it("rewrites links inside tables", () => {
-    const input = [
-      "| Col | Link |",
-      "| --- | ---- |",
-      "| a   | [x](/x) |",
-      "",
-    ].join("\n");
+    const input = ["| Col | Link |", "| --- | ---- |", "| a   | [x](/x) |", ""].join("\n");
     const output = rewriteInternalLinks(input, opts);
-    expect(output).toBe(
-      ["| Col | Link |", "| --- | ---- |", "| a   | [x](/pt-BR/x) |", ""].join(
-        "\n",
-      ),
-    );
+    expect(output).toBe(["| Col | Link |", "| --- | ---- |", "| a   | [x](/pt-BR/x) |", ""].join("\n"));
   });
 });

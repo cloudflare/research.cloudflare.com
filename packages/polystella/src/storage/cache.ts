@@ -40,6 +40,27 @@ export interface TranslateOrLoadOptions {
   frontmatterAdditions?: Record<string, unknown>;
   /** Cache-write progress hooks; only fire on the miss path with `r2`. */
   events?: CacheEvents;
+  /**
+   * When `true`, the cache layer skips the PUT after a miss-translate.
+   * The translated bytes are still returned to the caller for staging
+   * (the translator was already paid for) — `readOnly` only governs
+   * cache writes, not the translation pipeline.
+   *
+   * Use this on preview-branch builds that should consume but not
+   * mutate the primary cache.
+   */
+  readOnly?: boolean;
+  /**
+   * Ordered list of additional R2 keys to GET if the primary `key`
+   * misses. First hit wins; bytes are returned verbatim and NOT
+   * promoted to the primary key (callers that want promotion must
+   * issue an explicit PUT).
+   *
+   * Each fallback key MUST already be the result of `buildR2Key`
+   * with the appropriate fallback prefix — the cache layer is
+   * deliberately decoupled from key construction.
+   */
+  fallbackKeys?: string[];
 }
 
 /**
@@ -47,28 +68,14 @@ export interface TranslateOrLoadOptions {
  * `onWriteFailed` fires per `onWriteStart`.
  */
 export interface CacheEvents {
-  onWriteStart?: (event: {
-    key: string;
-    locale: string;
-    bytes: number;
-  }) => void;
-  onWriteDone?: (event: {
-    key: string;
-    locale: string;
-    bytes: number;
-    durationMs: number;
-  }) => void;
+  onWriteStart?: (event: { key: string; locale: string; bytes: number }) => void;
+  onWriteDone?: (event: { key: string; locale: string; bytes: number; durationMs: number }) => void;
   /**
    * Fires when the R2 PUT throws. The orchestrator does NOT rethrow:
    * the translator already succeeded and the bytes are returned to
    * the caller for staging — a flaky R2 shouldn't kill the build.
    */
-  onWriteFailed?: (event: {
-    key: string;
-    locale: string;
-    bytes: number;
-    error: Error;
-  }) => void;
+  onWriteFailed?: (event: { key: string; locale: string; bytes: number; error: Error }) => void;
 }
 
 export interface TranslateOrLoadResult {
@@ -77,15 +84,21 @@ export interface TranslateOrLoadResult {
   body: string;
   /** On hit, the cached object's metadata (`x-amz-meta-` prefix stripped). */
   cachedMetadata?: Record<string, string>;
+  /**
+   * Key that actually produced the cached bytes. Equals `opts.key`
+   * on a primary hit; equals one of `opts.fallbackKeys` on a
+   * fallback hit. Undefined on miss. Useful for build-report
+   * provenance ("translation came from main's cache" vs. "from
+   * the PR's own cache").
+   */
+  hitKey?: string;
 }
 
 /**
  * Errors propagate so the caller's per-pair try/catch can log + count
  * the failure. Silent fallback would mask real provider/storage outages.
  */
-export async function translateOrLoadFromCache(
-  opts: TranslateOrLoadOptions,
-): Promise<TranslateOrLoadResult> {
+export async function translateOrLoadFromCache(opts: TranslateOrLoadOptions): Promise<TranslateOrLoadResult> {
   const {
     ast,
     segments,
@@ -100,6 +113,8 @@ export async function translateOrLoadFromCache(
     metadata,
     events,
     frontmatterAdditions,
+    readOnly,
+    fallbackKeys,
   } = opts;
 
   // `null` r2 = operator opted out; skip lookup, always translate.
@@ -110,7 +125,28 @@ export async function translateOrLoadFromCache(
         outcome: "hit",
         body: new TextDecoder("utf-8").decode(hit.body),
         cachedMetadata: hit.metadata,
+        hitKey: key,
       };
+    }
+    // Primary miss → walk the fallback prefixes in order. First hit
+    // wins; we never write back to fallback prefixes (that's the
+    // upstream cache's job) and we never copy bytes from fallback
+    // to primary (avoids implicit cross-prefix writes).
+    if (fallbackKeys && fallbackKeys.length > 0) {
+      for (const fbKey of fallbackKeys) {
+        // Defensive: skip a fallback that's accidentally identical
+        // to the primary key (would just retry the same GET).
+        if (fbKey === key) continue;
+        const fbHit = await r2.get(fbKey);
+        if (fbHit) {
+          return {
+            outcome: "hit",
+            body: new TextDecoder("utf-8").decode(fbHit.body),
+            cachedMetadata: fbHit.metadata,
+            hitKey: fbKey,
+          };
+        }
+      }
     }
   }
 
@@ -133,7 +169,13 @@ export async function translateOrLoadFromCache(
   // surface the failure via `onWriteFailed` and return the bytes so
   // the caller can still stage them; the next build will retranslate
   // just that pair.
-  if (r2) {
+  //
+  // `readOnly` short-circuits the PUT entirely — used by preview
+  // builds that consume but don't mutate the primary cache. We
+  // intentionally still return the freshly-translated bytes so the
+  // caller can stage them; readOnly only forbids the side effect on
+  // R2, not the translation work itself.
+  if (r2 && !readOnly) {
     const bytes = Buffer.byteLength(translated, "utf8");
     events?.onWriteStart?.({ key, locale, bytes });
     const startedAt = Date.now();
@@ -181,9 +223,7 @@ export interface BuildCacheMetadataInput {
  * Build the `x-amz-meta-*` bag for a cache PUT. Keys kebab-case;
  * empty strings preserved so the metadata schema is uniform.
  */
-export function buildCacheMetadata(
-  input: BuildCacheMetadataInput,
-): Record<string, string> {
+export function buildCacheMetadata(input: BuildCacheMetadataInput): Record<string, string> {
   return {
     "source-path": input.sourcePath,
     locale: input.locale,

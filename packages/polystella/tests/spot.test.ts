@@ -54,10 +54,7 @@ describe("spot tests — code blocks", () => {
     const ast = parseMarkdown(source);
     const segments = extractSegments(ast, noOpts, source);
 
-    expect(segments.map((s) => s.text)).toEqual([
-      "Plain paragraph.",
-      "Another plain paragraph.",
-    ]);
+    expect(segments.map((s) => s.text)).toEqual(["Plain paragraph.", "Another plain paragraph."]);
   });
 
   it("preserves a fenced code block byte-for-byte through the round-trip", () => {
@@ -88,16 +85,13 @@ describe("spot tests — code blocks", () => {
     // One segment for the paragraph; inline code stays in the segment
     // text as-is (with the backticks). It is not separately extracted.
     expect(segments).toHaveLength(1);
-    expect(segments[0]!.text).toBe(
-      "Use the `fetch()` function for HTTP requests.",
-    );
+    expect(segments[0]!.text).toBe("Use the `fetch()` function for HTTP requests.");
   });
 });
 
 describe("spot tests — link URLs", () => {
   it("does not produce a separate segment for a link URL", () => {
-    const source =
-      "Read [the paper](https://example.com/paper.pdf) for details.\n";
+    const source = "Read [the paper](https://example.com/paper.pdf) for details.\n";
     const ast = parseMarkdown(source);
     const segments = extractSegments(ast, noOpts, source);
 
@@ -111,26 +105,18 @@ describe("spot tests — link URLs", () => {
   });
 
   it("preserves the link URL when only the surrounding paragraph is translated", () => {
-    const source =
-      "Read [the paper](https://example.com/paper.pdf) for details.\n";
+    const source = "Read [the paper](https://example.com/paper.pdf) for details.\n";
     const ast = parseMarkdown(source);
     const segments = extractSegments(ast, noOpts, source);
 
     // A model-style translation that keeps the URL intact (real models
     // are instructed to preserve markdown formatting and URLs).
-    const translation =
-      "Leia [o artigo](https://example.com/paper.pdf) para detalhes.";
-    const output = applyTranslations(
-      ast,
-      new Map([[segments[0]!.id, translation]]),
-      source,
-    );
+    const translation = "Leia [o artigo](https://example.com/paper.pdf) para detalhes.";
+    const output = applyTranslations(ast, new Map([[segments[0]!.id, translation]]), source);
 
     // The new link text is in place; the URL survived; everything
     // outside the inline span is unchanged.
-    expect(output).toBe(
-      "Leia [o artigo](https://example.com/paper.pdf) para detalhes.\n",
-    );
+    expect(output).toBe("Leia [o artigo](https://example.com/paper.pdf) para detalhes.\n");
   });
 
   it("re-parses a translated paragraph's link as a real Link node with the same URL", () => {
@@ -140,12 +126,7 @@ describe("spot tests — link URLs", () => {
 
     const output = applyTranslations(
       ast,
-      new Map([
-        [
-          segments[0]!.id,
-          "Veja [Smith 2020](https://example.com/smith) para contexto.",
-        ],
-      ]),
+      new Map([[segments[0]!.id, "Veja [Smith 2020](https://example.com/smith) para contexto."]]),
       source,
     );
 
@@ -179,10 +160,7 @@ describe("spot tests — HTML blocks", () => {
 
     // Only the surrounding paragraphs become segments; the HTML block
     // is preserved verbatim, never sent to the translator.
-    expect(segments.map((s) => s.text)).toEqual([
-      "Paragraph above.",
-      "Paragraph below.",
-    ]);
+    expect(segments.map((s) => s.text)).toEqual(["Paragraph above.", "Paragraph below."]);
   });
 
   it("preserves a top-level HTML block byte-for-byte through the round-trip", () => {
@@ -233,9 +211,7 @@ describe("spot tests — frontmatter keys outside the rule map", () => {
       docWithRichFrontmatter,
     );
 
-    const fmIds = segments
-      .filter((s) => s.id.startsWith("fm:"))
-      .map((s) => s.id);
+    const fmIds = segments.filter((s) => s.id.startsWith("fm:")).map((s) => s.id);
     expect(fmIds).toEqual(["fm:title"]);
     // year, authors, doi, metaDescription all silently skipped.
   });
@@ -245,11 +221,7 @@ describe("spot tests — frontmatter keys outside the rule map", () => {
     // Even WITH a body translation in the map, frontmatter is untouched
     // because the apply branch only mutates frontmatter when there's
     // at least one fm:* entry.
-    const output = applyTranslations(
-      ast,
-      new Map([["body:0", "Translated body."]]),
-      docWithRichFrontmatter,
-    );
+    const output = applyTranslations(ast, new Map([["body:0", "Translated body."]]), docWithRichFrontmatter);
 
     // Find the frontmatter block in both source and output and assert
     // they're byte-identical. (The body has changed, but frontmatter
@@ -262,11 +234,7 @@ describe("spot tests — frontmatter keys outside the rule map", () => {
 
   it("when ONE frontmatter key is translated, the OTHER keys still round-trip with the same values", () => {
     const ast = parseMarkdown(docWithRichFrontmatter);
-    const output = applyTranslations(
-      ast,
-      new Map([["fm:title", "Título Traduzido"]]),
-      docWithRichFrontmatter,
-    );
+    const output = applyTranslations(ast, new Map([["fm:title", "Título Traduzido"]]), docWithRichFrontmatter);
 
     // Re-parse the output's frontmatter and check non-translated keys
     // still hold their original values. (The YAML formatting of the

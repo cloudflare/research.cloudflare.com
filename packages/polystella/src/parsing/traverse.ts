@@ -10,15 +10,7 @@ import type { Heading, Paragraph, Root, TableCell } from "mdast";
 const TRANSLATABLE_BLOCK_TYPES = new Set(["paragraph", "heading", "tableCell"]);
 
 /** Containers we descend into without emitting a segment for the container itself. */
-const RECURSE_INTO_TYPES = new Set([
-  "root",
-  "blockquote",
-  "list",
-  "listItem",
-  "table",
-  "tableRow",
-  "footnoteDefinition",
-]);
+const RECURSE_INTO_TYPES = new Set(["root", "blockquote", "list", "listItem", "table", "tableRow", "footnoteDefinition"]);
 
 export type TranslatableBlock = Paragraph | Heading | TableCell;
 
@@ -33,10 +25,7 @@ export interface BlockVisit {
  * Visit every translatable block in DFS order. Skips code, HTML,
  * thematic breaks, frontmatter, definitions — they're left untouched.
  */
-export function visitTranslatableBlocks(
-  ast: Root,
-  visitor: (visit: BlockVisit) => void,
-): void {
+export function visitTranslatableBlocks(ast: Root, visitor: (visit: BlockVisit) => void): void {
   let index = 0;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -65,9 +54,7 @@ export function visitTranslatableBlocks(
  * content be replaced cleanly. The extract / apply symmetry on this
  * span is what gives us the byte-perfect round-trip.
  */
-export function inlineSpan(
-  block: TranslatableBlock,
-): { start: number; end: number } | undefined {
+export function inlineSpan(block: TranslatableBlock): { start: number; end: number } | undefined {
   const children = block.children;
   if (!Array.isArray(children) || children.length === 0) return undefined;
   const first = children[0]!;

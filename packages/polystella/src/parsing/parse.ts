@@ -16,10 +16,7 @@ import { unified } from "unified";
 
 /** Re-usable processor exposed so callers can attach further plugins. */
 export function createMarkdownProcessor() {
-  return unified()
-    .use(remarkParse)
-    .use(remarkFrontmatter, ["yaml"])
-    .use(remarkGfm);
+  return unified().use(remarkParse).use(remarkFrontmatter, ["yaml"]).use(remarkGfm);
 }
 
 /** Pure: no I/O, no Astro coupling. */

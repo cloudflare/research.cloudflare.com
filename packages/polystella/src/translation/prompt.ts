@@ -61,9 +61,7 @@ export function buildPrompt(input: BuildPromptInput): BuiltPrompt {
 
   if (glossary.doNotTranslate.length > 0) {
     systemLines.push("");
-    systemLines.push(
-      "TERMS THAT MUST NOT BE TRANSLATED (preserve verbatim, including capitalisation):",
-    );
+    systemLines.push("TERMS THAT MUST NOT BE TRANSLATED (preserve verbatim, including capitalisation):");
     for (const term of glossary.doNotTranslate) {
       systemLines.push(`- ${term}`);
     }
@@ -72,9 +70,7 @@ export function buildPrompt(input: BuildPromptInput): BuiltPrompt {
   const preferred = Object.entries(glossary.preferredTranslations);
   if (preferred.length > 0) {
     systemLines.push("");
-    systemLines.push(
-      "PREFERRED TRANSLATIONS (use these renderings, case-insensitive, when the source term appears):",
-    );
+    systemLines.push("PREFERRED TRANSLATIONS (use these renderings, case-insensitive, when the source term appears):");
     for (const [src, tgt] of preferred) {
       systemLines.push(`- ${src} -> ${tgt}`);
     }
@@ -117,10 +113,7 @@ export function buildPrompt(input: BuildPromptInput): BuiltPrompt {
  * preamble and discarded). Strict on the id set — unknown or
  * omitted ids throw with a truncated dump for diagnostics.
  */
-export function parseResponse(
-  rawText: string,
-  expectedIds: string[],
-): Map<string, string> {
+export function parseResponse(rawText: string, expectedIds: string[]): Map<string, string> {
   const cleaned = stripCodeFences(rawText.trim());
 
   // Split on `@@<id>@@` marker lines. The split keeps the captured id
@@ -134,10 +127,7 @@ export function parseResponse(
   // Multi-line flag so `^`/`$` match line starts/ends rather than
   // string ends — the marker has to be on its own line so we don't
   // mis-detect `@@something@@` if it appears mid-sentence.
-  const markerRe = new RegExp(
-    `^${escapeRegExp(MARKER)}([^@\\n]+?)${escapeRegExp(MARKER)}\\s*$`,
-    "gm",
-  );
+  const markerRe = new RegExp(`^${escapeRegExp(MARKER)}([^@\\n]+?)${escapeRegExp(MARKER)}\\s*$`, "gm");
   const parts = cleaned.split(markerRe);
 
   if (parts.length < 3) {
@@ -156,14 +146,10 @@ export function parseResponse(
     const value = (parts[i + 1] ?? "").trim();
     if (id.length === 0) continue;
     if (!expected.has(id)) {
-      throw new Error(
-        `[polystella] model returned unexpected segment id "${id}" (not in input)`,
-      );
+      throw new Error(`[polystella] model returned unexpected segment id "${id}" (not in input)`);
     }
     if (value.length === 0) {
-      throw new Error(
-        `[polystella] model returned an empty translation for segment "${id}"`,
-      );
+      throw new Error(`[polystella] model returned an empty translation for segment "${id}"`);
     }
     result.set(id, value);
   }
@@ -174,10 +160,7 @@ export function parseResponse(
       // segments) from a flat-out missing id (model produced markers
       // for some other ids and skipped this one).
       const lastEmitted = [...result.keys()].at(-1);
-      const totalCharsInResult = [...result.values()].reduce(
-        (n, v) => n + v.length,
-        0,
-      );
+      const totalCharsInResult = [...result.values()].reduce((n, v) => n + v.length, 0);
       const looksTruncated =
         lastEmitted !== undefined &&
         rawText.length > totalCharsInResult &&
@@ -187,9 +170,7 @@ export function parseResponse(
       const hint = looksTruncated
         ? ` Response appears truncated after segment "${lastEmitted}" — the model likely hit its output-token limit. Raise \`provider.maxTokens\` or split the source into smaller files.`
         : "";
-      throw new Error(
-        `[polystella] model omitted segment "${id}" from response.${hint}\nRaw response was:\n${truncateRaw(rawText)}`,
-      );
+      throw new Error(`[polystella] model omitted segment "${id}" from response.${hint}\nRaw response was:\n${truncateRaw(rawText)}`);
     }
   }
 

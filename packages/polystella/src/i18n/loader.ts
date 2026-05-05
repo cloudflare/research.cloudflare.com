@@ -40,10 +40,7 @@ export interface I18nLoaderOptions {
 }
 
 /** Injected so `buildI18nLoader` stays testable without `astro/loaders`. */
-export type GlobFactory<T = unknown> = (opts: {
-  base: string;
-  pattern: string;
-}) => T;
+export type GlobFactory<T = unknown> = (opts: { base: string; pattern: string }) => T;
 
 export interface BuildI18nLoaderDeps<T = unknown> {
   glob: GlobFactory<T>;
@@ -54,10 +51,7 @@ export interface BuildI18nLoaderDeps<T = unknown> {
  * (which feeds Astro's real `glob`) propagates Astro's `Loader` type
  * to consumers
  */
-export function buildI18nLoader<T>(
-  deps: BuildI18nLoaderDeps<T>,
-  options: I18nLoaderOptions = {},
-): T {
+export function buildI18nLoader<T>(deps: BuildI18nLoaderDeps<T>, options: I18nLoaderOptions = {}): T {
   const base = options.base ?? DEFAULT_I18N_BASE;
   const pattern = options.pattern ?? DEFAULT_I18N_PATTERN;
   return deps.glob({ base, pattern });

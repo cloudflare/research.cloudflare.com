@@ -30,10 +30,7 @@ declare module "astro:content" {
    * collection/slug type inference; we accept plain strings here
    * because PolyStella's runtime forwards untyped IDs from the URL.
    */
-  export function getEntry(
-    collection: string,
-    slug: string,
-  ): Promise<CollectionEntry | undefined>;
+  export function getEntry(collection: string, slug: string): Promise<CollectionEntry | undefined>;
 
   /**
    * Astro's `defineCollection`. Real shape is generic over the

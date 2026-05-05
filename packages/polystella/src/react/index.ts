@@ -17,17 +17,15 @@
  */
 
 import { useMemo } from "react";
-import { buildTranslateFn, interpolate } from "../ui/translate.js";
-import type { InterpolateParams, TranslateFn } from "../ui/translate.js";
+import { buildTranslateFn, interpolate } from "../i18n/translate.js";
+import type { InterpolateParams, TranslateFn } from "../i18n/translate.js";
 
 /**
  * React hook returning a `t(key, params?)` bound to the supplied
  * dictionary. Memoised on dictionary identity so re-renders that
  * pass the same object don't rebuild the lookup function.
  */
-export function useTranslations(
-  dictionary: Record<string, string>,
-): TranslateFn {
+export function useTranslations(dictionary: Record<string, string>): TranslateFn {
   return useMemo(() => buildTranslateFn(dictionary), [dictionary]);
 }
 

@@ -1,10 +1,5 @@
 import { getEntry, type CollectionEntry } from "astro:content";
-import {
-  defaultLocale,
-  fallback,
-  locales,
-  noTranslateBehavior,
-} from "polystella:runtime-config";
+import { defaultLocale, fallback, locales, noTranslateBehavior } from "polystella:runtime-config";
 
 import {
   normaliseGetLocalizedEntryArgs,
@@ -13,10 +8,7 @@ import {
   type LocalizedEntry,
   type SourceEntryShape,
 } from "./get-localized-entry.js";
-import {
-  resolveLocalizedHref,
-  type LocalizedHrefDeps,
-} from "./localized-href.js";
+import { resolveLocalizedHref, type LocalizedHrefDeps } from "./localized-href.js";
 
 /**
  * Locale-aware content fetcher; drop-in for Astro's `getEntry`.
@@ -69,11 +61,7 @@ export async function getLocalizedEntry<C extends string>(
       // known to Astro's generic `getEntry`. The structural cast is
       // lossless: extra `CollectionEntry` fields survive the
       // `{...source}` spread inside the dispatcher.
-      getEntry: (c, s) =>
-        (getEntry as (c: string, s: string) => Promise<unknown>)(
-          c,
-          s,
-        ) as Promise<SourceEntryShape | undefined>,
+      getEntry: (c, s) => (getEntry as (c: string, s: string) => Promise<unknown>)(c, s) as Promise<SourceEntryShape | undefined>,
     },
   });
   return result as LocalizedEntry<CollectionEntry<C>> | undefined;
@@ -100,12 +88,5 @@ export function localizedHref(href: string, locale?: string): string {
   });
 }
 
-export {
-  normaliseGetLocalizedEntryArgs,
-  type CollectionEntryRef,
-  type LocalizedEntry,
-} from "./get-localized-entry.js";
-export {
-  resolveLocalizedHref,
-  type LocalizedHrefDeps,
-} from "./localized-href.js";
+export { normaliseGetLocalizedEntryArgs, type CollectionEntryRef, type LocalizedEntry } from "./get-localized-entry.js";
+export { resolveLocalizedHref, type LocalizedHrefDeps } from "./localized-href.js";

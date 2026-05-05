@@ -9,11 +9,7 @@
 import { defineCollection as astroDefineCollection } from "astro:content";
 import { glob as astroGlob, file as astroFile } from "astro/loaders";
 
-import {
-  buildCollections,
-  type PolystellaCollectionsOptions,
-  type PolystellaCollectionsOutput,
-} from "./build.js";
+import { buildCollections, type PolystellaCollectionsOptions, type PolystellaCollectionsOutput } from "./build.js";
 
 export {
   buildCollections,
@@ -35,10 +31,7 @@ export {
  * `entry.data.*` access in consumer pages silently degrades to
  * `any`.
  */
-export function polystellaCollections<
-  TSource extends Record<string, unknown>,
-  TLocales extends readonly string[],
->(
+export function polystellaCollections<TSource extends Record<string, unknown>, TLocales extends readonly string[]>(
   opts: PolystellaCollectionsOptions<TSource, TLocales>,
 ): PolystellaCollectionsOutput<TSource, TLocales[number]> {
   return buildCollections(opts, {

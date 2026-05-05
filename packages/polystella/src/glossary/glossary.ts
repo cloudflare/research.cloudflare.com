@@ -33,9 +33,7 @@ const glossaryDataSchema = z
   .object({
     version: z.string().optional(),
     doNotTranslate: z.array(z.string().min(1)).optional(),
-    preferredTranslations: z
-      .record(z.string().min(1), z.string().min(1))
-      .optional(),
+    preferredTranslations: z.record(z.string().min(1), z.string().min(1)).optional(),
     notes: z.string().optional(),
   })
   .strict();
@@ -52,9 +50,7 @@ export interface LoadGlossariesOptions {
  * glossary for one locale can ship before another); malformed YAML
  * or schema violations throw.
  */
-export async function loadGlossaries(
-  opts: LoadGlossariesOptions,
-): Promise<Map<string, Glossary>> {
+export async function loadGlossaries(opts: LoadGlossariesOptions): Promise<Map<string, Glossary>> {
   const { config, projectRoot } = opts;
   if (!config.glossary) return new Map();
 
@@ -64,11 +60,7 @@ export async function loadGlossaries(
   if ("file" in config.glossary) {
     const template = config.glossary.file;
     if (!template.includes("{locale}")) {
-      throw new Error(
-        `[polystella] glossary.file must contain the "{locale}" placeholder (got: ${JSON.stringify(
-          template,
-        )})`,
-      );
+      throw new Error(`[polystella] glossary.file must contain the "{locale}" placeholder (got: ${JSON.stringify(template)})`);
     }
     for (const locale of config.locales) {
       const relPath = template.replaceAll("{locale}", locale);
@@ -84,11 +76,7 @@ export async function loadGlossaries(
       try {
         parsed = parseYaml(raw);
       } catch (err) {
-        throw new Error(
-          `[polystella] failed to parse glossary YAML at ${absPath}: ${
-            (err as Error).message
-          }`,
-        );
+        throw new Error(`[polystella] failed to parse glossary YAML at ${absPath}: ${(err as Error).message}`);
       }
       result.set(locale, validateGlossary(parsed ?? {}, absPath));
     }
@@ -97,10 +85,7 @@ export async function loadGlossaries(
 
   // Inline glossary.
   for (const [locale, data] of Object.entries(config.glossary.inline)) {
-    result.set(
-      locale,
-      validateGlossary(data, `inline glossary for locale "${locale}"`),
-    );
+    result.set(locale, validateGlossary(data, `inline glossary for locale "${locale}"`));
   }
   return result;
 }
@@ -160,7 +145,5 @@ function sortedRecord(rec: Record<string, string>): Record<string, string> {
 }
 
 function isNodeNotFoundError(err: unknown): boolean {
-  return (
-    err instanceof Error && (err as NodeJS.ErrnoException).code === "ENOENT"
-  );
+  return err instanceof Error && (err as NodeJS.ErrnoException).code === "ENOENT";
 }

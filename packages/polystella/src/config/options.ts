@@ -22,17 +22,39 @@ const r2OptionsSchema = z.object({
     .string()
     .url()
     .optional()
-    .describe(
-      "Override the default R2 endpoint (`https://<accountId>.r2.cloudflarestorage.com`). Useful for testing.",
-    ),
-  readOnly: z.boolean().optional(),
+    .describe("Override the default R2 endpoint (`https://<accountId>.r2.cloudflarestorage.com`). Useful for testing."),
+  /**
+   * When `true`, the cache layer skips PUTs and the post-translation
+   * prune step. GETs (against `prefix` and any `readFallbackPrefixes`)
+   * still happen.
+   *
+   * Designed for builds that should consume the cache without
+   * polluting it — the canonical use case is preview-branch builds
+   * that read main's translations but don't get to write back. Pairs
+   * naturally with `readFallbackPrefixes` for branch isolation
+   * without translation cost.
+   */
+  readOnly: z.boolean().default(false),
+  /**
+   * Ordered list of additional prefixes to consult on a cache miss
+   * against the primary `prefix`. First hit wins; bytes are returned
+   * verbatim and NOT promoted to the primary prefix (no implicit
+   * cross-prefix copies — keeps writes deterministic and isolated).
+   *
+   * Each entry MUST end with `/` (same constraint as `prefix`).
+   *
+   * Branch-isolation use case: a preview build configured with
+   * `prefix: "previews/<branch>/i18n/"` and
+   * `readFallbackPrefixes: ["i18n/"]` reads main's translations
+   * for unchanged content, only translating PR-edited files into
+   * its own private prefix.
+   */
+  readFallbackPrefixes: z.array(z.string()).default([]),
   /**
    * Count-based pruning: per (locale, sourcePath), keep only the N
    * most-recent hash variants. `false` disables pruning.
    */
-  keepLastN: z
-    .union([z.number().int().positive(), z.literal(false)])
-    .default(5),
+  keepLastN: z.union([z.number().int().positive(), z.literal(false)]).default(5),
 });
 
 const workersAiProviderSchema = z.object({
@@ -45,10 +67,7 @@ const workersAiProviderSchema = z.object({
    * key. The resolved model id is part of the cache key, so changing
    * it invalidates that locale's cached translations.
    */
-  model: z.union([
-    z.string().min(1),
-    z.object({ default: z.string().min(1) }).catchall(z.string().min(1)),
-  ]),
+  model: z.union([z.string().min(1), z.object({ default: z.string().min(1) }).catchall(z.string().min(1))]),
   /**
    * Max output tokens per call. Workers AI's default ceiling (~256)
    * truncates multi-segment translations mid-string and breaks JSON
@@ -60,26 +79,18 @@ const workersAiProviderSchema = z.object({
 const anthropicProviderSchema = z.object({
   kind: z.literal("anthropic"),
   apiKey: z.string().min(1, "provider.apiKey is required"),
-  model: z.union([
-    z.string().min(1),
-    z.object({ default: z.string().min(1) }).catchall(z.string().min(1)),
-  ]),
+  model: z.union([z.string().min(1), z.object({ default: z.string().min(1) }).catchall(z.string().min(1))]),
   /** Max output tokens per call. */
   maxTokens: z.number().int().positive().default(8192),
 });
 
-const providerSchema = z.discriminatedUnion("kind", [
-  workersAiProviderSchema,
-  anthropicProviderSchema,
-]);
+const providerSchema = z.discriminatedUnion("kind", [workersAiProviderSchema, anthropicProviderSchema]);
 
 const glossaryFileSchema = z.object({
   file: z
     .string()
     .min(1)
-    .describe(
-      "Path template for per-locale glossary files. Use `{locale}` as the placeholder. Example: './i18n/glossary/{locale}.yaml'.",
-    ),
+    .describe("Path template for per-locale glossary files. Use `{locale}` as the placeholder. Example: './i18n/glossary/{locale}.yaml'."),
 });
 
 const glossaryInlineSchema = z.object({
@@ -126,9 +137,7 @@ export const polystellaOptionsSchema = z
         context: z
           .string()
           .optional()
-          .describe(
-            "Site-/domain-specific guidance appended to the default 'You are a professional translator.' opener.",
-          ),
+          .describe("Site-/domain-specific guidance appended to the default 'You are a professional translator.' opener."),
       })
       .default({}),
 
@@ -159,8 +168,7 @@ export const polystellaOptionsSchema = z
         if (value === "starlight") {
           ctx.addIssue({
             code: z.ZodIssueCode.custom,
-            message:
-              'mode: "starlight" is not yet supported. Use "standalone" or omit `mode` for the default "auto".',
+            message: 'mode: "starlight" is not yet supported. Use "standalone" or omit `mode` for the default "auto".',
           });
         }
       }),
@@ -174,9 +182,7 @@ export const polystellaOptionsSchema = z
 
 export type PolyStellaOptions = z.input<typeof polystellaOptionsSchema>;
 
-export type PolyStellaResolvedOptions = z.output<
-  typeof polystellaOptionsSchema
-> & {
+export type PolyStellaResolvedOptions = z.output<typeof polystellaOptionsSchema> & {
   /** Source/canonical locale, derived from Astro's `config.i18n.defaultLocale`. */
   defaultLocale: string;
   /** Target locales, derived from `config.i18n.locales` minus the default. */
@@ -190,9 +196,7 @@ export type PolyStellaResolvedOptions = z.output<
  */
 export interface AstroI18nLike {
   defaultLocale: string;
-  locales: ReadonlyArray<
-    string | { path: string; codes?: ReadonlyArray<string> }
-  >;
+  locales: ReadonlyArray<string | { path: string; codes?: ReadonlyArray<string> }>;
   routing?:
     | "manual"
     | {
@@ -208,10 +212,7 @@ export interface AstroI18nLike {
  * thrown Error so the operator fixes everything in one pass. PolyStella
  * never writes to Astro's config.
  */
-export function resolveOptions(
-  raw: unknown,
-  astroI18n: AstroI18nLike | undefined,
-): PolyStellaResolvedOptions {
+export function resolveOptions(raw: unknown, astroI18n: AstroI18nLike | undefined): PolyStellaResolvedOptions {
   const parsed = polystellaOptionsSchema.safeParse(raw);
   const optionIssues = parsed.success
     ? []
@@ -228,11 +229,7 @@ export function resolveOptions(
       sections.push(`Invalid PolyStella options:\n${optionIssues.join("\n")}`);
     }
     if (i18nIssues.length > 0) {
-      sections.push(
-        `Invalid Astro \`i18n\` config (PolyStella derives locales from it):\n${i18nIssues.join(
-          "\n",
-        )}`,
-      );
+      sections.push(`Invalid Astro \`i18n\` config (PolyStella derives locales from it):\n${i18nIssues.join("\n")}`);
     }
     throw new Error(
       `[polystella] configuration error:\n${sections.join(
@@ -244,9 +241,7 @@ export function resolveOptions(
   // Both checks passed: derive the locale fields and merge.
   const i18n = astroI18n!;
   const defaultLocale = i18n.defaultLocale;
-  const locales = (i18n.locales as string[]).filter(
-    (locale) => locale !== defaultLocale,
-  );
+  const locales = (i18n.locales as string[]).filter((locale) => locale !== defaultLocale);
   return {
     ...parsed.data!,
     defaultLocale,
@@ -276,51 +271,29 @@ function validateAstroI18n(i18n: AstroI18nLike | undefined): string[] {
 
   const issues: string[] = [];
 
-  if (
-    typeof i18n.defaultLocale !== "string" ||
-    i18n.defaultLocale.length === 0
-  ) {
-    issues.push(
-      "  • `i18n.defaultLocale` is required and must be a non-empty string.",
-    );
+  if (typeof i18n.defaultLocale !== "string" || i18n.defaultLocale.length === 0) {
+    issues.push("  • `i18n.defaultLocale` is required and must be a non-empty string.");
   }
 
   if (!Array.isArray(i18n.locales) || i18n.locales.length === 0) {
-    issues.push(
-      "  • `i18n.locales` is required and must declare at least one locale.",
-    );
+    issues.push("  • `i18n.locales` is required and must declare at least one locale.");
   } else {
-    const objectForms = i18n.locales.filter(
-      (entry): entry is { path: string } =>
-        typeof entry === "object" && entry !== null,
-    );
+    const objectForms = i18n.locales.filter((entry): entry is { path: string } => typeof entry === "object" && entry !== null);
     if (objectForms.length > 0) {
       const paths = objectForms.map((e) => e.path).join(", ");
       issues.push(
         `  • \`i18n.locales\` contains object-form entries (${paths}). PolyStella only supports plain string locales today; rewrite them as plain strings (e.g. "pt-BR").`,
       );
     }
-    const stringLocales = i18n.locales.filter(
-      (entry): entry is string => typeof entry === "string",
-    );
-    if (
-      typeof i18n.defaultLocale === "string" &&
-      i18n.defaultLocale.length > 0 &&
-      !stringLocales.includes(i18n.defaultLocale)
-    ) {
+    const stringLocales = i18n.locales.filter((entry): entry is string => typeof entry === "string");
+    if (typeof i18n.defaultLocale === "string" && i18n.defaultLocale.length > 0 && !stringLocales.includes(i18n.defaultLocale)) {
       issues.push(
         `  • \`i18n.locales\` must include \`defaultLocale\` ("${i18n.defaultLocale}"). Astro's contract is that the default is one of the listed locales; add it.`,
       );
     }
-    const dupes = stringLocales.filter(
-      (locale, i) => stringLocales.indexOf(locale) !== i,
-    );
+    const dupes = stringLocales.filter((locale, i) => stringLocales.indexOf(locale) !== i);
     if (dupes.length > 0) {
-      issues.push(
-        `  • \`i18n.locales\` contains duplicates: ${[...new Set(dupes)].join(
-          ", ",
-        )}.`,
-      );
+      issues.push(`  • \`i18n.locales\` contains duplicates: ${[...new Set(dupes)].join(", ")}.`);
     }
   }
 

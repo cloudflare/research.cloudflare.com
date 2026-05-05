@@ -24,12 +24,7 @@ export interface HashInput {
 
 /** 64-char lowercase hex SHA-256 digest. */
 export function computeSourceHash(input: HashInput): string {
-  const segments: string[] = [
-    input.body,
-    canonicalJSON(input.frontmatter),
-    input.glossaryHash,
-    input.modelId,
-  ];
+  const segments: string[] = [input.body, canonicalJSON(input.frontmatter), input.glossaryHash, input.modelId];
 
   const hasher = createHash("sha256");
   for (const segment of segments) {
@@ -55,7 +50,5 @@ function canonicalJSON(value: unknown): string {
   const entries = Object.entries(value as Record<string, unknown>)
     .filter(([, v]) => v !== undefined)
     .sort(([a], [b]) => (a < b ? -1 : a > b ? 1 : 0));
-  return `{${entries
-    .map(([k, v]) => `${JSON.stringify(k)}:${canonicalJSON(v)}`)
-    .join(",")}}`;
+  return `{${entries.map(([k, v]) => `${JSON.stringify(k)}:${canonicalJSON(v)}`).join(",")}}`;
 }

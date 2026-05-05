@@ -1,28 +1,25 @@
 ---
 import InteriorLayout from "../layouts/interior.astro";
-import ArticleHeading, {
-  type typeClassNames,
-} from "../components/ArticleHeading.astro";
+import ArticleHeading, { type typeClassNames } from "../components/ArticleHeading.astro";
 import SeeMore from "@/components/SeeMore.astro";
 import Section from "../components/Section.astro";
 import NarrowContent from "../components/NarrowContent.astro";
 import { getCollection } from "astro:content";
 import { getLocalizedEntry } from "polystella/runtime";
+import { getTranslations } from "polystella/i18n";
 
 export async function getStaticPaths() {
   const publications = await getCollection("publications");
   return publications.map((pub) => ({ params: { slug: pub.id } }));
 }
 
+const t = await getTranslations(Astro.currentLocale);
+
 // get the slug from the URL
 const { slug } = Astro.params;
 
 // get the content from the publications collection
-const publication = await getLocalizedEntry(
-  "publications",
-  slug,
-  Astro.currentLocale,
-);
+const publication = await getLocalizedEntry("publications", slug, Astro.currentLocale);
 
 const resolvedAuthors = publication?.data.authors
   ? await Promise.all(
@@ -34,19 +31,14 @@ const resolvedAuthors = publication?.data.authors
   : undefined;
 
 // Filter out any undefined entries (missing authors)
-const authors = resolvedAuthors?.filter(
-  (author): author is NonNullable<typeof author> => author !== undefined,
-);
+const authors = resolvedAuthors?.filter((author): author is NonNullable<typeof author> => author !== undefined);
 ---
 
 <InteriorLayout metaTitle="Blog">
   <Section>
     <NarrowContent>
       <div class="mb-3">
-        <ArticleHeading
-          type="publication"
-          year={publication?.data.year?.toString()}
-        />
+        <ArticleHeading type="publication" year={publication?.data.year?.toString()} />
       </div>
 
       <h1 class="heading mb-10">{publication?.data.title}</h1>
@@ -54,7 +46,7 @@ const authors = resolvedAuthors?.filter(
       {
         authors && authors.length > 0 && (
           <div class="mb-10">
-            <h2 class="heading-label">Contributors</h2>
+            <h2 class="heading-label">{t("publication.contributors")}</h2>
             <p class="text-sm font-medium text-page-text-muted">
               {authors.map((author, index) => (
                 <>
@@ -62,10 +54,7 @@ const authors = resolvedAuthors?.filter(
                   {author.data.type === "external" ? (
                     <span>{author.data.title}</span>
                   ) : (
-                    <a
-                      href={`/people/${author.id}`}
-                      class="hover:text-page-text hover:underline"
-                    >
+                    <a href={`/people/${author.id}`} class="hover:text-page-text hover:underline">
                       {author.data.title}
                     </a>
                   )}
@@ -79,10 +68,8 @@ const authors = resolvedAuthors?.filter(
       {
         publication?.data.location && (
           <div class="box">
-            <h2 class="heading-label">Details</h2>
-            <div class="text-sm font-medium text-page-text-muted leading-loose">
-              {publication.data.location}
-            </div>
+            <h2 class="heading-label">{t("publication.details")}</h2>
+            <div class="text-sm font-medium text-page-text-muted leading-loose">{publication.data.location}</div>
           </div>
         )
       }
@@ -90,7 +77,7 @@ const authors = resolvedAuthors?.filter(
       {
         publication?.data.url && (
           <div class="mb-10 relative md:-left-6">
-            <SeeMore href={publication.data.url}>View</SeeMore>
+            <SeeMore href={publication.data.url}>{t("globals.view")}</SeeMore>
           </div>
         )
       }
@@ -98,7 +85,7 @@ const authors = resolvedAuthors?.filter(
       {
         publication?.body && (
           <>
-            <h2 class="heading-label">Abstract</h2>
+            <h2 class="heading-label">{t("publication.abstract")}</h2>
             {publication.body}
           </>
         )

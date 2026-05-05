@@ -1,11 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  buildCollections,
-  deriveSiblingCollection,
-  type LoaderOverride,
-  type PolystellaCollectionsDeps,
-} from "../src/content/build.js";
+import { buildCollections, deriveSiblingCollection, type LoaderOverride, type PolystellaCollectionsDeps } from "../src/content/build.js";
 
 /**
  * Tests pin the contract `polystellaCollections` exposes to user
@@ -225,11 +220,7 @@ describe("buildCollections — defaultLocale filtering", () => {
       deps,
     );
 
-    expect(Object.keys(out)).toEqual([
-      "publications",
-      "publications__pt-BR",
-      "publications__ja-JP",
-    ]);
+    expect(Object.keys(out)).toEqual(["publications", "publications__pt-BR", "publications__ja-JP"]);
   });
 
   it("treats `locales` literally when defaultLocale is not provided", () => {
@@ -244,11 +235,7 @@ describe("buildCollections — defaultLocale filtering", () => {
       deps,
     );
 
-    expect(Object.keys(out)).toEqual([
-      "publications",
-      "publications__pt-BR",
-      "publications__ja-JP",
-    ]);
+    expect(Object.keys(out)).toEqual(["publications", "publications__pt-BR", "publications__ja-JP"]);
   });
 });
 
@@ -267,11 +254,7 @@ describe("buildCollections — skipLocalize", () => {
       deps,
     );
 
-    expect(Object.keys(out).sort()).toEqual([
-      "blog",
-      "publications",
-      "publications__pt-BR",
-    ]);
+    expect(Object.keys(out).sort()).toEqual(["blog", "publications", "publications__pt-BR"]);
   });
 
   it("preserves the source collection for skipped collections", () => {
@@ -307,9 +290,7 @@ describe("buildCollections — loaderOverrides", () => {
       deps,
     );
 
-    expect(fileCalls).toEqual([
-      { path: ".astro/i18n-staging/pt-BR/site/site.toml" },
-    ]);
+    expect(fileCalls).toEqual([{ path: ".astro/i18n-staging/pt-BR/site/site.toml" }]);
     // Schema still threaded through.
     const siblingConfig = defineCalls[0]?.config as { schema?: unknown };
     expect(siblingConfig?.schema).toEqual({ tag: "site-schema" });
@@ -342,9 +323,7 @@ describe("buildCollections — loaderOverrides", () => {
     const { deps } = makeDeps();
     const blog = makeCustomSource();
     const customResult = { __tag: "user-built-blog-collection" };
-    const factory = vi.fn(
-      (_locale: string, _stagingBase: string) => customResult,
-    );
+    const factory = vi.fn((_locale: string, _stagingBase: string) => customResult);
 
     const out = buildCollections(
       {
@@ -357,10 +336,7 @@ describe("buildCollections — loaderOverrides", () => {
       deps,
     );
 
-    expect(factory).toHaveBeenCalledExactlyOnceWith(
-      "pt-BR",
-      ".astro/i18n-staging/pt-BR/blog",
-    );
+    expect(factory).toHaveBeenCalledExactlyOnceWith("pt-BR", ".astro/i18n-staging/pt-BR/blog");
     expect(out["blog__pt-BR"]).toBe(customResult);
   });
 
@@ -429,9 +405,7 @@ describe("buildCollections — custom-loader auto-skip", () => {
 
     expect(Object.keys(out)).toEqual(["blog"]);
     expect(logger.warn).toHaveBeenCalledTimes(1);
-    expect(logger.warn.mock.calls[0]?.[0]).toMatch(
-      /collection "blog" uses a custom loader/,
-    );
+    expect(logger.warn.mock.calls[0]?.[0]).toMatch(/collection "blog" uses a custom loader/);
     // The warning should also point users at the escape hatch + the
     // explicit-skip silencer so it's actionable, not just noise.
     expect(logger.warn.mock.calls[0]?.[0]).toMatch(/loaderOverrides\.blog/);
@@ -462,9 +436,7 @@ describe("buildCollections — custom-loader auto-skip", () => {
 describe("buildCollections — empty inputs", () => {
   it("returns an empty object when source is empty", () => {
     const { deps } = makeDeps();
-    expect(buildCollections({ source: {}, locales: ["pt-BR"] }, deps)).toEqual(
-      {},
-    );
+    expect(buildCollections({ source: {}, locales: ["pt-BR"] }, deps)).toEqual({});
   });
 
   it("returns source verbatim when locales is empty (no siblings)", () => {
@@ -519,9 +491,7 @@ describe("deriveSiblingCollection — edge cases", () => {
         deps,
         logger,
       }),
-    ).toThrowError(
-      /unrecognized loaderOverride kind for collection "publications"/,
-    );
+    ).toThrowError(/unrecognized loaderOverride kind for collection "publications"/);
   });
 
   it("returns null (and warns) for a custom-loader source without an override", () => {

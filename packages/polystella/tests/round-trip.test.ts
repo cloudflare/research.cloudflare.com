@@ -22,10 +22,7 @@ import { parseMarkdown } from "../src/parsing/parse.js";
  * automatically covers any future publications added to the corpus.
  */
 
-const PUBLICATIONS_DIR = resolve(
-  fileURLToPath(import.meta.url),
-  "../../../../content/publications",
-);
+const PUBLICATIONS_DIR = resolve(fileURLToPath(import.meta.url), "../../../../content/publications");
 
 const publicationFiles = readdirSync(PUBLICATIONS_DIR)
   .filter((name) => name.endsWith(".md"))

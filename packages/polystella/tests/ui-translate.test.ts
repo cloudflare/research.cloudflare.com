@@ -1,10 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import {
-  buildTranslateFn,
-  interpolate,
-  resolveTranslations,
-  type GetI18nEntry,
-} from "../src/ui/translate.js";
+import { buildTranslateFn, interpolate, resolveTranslations, type GetI18nEntry } from "../src/i18n/translate.js";
 
 /**
  * Tests for the runtime translator. Three layers:
@@ -24,9 +19,7 @@ import {
 
 describe("interpolate", () => {
   it("replaces `{{name}}` placeholders with string params", () => {
-    expect(interpolate("Hello, {{name}}!", { name: "Diogo" })).toBe(
-      "Hello, Diogo!",
-    );
+    expect(interpolate("Hello, {{name}}!", { name: "Diogo" })).toBe("Hello, Diogo!");
   });
 
   it("coerces number params to strings", () => {
@@ -34,9 +27,7 @@ describe("interpolate", () => {
   });
 
   it("coerces boolean params to strings", () => {
-    expect(interpolate("Enabled: {{flag}}", { flag: true })).toBe(
-      "Enabled: true",
-    );
+    expect(interpolate("Enabled: {{flag}}", { flag: true })).toBe("Enabled: true");
   });
 
   it("handles multiple placeholders in one template", () => {
@@ -49,24 +40,18 @@ describe("interpolate", () => {
   });
 
   it("repeats the same placeholder when it appears multiple times", () => {
-    expect(interpolate("{{x}}, {{x}}, {{x}}", { x: "Doug" })).toBe(
-      "Doug, Doug, Doug",
-    );
+    expect(interpolate("{{x}}, {{x}}, {{x}}", { x: "Doug" })).toBe("Doug, Doug, Doug");
   });
 
   it("leaves unknown placeholders in place (helps catch typos in templates)", () => {
-    expect(
-      interpolate("Hello, {{name}}! Today is {{day}}.", { name: "Diogo" }),
-    ).toBe("Hello, Diogo! Today is {{day}}.");
+    expect(interpolate("Hello, {{name}}! Today is {{day}}.", { name: "Diogo" })).toBe("Hello, Diogo! Today is {{day}}.");
   });
 
   it("treats placeholders as word characters only (no dotted paths)", () => {
     // `{{user.name}}` is NOT supported in v0.1; the dot makes it not
     // match the `\w+` placeholder grammar, so it survives unchanged.
     // The flat-dictionary contract precludes nested keys anyway.
-    expect(interpolate("Welcome {{user.name}}", { "user.name": "Diogo" })).toBe(
-      "Welcome {{user.name}}",
-    );
+    expect(interpolate("Welcome {{user.name}}", { "user.name": "Diogo" })).toBe("Welcome {{user.name}}");
   });
 
   it("returns the template unchanged when no placeholders match", () => {
@@ -86,10 +71,7 @@ describe("buildTranslateFn", () => {
   });
 
   it("falls back to the secondary dictionary on primary miss", () => {
-    const t = buildTranslateFn(
-      { "nav.home": "Início" },
-      { "nav.home": "Home", "nav.about": "About" },
-    );
+    const t = buildTranslateFn({ "nav.home": "Início" }, { "nav.home": "Home", "nav.about": "About" });
     expect(t("nav.about")).toBe("About");
   });
 
@@ -119,9 +101,7 @@ describe("buildTranslateFn", () => {
 });
 
 describe("resolveTranslations", () => {
-  function makeGetEntry(
-    entries: Record<string, Record<string, string>>,
-  ): GetI18nEntry {
+  function makeGetEntry(entries: Record<string, Record<string, string>>): GetI18nEntry {
     return vi.fn(async (locale: string) => {
       if (locale in entries) {
         return { data: entries[locale]! };

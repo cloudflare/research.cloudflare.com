@@ -9,6 +9,7 @@
   "globals.blog": "ブログ",
   "globals.video": "動画",
   "globals.presentation": "発表",
+  "globals.view": "表示",
   "globals.seeMore": "詳細を見る",
   "globals.viewAll": "すべてを見る",
 
@@ -63,7 +64,6 @@
   "publication.contributors": "貢献者",
   "publication.details": "詳細",
   "publication.abstract": "概要",
-  "publication.view": "閲覧",
 
   "people.heading": "メンバー",
   "people.subheading": "Cloudflare Researchチームのご紹介",

@@ -28,14 +28,7 @@ describe("parseMarkdown", () => {
   });
 
   it("captures YAML frontmatter as a `yaml` node (not stripped, not a thematic break)", () => {
-    const source = [
-      "---",
-      "title: Foo",
-      "tags: [a, b]",
-      "---",
-      "",
-      "# Body",
-    ].join("\n");
+    const source = ["---", "title: Foo", "tags: [a, b]", "---", "", "# Body"].join("\n");
     const ast = parseMarkdown(source);
 
     expect(ast.children[0]).toMatchObject({

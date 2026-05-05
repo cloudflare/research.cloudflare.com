@@ -23,10 +23,7 @@ export interface WalkOptions {
 export async function walkSources(opts: WalkOptions): Promise<SourceFile[]> {
   const baseDir = path.resolve(opts.sourceDir);
   const matchInclude = picomatch(opts.include, { dot: false });
-  const matchExclude =
-    opts.exclude.length > 0
-      ? picomatch(opts.exclude, { dot: false })
-      : () => false;
+  const matchExclude = opts.exclude.length > 0 ? picomatch(opts.exclude, { dot: false }) : () => false;
 
   let entries;
   try {

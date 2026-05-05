@@ -1,9 +1,5 @@
 import { describe, expect, it } from "vitest";
-import {
-  extractSegments,
-  peekNoTranslate,
-  selectTranslatableFrontmatter,
-} from "../src/parsing/extract.js";
+import { extractSegments, peekNoTranslate, selectTranslatableFrontmatter } from "../src/parsing/extract.js";
 import { parseMarkdown } from "../src/parsing/parse.js";
 import { computeSourceHash } from "../src/storage/hash.js";
 
@@ -55,22 +51,11 @@ describe("extractSegments — body", () => {
     const segments = extractSegments(ast, noFrontmatterRules, source);
 
     expect(segments).toHaveLength(1);
-    expect(segments[0]?.text).toBe(
-      "See [Smith 2020](https://example.com/smith) for details.",
-    );
+    expect(segments[0]?.text).toBe("See [Smith 2020](https://example.com/smith) for details.");
   });
 
   it("emits NO segments for code blocks (preserved verbatim)", () => {
-    const source = [
-      "Before.",
-      "",
-      "```ts",
-      "const x = 1;",
-      "```",
-      "",
-      "After.",
-      "",
-    ].join("\n");
+    const source = ["Before.", "", "```ts", "const x = 1;", "```", "", "After.", ""].join("\n");
     const ast = parseMarkdown(source);
     const segments = extractSegments(ast, noFrontmatterRules, source);
 
@@ -174,9 +159,7 @@ describe("extractSegments — frontmatter", () => {
     );
 
     // `year: 2025` is a number; only `title` makes it through.
-    expect(segments.filter((s) => s.id.startsWith("fm:"))).toEqual([
-      { id: "fm:title", text: "Hello" },
-    ]);
+    expect(segments.filter((s) => s.id.startsWith("fm:"))).toEqual([{ id: "fm:title", text: "Hello" }]);
   });
 
   it("unions keys across all matching globs in declaration order", () => {
@@ -196,9 +179,7 @@ describe("extractSegments — frontmatter", () => {
     // Globs are iterated in the order they're declared in the rules
     // object; matching globs contribute their keys in that order. So
     // `**/*`'s `description` is collected before `publications/**`'s `title`.
-    expect(
-      segments.filter((s) => s.id.startsWith("fm:")).map((s) => s.id),
-    ).toEqual(["fm:description", "fm:title"]);
+    expect(segments.filter((s) => s.id.startsWith("fm:")).map((s) => s.id)).toEqual(["fm:description", "fm:title"]);
   });
 });
 
@@ -266,9 +247,7 @@ describe("selectTranslatableFrontmatter", () => {
   // changes, so editing e.g. `metaDescription` busts the cache.
   it("changes the cache key when a translatable frontmatter value changes", () => {
     const before = parseMarkdown(docWithFrontmatter);
-    const after = parseMarkdown(
-      docWithFrontmatter.replace("An overview.", "An updated overview."),
-    );
+    const after = parseMarkdown(docWithFrontmatter.replace("An overview.", "An updated overview."));
 
     const opts = {
       sourcePath: "publications/foo.md",
@@ -295,9 +274,7 @@ describe("selectTranslatableFrontmatter", () => {
 
   it("does NOT change the cache key when a non-translatable frontmatter key changes", () => {
     const before = parseMarkdown(docWithFrontmatter);
-    const after = parseMarkdown(
-      docWithFrontmatter.replace("year: 2025", "year: 2026"),
-    );
+    const after = parseMarkdown(docWithFrontmatter.replace("year: 2025", "year: 2026"));
 
     const opts = {
       sourcePath: "publications/foo.md",
@@ -338,46 +315,34 @@ describe("peekNoTranslate", () => {
   });
 
   it("returns true for `noTranslate: true`", () => {
-    const ast = parseMarkdown(
-      '---\ntitle: "Hello"\nnoTranslate: true\n---\n\nBody.\n',
-    );
+    const ast = parseMarkdown('---\ntitle: "Hello"\nnoTranslate: true\n---\n\nBody.\n');
     expect(peekNoTranslate(ast)).toBe(true);
   });
 
   it("returns false for `noTranslate: false`", () => {
-    const ast = parseMarkdown(
-      '---\ntitle: "Hello"\nnoTranslate: false\n---\n\nBody.\n',
-    );
+    const ast = parseMarkdown('---\ntitle: "Hello"\nnoTranslate: false\n---\n\nBody.\n');
     expect(peekNoTranslate(ast)).toBe(false);
   });
 
   it('accepts the string alias `noTranslate: "true"`', () => {
-    const ast = parseMarkdown(
-      '---\ntitle: "Hello"\nnoTranslate: "true"\n---\n\nBody.\n',
-    );
+    const ast = parseMarkdown('---\ntitle: "Hello"\nnoTranslate: "true"\n---\n\nBody.\n');
     expect(peekNoTranslate(ast)).toBe(true);
   });
 
   it("accepts the string alias `noTranslate: yes`", () => {
-    const ast = parseMarkdown(
-      '---\ntitle: "Hello"\nnoTranslate: "yes"\n---\n\nBody.\n',
-    );
+    const ast = parseMarkdown('---\ntitle: "Hello"\nnoTranslate: "yes"\n---\n\nBody.\n');
     expect(peekNoTranslate(ast)).toBe(true);
   });
 
   it("does NOT accept other YAML truthy aliases (avoids false positives on real strings)", () => {
     // `on` and `y` are YAML 1.1 truthy but commonly appear as real
     // string values; we limit acceptance to "true" / "yes" only.
-    const astOn = parseMarkdown(
-      '---\ntitle: "Hello"\nnoTranslate: "on"\n---\n\nBody.\n',
-    );
+    const astOn = parseMarkdown('---\ntitle: "Hello"\nnoTranslate: "on"\n---\n\nBody.\n');
     expect(peekNoTranslate(astOn)).toBe(false);
   });
 
   it("returns false for non-boolean truthy values (e.g. `noTranslate: 1`)", () => {
-    const ast = parseMarkdown(
-      '---\ntitle: "Hello"\nnoTranslate: 1\n---\n\nBody.\n',
-    );
+    const ast = parseMarkdown('---\ntitle: "Hello"\nnoTranslate: 1\n---\n\nBody.\n');
     expect(peekNoTranslate(ast)).toBe(false);
   });
 });

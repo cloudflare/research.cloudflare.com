@@ -23,12 +23,7 @@ import path from "node:path";
  * Outcome categories. Precedence: `override` > `skipped-no-translate`
  * (when no override) > `cache-hit` / `ai-translated` > `error`.
  */
-export type BuildReportOutcome =
-  | "cache-hit"
-  | "ai-translated"
-  | "override"
-  | "skipped-no-translate"
-  | "error";
+export type BuildReportOutcome = "cache-hit" | "ai-translated" | "override" | "skipped-no-translate" | "error";
 
 export interface BuildReportEntry {
   /** Source-relative path, normalised to forward slashes. */
@@ -96,9 +91,7 @@ export interface BuildReport {
  * AT LEAST ONE entry reported them — distinguishes "no entry was
  * instrumented" from "every entry was 0 tokens".
  */
-export function computeBuildReportTotals(
-  entries: ReadonlyArray<BuildReportEntry>,
-): BuildReportTotals {
+export function computeBuildReportTotals(entries: ReadonlyArray<BuildReportEntry>): BuildReportTotals {
   let cacheHits = 0;
   let aiTranslated = 0;
   let overrides = 0;
@@ -158,9 +151,7 @@ export interface EmitBuildReportOptions {
  * trailing newline for POSIX tooling. `mkdir({ recursive: true })`
  * defensively in case the output directory hasn't been created yet.
  */
-export async function emitBuildReport(
-  opts: EmitBuildReportOptions,
-): Promise<string> {
+export async function emitBuildReport(opts: EmitBuildReportOptions): Promise<string> {
   const filename = opts.filename ?? "i18n-r2-report.json";
   const target = path.resolve(opts.outDir, filename);
   await mkdir(path.dirname(target), { recursive: true });

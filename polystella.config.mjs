@@ -11,6 +11,60 @@ import "dotenv/config";
  * Schema source of truth: `packages/polystella/src/options.ts`.
  */
 
+/**
+ * Three-mode dispatch for the R2 cache:
+ *
+ *   1. Local build (`pnpm build` / `pnpm dev`, no env signals):
+ *      Read main's `i18n/` prefix, never write to R2. A developer's
+ *      build can never overwrite production data; if their edits
+ *      change the source hash, translation still happens but the
+ *      bytes only land in local staging — paid by the dev's
+ *      Workers AI quota and discarded at the next clean.
+ *
+ *   2. CI build (Workers Builds, `WORKERS_CI_BRANCH` set by the
+ *      runtime): main writes to `i18n/`, every other branch writes
+ *      to `previews/<sanitized-branch>/i18n/` with a read-fallback
+ *      to `i18n/` so unchanged content reuses production's cache.
+ *
+ *   3. Explicit CLI run (`pnpm translate`, `POLYSTELLA_CLI=1` set
+ *      by `cli.ts` before this module is imported): same dispatch
+ *      as CI — main writes to production, anything else to its
+ *      preview prefix. The CLI is the only path that lets a
+ *      developer write to R2 from outside CI; the explicit
+ *      invocation is the consent.
+ *
+ * Detection cascade:
+ *   - `inCi`         — `WORKERS_CI_BRANCH` is set (ONLY Workers
+ *                      Builds sets this; local shells don't).
+ *   - `inCli`        — `POLYSTELLA_CLI === "1"` (set by our CLI).
+ *   - `isLocalBuild` — neither of the above.
+ *
+ * Branch sanitisation:
+ *   Branch names commonly contain `/` (e.g. `diogo/polystella-v1`).
+ *   Embedded slashes work in R2 keys but fragment a branch's cache
+ *   across nested folders and let two branches collide on a shared
+ *   namespace component (`diogo/foo` and `diogo/bar` both nest
+ *   under `previews/diogo/`). We flatten to a single-level segment.
+ *
+ *   The sanitisation is lossy: `diogo/foo-bar` and `diogo-foo-bar`
+ *   both normalise to `diogo-foo-bar` and would share a cache. The
+ *   cache is content-addressed so no data corruption is possible
+ *   even on a collision — worst case is one branch reads the
+ *   other's translations of an identical source hash.
+ */
+const sanitizeBranchSegment = (name) => {
+  const sanitized = name.replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/^-+|-+$/g, "");
+  return sanitized.length > 0 ? sanitized : "branch";
+};
+
+const inCi = process.env.WORKERS_CI_BRANCH !== undefined;
+const inCli = process.env.POLYSTELLA_CLI === "1";
+const isLocalBuild = !inCi && !inCli;
+
+const branch = process.env.WORKERS_CI_BRANCH ?? "main";
+const isProduction = branch === "main";
+const branchSegment = sanitizeBranchSegment(branch);
+
 /** @type {import('polystella').PolyStellaOptions} */
 const config = {
   // ─── Locales ───────────────────────────────────────────────────
@@ -66,18 +120,38 @@ const config = {
   // rewriteInternalLinks: true,
 
   // ─── R2 storage (translation cache) ──────────────────────────────────
-  // Becomes required once M6 wires real R2 access. While we're in
-  // dry-run, this can be omitted entirely.
   //
+  // Three-mode dispatch — see the `inCi`/`inCli`/`isLocalBuild` block
+  // above for the detection logic.
+  //
+  // Local build: `prefix: "i18n/"` + `readOnly: true`. We point at
+  // production's prefix so cache hits are maximised, and the readOnly
+  // flag forbids both PUTs and the prune step. Local builds therefore
+  // cannot mutate the production cache, regardless of which branch
+  // the developer happens to be on. `readFallbackPrefixes` is empty
+  // because we're already reading from main; nothing to fall back to.
+  //
+  // CI / CLI: branch-isolated namespace. Main writes to `i18n/`;
+  // anything else writes to `previews/<sanitized-branch>/i18n/` and
+  // reads main on miss. Cross-prefix promotion is forbidden by
+  // design — a preview hit against main returns those bytes verbatim
+  // and never copies them under the preview prefix. Cleanup of stale
+  // `previews/...` objects is handled by the bucket's lifecycle rule
+  // (see README §Deployment).
   r2: {
     accountId: process.env.CF_ACCOUNT_ID,
     bucket: "research-i18n-cache",
     accessKeyId: process.env.R2_ACCESS_KEY_ID,
     secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-    prefix: "i18n/", // default: "i18n/"
+    prefix: isLocalBuild || isProduction ? "i18n/" : `previews/${branchSegment}/i18n/`,
+    readFallbackPrefixes: isLocalBuild || isProduction ? [] : ["i18n/"],
+    readOnly: isLocalBuild,
     // endpoint: "https://<accountId>.eu.r2.cloudflarestorage.com",
-    // readOnly: false,                    // skip writes; useful for staging
-    keepLastN: 3, // pruning per (locale, sourcePath); set to false to disable
+    keepLastN: isLocalBuild
+      ? false // readOnly already disables prune; setting `false` is belt + braces.
+      : isProduction
+        ? 3
+        : 5, // preview branches churn hashes faster, keep more variants.
   },
 
   // ─── AI provider ─────────────────────────────────────────────────────

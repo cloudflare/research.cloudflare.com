@@ -30,11 +30,7 @@ export interface ExtractOptions {
  * the same range, keeping block markers (`#`, `> `, `- `) intact.
  * Frontmatter segments hold parsed YAML scalars.
  */
-export function extractSegments(
-  ast: Root,
-  opts: ExtractOptions,
-  source: string,
-): Segment[] {
+export function extractSegments(ast: Root, opts: ExtractOptions, source: string): Segment[] {
   const segments: Segment[] = [];
 
   visitTranslatableBlocks(ast, ({ block, id }) => {
@@ -46,9 +42,7 @@ export function extractSegments(
     }
   });
 
-  const frontmatterNode = ast.children.find(
-    (child): child is Yaml => child.type === "yaml",
-  );
+  const frontmatterNode = ast.children.find((child): child is Yaml => child.type === "yaml");
   if (frontmatterNode) {
     const keys = resolveFrontmatterKeys(opts.sourcePath, opts.frontmatter);
     if (keys.length > 0) {
@@ -76,10 +70,7 @@ export function extractSegments(
  * Resolve which frontmatter keys to translate for `sourcePath`, by
  * unioning the key lists of every matching glob in `rules`.
  */
-export function resolveFrontmatterKeys(
-  sourcePath: string,
-  rules: Record<string, string[]>,
-): string[] {
+export function resolveFrontmatterKeys(sourcePath: string, rules: Record<string, string[]>): string[] {
   const matched = new Set<string>();
   for (const [pattern, keys] of Object.entries(rules)) {
     if (picomatch.isMatch(sourcePath, pattern)) {
@@ -98,9 +89,7 @@ export function resolveFrontmatterKeys(
  * translation loop entirely.
  */
 export function peekNoTranslate(ast: Root): boolean {
-  const frontmatterNode = ast.children.find(
-    (child): child is Yaml => child.type === "yaml",
-  );
+  const frontmatterNode = ast.children.find((child): child is Yaml => child.type === "yaml");
   if (!frontmatterNode) return false;
 
   let parsed: unknown;
@@ -126,13 +115,8 @@ export function peekNoTranslate(ast: Root): boolean {
  * the hash; non-string values still propagate to the hash so e.g. a
  * `year: 2025 → 2026` change re-keys the cache).
  */
-export function selectTranslatableFrontmatter(
-  ast: Root,
-  opts: ExtractOptions,
-): Record<string, unknown> {
-  const frontmatterNode = ast.children.find(
-    (child): child is Yaml => child.type === "yaml",
-  );
+export function selectTranslatableFrontmatter(ast: Root, opts: ExtractOptions): Record<string, unknown> {
+  const frontmatterNode = ast.children.find((child): child is Yaml => child.type === "yaml");
   if (!frontmatterNode) return {};
 
   const keys = resolveFrontmatterKeys(opts.sourcePath, opts.frontmatter);

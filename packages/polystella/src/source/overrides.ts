@@ -26,9 +26,7 @@ export interface ReadOverrideOptions {
  * Returns file contents on hit, `null` on miss. Errors other than
  * ENOENT propagate so permission problems surface loudly.
  */
-export async function readOverride(
-  opts: ReadOverrideOptions,
-): Promise<string | null> {
+export async function readOverride(opts: ReadOverrideOptions): Promise<string | null> {
   const overridePath = resolveOverridePath(opts);
   try {
     return await readFile(overridePath, "utf8");
@@ -40,16 +38,9 @@ export async function readOverride(
 
 /** Absolute path; exposed so callers can log it without duplicating the join. */
 export function resolveOverridePath(opts: ReadOverrideOptions): string {
-  return path.resolve(
-    opts.rootDir,
-    opts.overridesDir,
-    opts.locale,
-    opts.relativeSourcePath,
-  );
+  return path.resolve(opts.rootDir, opts.overridesDir, opts.locale, opts.relativeSourcePath);
 }
 
 function isNodeNotFoundError(err: unknown): boolean {
-  return (
-    err instanceof Error && (err as NodeJS.ErrnoException).code === "ENOENT"
-  );
+  return err instanceof Error && (err as NodeJS.ErrnoException).code === "ENOENT";
 }

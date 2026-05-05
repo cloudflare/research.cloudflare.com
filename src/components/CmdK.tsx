@@ -11,11 +11,7 @@ export const CmdK = () => {
         </button>
       </DialogTrigger>
       <DialogContent>
-        <input
-          type="text"
-          placeholder="Search..."
-          className="focus:none outline-0 focus:outline-0"
-        />
+        <input type="text" placeholder="Search..." className="focus:none outline-0 focus:outline-0" />
       </DialogContent>
     </Dialog>
   );

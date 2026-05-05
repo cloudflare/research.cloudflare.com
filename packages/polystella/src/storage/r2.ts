@@ -37,11 +37,7 @@ export interface R2Client {
   /** Returns the object body + headers, or `null` if `key` does not exist. */
   get(key: string): Promise<R2GetResult | null>;
   /** Uploads `body` to `key`. */
-  put(
-    key: string,
-    body: Uint8Array | string,
-    opts?: R2PutOptions,
-  ): Promise<void>;
+  put(key: string, body: Uint8Array | string, opts?: R2PutOptions): Promise<void>;
   /** Lists every object whose key begins with `prefix` (auto-paginated by s3mini). */
   list(prefix: string): Promise<R2ListEntry[]>;
   /** Deletes the object at `key`; resolves cleanly if `key` does not exist. */
@@ -64,26 +60,52 @@ export interface R2ConnectionOptions {
 }
 
 /**
- * Format: `i18n/{locale}/{relative-source-path}#{hash}.md`. The
- * source path is preserved verbatim so the key is reversible.
+ * Default key prefix when the operator hasn't customised
+ * `r2.prefix`. Co-located with `buildR2Key` because the two values
+ * (default config + the format helper) must agree byte-for-byte —
+ * pulling them apart has historically caused silent cache misses
+ * (e.g. a new prefix in config + a hardcoded `"i18n/"` here).
+ */
+export const DEFAULT_R2_KEY_PREFIX = "i18n/";
+
+/**
+ * Format: `{prefix}{locale}/{relative-source-path}#{hash}.md`.
+ *
+ * `prefix` defaults to `"i18n/"` so existing callers that haven't
+ * been threaded through the resolved config keep producing identical
+ * keys — but the prefix is configurable so per-branch caches (e.g.
+ * `previews/<branch>/i18n/`) can isolate writes from production
+ * without churning the schema.
+ *
+ * The source path is preserved verbatim so the key is reversible
+ * (only `#` introduces ambiguity, and we anchor on `lastIndexOf("#")`
+ * downstream).
+ *
+ * `prefix` MUST end with `/` when non-empty; we don't auto-append
+ * because a missing slash usually indicates a config typo, and a
+ * silent fixup hides it.
  */
 export function buildR2Key({
   locale,
   sourcePath,
   hash,
+  prefix = DEFAULT_R2_KEY_PREFIX,
 }: {
   locale: string;
   sourcePath: string;
   hash: string;
+  prefix?: string;
 }): string {
   const normalisedPath = sourcePath.replace(/\\/g, "/").replace(/^\/+/, "");
-  return `i18n/${locale}/${normalisedPath}#${hash}.md`;
+  if (prefix.length > 0 && !prefix.endsWith("/")) {
+    throw new Error(`[polystella] r2.prefix must end with "/" (got: ${JSON.stringify(prefix)})`);
+  }
+  return `${prefix}${locale}/${normalisedPath}#${hash}.md`;
 }
 
 /** Stateless R2 client; safe to share across concurrent operations. */
 export function createR2Client(opts: R2ConnectionOptions): R2Client {
-  const baseEndpoint =
-    opts.endpoint ?? `https://${opts.accountId}.r2.cloudflarestorage.com`;
+  const baseEndpoint = opts.endpoint ?? `https://${opts.accountId}.r2.cloudflarestorage.com`;
   const endpoint = `${baseEndpoint.replace(/\/+$/, "")}/${opts.bucket}`;
 
   const s3 = new S3mini({
@@ -135,9 +157,7 @@ export function createR2Client(opts: R2ConnectionOptions): R2Client {
         body,
         putOpts?.contentType,
         undefined,
-        Object.keys(additionalHeaders).length > 0
-          ? additionalHeaders
-          : undefined,
+        Object.keys(additionalHeaders).length > 0 ? additionalHeaders : undefined,
       );
     },
 

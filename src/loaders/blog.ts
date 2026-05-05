@@ -23,10 +23,7 @@ interface CachedData {
 /**
  * Fetches blog posts from the Cloudflare Worker with caching
  */
-async function fetchWithCache(
-  endpoint: string,
-  cacheFile: string,
-): Promise<BlogPost[]> {
+async function fetchWithCache(endpoint: string, cacheFile: string): Promise<BlogPost[]> {
   const cachePath = path.join(CACHE_DIR, cacheFile);
 
   // Create cache directory if it doesn't exist
@@ -51,9 +48,7 @@ async function fetchWithCache(
   const response = await fetch(`${WORKER_BASE_URL}${endpoint}`);
 
   if (!response.ok) {
-    throw new Error(
-      `Failed to fetch blog posts: ${response.status} ${response.statusText}`,
-    );
+    throw new Error(`Failed to fetch blog posts: ${response.status} ${response.statusText}`);
   }
 
   const data: BlogPost[] = await response.json();
@@ -125,11 +120,6 @@ export function blogLoader(): Loader {
  * Custom loader for fetching blog posts by author
  * This can be used to augment people profiles with their blog posts
  */
-export async function fetchBlogPostsByAuthor(
-  blogAuthor: string,
-): Promise<BlogPost[]> {
-  return fetchWithCache(
-    `/blog/author?name=${blogAuthor}`,
-    `blogposts_${blogAuthor}.json`,
-  );
+export async function fetchBlogPostsByAuthor(blogAuthor: string): Promise<BlogPost[]> {
+  return fetchWithCache(`/blog/author?name=${blogAuthor}`, `blogposts_${blogAuthor}.json`);
 }

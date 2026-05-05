@@ -31,9 +31,7 @@ export function normaliseGetLocalizedEntryArgs(
 ): { collection: string; id: string; locale: string | undefined } {
   if (typeof collectionOrRef === "string") {
     if (typeof idOrLocale !== "string") {
-      throw new TypeError(
-        "[polystella] getLocalizedEntry(collection, id, locale?): `id` is required when the first argument is a string.",
-      );
+      throw new TypeError("[polystella] getLocalizedEntry(collection, id, locale?): `id` is required when the first argument is a string.");
     }
     return {
       collection: collectionOrRef,
@@ -78,11 +76,10 @@ export interface SourceEntryShape {
  * full schema-aware inference (`data.authors` typed as the resolved
  * `reference("people")` array, etc.).
  */
-export type LocalizedEntry<TEntry extends SourceEntryShape = SourceEntryShape> =
-  TEntry & {
-    isLocalized: boolean;
-    locale: string;
-  };
+export type LocalizedEntry<TEntry extends SourceEntryShape = SourceEntryShape> = TEntry & {
+  isLocalized: boolean;
+  locale: string;
+};
 
 /**
  * Sibling-miss policy for sources WITHOUT `noTranslate: true`.
@@ -112,10 +109,7 @@ export interface ResolveLocalizedEntryDeps {
    * lookups: sibling first, source on miss. `undefined` is the
    * standard "entry not found" sentinel.
    */
-  getEntry: (
-    collection: string,
-    slug: string,
-  ) => Promise<SourceEntryShape | undefined>;
+  getEntry: (collection: string, slug: string) => Promise<SourceEntryShape | undefined>;
 }
 
 export interface ResolveLocalizedEntryInput {
@@ -152,9 +146,7 @@ export interface ResolveLocalizedEntryInput {
  * run in different module graphs (content config vs. page render),
  * so a shared constant isn't workable.
  */
-export async function resolveLocalizedEntry(
-  input: ResolveLocalizedEntryInput,
-): Promise<LocalizedEntry | undefined> {
+export async function resolveLocalizedEntry(input: ResolveLocalizedEntryInput): Promise<LocalizedEntry | undefined> {
   const { collection, slug, locale, deps } = input;
 
   if (locale === undefined || locale === "" || locale === deps.defaultLocale) {
@@ -186,10 +178,6 @@ export async function resolveLocalizedEntry(
 }
 
 /** Fresh shallow copy + extension fields; doesn't mutate the input. */
-function withExtensions(
-  entry: SourceEntryShape,
-  isLocalized: boolean,
-  locale: string,
-): LocalizedEntry {
+function withExtensions(entry: SourceEntryShape, isLocalized: boolean, locale: string): LocalizedEntry {
   return { ...entry, isLocalized, locale };
 }

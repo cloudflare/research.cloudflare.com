@@ -26,9 +26,7 @@ export interface DerivedUrlPattern {
  */
 export function deriveUrlPattern(sourcePath: string): DerivedUrlPattern {
   const normalised = sourcePath.replace(/\\/g, "/").replace(/^\/+/, "");
-  const stripped = normalised
-    .replace(/^src\/pages\//, "")
-    .replace(/\.astro$/, "");
+  const stripped = normalised.replace(/^src\/pages\//, "").replace(/\.astro$/, "");
   // Drop a trailing `/index` — section indexes route to the bare URL.
   const pattern = stripped.replace(/(^|\/)index$/, "");
   const isDynamic = /\[[^\]]+\]/.test(pattern);

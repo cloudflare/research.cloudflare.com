@@ -33,6 +33,69 @@ describe("buildR2Key", () => {
       }),
     ).toBe(`i18n/pt-BR/publications/nested/foo.md#${TEST_HASH}.md`);
   });
+
+  // Configurable prefix is the knob branch-isolation hangs on: a PR
+  // build pointing at `previews/<branch>/i18n/` MUST produce keys
+  // disjoint from main's `i18n/...` keys, otherwise concurrent PRs
+  // would collide on the same R2 namespace.
+  it("honours a custom prefix (used for branch-prefixed previews)", () => {
+    expect(
+      buildR2Key({
+        locale: "pt-BR",
+        sourcePath: "publications/foo.md",
+        hash: TEST_HASH,
+        prefix: "previews/feature-x/i18n/",
+      }),
+    ).toBe(`previews/feature-x/i18n/pt-BR/publications/foo.md#${TEST_HASH}.md`);
+  });
+
+  it("defaults the prefix to `i18n/` so back-compat callers are unaffected", () => {
+    // The two-arg call (no `prefix`) is still valid and produces the
+    // legacy key shape — required so the integration's existing
+    // callers don't have to be threaded through a config object on
+    // day one.
+    const withDefault = buildR2Key({
+      locale: "pt-BR",
+      sourcePath: "publications/foo.md",
+      hash: TEST_HASH,
+    });
+    const withExplicit = buildR2Key({
+      locale: "pt-BR",
+      sourcePath: "publications/foo.md",
+      hash: TEST_HASH,
+      prefix: "i18n/",
+    });
+    expect(withDefault).toBe(withExplicit);
+  });
+
+  it("rejects a non-empty prefix that doesn't end with `/` (catches config typos)", () => {
+    // A typo like `prefix: "previews/feature-x"` would otherwise
+    // silently produce `previews/feature-xpt-BR/...` keys — different
+    // from the operator's intent. Throwing surfaces the bug at config
+    // time, before any R2 round-trip.
+    expect(() =>
+      buildR2Key({
+        locale: "pt-BR",
+        sourcePath: "publications/foo.md",
+        hash: TEST_HASH,
+        prefix: "previews/feature-x",
+      }),
+    ).toThrowError(/r2\.prefix must end with "\/"/);
+  });
+
+  it("accepts an empty prefix (rare, but keys are then locale-rooted)", () => {
+    // No throw, no inserted `/`. Useful for buckets dedicated solely
+    // to translations where the operator wants to drop the redundant
+    // `i18n/` namespace.
+    expect(
+      buildR2Key({
+        locale: "pt-BR",
+        sourcePath: "publications/foo.md",
+        hash: TEST_HASH,
+        prefix: "",
+      }),
+    ).toBe(`pt-BR/publications/foo.md#${TEST_HASH}.md`);
+  });
 });
 
 describe("createR2Client", () => {
@@ -40,8 +103,7 @@ describe("createR2Client", () => {
     // Capture every fetch s3mini issues so we can assert the URL and method.
     const calls: Array<{ url: string; method: string; headers: Headers }> = [];
     const fakeFetch: typeof fetch = async (input, init) => {
-      const url =
-        typeof input === "string" ? input : (input as URL | Request).toString();
+      const url = typeof input === "string" ? input : (input as URL | Request).toString();
       const method = (init?.method ?? "GET").toUpperCase();
       calls.push({
         url,
@@ -73,9 +135,7 @@ describe("createR2Client", () => {
     expect(put, "expected at least one PUT call").toBeDefined();
 
     // Endpoint shape: https://<accountId>.r2.cloudflarestorage.com/<bucket>/<key>
-    expect(put!.url).toMatch(
-      /^https:\/\/acct1234\.r2\.cloudflarestorage\.com\/research-i18n-cache\//,
-    );
+    expect(put!.url).toMatch(/^https:\/\/acct1234\.r2\.cloudflarestorage\.com\/research-i18n-cache\//);
     expect(put!.url).toContain("i18n/pt-BR/foo.md");
 
     // SigV4 produced an Authorization header.
@@ -87,8 +147,7 @@ describe("createR2Client", () => {
   });
 
   it("returns null from get() when the object is missing", async () => {
-    const fakeFetch: typeof fetch = async () =>
-      new Response("Not Found", { status: 404 });
+    const fakeFetch: typeof fetch = async () => new Response("Not Found", { status: 404 });
 
     const client = createR2Client({
       accountId: "acct1234",
@@ -105,9 +164,7 @@ describe("createR2Client", () => {
   it("respects an explicit endpoint override (e.g. jurisdictional EU)", async () => {
     const calls: string[] = [];
     const fakeFetch: typeof fetch = async (input) => {
-      calls.push(
-        typeof input === "string" ? input : (input as URL | Request).toString(),
-      );
+      calls.push(typeof input === "string" ? input : (input as URL | Request).toString());
       return new Response("", { status: 200, headers: { etag: '"x"' } });
     };
 
@@ -121,8 +178,6 @@ describe("createR2Client", () => {
     });
 
     await client.put("hello.txt", "hi");
-    expect(calls[0]).toMatch(
-      /^https:\/\/acct1234\.eu\.r2\.cloudflarestorage\.com\/eu-cache\//,
-    );
+    expect(calls[0]).toMatch(/^https:\/\/acct1234\.eu\.r2\.cloudflarestorage\.com\/eu-cache\//);
   });
 });

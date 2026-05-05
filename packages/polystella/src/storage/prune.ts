@@ -1,3 +1,4 @@
+import { DEFAULT_R2_KEY_PREFIX } from "./r2.js";
 import type { R2Client, R2ListEntry } from "./r2.js";
 
 /**
@@ -26,6 +27,19 @@ export interface PruneCacheByPairOptions {
   touchedPairs: Iterable<string>;
   /** Max hash variants per pair. `false` disables pruning entirely. */
   keepLastN: number | false;
+  /**
+   * Key prefix to scan and prune within. Defaults to the legacy
+   * `"i18n/"` for back-compat with callers that pre-date branch
+   * isolation.
+   *
+   * The pruner ONLY touches keys under this prefix, by design — when
+   * a preview build runs with `prefix: "previews/<branch>/i18n/"`,
+   * passing the same prefix here ensures it can't accidentally evict
+   * production variants stored under `"i18n/"`.
+   *
+   * Must end with `/` (matching the constraint in `buildR2Key`).
+   */
+  prefix?: string;
 }
 
 export interface PruneResult {
@@ -53,9 +67,7 @@ export function encodeTouchedPair(locale: string, sourcePath: string): string {
  * malformed (defensive — should never fire when both ends use
  * `encodeTouchedPair`).
  */
-export function decodeTouchedPair(
-  encoded: string,
-): { locale: string; sourcePath: string } | null {
+export function decodeTouchedPair(encoded: string): { locale: string; sourcePath: string } | null {
   const idx = encoded.indexOf("::");
   if (idx < 0) return null;
   return {
@@ -64,9 +76,7 @@ export function decodeTouchedPair(
   };
 }
 
-export async function pruneCacheByPair(
-  opts: PruneCacheByPairOptions,
-): Promise<PruneResult> {
+export async function pruneCacheByPair(opts: PruneCacheByPairOptions): Promise<PruneResult> {
   if (opts.keepLastN === false) {
     return {
       deleted: 0,
@@ -74,6 +84,10 @@ export async function pruneCacheByPair(
       prunedPairs: 0,
       consideredPairs: 0,
     };
+  }
+  const basePrefix = opts.prefix ?? DEFAULT_R2_KEY_PREFIX;
+  if (basePrefix.length > 0 && !basePrefix.endsWith("/")) {
+    throw new Error(`[polystella] pruneCacheByPair: prefix must end with "/" (got: ${JSON.stringify(basePrefix)})`);
   }
   const keep = opts.keepLastN;
   const deletedKeys: string[] = [];
@@ -98,18 +112,24 @@ export async function pruneCacheByPair(
   let prunedPairs = 0;
 
   for (const [locale, sourcePaths] of sourcePathsByLocale) {
-    const prefix = `i18n/${locale}/`;
-    const all = await opts.r2.list(prefix);
+    // Prune-scope prefix: `<basePrefix><locale>/`. Scoping by locale
+    // (rather than just basePrefix) keeps list() small and matches
+    // the keying contract from `buildR2Key`. Concatenation, not
+    // path.join, because R2 keys are S3-style strings (forward
+    // slashes only, no platform-specific normalisation).
+    const localePrefix = `${basePrefix}${locale}/`;
+    const all = await opts.r2.list(localePrefix);
 
-    // Recover sourcePath from each key (`i18n/<locale>/<src>#<hash>.md`)
-    // via `lastIndexOf("#")` — tolerates `#` inside a sourcePath
-    // since the trailing hash is the last `#` by construction.
+    // Recover sourcePath from each key
+    // (`<prefix><locale>/<src>#<hash>.md`) via `lastIndexOf("#")`.
+    // Tolerates `#` inside a sourcePath since the trailing hash is
+    // the last `#` by construction.
     const variantsBySourcePath = new Map<string, R2ListEntry[]>();
     for (const entry of all) {
-      if (!entry.key.startsWith(prefix)) continue; // defensive
+      if (!entry.key.startsWith(localePrefix)) continue; // defensive
       const hashStart = entry.key.lastIndexOf("#");
-      if (hashStart < prefix.length) continue; // malformed; skip
-      const sourcePath = entry.key.slice(prefix.length, hashStart);
+      if (hashStart < localePrefix.length) continue; // malformed; skip
+      const sourcePath = entry.key.slice(localePrefix.length, hashStart);
       let bucket = variantsBySourcePath.get(sourcePath);
       if (!bucket) {
         bucket = [];
@@ -122,9 +142,7 @@ export async function pruneCacheByPair(
       const variants = variantsBySourcePath.get(sourcePath);
       if (!variants || variants.length <= keep) continue;
       // Newest first.
-      variants.sort(
-        (a, b) => b.lastModified.getTime() - a.lastModified.getTime(),
-      );
+      variants.sort((a, b) => b.lastModified.getTime() - a.lastModified.getTime());
       const toDelete = variants.slice(keep);
       for (const entry of toDelete) {
         await opts.r2.del(entry.key);
