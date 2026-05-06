@@ -77,7 +77,7 @@ function getBlogAuthorMap(): Record<string, string> {
   const map: Record<string, string> = {};
   if (!fs.existsSync(PEOPLE_DIR)) return map;
 
-  const files = fs.readdirSync(PEOPLE_DIR).filter(f => f.endsWith(".md"));
+  const files = fs.readdirSync(PEOPLE_DIR).filter((f) => f.endsWith(".md"));
   for (const file of files) {
     const content = fs.readFileSync(path.join(PEOPLE_DIR, file), "utf-8");
     const blogAuthorMatch = content.match(/^blog_author:\s*(.+)$/m);
@@ -145,7 +145,9 @@ export function blogLoader(): Loader {
               `blogposts_${blogAuthor}.json`
             );
           } catch (err) {
-            logger.warn(`Failed to fetch posts for author "${blogAuthor}": ${err}`);
+            logger.warn(
+              `Failed to fetch posts for author "${blogAuthor}": ${err}`
+            );
             continue;
           }
 
@@ -177,7 +179,9 @@ export function blogLoader(): Loader {
         }
 
         if (extraCount > 0) {
-          logger.info(`Loaded ${extraCount} additional blog posts from per-author endpoints`);
+          logger.info(
+            `Loaded ${extraCount} additional blog posts from per-author endpoints`
+          );
         }
       } catch (error) {
         logger.error(`Failed to load blog posts: ${error}`);
