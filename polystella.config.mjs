@@ -82,7 +82,7 @@ const config = {
   // Glob patterns relative to `sourceDir`. A file is considered for
   // translation if it matches at least one `include` and no `exclude`.
   // include: ["**/*.md", "**/*.mdx"],
-  include: ["publications/*.md"],
+  include: ["publications/*.md", "site.toml"],
   // exclude: [],
   //
   // Staged-rollout example — translate publications first:
@@ -90,7 +90,7 @@ const config = {
   // …or keep `include` broad and exclude the rest:
   //   exclude: ["people/**", "presentations/**", "tags/**"],
 
-  // ─── Per-collection frontmatter rules ────────────────────────────────
+  // ─── Per-collection frontmatter rules (markdown adapter) ─────────────
   // Map of glob (against the file's relative source path) → array of
   // frontmatter keys that should be translated. Frontmatter keys not
   // listed here are passed through verbatim.
@@ -101,6 +101,24 @@ const config = {
     //"tags/**": ["title", "description"],
   },
   // frontmatter: {},
+
+  // ─── TOML key paths (TOML adapter, v0.1.x) ───────────────────────────
+  // Translatable scalars inside `.toml` files. Same shape as
+  // `frontmatter`: glob → array of dotted/bracketed key paths inside
+  // the parsed TOML. Wildcards `[*]` and `.*` expand at extract time.
+  //
+  // `site.toml`'s structure: a single top-level entry (`main`) holds
+  // `featuredResearch` with translatable strings. Astro's `file()`
+  // loader produces one entry per top-level TOML table, so the
+  // schema in `src/content.config.ts` validates against
+  // `entry.data.featuredResearch`.
+  tomlKeys: {
+    "site.toml": [
+      "main.featuredResearch.title",
+      "main.featuredResearch.description",
+      "main.featuredResearch.buttonLabel",
+    ],
+  },
 
   // ─── Standalone-mode routing ─────────────────────────────────────────
   // Source pages PolyStella generates locale-prefixed shims for. Each

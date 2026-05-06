@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { buildCacheMetadata, translateOrLoadFromCache, type TranslateOrLoadOptions } from "../src/storage/cache.js";
+import { applyTranslations } from "../src/parsing/apply.js";
 import { extractSegments } from "../src/parsing/extract.js";
 import { EMPTY_GLOSSARY, hashGlossary, type Glossary } from "../src/glossary/glossary.js";
 import { computeSourceHash } from "../src/storage/hash.js";
@@ -121,15 +122,26 @@ const SAMPLE_SOURCE = ["---", "title: Hello", "---", "", "First paragraph with *
 function makeOptions(
   overrides: Partial<TranslateOrLoadOptions> & {
     r2?: R2Client | null;
+    /**
+     * Test-only convenience: when set, the default `apply` closure
+     * forwards them as `frontmatterAdditions` to the markdown applier
+     * (mirroring how `runTranslationPass` weaves the AI-translation
+     * marker into the closure).
+     */
+    frontmatterAdditions?: Record<string, unknown>;
   },
 ): TranslateOrLoadOptions {
   const ast = parseMarkdown(SAMPLE_SOURCE);
   const segments = extractSegments(ast, { sourcePath: "publications/sample.md", frontmatter: {} }, SAMPLE_SOURCE);
   const translator = overrides.translator ?? makeStubTranslator();
+  const fm = overrides.frontmatterAdditions;
+  const apply: TranslateOrLoadOptions["apply"] = (translations) =>
+    applyTranslations(ast, translations, SAMPLE_SOURCE, {
+      ...(fm ? { frontmatterAdditions: fm } : {}),
+    });
   return {
-    ast,
     segments,
-    sourceBody: SAMPLE_SOURCE,
+    apply,
     locale: "pt-BR",
     key: "i18n/pt-BR/publications/sample.md#abc123.md",
     r2: overrides.r2 ?? null,

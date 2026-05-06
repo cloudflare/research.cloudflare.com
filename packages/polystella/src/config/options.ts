@@ -116,7 +116,26 @@ export const polystellaOptionsSchema = z
     exclude: z.array(z.string()).default([]),
 
     // Per-collection frontmatter rules; globs against relative source path.
+    // Markdown adapter (`.md` / `.mdx`) consumes this map.
     frontmatter: z.record(z.string(), z.array(z.string())).default({}),
+
+    /**
+     * Translatable key paths for `.toml` files. Same shape as
+     * `frontmatter`: glob against the relative source path → array
+     * of dotted/bracketed key paths inside the parsed TOML.
+     *
+     * Wildcards `[*]` and `.*` expand against the parsed structure
+     * at extract time. Example for a single-file `site.toml`:
+     *
+     *     tomlKeys: {
+     *       "site.toml": [
+     *         "main.featuredResearch.title",
+     *         "main.featuredResearch.description",
+     *         "main.featuredResearch.buttonLabel",
+     *       ],
+     *     }
+     */
+    tomlKeys: z.record(z.string(), z.array(z.string())).default({}),
 
     /**
      * Source pages to inject locale-prefixed shims for. Each entry

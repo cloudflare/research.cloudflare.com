@@ -4,9 +4,9 @@ import { pathToFileURL } from "node:url";
 
 import type { PolyStellaResolvedOptions } from "../config/options.js";
 import { EMPTY_GLOSSARY, EMPTY_GLOSSARY_HASH, hashGlossary, loadGlossaries } from "../glossary/glossary.js";
-import { extractSegments, peekNoTranslate, selectTranslatableFrontmatter } from "../parsing/extract.js";
-import { parseMarkdown } from "../parsing/parse.js";
+import type { AdapterExtractOptions, FileTypeAdapter } from "../parsing/adapter.js";
 import { rewriteInternalLinks, type RewriteInternalLinksOptions } from "../parsing/rewrite-links.js";
+import { getAdapter, listRegisteredExtensions } from "../parsing/registry.js";
 import { readOverride } from "../source/overrides.js";
 import { runWithConcurrency } from "../source/pool.js";
 import { walkSources } from "../source/walk.js";
@@ -158,6 +158,29 @@ async function writeStagedTranslation(args: {
 }
 
 /**
+ * Resolve which per-glob → key-paths map an adapter consumes. Markdown
+ * uses the `frontmatter` option; structured-data adapters (M3+) use
+ * their own per-type maps (`tomlKeys`, `jsonKeys`, `yamlKeys`). For
+ * extensions an adapter doesn't claim, this returns `{}` so the
+ * adapter sees no translatable keys at all (a defensible default —
+ * the source still passes through, segments are empty, no cache miss
+ * is generated).
+ */
+function pickTranslatableKeysForAdapter(adapter: FileTypeAdapter, resolved: PolyStellaResolvedOptions): Record<string, string[]> {
+  for (const ext of adapter.extensions) {
+    switch (ext) {
+      case ".md":
+      case ".mdx":
+        return resolved.frontmatter;
+      case ".toml":
+        return resolved.tomlKeys;
+      // JSON / YAML adapter maps land here in M4 / M5.
+    }
+  }
+  return {};
+}
+
+/**
  * Build the ordered list of fallback R2 keys for a (locale, hash, source)
  * tuple. Resolves each configured `readFallbackPrefixes` entry through
  * `buildR2Key` so callers don't need their own key concatenation logic.
@@ -304,16 +327,25 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
   let pairCount = 0;
   await Promise.all(
     sources.map(async (source) => {
+      const ext = path.extname(source.relativePath).toLowerCase();
+      const adapter = getAdapter(ext);
+      if (!adapter) {
+        logger.warn(
+          `no adapter registered for "${ext}" (source: ${source.relativePath}); known: ${listRegisteredExtensions().join(", ") || "none"}. Skipping.`,
+        );
+        return;
+      }
       const body = await readFile(source.absolutePath, "utf8");
-      const ast = parseMarkdown(body);
-      const fmValues = selectTranslatableFrontmatter(ast, {
+      const parsed = adapter.parse(body);
+      const adapterOpts: AdapterExtractOptions = {
         sourcePath: source.relativePath,
-        frontmatter: resolved.frontmatter,
-      });
+        translatableKeys: pickTranslatableKeysForAdapter(adapter, resolved),
+      };
+      const selectedValues = adapter.selectedValuesForHash(parsed, body, adapterOpts);
       for (const locale of resolved.locales) {
         const hash = computeSourceHash({
           body,
-          frontmatter: fmValues,
+          frontmatter: selectedValues,
           glossaryHash: glossaryHashByLocale.get(locale) ?? EMPTY_GLOSSARY_HASH,
           modelId: translatorByLocale.get(locale)?.modelId ?? "",
         });
@@ -401,21 +433,29 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
   // pool resolves once every source has been processed and the
   // closing-summary log lines run after.
   await runWithConcurrency(sources, resolved.concurrency, async (source) => {
+    const ext = path.extname(source.relativePath).toLowerCase();
+    const adapter = getAdapter(ext);
+    if (!adapter) {
+      // Already warned in the dry-run pass above; silently drop here
+      // so a single source file with an unsupported extension doesn't
+      // double-log on every run.
+      return;
+    }
     const body = await readFile(source.absolutePath, "utf8");
-    const ast = parseMarkdown(body);
+    const parsed = adapter.parse(body);
+    const adapterOpts: AdapterExtractOptions = {
+      sourcePath: source.relativePath,
+      translatableKeys: pickTranslatableKeysForAdapter(adapter, resolved),
+    };
 
     // Computed once per source so all branches (noTranslate, override,
     // translate, error) push consistent report entries.
-    const extractOptsForReport = {
-      sourcePath: source.relativePath,
-      frontmatter: resolved.frontmatter,
-    };
-    const fmValuesForReport = selectTranslatableFrontmatter(ast, extractOptsForReport);
+    const selectedValuesForReport = adapter.selectedValuesForHash(parsed, body, adapterOpts);
     const reportKeysFor = (locale: string) => {
       const modelId = translatorByLocale.get(locale)?.modelId ?? "";
       const sourceHash = computeSourceHash({
         body,
-        frontmatter: fmValuesForReport,
+        frontmatter: selectedValuesForReport,
         glossaryHash: glossaryHashByLocale.get(locale) ?? EMPTY_GLOSSARY_HASH,
         modelId,
       });
@@ -430,7 +470,7 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
 
     // `noTranslate: true` skips translation entirely. Overrides
     // still apply (operator opt-back-in, per-locale).
-    if (peekNoTranslate(ast)) {
+    if (adapter.peekNoTranslate(parsed)) {
       noTranslateSources++;
       for (const locale of resolved.locales) {
         const pairStart = Date.now();
@@ -483,13 +523,9 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
       return;
     }
 
-    const extractOpts = {
-      sourcePath: source.relativePath,
-      frontmatter: resolved.frontmatter,
-    };
-    const segments = extractSegments(ast, extractOpts, body);
+    const segments = adapter.extractSegments(parsed, body, adapterOpts);
     // Reused across the per-locale loop below.
-    const fmValues = selectTranslatableFrontmatter(ast, extractOpts);
+    const selectedValues = adapter.selectedValuesForHash(parsed, body, adapterOpts);
 
     for (const locale of resolved.locales) {
       const pairStart = Date.now();
@@ -547,7 +583,7 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
         const glossaryHash = glossaryHashByLocale.get(locale) ?? EMPTY_GLOSSARY_HASH;
         const sourceHash = computeSourceHash({
           body,
-          frontmatter: fmValues,
+          frontmatter: selectedValues,
           glossaryHash,
           modelId: translator.modelId,
         });
@@ -602,10 +638,20 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
         // in-bytes `aiTranslatedAt` marker so they don't drift if
         // anyone diffs cache vs. staged file.
         const translatedAt = new Date().toISOString();
+        // AI-translation marker. Baked into the apply closure so it
+        // lands in the bytes BEFORE the R2 PUT, keeping `aiTranslatedAt`
+        // truthful on later cache hits.
+        const topLevelAdditions: Record<string, unknown> = {
+          aiTranslated: true,
+          aiTranslationModel: translator.modelId,
+          aiTranslatedAt: translatedAt,
+        };
         const result = await translateOrLoadFromCache({
-          ast,
           segments,
-          sourceBody: body,
+          apply: (translations) =>
+            adapter.applyTranslations(parsed, body, translations, {
+              topLevelAdditions,
+            }),
           locale,
           key,
           r2,
@@ -622,15 +668,6 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
             translatedAt,
             polystellaVersion,
           }),
-          // AI-translation marker. Baked in BEFORE the R2 PUT so
-          // cache hits on later builds return the marker verbatim
-          // and `aiTranslatedAt` keeps the original translation
-          // time.
-          frontmatterAdditions: {
-            aiTranslated: true,
-            aiTranslationModel: translator.modelId,
-            aiTranslatedAt: translatedAt,
-          },
           ...(resolved.r2?.readOnly ? { readOnly: true } : {}),
           ...(fallbackKeys.length > 0 ? { fallbackKeys } : {}),
           events: {

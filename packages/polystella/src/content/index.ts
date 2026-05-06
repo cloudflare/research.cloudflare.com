@@ -22,6 +22,13 @@ export {
 } from "./build.js";
 
 /**
+ * Polystella's `file()` loader — drop-in replacement for Astro's,
+ * adds path-recording so `polystellaCollections` can auto-derive
+ * locale siblings without `loaderOverrides`. See `./file-loader.ts`.
+ */
+export { file, readRecordedSourcePath, POLYSTELLA_SOURCE_PATH_KEY, type PolystellaFileLoader } from "./file-loader.js";
+
+/**
  * Returns `{ ...source, ...siblings }` — the right-hand side of
  * `export const collections = ...` in `src/content.config.ts`.
  *

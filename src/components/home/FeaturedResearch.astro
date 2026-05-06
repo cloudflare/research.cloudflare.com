@@ -1,12 +1,17 @@
 ---
 import SeeMore from "../SeeMore.astro";
-import { getCollection } from "astro:content";
+import { getLocalizedEntry } from "polystella/runtime";
 import { getTranslations } from "polystella/i18n";
 
 const t = await getTranslations(Astro.currentLocale);
 
-const [siteSettings] = await getCollection("site");
-const { title, description, link, buttonLabel } = siteSettings.data.featuredResearch;
+// `site.toml` produces a single `main` entry under Astro's `file()`
+// loader. PolyStella stages translated TOML at
+// `<staging>/<locale>/site.toml`; `getLocalizedEntry` dispatches to
+// the locale's sibling collection (`site__pt-BR` / `site__ja-JP`)
+// and falls back to the source on the default locale or a miss.
+const siteEntry = await getLocalizedEntry("site", "main", Astro.currentLocale);
+const { title, description, link, buttonLabel } = siteEntry!.data.featuredResearch;
 ---
 
 <section class="interior-content border-b-2 border-page-border connector-bl connector-br">

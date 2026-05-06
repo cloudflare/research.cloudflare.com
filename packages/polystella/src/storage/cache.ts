@@ -1,5 +1,3 @@
-import type { Root } from "mdast";
-import { applyTranslations } from "../parsing/apply.js";
 import type { Segment } from "../parsing/extract.js";
 import type { Glossary } from "../glossary/glossary.js";
 import { translateBatch, type Translator } from "../translation/provider.js";
@@ -8,8 +6,20 @@ import type { R2Client } from "./r2.js";
 /**
  * Cache-aware translation orchestrator. Single entry point per
  * (file, locale) pair: R2 GET → on hit return cached bytes; on miss,
- * translate via the provider, splice via the position-based applier,
- * PUT back to R2 with metadata.
+ * translate via the provider, splice via the caller-supplied apply
+ * callback, PUT back to R2 with metadata.
+ *
+ * The orchestrator is format-agnostic: callers pass `apply` as an
+ * opaque "splice these translations into the source bytes" closure.
+ * The markdown adapter's apply byte-splices inline ranges; structured-
+ * data adapters (M3+) parse-mutate-stringify. Either way, the cache
+ * layer just calls `apply(translations)` and receives final bytes.
+ *
+ * Any per-format AI-translation marker (e.g. `aiTranslated: true`
+ * baked into frontmatter / top-level keys) is the caller's
+ * responsibility to weave into the closure — bake it in BEFORE the
+ * R2 PUT so later cache hits return the marker verbatim and timestamps
+ * stay truthful.
  *
  * Lives separately from `index.ts` so the cache decision tree is
  * unit-testable with mocked R2 + Translator without booting Astro.
@@ -18,9 +28,17 @@ import type { R2Client } from "./r2.js";
 export type CacheOutcome = "hit" | "miss";
 
 export interface TranslateOrLoadOptions {
-  ast: Root;
   segments: Segment[];
-  sourceBody: string;
+  /**
+   * Format-agnostic apply step. Called once per cache miss, AFTER
+   * the translator returns. Whatever closure the caller builds owns
+   * (a) parsing the source, (b) mutating it with `translations`, and
+   * (c) injecting any top-level marker fields (AI metadata, etc.).
+   *
+   * The cache layer treats the returned string as opaque bytes; it
+   * gets PUT to R2 verbatim and returned to the caller for staging.
+   */
+  apply: (translations: Map<string, string>) => string;
   locale: string;
   /** R2 key from `buildR2Key`. */
   key: string;
@@ -32,12 +50,6 @@ export interface TranslateOrLoadOptions {
   context?: string;
   /** From `buildCacheMetadata` — kept caller-built for hook/test parity. */
   metadata: Record<string, string>;
-  /**
-   * Frontmatter keys merged into translated bytes BEFORE the R2 PUT
-   * (used for the `aiTranslated*` marker). Baking into cached bytes
-   * keeps `aiTranslatedAt` truthful on later cache hits.
-   */
-  frontmatterAdditions?: Record<string, unknown>;
   /** Cache-write progress hooks; only fire on the miss path with `r2`. */
   events?: CacheEvents;
   /**
@@ -100,9 +112,8 @@ export interface TranslateOrLoadResult {
  */
 export async function translateOrLoadFromCache(opts: TranslateOrLoadOptions): Promise<TranslateOrLoadResult> {
   const {
-    ast,
     segments,
-    sourceBody,
+    apply,
     locale,
     key,
     r2,
@@ -112,7 +123,6 @@ export async function translateOrLoadFromCache(opts: TranslateOrLoadOptions): Pr
     context,
     metadata,
     events,
-    frontmatterAdditions,
     readOnly,
     fallbackKeys,
   } = opts;
@@ -150,8 +160,9 @@ export async function translateOrLoadFromCache(opts: TranslateOrLoadOptions): Pr
     }
   }
 
-  // Cache miss. Marker additions are baked in BEFORE the PUT so
-  // later cache hits return the marker verbatim.
+  // Cache miss. The caller's `apply` closure is responsible for any
+  // marker additions (AI metadata etc.) — they MUST be baked in
+  // BEFORE the PUT so later cache hits return the marker verbatim.
   const translations = await translateBatch({
     translator,
     segments,
@@ -160,9 +171,7 @@ export async function translateOrLoadFromCache(opts: TranslateOrLoadOptions): Pr
     targetLocale: locale,
     context,
   });
-  const translated = applyTranslations(ast, translations, sourceBody, {
-    ...(frontmatterAdditions ? { frontmatterAdditions } : {}),
-  });
+  const translated = apply(translations);
 
   // PUT failures are caught (not rethrown): translator already ran
   // and was billed; dropping the bytes would compound the cost. We

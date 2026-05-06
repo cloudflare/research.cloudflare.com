@@ -1,8 +1,14 @@
 // 1. Import utilities from `astro:content`
 import { defineCollection, reference } from "astro:content";
 
-// 2. Import loader(s)
-import { glob, file } from "astro/loaders";
+// 2. Import loader(s).
+//    `file` comes from polystella/content (instead of astro/loaders) so
+//    polystellaCollections can auto-derive the locale sibling for
+//    single-file collections — no `loaderOverrides.<name>` needed.
+//    The wrapper forwards to Astro's `file()` and just records the
+//    source path on the returned loader.
+import { glob } from "astro/loaders";
+import { file } from "polystella/content";
 import { blogLoader } from "./loaders/blog";
 
 // 3. Import Zod
@@ -115,11 +121,6 @@ export const collections = {
     locales: ["en", "pt-BR", "ja-JP"],
     defaultLocale: "en",
     loaderOverrides: {
-      // `site` is TOML-backed. The translation pipeline currently only
-      // understands markdown (and soon MDX) ASTs — running TOML through
-      // the markdown extractor would mangle section headers and
-      // assignments. Skipping until a TOML extractor/applier exists.
-      site: { kind: "skip", reason: "TOML translation not supported yet" },
       // `blog` uses a custom loader; opting it out so the warning goes
       // away. Blog posts are English-only by design today.
       blog: { kind: "skip", reason: "blog posts are English-only" },
