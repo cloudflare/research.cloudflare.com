@@ -4,6 +4,8 @@ import fs from "node:fs";
 import path from "node:path";
 import { blogMappings } from "../data/blog-mappings";
 
+const PEOPLE_DIR = "./content/people";
+
 const WORKER_BASE_URL = "https://website-worker.research.cloudflare.com";
 const CACHE_DIR = ".astro/cache/blog";
 
@@ -64,6 +66,25 @@ async function fetchWithCache(endpoint: string, cacheFile: string): Promise<Blog
 }
 
 /**
+ * Reads all people files and returns a map of blog_author -> people slug
+ */
+function getBlogAuthorMap(): Record<string, string> {
+  const map: Record<string, string> = {};
+  if (!fs.existsSync(PEOPLE_DIR)) return map;
+
+  const files = fs.readdirSync(PEOPLE_DIR).filter((f) => f.endsWith(".md"));
+  for (const file of files) {
+    const content = fs.readFileSync(path.join(PEOPLE_DIR, file), "utf-8");
+    const blogAuthorMatch = content.match(/^blog_author:\s*(.+)$/m);
+    const slugMatch = content.match(/^slug:\s*(.+)$/m);
+    if (blogAuthorMatch && slugMatch) {
+      map[blogAuthorMatch[1].trim()] = slugMatch[1].trim();
+    }
+  }
+  return map;
+}
+
+/**
  * Custom Astro loader for Cloudflare blog posts
  */
 export function blogLoader(): Loader {
@@ -79,14 +100,14 @@ export function blogLoader(): Loader {
         // Clear existing entries
         store.clear();
 
-        // Process each blog post
+        // Track which URLs we've already added
+        const seenLinks = new Set<string>();
+
+        // Process each blog post from /blog/all
         for (const post of posts) {
           const id = generateDigest(post.link);
-
-          // Get mapping data for this blog post
           const mapping = blogMappings[post.link];
 
-          // Parse and validate the data
           const data = await parseData({
             id,
             data: {
@@ -101,13 +122,62 @@ export function blogLoader(): Loader {
             },
           });
 
-          store.set({
-            id,
-            data,
-          });
+          store.set({ id, data });
+          seenLinks.add(post.link);
         }
 
-        logger.info(`Loaded ${posts.length} blog posts`);
+        logger.info(`Loaded ${posts.length} blog posts from /blog/all`);
+
+        // Fetch per-author posts to catch any not in /blog/all
+        const blogAuthorMap = getBlogAuthorMap();
+        let extraCount = 0;
+
+        for (const [blogAuthor, peopleSlug] of Object.entries(blogAuthorMap)) {
+          let authorPosts: BlogPost[];
+          try {
+            authorPosts = await fetchWithCache(
+              `/blog/author?name=${blogAuthor}`,
+              `blogposts_${blogAuthor}.json`
+            );
+          } catch (err) {
+            logger.warn(
+              `Failed to fetch posts for author "${blogAuthor}": ${err}`
+            );
+            continue;
+          }
+
+          for (const post of authorPosts) {
+            if (seenLinks.has(post.link)) continue;
+
+            const id = generateDigest(post.link);
+            const mapping = blogMappings[post.link];
+
+            const data = await parseData({
+              id,
+              data: {
+                title: post.heading,
+                date: new Date(post.date),
+                url: post.link,
+                excerpt: post.text,
+                image: post.image,
+                // Use mapping author if set, otherwise fall back to this person
+                author: mapping?.author ?? peopleSlug,
+                pillar: mapping?.pillar,
+                tags: mapping?.tags,
+              },
+            });
+
+            store.set({ id, data });
+            seenLinks.add(post.link);
+            extraCount++;
+          }
+        }
+
+        if (extraCount > 0) {
+          logger.info(
+            `Loaded ${extraCount} additional blog posts from per-author endpoints`
+          );
+        }
       } catch (error) {
         logger.error(`Failed to load blog posts: ${error}`);
         throw error;
