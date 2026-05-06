@@ -66,6 +66,7 @@ Content is managed through Astro's Content Collections located in the `/content`
 - **Tags**: Topic categorization for filtering content
 
 ### Featured Research
+
 Within the [`/content/site.toml`](./content/site.toml) file, you can configure the featured research section on the homepage. It must follow this structure:
 
 ```toml
@@ -78,6 +79,7 @@ buttonLabel = "Read the Full Article"
 ```
 
 ### People
+
 All people are located within the [`/content/people`](./content/people) directory.
 
 They must follow this structure:
@@ -102,6 +104,7 @@ Only `active` and `alumni` types are displayed on the team page.
 Avatars are stored in the [`/public/images/people`](./public/images/people) directory and should be named after the person's slug.
 
 ### Publications
+
 All publications are located within the [`/content/publications`](./content/publications) directory.
 
 They must follow this structure:
@@ -126,6 +129,7 @@ Publication content
 ```
 
 ### Presentations
+
 All presentations are located within the [`/content/presentations`](./content/presentations) directory.
 
 They must follow this structure:
@@ -142,6 +146,7 @@ Presentation content
 ```
 
 ### Tags
+
 Tags are maintained in the [`/content/tags`](./content/tags) directory. They are used to categorize publications and presentations.
 
 Tags must follow this structure:
