@@ -164,6 +164,22 @@ export const polystellaOptionsSchema = z
       .strict()
       .default({ keys: {}, urls: {} }),
 
+    json: z
+      .object({
+        keys: z.record(z.string(), z.array(z.string())).default({}),
+        urls: z.record(z.string(), z.array(z.string())).default({}),
+      })
+      .strict()
+      .default({ keys: {}, urls: {} }),
+
+    yaml: z
+      .object({
+        keys: z.record(z.string(), z.array(z.string())).default({}),
+        urls: z.record(z.string(), z.array(z.string())).default({}),
+      })
+      .strict()
+      .default({ keys: {}, urls: {} }),
+
     /**
      * Internal URL paths to leave unprefixed by the link rewriter.
      * Picomatch globs match against the URL path (after splitting
@@ -446,6 +462,8 @@ function findKeysUrlsOverlaps(opts: z.output<typeof polystellaOptionsSchema>): s
   const formats: Array<{ name: string; keys: Record<string, string[]>; urls: Record<string, string[]> }> = [
     { name: "markdown", keys: opts.markdown.keys, urls: opts.markdown.urls },
     { name: "toml", keys: opts.toml.keys, urls: opts.toml.urls },
+    { name: "json", keys: opts.json.keys, urls: opts.json.urls },
+    { name: "yaml", keys: opts.yaml.keys, urls: opts.yaml.urls },
   ];
   for (const format of formats) {
     for (const glob of Object.keys(format.keys)) {

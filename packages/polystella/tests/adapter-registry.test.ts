@@ -1,8 +1,10 @@
 import { afterEach, describe, expect, it } from "vitest";
 
 import type { AdapterApplyOptions, AdapterExtractOptions, FileTypeAdapter } from "../src/parsing/adapter.js";
+import { jsonAdapter } from "../src/parsing/adapters/json.js";
 import { markdownAdapter } from "../src/parsing/adapters/markdown.js";
 import { tomlAdapter } from "../src/parsing/adapters/toml.js";
+import { yamlAdapter } from "../src/parsing/adapters/yaml.js";
 import {
   getAdapter,
   listRegisteredExtensions,
@@ -26,6 +28,8 @@ function reseedBuiltins(): void {
   resetRegistry();
   registerAdapter(markdownAdapter);
   registerAdapter(tomlAdapter);
+  registerAdapter(jsonAdapter);
+  registerAdapter(yamlAdapter);
 }
 
 afterEach(() => {
@@ -68,16 +72,25 @@ describe("registry — built-ins", () => {
     expect(getAdapter(".toml")).toBe(tomlAdapter);
   });
 
+  it("registers JSON automatically for .json", () => {
+    expect(getAdapter(".json")).toBe(jsonAdapter);
+  });
+
+  it("registers YAML automatically for .yaml and .yml", () => {
+    expect(getAdapter(".yaml")).toBe(yamlAdapter);
+    expect(getAdapter(".yml")).toBe(yamlAdapter);
+  });
+
   it("listRegisteredExtensions returns built-in extensions sorted", () => {
-    expect(listRegisteredExtensions()).toEqual([".md", ".mdx", ".toml"]);
+    expect(listRegisteredExtensions()).toEqual([".json", ".md", ".mdx", ".toml", ".yaml", ".yml"]);
   });
 });
 
 describe("registry — dispatch", () => {
   it("returns undefined for unknown extensions", () => {
-    // JSON / YAML adapters land in M4 / M5; until then they're misses.
-    expect(getAdapter(".json")).toBeUndefined();
-    expect(getAdapter(".yaml")).toBeUndefined();
+    expect(getAdapter(".html")).toBeUndefined();
+    expect(getAdapter(".csv")).toBeUndefined();
+    expect(getAdapter(".xml")).toBeUndefined();
   });
 
   it("normalises extension lookup to lowercase", () => {

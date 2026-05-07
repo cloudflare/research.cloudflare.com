@@ -12,16 +12,12 @@ import { CONSTANTS } from "@/lib/constants";
 import SeeMore from "@/components/SeeMore.astro";
 import { linkDescriptions } from "@/data/seo";
 import { getTranslations } from "polystella/i18n";
+import { localizedHref } from "packages/polystella/src/runtime";
 
 const t = await getTranslations(Astro.currentLocale);
 
 // Pull in 3 most recent publications (2025+), sorted by date
-const recentPublications = (
-  await getCollection(
-    "publications",
-    ({ data }) => data.year && data.year >= 2025,
-  )
-)
+const recentPublications = (await getCollection("publications", ({ data }) => data.year && data.year >= 2025))
   .sort((a, b) => {
     const dateA = a.data.date || new Date(a.data.year || 0, 11, 31);
     const dateB = b.data.date || new Date(b.data.year || 0, 11, 31);
@@ -46,18 +42,14 @@ const recentPublications = (
     <h2 class="heading mb-3 text-left md:text-center text-quartz px-8 md:px-4">
       {t("home.focusAreas.heading")}
     </h2>
-    <h3
-      class="subheading mb-8 text-left md:text-center text-stack px-8 md:px-4"
-    >
+    <h3 class="subheading mb-8 text-left md:text-center text-stack px-8 md:px-4">
       {t("home.focusAreas.subheading")}
     </h3>
-    <div
-      class="flex flex-wrap gap-4 justify-center -mx-px relative connector-top-left mb-5 border-t-2 sm:border-t-0 border-page-border"
-    >
+    <div class="flex flex-wrap gap-4 justify-center -mx-px relative connector-top-left mb-5 border-t-2 sm:border-t-0 border-page-border">
       <FocusArea
         icon="hidden"
         title={t("globals.morePrivate")}
-        seeMore="/focus/private"
+        seeMore={localizedHref("/focus/private", Astro.currentLocale)}
         className="w-[calc(100%-2px)] md:w-[calc(49%-2px)] lg:w-[calc(33%-8px)]"
         description={linkDescriptions.private}
       >

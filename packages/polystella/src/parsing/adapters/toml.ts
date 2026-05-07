@@ -1,4 +1,3 @@
-import picomatch from "picomatch";
 import { parse as parseToml, stringify as stringifyToml } from "smol-toml";
 
 import type {
@@ -8,7 +7,7 @@ import type {
   FileTypeAdapter,
 } from "../adapter.js";
 import type { Segment } from "../extract.js";
-import { expandPath, parsePath, readAtPath, writeAtPath, type PathSegment } from "../key-paths.js";
+import { expandPath, parsePath, readAtPath, resolveConcretePaths, writeAtPath, type PathSegment } from "../key-paths.js";
 
 /**
  * TOML adapter. Parses with `smol-toml`, extracts translatable
@@ -62,7 +61,11 @@ export const tomlAdapter: FileTypeAdapter<TomlData> = {
 
   extractSegments(parsed: TomlData, _source: string, opts: AdapterExtractOptions): Segment[] {
     const segments: Segment[] = [];
-    const concretePaths = resolveConcretePaths(parsed, opts);
+    const concretePaths = resolveConcretePaths({
+      parsed,
+      sourcePath: opts.sourcePath,
+      translatableKeys: opts.translatableKeys,
+    });
     for (const path of concretePaths) {
       const { segments: pathSegs } = parsePath(path);
       const value = readAtPath(parsed, pathSegs as PathSegment[]);
@@ -126,7 +129,11 @@ export const tomlAdapter: FileTypeAdapter<TomlData> = {
 
   selectedValuesForHash(parsed: TomlData, _source: string, opts: AdapterExtractOptions): Record<string, unknown> {
     const result: Record<string, unknown> = {};
-    const concretePaths = resolveConcretePaths(parsed, opts);
+    const concretePaths = resolveConcretePaths({
+      parsed,
+      sourcePath: opts.sourcePath,
+      translatableKeys: opts.translatableKeys,
+    });
     for (const path of concretePaths) {
       const { segments } = parsePath(path);
       const value = readAtPath(parsed, segments as PathSegment[]);
@@ -186,38 +193,3 @@ export const tomlAdapter: FileTypeAdapter<TomlData> = {
  * useful narrower type at this layer.
  */
 export type TomlData = Record<string, unknown>;
-
-/**
- * Resolve translatable key paths for a single source file. Walks
- * every glob in `translatableKeys` that matches the source path,
- * unions the listed paths, expands wildcards against `parsed`, and
- * returns the deduplicated concrete-path list.
- *
- * Order matters for ID stability: concrete paths are emitted in
- * the order rules appear in the user's config (within a glob, in
- * the user's listed order; across globs, in object-iteration order).
- * Any later-stage list dedup preserves first occurrence.
- */
-function resolveConcretePaths(parsed: TomlData, opts: AdapterExtractOptions): string[] {
-  const matchedRulePaths: string[] = [];
-  for (const [pattern, paths] of Object.entries(opts.translatableKeys)) {
-    if (picomatch.isMatch(opts.sourcePath, pattern)) {
-      for (const p of paths) {
-        if (!matchedRulePaths.includes(p)) {
-          matchedRulePaths.push(p);
-        }
-      }
-    }
-  }
-  const concrete: string[] = [];
-  const seen = new Set<string>();
-  for (const rule of matchedRulePaths) {
-    for (const expanded of expandPath(rule, parsed)) {
-      if (!seen.has(expanded)) {
-        seen.add(expanded);
-        concrete.push(expanded);
-      }
-    }
-  }
-  return concrete;
-}

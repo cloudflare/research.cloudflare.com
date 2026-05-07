@@ -1,6 +1,8 @@
 import type { FileTypeAdapter } from "./adapter.js";
+import { jsonAdapter } from "./adapters/json.js";
 import { markdownAdapter } from "./adapters/markdown.js";
 import { tomlAdapter } from "./adapters/toml.js";
+import { yamlAdapter } from "./adapters/yaml.js";
 
 /**
  * Registry of file-format adapters keyed by extension.
@@ -11,9 +13,8 @@ import { tomlAdapter } from "./adapters/toml.js";
  * register exactly one adapter per extension, so collisions only
  * matter for tests and bespoke setups.
  *
- * **Built-in adapters.** Markdown is registered automatically at
- * module load. v0.1.x M3–M5 register TOML / JSON / YAML adapters
- * the same way.
+ * **Built-in adapters.** Markdown, TOML, JSON, and YAML are all
+ * registered automatically at module load (v0.1.x).
  *
  * **Resetting (tests).** Tests that need a clean slate call
  * `resetRegistry()` and re-register the adapters they want.
@@ -61,6 +62,9 @@ export function resetRegistry(): void {
 }
 
 // Built-in registrations. Order here decides "first-registered wins"
-// for ties; markdown owns `.md`/`.mdx`, TOML owns `.toml`.
+// for ties; markdown owns `.md`/`.mdx`, TOML owns `.toml`, JSON owns
+// `.json`, YAML owns `.yaml`/`.yml`.
 registerAdapter(markdownAdapter);
 registerAdapter(tomlAdapter);
+registerAdapter(jsonAdapter);
+registerAdapter(yamlAdapter);

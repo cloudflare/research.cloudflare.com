@@ -162,7 +162,7 @@ async function writeStagedTranslation(args: {
 /**
  * Resolve which per-glob → key-paths map an adapter consumes for
  * translatable scalars. Markdown reads `markdown.keys`; TOML reads
- * `toml.keys`; future structured-data adapters get their own block.
+ * `toml.keys`; JSON reads `json.keys`; YAML reads `yaml.keys`.
  * For extensions an adapter doesn't claim, this returns `{}` so the
  * adapter sees no translatable keys at all (a defensible default —
  * the source still passes through, segments are empty, no cache
@@ -176,7 +176,11 @@ function pickTranslatableKeysForAdapter(adapter: FileTypeAdapter, resolved: Poly
         return resolved.markdown.keys;
       case ".toml":
         return resolved.toml.keys;
-      // JSON / YAML adapter maps land here in M4 / M5.
+      case ".json":
+        return resolved.json.keys;
+      case ".yaml":
+      case ".yml":
+        return resolved.yaml.keys;
     }
   }
   return {};
@@ -196,6 +200,11 @@ function pickUrlKeysForAdapter(adapter: FileTypeAdapter, resolved: PolyStellaRes
         return resolved.markdown.urls;
       case ".toml":
         return resolved.toml.urls;
+      case ".json":
+        return resolved.json.urls;
+      case ".yaml":
+      case ".yml":
+        return resolved.yaml.urls;
     }
   }
   return {};

@@ -249,3 +249,51 @@ export function writeAtPath(node: unknown, segments: readonly PathSegment[], val
  * picomatch import — picomatch is already a transitive dep.
  */
 export { default as picomatchMatcher } from "picomatch";
+
+import picomatch from "picomatch";
+
+/**
+ * Resolve translatable key paths for a single source file. Walks
+ * every glob in `translatableKeys` that matches `sourcePath`,
+ * unions the listed key paths, expands any wildcards (`[*]`, `.*`)
+ * against the parsed structure, and returns the deduplicated
+ * concrete-path list.
+ *
+ * Shared across structured-data adapters (TOML / JSON / YAML) since
+ * the resolution is identical — only the parser differs. Markdown
+ * doesn't use this helper because its key paths target frontmatter
+ * keys (a flat scalar map), not nested data.
+ *
+ * Order matters for ID stability: concrete paths are emitted in
+ * the order rules appear in the user's config (within a glob, in
+ * the user's listed order; across globs, in object-iteration order).
+ * Dedup preserves first occurrence.
+ */
+export function resolveConcretePaths(args: {
+  parsed: unknown;
+  sourcePath: string;
+  translatableKeys: Record<string, string[]>;
+}): string[] {
+  const { parsed, sourcePath, translatableKeys } = args;
+  const matchedRulePaths: string[] = [];
+  for (const [pattern, paths] of Object.entries(translatableKeys)) {
+    if (picomatch.isMatch(sourcePath, pattern)) {
+      for (const p of paths) {
+        if (!matchedRulePaths.includes(p)) {
+          matchedRulePaths.push(p);
+        }
+      }
+    }
+  }
+  const concrete: string[] = [];
+  const seen = new Set<string>();
+  for (const rule of matchedRulePaths) {
+    for (const expanded of expandPath(rule, parsed)) {
+      if (!seen.has(expanded)) {
+        seen.add(expanded);
+        concrete.push(expanded);
+      }
+    }
+  }
+  return concrete;
+}
