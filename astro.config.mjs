@@ -8,22 +8,20 @@ import mdx from "@astrojs/mdx";
 
 import sitemap from "@astrojs/sitemap";
 
-import polystella from "polystella";
+import polystella, { astroSitemapI18n } from "polystella";
 import polystellaConfig from "./polystella.config.mjs";
+
+const i18n = {
+  defaultLocale: "en",
+  locales: ["en", "pt-BR", "ja-JP", "es-ES"],
+  routing: { prefixDefaultLocale: false },
+};
 
 // https://astro.build/config
 export default defineConfig({
   site: "https://research.cloudflare.com",
   output: "static",
-  // Locale set: source of truth for both Astro routing and PolyStella.
-  // Existing English routes stay at their current paths; non-default
-  // locales mount under `/pt-BR/...`, `/ja-JP/...`, and `/es-ES/...`
-  // once PolyStella's route injection lands.
-  i18n: {
-    defaultLocale: "en",
-    locales: ["en", "pt-BR", "ja-JP", "es-ES"],
-    routing: { prefixDefaultLocale: false },
-  },
+  i18n,
   fonts: [
     {
       provider: fontProviders.local(),
@@ -86,7 +84,22 @@ export default defineConfig({
       },
     },
   },
-  integrations: [react(), mdx(), sitemap(), polystella(polystellaConfig)],
+  integrations: [
+    react(),
+    mdx(),
+    // `astroSitemapI18n` derives the i18n-related sitemap options
+    // (the `i18n` config plus a `serialize` callback that injects
+    // `hreflang="x-default"` annotations) from the same Astro `i18n`
+    // block above. Without this, the locale-prefixed URLs PolyStella
+    // injects appear in the sitemap as duplicate content rather than
+    // as alternate-language pages, hurting SEO.
+    //
+    // The `hreflang` override maps Astro's URL prefix `en` to the
+    // BCP 47 region-specific `en-US` value, since this site's English
+    // content is American English. Other locales identity-map.
+    sitemap(astroSitemapI18n(i18n, { hreflang: { en: "en-US" } })),
+    polystella(polystellaConfig),
+  ],
   redirects: {
     "/about/approach/": "/people",
     "/about/story/": "/people",

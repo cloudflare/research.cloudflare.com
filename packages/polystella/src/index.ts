@@ -105,6 +105,12 @@ export {
   type RunTranslationCounts,
 } from "./translation/run.js";
 export { loadAndCheckDrift, formatDriftIssues } from "./i18n/drift.js";
+export {
+  astroSitemapI18n,
+  type AstroSitemapI18nInput,
+  type AstroSitemapI18nOptions,
+  type AstroSitemapI18nOutput,
+} from "./i18n/sitemap.js";
 
 /**
  * PolyStella — AI-driven content localization for Astro.

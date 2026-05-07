@@ -1,4 +1,10 @@
+---
+const { t } = Astro.locals;
+---
+
 <header class="interior-header">
-  <h1 class="heading">Our Philosophy</h1>
-  <h2 class="subheading">Solving the Internet’s most complex challenges by turning bleeding-edge research into production-ready reality.</h2>
+  <h1 class="heading">{t("philosophy.heading")}</h1>
+  <h2 class="subheading">
+    {t("philosophy.subheading")}
+  </h2>
 </header>

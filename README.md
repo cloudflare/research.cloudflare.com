@@ -173,6 +173,50 @@ Configure a lifecycle rule on the `research-i18n-cache` bucket to expire objects
 
 The polystella package itself prunes within its configured `prefix` only, so a preview build can never accidentally evict production variants — the lifecycle rule handles cross-build cleanup of orphan preview prefixes.
 
+### Sitemap hreflang annotations
+
+`@astrojs/sitemap` doesn't auto-detect Astro's `i18n` configuration; its own `i18n` option has to be passed in and kept in sync with `astro.config.mjs`'s locale list. Without that option, every locale-prefixed URL PolyStella injects appears in the sitemap as a stand-alone entry with no `<xhtml:link rel="alternate" hreflang="…">` annotation — search engines then treat the language variants as duplicate content instead of alternate-language pages, dilutes ranking signals, and risks wrong-locale targeting (e.g. surfacing the English page to a Spanish-language searcher even though `/es-ES/foo` exists).
+
+PolyStella exports a small synchronous helper, `astroSitemapI18n`, that derives the i18n-driven sitemap options from the same Astro `i18n` block. Wire it like this in `astro.config.mjs`:
+
+```js
+import polystella, { astroSitemapI18n } from "polystella";
+
+// Hoist `i18n` out of defineConfig so the same object feeds Astro
+// routing, PolyStella translation, AND the sitemap helper. One source
+// of truth for the locale list; the three integrations stay in sync.
+const i18n = {
+  defaultLocale: "en",
+  locales: ["en", "pt-BR", "ja-JP", "es-ES"],
+  routing: { prefixDefaultLocale: false },
+};
+
+export default defineConfig({
+  i18n,
+  integrations: [
+    sitemap(astroSitemapI18n(i18n, { hreflang: { en: "en-US" } })),
+    polystella(polystellaConfig),
+  ],
+});
+```
+
+The helper returns `{ i18n, serialize }` — both top-level `@astrojs/sitemap` options. `i18n` wires the integration's built-in alternates support so each URL emits `<xhtml:link rel="alternate" hreflang="…">` annotations grouping it with its sibling-language variants. `serialize` appends a `hreflang="x-default"` annotation pointing at the default-locale URL, a recommended SEO best practice that tells search engines which URL to fall back to when no preferred-language match is available.
+
+Compose with other sitemap options via spread:
+
+```js
+sitemap({
+  ...astroSitemapI18n(i18n, { hreflang: { en: "en-US" } }),
+  filter: (page) => !page.includes("/draft/"),
+})
+```
+
+Validation: `defaultLocale` must appear in `locales`, locale codes must be unique, and any `hreflang` override key must match a configured locale. Default behavior is identity-mapping (locale code is its own hreflang); the optional `hreflang` map is for cases where the URL prefix differs from the BCP 47 string you want emitted (most commonly `en` URL → `en-US` hreflang). The object form of Astro locales (`{ codes: [...], path: "..." }`, used for multi-code path groups) is currently rejected — configure `@astrojs/sitemap`'s `i18n` option manually for that case.
+
+Pass `xDefault: false` to skip the `serialize` callback if you'd rather rely on per-locale `Accept-Language` matching alone, or if you're authoring a custom `serialize` that handles `x-default` differently.
+
+The result is `<url>` entries grouped with their `<xhtml:link rel="alternate" hreflang="…">` annotations plus `x-default` — the SEO-correct shape for indexable multilingual content. Each language variant lists every other variant as an alternate; search engines consolidate ranking signals across the group and serve the best language match per user, falling back to `x-default` when no language matches.
+
 ## 🚢 Deployment
 
 The site is deployed on Cloudflare Workers with automatic deployments (via Workers Builds) from the main branch. PR previews are built and deployed automatically; their translation pass uses the branch-isolated cache described under _Translation_ above.
