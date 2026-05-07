@@ -369,3 +369,20 @@ describe("resolveOptions — noPrefixUrls", () => {
     expect(resolved.noPrefixUrls).toEqual(["/api-docs", "/api-docs/**", "/legal/*"]);
   });
 });
+
+describe("resolveOptions — middleware flag", () => {
+  it("defaults to true (middleware auto-registered)", () => {
+    const resolved = resolveOptions({}, HAPPY_I18N);
+    expect(resolved.middleware).toBe(true);
+  });
+
+  it("accepts explicit true", () => {
+    const resolved = resolveOptions({ middleware: true }, HAPPY_I18N);
+    expect(resolved.middleware).toBe(true);
+  });
+
+  it("accepts explicit false (consumer wants manual composition)", () => {
+    const resolved = resolveOptions({ middleware: false }, HAPPY_I18N);
+    expect(resolved.middleware).toBe(false);
+  });
+});

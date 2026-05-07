@@ -36,4 +36,19 @@ declare module "polystella:runtime-config" {
    * `"404"` returns `undefined`.
    */
   export const noTranslateBehavior: "fallback" | "404";
+
+  /**
+   * Operator-declared internal URL paths that should NOT receive a
+   * locale prefix. Picomatch globs against the URL path (after
+   * splitting query/fragment). Used by `localizedHref` for parity
+   * with the build-time link rewriter.
+   */
+  export const noPrefixUrls: ReadonlyArray<string>;
+
+  /**
+   * Resolved integration mode. The runtime middleware reads this
+   * to decide whether to install polystella's `Astro.locals.t`
+   * (standalone / auto) or defer to Starlight's (starlight).
+   */
+  export const mode: "auto" | "standalone" | "starlight";
 }

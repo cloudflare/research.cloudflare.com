@@ -75,7 +75,19 @@ const entry = await getLocalizedEntry("publications", slug, Astro.currentLocale)
 ---
 ```
 
-For UI strings:
+For UI strings and locale-prefixed URLs in templates, use `Astro.locals` directly — the integration auto-registers a request middleware that populates both per request, no imports needed:
+
+```astro
+---
+// any page, no frontmatter wrapper
+---
+<a href={Astro.locals.lhref("/foo")}>{Astro.locals.t("nav.foo")}</a>
+<img src={Astro.locals.lhref("/hero.png")} alt={Astro.locals.t("hero.alt")} />
+```
+
+`Astro.locals.t` and `Astro.locals.lhref` mirror Starlight's `Astro.locals.t` shape so the surface is consistent. The short `lhref` name keeps templates terse — for non-template contexts (utility scripts, etc.), import the verbose-named `localizedHref(href, locale?)` from `polystella/runtime` directly. In starlight mode, polystella defers to Starlight's i18next-backed `t` and only sets `lhref`. To opt out and compose middleware manually, set `middleware: false` in your polystella config and call `polystellaMiddleware()` from `src/middleware.ts` via `astro:middleware`'s `sequence(...)`.
+
+For non-template contexts (utility scripts, build helpers), the explicit lookups remain available:
 
 ```astro
 ---
@@ -85,7 +97,7 @@ const t = await getTranslations(Astro.currentLocale);
 <a href="/">{t("nav.home")}</a>
 ```
 
-For React islands, fetch the dictionary server-side and consume it via the hook:
+For React islands, fetch the dictionary server-side and consume it via the hook. Pair with `useLocalizedHref(locale)` for client-side URL prefixing:
 
 ```astro
 ---
@@ -93,15 +105,22 @@ import { getDictionary } from "polystella/i18n";
 import { NavMenu } from "../components/NavMenu";
 const navDict = await getDictionary(Astro.currentLocale, "nav");
 ---
-<NavMenu client:load dict={navDict} />
+<NavMenu client:load locale={Astro.currentLocale} dict={navDict} />
 ```
 
 ```tsx
-import { useTranslations } from "polystella/react";
+import { useTranslations, useLocalizedHref } from "polystella/react";
 
-export function NavMenu({ dict }: { dict: Record<string, string> }) {
+export function NavMenu({
+  locale,
+  dict,
+}: {
+  locale: string | undefined;
+  dict: Record<string, string>;
+}) {
   const t = useTranslations(dict);
-  return <a href="/">{t("nav.home")}</a>;
+  const link = useLocalizedHref(locale);
+  return <a href={link("/foo")}>{t("nav.home")}</a>;
 }
 ```
 

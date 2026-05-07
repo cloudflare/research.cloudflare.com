@@ -145,7 +145,7 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
   return {
     name: "polystella",
     hooks: {
-      "astro:config:setup": async ({ logger, config, injectRoute, updateConfig, command }) => {
+      "astro:config:setup": async ({ logger, config, injectRoute, updateConfig, command, addMiddleware }) => {
         resolved = resolveOptions(options, config.i18n);
         logger.info(
           `validated options: defaultLocale=${resolved.defaultLocale}, locales=[${resolved.locales.join(", ")}], mode=${resolved.mode}`,
@@ -172,6 +172,11 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
           `export const locales = ${JSON.stringify(allLocalesIncludingDefault)};`,
           `export const fallback = ${JSON.stringify(resolved.fallback)};`,
           `export const noTranslateBehavior = ${JSON.stringify(resolved.noTranslateBehavior)};`,
+          `export const noPrefixUrls = ${JSON.stringify(resolved.noPrefixUrls)};`,
+          // `mode` is exposed so the runtime middleware can defer to
+          // Starlight's own `Astro.locals.t` when starlight mode lands;
+          // standalone/auto runs install polystella's translator.
+          `export const mode = ${JSON.stringify(resolved.mode)};`,
           "",
         ].join("\n");
         updateConfig({
@@ -195,6 +200,20 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
             ],
           },
         });
+
+        // Auto-register the per-request middleware that exposes
+        // `Astro.locals.t` and `Astro.locals.localizedHref`. Order is
+        // `pre` so user-defined middleware (in `src/middleware.ts`)
+        // can read these locals downstream. Consumers can opt out
+        // via `middleware: false` in their polystella config and
+        // compose manually via `astro:middleware`'s `sequence(...)`.
+        if (resolved.middleware) {
+          // Resolved relative to this package's source root so the
+          // path survives publishing (no node_modules path baked in).
+          const middlewareEntrypoint = new URL("./runtime/middleware.js", import.meta.url).href;
+          addMiddleware({ entrypoint: middlewareEntrypoint, order: "pre" });
+          logger.info("registered Astro.locals middleware (t + localizedHref)");
+        }
 
         // For each `routes` entry, generate a shim under
         // `<cacheDir>/polystella-shims/route-<idx>.astro` that

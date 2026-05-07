@@ -1,5 +1,6 @@
+/// <reference path="./locals.d.ts" />
 import { getEntry, type CollectionEntry } from "astro:content";
-import { defaultLocale, fallback, locales, noTranslateBehavior } from "polystella:runtime-config";
+import { defaultLocale, fallback, locales, noPrefixUrls, noTranslateBehavior } from "polystella:runtime-config";
 
 import {
   normaliseGetLocalizedEntryArgs,
@@ -85,8 +86,10 @@ export function localizedHref(href: string, locale?: string): string {
   return resolveLocalizedHref(href, locale, {
     defaultLocale,
     locales,
+    ...(noPrefixUrls.length > 0 ? { noPrefixUrls } : {}),
   });
 }
 
 export { normaliseGetLocalizedEntryArgs, type CollectionEntryRef, type LocalizedEntry } from "./get-localized-entry.js";
 export { resolveLocalizedHref, type LocalizedHrefDeps } from "./localized-href.js";
+export { polystellaMiddleware, buildLocalizedHref, type PolystellaMiddleware } from "./middleware.js";

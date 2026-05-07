@@ -11,10 +11,8 @@ import { getCollection } from "astro:content";
 import { CONSTANTS } from "@/lib/constants";
 import SeeMore from "@/components/SeeMore.astro";
 import { linkDescriptions } from "@/data/seo";
-import { getTranslations } from "polystella/i18n";
-import { localizedHref } from "packages/polystella/src/runtime";
 
-const t = await getTranslations(Astro.currentLocale);
+const { t, lhref } = Astro.locals;
 
 // Pull in 3 most recent publications (2025+), sorted by date
 const recentPublications = (await getCollection("publications", ({ data }) => data.year && data.year >= 2025))
@@ -49,7 +47,7 @@ const recentPublications = (await getCollection("publications", ({ data }) => da
       <FocusArea
         icon="hidden"
         title={t("globals.morePrivate")}
-        seeMore={localizedHref("/focus/private", Astro.currentLocale)}
+        seeMore={lhref("/focus/private")}
         className="w-[calc(100%-2px)] md:w-[calc(49%-2px)] lg:w-[calc(33%-8px)]"
         description={linkDescriptions.private}
       >

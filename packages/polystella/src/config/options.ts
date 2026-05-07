@@ -307,6 +307,19 @@ export const polystellaOptionsSchema = z
      * Off by default; only the closing summary and failures log.
      */
     verbose: z.boolean().default(false),
+
+    /**
+     * Auto-register the polystella request middleware. When `true`
+     * (default), the integration calls `addMiddleware` at config-
+     * setup time so every request gets `Astro.locals.t` and
+     * `Astro.locals.localizedHref` populated.
+     *
+     * Set to `false` to disable auto-registration — useful when
+     * composing polystella's middleware manually with other
+     * middleware via `sequence(...)`. The factory is still exported
+     * as `polystellaMiddleware` from `polystella/runtime`.
+     */
+    middleware: z.boolean().default(true),
   })
   .strict();
 

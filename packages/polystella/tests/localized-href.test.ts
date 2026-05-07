@@ -121,3 +121,46 @@ describe("resolveLocalizedHref — happy path prefixing", () => {
     expect(resolveLocalizedHref("/foo", "fr-FR", DEPS)).toBe("/fr-FR/foo");
   });
 });
+
+describe("resolveLocalizedHref — noPrefixUrls", () => {
+  // Parity with the build-time `rewriteUrlIfInternal` bailout.
+  // Without this, an operator's `noPrefixUrls: ["/api-docs"]` config
+  // would only affect markdown body / structured-data URLs and
+  // silently leak into prefix-mismatch on component-rendered hrefs.
+
+  it("leaves an exact-match path unprefixed", () => {
+    expect(
+      resolveLocalizedHref("/api-docs", "pt-BR", { ...DEPS, noPrefixUrls: ["/api-docs"] }),
+    ).toBe("/api-docs");
+  });
+
+  it("leaves descendants of a glob-matched path unprefixed", () => {
+    const deps = { ...DEPS, noPrefixUrls: ["/api-docs/**"] };
+    expect(resolveLocalizedHref("/api-docs/intro", "pt-BR", deps)).toBe("/api-docs/intro");
+    expect(resolveLocalizedHref("/api-docs/v2/zones", "pt-BR", deps)).toBe("/api-docs/v2/zones");
+  });
+
+  it("strips query / fragment before matching", () => {
+    const deps = { ...DEPS, noPrefixUrls: ["/api-docs"] };
+    expect(resolveLocalizedHref("/api-docs?ref=home", "pt-BR", deps)).toBe("/api-docs?ref=home");
+    expect(resolveLocalizedHref("/api-docs#section", "pt-BR", deps)).toBe("/api-docs#section");
+  });
+
+  it("does not interfere with the external-URL bailout", () => {
+    const deps = { ...DEPS, noPrefixUrls: ["/api-docs/**"] };
+    expect(resolveLocalizedHref("https://example.com/api-docs/x", "pt-BR", deps)).toBe(
+      "https://example.com/api-docs/x",
+    );
+  });
+
+  it("preserves rewriting for paths outside the glob", () => {
+    const deps = { ...DEPS, noPrefixUrls: ["/api-docs/**"] };
+    expect(resolveLocalizedHref("/blog", "pt-BR", deps)).toBe("/pt-BR/blog");
+  });
+
+  it("treats an empty noPrefixUrls list as a no-op", () => {
+    expect(
+      resolveLocalizedHref("/api-docs", "pt-BR", { ...DEPS, noPrefixUrls: [] }),
+    ).toBe("/pt-BR/api-docs");
+  });
+});
