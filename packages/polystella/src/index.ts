@@ -202,17 +202,21 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
         });
 
         // Auto-register the per-request middleware that exposes
-        // `Astro.locals.t` and `Astro.locals.localizedHref`. Order is
-        // `pre` so user-defined middleware (in `src/middleware.ts`)
-        // can read these locals downstream. Consumers can opt out
-        // via `middleware: false` in their polystella config and
-        // compose manually via `astro:middleware`'s `sequence(...)`.
+        // `Astro.locals.t` and `Astro.locals.lhref`. Order is `pre`
+        // so user-defined middleware (in `src/middleware.ts`) can
+        // read these locals downstream. Consumers can opt out via
+        // `middleware: false` in their polystella config and compose
+        // manually via `astro:middleware`'s `sequence(...)`.
+        //
+        // Entrypoint is a package specifier (not a `file://` URL)
+        // so Vite resolves it through the package's `exports` map.
+        // That keeps the source-vs-built distinction inside the
+        // package — Vite picks `./src/runtime/middleware.ts` today;
+        // a future build step that ships `./dist/...` would change
+        // only the package.json mapping, not this call.
         if (resolved.middleware) {
-          // Resolved relative to this package's source root so the
-          // path survives publishing (no node_modules path baked in).
-          const middlewareEntrypoint = new URL("./runtime/middleware.js", import.meta.url).href;
-          addMiddleware({ entrypoint: middlewareEntrypoint, order: "pre" });
-          logger.info("registered Astro.locals middleware (t + localizedHref)");
+          addMiddleware({ entrypoint: "polystella/runtime/middleware", order: "pre" });
+          logger.info("registered Astro.locals middleware (t + lhref)");
         }
 
         // For each `routes` entry, generate a shim under

@@ -2,30 +2,21 @@
 import { cn } from "@/lib/utils";
 import Icon from "../Icon.astro";
 import SeeMore from "../SeeMore.astro";
-import { getTranslations } from "polystella/i18n";
-const t = await getTranslations(Astro.currentLocale);
+
+const { t } = Astro.locals;
 
 const { className, icon, title, seeMore, description } = Astro.props;
 ---
 
-<div
-  class={cn(
-    `border-b-2 sm:border-2 border-page-border p-8 flex flex-col justify-between`,
-    className,
-  )}
->
+<div class={cn(`border-b-2 sm:border-2 border-page-border p-8 flex flex-col justify-between`, className)}>
   <div class="flex-1">
     <div class="mb-6 text-page-text-muted"><Icon id={icon} size={48} /></div>
     <h2 class="text-lg lg:text-xl font-medium text-bizarre mb-4">{title}</h2>
-    <div
-      class="text-base lg:text-lg font-stack leading-relaxed mb-7 text-stack"
-    >
+    <div class="text-base lg:text-lg font-stack leading-relaxed mb-7 text-stack">
       <slot />
     </div>
   </div>
   <div>
-    <SeeMore href={seeMore} description={description}
-      >{t("globals.seeMore")}</SeeMore
-    >
+    <SeeMore href={seeMore} description={description}>{t("globals.seeMore")}</SeeMore>
   </div>
 </div>

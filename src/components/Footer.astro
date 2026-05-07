@@ -1,31 +1,20 @@
 ---
 import { CONSTANTS } from "../lib/constants";
 import Icon from "./Icon.astro";
-import { getTranslations } from "polystella/i18n";
 
-const t = await getTranslations(Astro.currentLocale);
+const { t, lhref } = Astro.locals;
 ---
 
 <footer class="pt-11">
   <!-- Main footer content -->
   <div class="pb-[60px] px-8">
-    <nav
-      class="grid grid-cols-1 gap-20 sm:grid-cols-3 xl:grid-cols-[250px_1fr_1fr_1fr_1.1fr] gap-x-8"
-    >
+    <nav class="grid grid-cols-1 gap-20 sm:grid-cols-3 xl:grid-cols-[250px_1fr_1fr_1fr_1.1fr] gap-x-8">
       <!-- Logo section -->
       <div class="sm:row-span-2 xl:row-span-1">
         <a href="/">
           <picture>
-            <source
-              srcset="/images/logo.svg"
-              media="(prefers-color-scheme: dark)"
-            />
-            <img
-              src="/images/logo--light.svg"
-              alt="Cloudflare Research"
-              width="197"
-              height="53"
-            />
+            <source srcset="/images/logo.svg" media="(prefers-color-scheme: dark)" />
+            <img src="/images/logo--light.svg" alt="Cloudflare Research" width="197" height="53" />
           </picture>
         </a>
       </div>
@@ -36,15 +25,15 @@ const t = await getTranslations(Astro.currentLocale);
         <hr />
         <ul>
           <li>
-            <a href="/focus/private">{t("globals.morePrivate")}</a>
+            <a href={lhref("/focus/private")}>{t("globals.morePrivate")}</a>
           </li>
-          <li><a href="/focus/safe">{t("globals.safer")}</a></li>
-          <li><a href="/focus/fast">{t("globals.faster")}</a></li>
+          <li><a href={lhref("/focus/safe")}>{t("globals.safer")}</a></li>
+          <li><a href={lhref("/focus/fast")}>{t("globals.faster")}</a></li>
           <li>
-            <a href="/focus/reliable">{t("globals.moreReliable")}</a>
+            <a href={lhref("/focus/reliable")}>{t("globals.moreReliable")}</a>
           </li>
           <li>
-            <a href="/focus/measurable">{t("globals.moreMeasurable")}</a>
+            <a href={lhref("/focus/measurable")}>{t("globals.moreMeasurable")}</a>
           </li>
         </ul>
       </div>
@@ -55,7 +44,7 @@ const t = await getTranslations(Astro.currentLocale);
         <hr />
         <ul>
           <li>
-            <a href="/presentations">{t("footer.outreach.presentations")}</a>
+            <a href={lhref("/presentations")}>{t("footer.outreach.presentations")}</a>
           </li>
         </ul>
       </nav>
@@ -65,8 +54,8 @@ const t = await getTranslations(Astro.currentLocale);
         <h3>{t("footer.aboutUs")}</h3>
         <hr />
         <ul>
-          <li><a href="/people">{t("footer.aboutUs.people")}</a></li>
-          <li><a href="/philosophy">{t("footer.aboutUs.philosophy")}</a></li>
+          <li><a href={lhref("/people")}>{t("footer.aboutUs.people")}</a></li>
+          <li><a href={lhref("/philosophy")}>{t("footer.aboutUs.philosophy")}</a></li>
         </ul>
       </div>
 
@@ -122,8 +111,8 @@ const t = await getTranslations(Astro.currentLocale);
       {t("footer.legal.copyright", { year: new Date().getFullYear() })}
     </div>
     <div class="text-left sm:text-right">
-      <a href={CONSTANTS.PRIVACY_POLICY}>{t("footer.legal.privacyPolicy")}</a> . <a
-        href={CONSTANTS.TERMS_OF_SERVICE}>{t("footer.legal.terms")}</a
+      <a href={CONSTANTS.PRIVACY_POLICY}>{t("footer.legal.privacyPolicy")}</a> . <a href={CONSTANTS.TERMS_OF_SERVICE}
+        >{t("footer.legal.terms")}</a
       > . <a href={CONSTANTS.GDPR}>{t("footer.legal.gdpr")}</a>
     </div>
   </div>

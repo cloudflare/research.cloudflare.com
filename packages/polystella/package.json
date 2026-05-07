@@ -7,7 +7,7 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "bin": {
-    "polystella-translate": "./src/cli.ts"
+    "polystella-translate": "./dist/cli.js"
   },
   "exports": {
     ".": {
@@ -17,6 +17,10 @@
     "./runtime": {
       "types": "./src/runtime/index.ts",
       "default": "./src/runtime/index.ts"
+    },
+    "./runtime/middleware": {
+      "types": "./src/runtime/middleware.ts",
+      "default": "./src/runtime/middleware.ts"
     },
     "./content": {
       "types": "./src/content/index.ts",
@@ -34,11 +38,14 @@
   },
   "files": [
     "src",
-    "components"
+    "components",
+    "dist"
   ],
   "scripts": {
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "build:cli": "esbuild src/cli.ts --bundle --platform=node --format=esm --outfile=dist/cli.js --packages=external --sourcemap=linked",
+    "prepublishOnly": "pnpm build:cli"
   },
   "dependencies": {
     "picomatch": "^4.0.2",
@@ -53,6 +60,7 @@
   "devDependencies": {
     "@types/mdast": "^4.0.4",
     "@types/picomatch": "^4.0.0",
+    "esbuild": "^0.28.0",
     "vitest": "^3.0.0"
   },
   "peerDependencies": {

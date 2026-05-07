@@ -1,45 +1,29 @@
 ---
 import Nav from "../Nav.astro";
 import ButtonLink from "../ButtonLink.astro";
-import { getTranslations } from "polystella/i18n";
-const t = await getTranslations(Astro.currentLocale);
+
+const { t, lhref } = Astro.locals;
 ---
 
-<header
-  class="md:max-h-[695px] overflow-hidden mt-1 md:mt-4 relative"
-  id="home-header"
->
+<header class="md:max-h-[695px] overflow-hidden mt-1 md:mt-4 relative" id="home-header">
   <div class="bg-grid absolute z-1 inset-0 opacity-25"></div>
   <div class="md:absolute size-full inset-0 flex flex-col">
     <div class="z-4"><Nav /></div>
-    <div
-      class="center text-center flex-col flex-1 px-4 pt-12 pb-14 md:py-0 z-3 relative"
-    >
-      <h1
-        class="heading mb-5 max-w-[940px] text-white text-3xl sm:text-4xl lg:text-5xl leading-tight md:leading-none"
-      >
+    <div class="center text-center flex-col flex-1 px-4 pt-12 pb-14 md:py-0 z-3 relative">
+      <h1 class="heading mb-5 max-w-[940px] text-white text-3xl sm:text-4xl lg:text-5xl leading-tight md:leading-none">
         {t("home.hero.heading")}
       </h1>
-      <h2
-        class="subheading mb-12 sm:mb-20 max-w-[490px] text-white text-lg sm:text-xl"
-      >
+      <h2 class="subheading mb-12 sm:mb-20 max-w-[490px] text-white text-lg sm:text-xl">
         {t("home.hero.subheading")}
       </h2>
       <div class="flex flex-col sm:flex-row items-center gap-4">
         <!-- <a href="/philosophy" class="text-white border-b border-white hover:border-blue text-base sm:text-lg font-medium">Learn about our Research</a> -->
-        <ButtonLink href="/focus">{t("home.hero.cta")}</ButtonLink>
+        <ButtonLink href={lhref("/focus")}>{t("home.hero.cta")}</ButtonLink>
       </div>
     </div>
   </div>
-  <div
-    class="rounded-4xl overflow-hidden xl:w-page absolute inset-0 z-[-2] md:z-0 md:relative md:h-[695px]"
-  >
-    <div
-      data-us-project-src="/blue_liquid.json"
-      class="w-full h-full"
-      style="min-width:1440px; height: 900px;"
-    >
-    </div>
+  <div class="rounded-4xl overflow-hidden xl:w-page absolute inset-0 z-[-2] md:z-0 md:relative md:h-[695px]">
+    <div data-us-project-src="/blue_liquid.json" class="w-full h-full" style="min-width:1440px; height: 900px;"></div>
   </div>
   <script is:inline>
     (function () {

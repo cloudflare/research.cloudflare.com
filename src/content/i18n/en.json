@@ -111,5 +111,8 @@
   "seo.safer": "Access publications and tools focused on network security, anti-censorship technologies, and modern cryptographic defenses.",
   "seo.faster": "Access publications and insights on high-speed connectivity, HTTP/3, and the future of optimized internet infrastructure.",
   "seo.moreReliable": "Access publications and insights on internet reliability, distributed architecture, and the foundational protocols of a dependable global network.",
-  "seo.moreMeasurable": "Access publications and insights on internet measurement, verifiable systems, and the open standards ensuring a more transparent web."
+  "seo.moreMeasurable": "Access publications and insights on internet measurement, verifiable systems, and the open standards ensuring a more transparent web",
+
+  "a11y.toggleMenu": "Toggle menu",
+  "a11y.closeMenu": "Close menu"
 }

@@ -111,5 +111,8 @@
   "seo.safer": "Acesse publicações e ferramentas focadas em segurança de rede, tecnologias anticensura e defesas criptográficas modernas.",
   "seo.faster": "Acesse publicações e insights sobre conectividade de alta velocidade, HTTP/3 e o futuro da infraestrutura de internet otimizada.",
   "seo.moreReliable": "Acesse publicações e insights sobre confiabilidade da internet, arquitetura distribuída e os protocolos fundamentais de uma rede global confiável.",
-  "seo.moreMeasurable": "Acesse publicações e insights sobre medição da internet, sistemas verificáveis e os padrões abertos que garantem uma web mais transparente."
+  "seo.moreMeasurable": "Acesse publicações e insights sobre medição da internet, sistemas verificáveis e os padrões abertos que garantem uma web mais transparente.",
+
+  "a11y.toggleMenu": "Alternar menu",
+  "a11y.closeMenu": "Fechar menu"
 }

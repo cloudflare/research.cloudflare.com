@@ -6,8 +6,8 @@ import PersonCard from "@/components/PersonCard.astro";
 import AlumniCard from "@/components/AlumniCard.astro";
 import { cn } from "@/lib/utils";
 import { getCollection } from "astro:content";
-import { getTranslations } from "polystella/i18n";
-const t = await getTranslations(Astro.currentLocale);
+
+const { t } = Astro.locals;
 
 // get all people from the content collection
 const activePeople = await getCollection("people", ({ data }) => data.type === "active");

@@ -56,7 +56,7 @@ const recentPublications = (await getCollection("publications", ({ data }) => da
       <FocusArea
         icon="hand"
         title={t("globals.safer")}
-        seeMore="/focus/safe"
+        seeMore={lhref("/focus/safe")}
         className="w-[calc(100%-2px)] md:w-[calc(49%-2px)] lg:w-[calc(33%-8px)]"
         description={linkDescriptions.safe}
       >
@@ -65,7 +65,7 @@ const recentPublications = (await getCollection("publications", ({ data }) => da
       <FocusArea
         icon="bolt"
         title={t("globals.faster")}
-        seeMore="/focus/fast"
+        seeMore={lhref("/focus/fast")}
         className="w-[calc(100%-2px)] md:w-[calc(49%-2px)] lg:w-[calc(33%-8px)]"
         description={linkDescriptions.fast}
       >
@@ -74,7 +74,7 @@ const recentPublications = (await getCollection("publications", ({ data }) => da
       <FocusArea
         icon="shield"
         title={t("globals.moreReliable")}
-        seeMore="/focus/reliable"
+        seeMore={lhref("/focus/reliable")}
         className="w-[calc(100%-2px)] md:w-[calc(49%-2px)] lg:w-[calc(33%-8px)]"
         description={linkDescriptions.reliable}
       >
@@ -83,7 +83,7 @@ const recentPublications = (await getCollection("publications", ({ data }) => da
       <FocusArea
         icon="transparent"
         title={t("globals.moreMeasurable")}
-        seeMore="/focus/measurable"
+        seeMore={lhref("/focus/measurable")}
         className="w-[calc(100%-2px)] md:w-[calc(49%-2px)] lg:w-[calc(33%-8px)]"
         description={linkDescriptions.measurable}
       >
@@ -91,7 +91,7 @@ const recentPublications = (await getCollection("publications", ({ data }) => da
       </FocusArea>
     </div>
     <div class="flex justify-center">
-      <SeeMore href="/focus">{t("globals.viewAll")}</SeeMore>
+      <SeeMore href={lhref("/focus")}>{t("globals.viewAll")}</SeeMore>
     </div>
   </Section>
 
@@ -108,7 +108,7 @@ const recentPublications = (await getCollection("publications", ({ data }) => da
         recentPublications.map((publication) => (
           <WhatsNewCard
             className="flex-1"
-            link={`/${publication.id}` || ""}
+            link={lhref(`/${publication.id}`) || ""}
             date={publication.data.year?.toString() || ""}
             title={publication.data.title}
             tags={publication.data.related_interests || []}

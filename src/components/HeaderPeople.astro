@@ -1,6 +1,5 @@
 ---
-import { getTranslations } from "polystella/i18n";
-const t = await getTranslations(Astro.currentLocale);
+const { t } = Astro.locals;
 ---
 
 <header class="interior-header">

@@ -14,14 +14,16 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { CONSTANTS } from "@/lib/constants";
-import { useTranslations } from "polystella/react";
+import { useLocalizedHref, useTranslations } from "polystella/react";
 
 interface NavMenuProps {
   dict: Record<string, string>;
+  locale: string;
 }
 
-export function NavMenu({ dict }: NavMenuProps) {
+export function NavMenu({ dict, locale }: NavMenuProps) {
   const t = useTranslations(dict);
+  const lhref = useLocalizedHref(locale);
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [focusAreasOpen, setFocusAreasOpen] = React.useState(false);
@@ -31,36 +33,36 @@ export function NavMenu({ dict }: NavMenuProps) {
     () => [
       {
         title: t("nav.focusAreas.all.title"),
-        href: "/focus",
+        href: lhref("/focus"),
         description: t("nav.focusAreas.all.description"),
       },
       {
         title: t("globals.morePrivate"),
-        href: "/focus/private",
+        href: lhref("/focus/private"),
         description: t("nav.focusAreas.morePrivate.description"),
       },
       {
         title: t("globals.safer"),
-        href: "/focus/safe",
+        href: lhref("/focus/safe"),
         description: t("nav.focusAreas.safer.description"),
       },
       {
         title: t("globals.faster"),
-        href: "/focus/fast",
+        href: lhref("/focus/fast"),
         description: t("nav.focusAreas.faster.description"),
       },
       {
         title: t("globals.moreReliable"),
-        href: "/focus/reliable",
+        href: lhref("/focus/reliable"),
         description: t("nav.focusAreas.moreReliable.description"),
       },
       {
         title: t("globals.moreMeasurable"),
-        href: "/focus/measurable",
+        href: lhref("/focus/measurable"),
         description: t("nav.focusAreas.moreMeasurable.description"),
       },
     ],
-    [t],
+    [t, lhref],
   );
 
   // Lock body scroll when mobile menu is open
@@ -82,7 +84,7 @@ export function NavMenu({ dict }: NavMenuProps) {
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="p-2 text-page-text hover:text-baby-blue-eyes transition-colors"
-          aria-label="Toggle menu"
+          aria-label={t("a11y.toggleMenu")}
         >
           {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -95,7 +97,7 @@ export function NavMenu({ dict }: NavMenuProps) {
               <button
                 onClick={() => setMobileMenuOpen(false)}
                 className="p-2 text-page-text hover:text-baby-blue-eyes transition-colors"
-                aria-label="Close menu"
+                aria-label={t("a11y.closeMenu")}
               >
                 <X size={24} />
               </button>
@@ -130,7 +132,7 @@ export function NavMenu({ dict }: NavMenuProps) {
 
               {/* Other Navigation Items */}
               <a
-                href="/presentations"
+                href={lhref("/presentations")}
                 className="text-lg font-medium text-page-text hover:text-baby-blue-eyes transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -149,14 +151,14 @@ export function NavMenu({ dict }: NavMenuProps) {
                 {aboutOpen && (
                   <div className="mt-4 space-y-4 pl-4">
                     <a
-                      href="/people"
+                      href={lhref("/people")}
                       className="block text-base font-medium text-page-text hover:text-baby-blue-eyes transition-colors"
                       onClick={() => setMobileMenuOpen(false)}
                     >
                       {t("nav.people")}
                     </a>
                     <a
-                      href="/philosophy"
+                      href={lhref("/philosophy")}
                       className="block text-base font-medium text-page-text hover:text-baby-blue-eyes transition-colors"
                       onClick={() => setMobileMenuOpen(false)}
                     >
@@ -195,7 +197,7 @@ export function NavMenu({ dict }: NavMenuProps) {
           </NavigationMenuItem>
           <NavigationMenuItem>
             <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
-              <a href="/presentations">{t("nav.presentations")}</a>
+              <a href={lhref("/presentations")}>{t("nav.presentations")}</a>
             </NavigationMenuLink>
           </NavigationMenuItem>
 
@@ -203,8 +205,8 @@ export function NavMenu({ dict }: NavMenuProps) {
             <NavigationMenuTrigger>{t("nav.aboutUs")}</NavigationMenuTrigger>
             <NavigationMenuContent>
               <ul className="grid gap-2 w-[200px] z-(--z-nav) relative p-2">
-                <ListItem title={t("nav.people")} href="/people" />
-                <ListItem title={t("nav.philosophy")} href="/philosophy" />
+                <ListItem title={t("nav.people")} href={lhref("/people")} />
+                <ListItem title={t("nav.philosophy")} href={lhref("/philosophy")} />
               </ul>
             </NavigationMenuContent>
           </NavigationMenuItem>
