@@ -413,3 +413,97 @@ describe("tomlAdapter — cache-key behaviour", () => {
     expect(JSON.stringify(v1)).toBe(JSON.stringify(v2));
   });
 });
+
+describe("tomlAdapter — rewriteUrls", () => {
+  // The post-cache URL rewriter. Operates on serialised bytes, parses
+  // them, walks configured URL paths, applies the rewriter, and
+  // re-serialises. Cached bytes are URL-rewrite-naïve so a config
+  // change to `noPrefixUrls` doesn't bust them.
+
+  const localePrefix = (url: string) => (url.startsWith("/") ? `/pt-BR${url}` : `/pt-BR/${url}`);
+
+  it("rewrites a single URL path", () => {
+    const out = tomlAdapter.rewriteUrls!(SITE_TOML, {
+      paths: ["main.featuredResearch.link"],
+      rewriter: (url) => (url.startsWith("/") ? localePrefix(url) : null),
+    });
+    expect(out).toContain('link = "/pt-BR/nikulin2026"');
+    // Unrelated translatable scalars stay verbatim.
+    expect(out).toContain('title = "Unweight: Lossless MLP Weight Compression"');
+  });
+
+  it("returns input bytes unchanged when paths list is empty", () => {
+    const out = tomlAdapter.rewriteUrls!(SITE_TOML, {
+      paths: [],
+      rewriter: () => "/should-not-be-called",
+    });
+    expect(out).toBe(SITE_TOML);
+  });
+
+  it("returns input bytes unchanged when no path matches", () => {
+    const out = tomlAdapter.rewriteUrls!(SITE_TOML, {
+      paths: ["main.featuredResearch.nonExistentKey"],
+      rewriter: () => "/anything",
+    });
+    expect(out).toBe(SITE_TOML);
+  });
+
+  it("returns input bytes unchanged when rewriter returns null", () => {
+    // External URLs / anchors return null in the real rewriter.
+    // Mirroring that here, the adapter should leave bytes alone when
+    // every matched value passes the rewriter unmodified.
+    const out = tomlAdapter.rewriteUrls!(SITE_TOML, {
+      paths: ["main.featuredResearch.link"],
+      rewriter: () => null,
+    });
+    expect(out).toBe(SITE_TOML);
+  });
+
+  it("skips non-string values without throwing", () => {
+    // A configured URL path could legally point at a non-string value
+    // if the operator misconfigured. Pass through unchanged.
+    const tomlWithNumber = `[main.featuredResearch]
+link = 42
+`;
+    const out = tomlAdapter.rewriteUrls!(tomlWithNumber, {
+      paths: ["main.featuredResearch.link"],
+      rewriter: () => "/anything",
+    });
+    expect(out).toBe(tomlWithNumber);
+  });
+
+  it("expands wildcard paths against the parsed structure", () => {
+    const tomlWithArray = `[main]
+[[main.items]]
+url = "/foo"
+
+[[main.items]]
+url = "/bar"
+
+[[main.items]]
+url = "/baz"
+`;
+    const out = tomlAdapter.rewriteUrls!(tomlWithArray, {
+      paths: ["main.items[*].url"],
+      rewriter: (url) => `/pt-BR${url}`,
+    });
+    expect(out).toContain('url = "/pt-BR/foo"');
+    expect(out).toContain('url = "/pt-BR/bar"');
+    expect(out).toContain('url = "/pt-BR/baz"');
+  });
+
+  it("is idempotent on already-rewritten bytes when the rewriter returns null for prefixed paths", () => {
+    // Mirroring `rewriteUrlIfInternal`'s actual behaviour: paths
+    // already prefixed with a known locale return null. So a second
+    // pass over the staged bytes is a no-op.
+    const stagedOnce = tomlAdapter.rewriteUrls!(SITE_TOML, {
+      paths: ["main.featuredResearch.link"],
+      rewriter: (url) => (url.startsWith("/pt-BR/") ? null : `/pt-BR${url}`),
+    });
+    const stagedTwice = tomlAdapter.rewriteUrls!(stagedOnce, {
+      paths: ["main.featuredResearch.link"],
+      rewriter: (url) => (url.startsWith("/pt-BR/") ? null : `/pt-BR${url}`),
+    });
+    expect(stagedTwice).toBe(stagedOnce);
+  });
+});

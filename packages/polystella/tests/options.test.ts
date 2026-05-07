@@ -264,3 +264,108 @@ describe("resolveOptions — routes normalisation", () => {
     expect(resolved.routesImports).toEqual(["./src/styles/global.css"]);
   });
 });
+
+describe("resolveOptions — per-format keys/urls", () => {
+  // The redesigned per-format blocks: every format has a `keys` map
+  // (translatable scalars) and a `urls` map (URL fields to rewrite).
+  // The cross-check rejects a path listed in BOTH maps for the same
+  // glob — translation + URL rewriting on the same field is never
+  // intentional.
+
+  it("accepts well-formed markdown / toml blocks with disjoint keys and urls", () => {
+    const resolved = resolveOptions(
+      {
+        markdown: {
+          keys: { "publications/**": ["title", "metaDescription"] },
+          urls: { "publications/**": ["heroImage"] },
+        },
+        toml: {
+          keys: { "site.toml": ["main.featuredResearch.title"] },
+          urls: { "site.toml": ["main.featuredResearch.link"] },
+        },
+      },
+      HAPPY_I18N,
+    );
+    expect(resolved.markdown.keys["publications/**"]).toEqual(["title", "metaDescription"]);
+    expect(resolved.markdown.urls["publications/**"]).toEqual(["heroImage"]);
+    expect(resolved.toml.urls["site.toml"]).toEqual(["main.featuredResearch.link"]);
+  });
+
+  it("defaults markdown / toml blocks to empty maps when omitted", () => {
+    const resolved = resolveOptions({}, HAPPY_I18N);
+    expect(resolved.markdown.keys).toEqual({});
+    expect(resolved.markdown.urls).toEqual({});
+    expect(resolved.toml.keys).toEqual({});
+    expect(resolved.toml.urls).toEqual({});
+  });
+
+  it("rejects a path listed in both keys and urls for the same markdown glob", () => {
+    expect(() =>
+      resolveOptions(
+        {
+          markdown: {
+            keys: { "publications/**": ["heroImage"] },
+            urls: { "publications/**": ["heroImage"] },
+          },
+        },
+        HAPPY_I18N,
+      ),
+    ).toThrowError(/markdown.*publications\/\*\*.*heroImage.*both/i);
+  });
+
+  it("rejects a path listed in both keys and urls for the same toml glob", () => {
+    expect(() =>
+      resolveOptions(
+        {
+          toml: {
+            keys: { "site.toml": ["main.featuredResearch.link"] },
+            urls: { "site.toml": ["main.featuredResearch.link"] },
+          },
+        },
+        HAPPY_I18N,
+      ),
+    ).toThrowError(/toml.*site\.toml.*main\.featuredResearch\.link.*both/i);
+  });
+
+  it("does NOT reject the same path in keys for one glob and urls for another", () => {
+    // Cross-glob overlap is fine — each glob is its own contract.
+    expect(() =>
+      resolveOptions(
+        {
+          markdown: {
+            keys: { "publications/**": ["title"] },
+            urls: { "people/**": ["title"] },
+          },
+        },
+        HAPPY_I18N,
+      ),
+    ).not.toThrow();
+  });
+
+  it("rejects unknown fields inside the markdown block (strict)", () => {
+    // The block is `.strict()` — typo'd field names surface as errors.
+    expect(() =>
+      resolveOptions(
+        {
+          markdown: { keys: {}, urls: {}, frontmatter: {} } as Record<string, unknown>,
+        },
+        HAPPY_I18N,
+      ),
+    ).toThrowError();
+  });
+});
+
+describe("resolveOptions — noPrefixUrls", () => {
+  it("defaults to an empty array", () => {
+    const resolved = resolveOptions({}, HAPPY_I18N);
+    expect(resolved.noPrefixUrls).toEqual([]);
+  });
+
+  it("accepts a list of glob strings", () => {
+    const resolved = resolveOptions(
+      { noPrefixUrls: ["/api-docs", "/api-docs/**", "/legal/*"] },
+      HAPPY_I18N,
+    );
+    expect(resolved.noPrefixUrls).toEqual(["/api-docs", "/api-docs/**", "/legal/*"]);
+  });
+});

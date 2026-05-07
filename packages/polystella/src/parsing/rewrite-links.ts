@@ -1,4 +1,5 @@
 import type { Link, Root } from "mdast";
+import picomatch from "picomatch";
 import { parseMarkdown } from "./parse.js";
 
 export interface RewriteInternalLinksOptions {
@@ -6,6 +7,17 @@ export interface RewriteInternalLinksOptions {
   targetLocale: string;
   /** Full locale set INCLUDING the default; used for idempotency. */
   locales: ReadonlyArray<string>;
+  /**
+   * Picomatch globs against the URL path (after splitting query /
+   * fragment). When a URL's path matches any glob, the rewriter
+   * leaves it unchanged — useful for declaring single-locale
+   * internal pages that shouldn't be prefixed.
+   *
+   * External URLs (`http://`, `https://`, `mailto:`, etc.) and
+   * anchor-only URLs already bail out before this list is consulted,
+   * so it has no effect on those.
+   */
+  noPrefixUrls?: ReadonlyArray<string>;
 }
 
 /**
@@ -85,6 +97,16 @@ export function rewriteUrlIfInternal(url: string, options: RewriteInternalLinksO
   const suffixMatch = /[?#]/.exec(url);
   const path = suffixMatch ? url.slice(0, suffixMatch.index) : url;
   const suffix = suffixMatch ? url.slice(suffixMatch.index) : "";
+
+  // Operator-declared internal exemptions. Match against the path
+  // portion (suffix already split off). picomatch.isMatch returns
+  // false for an empty pattern list, so the no-config case is a
+  // no-op.
+  if (options.noPrefixUrls && options.noPrefixUrls.length > 0) {
+    if (picomatch.isMatch(path, options.noPrefixUrls as string[])) {
+      return null;
+    }
+  }
 
   const trimmedPath = path.startsWith("/") ? path.slice(1) : path;
   return `/${options.targetLocale}/${trimmedPath}${suffix}`;

@@ -2,10 +2,12 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
+import picomatch from "picomatch";
+
 import type { PolyStellaResolvedOptions } from "../config/options.js";
 import { EMPTY_GLOSSARY, EMPTY_GLOSSARY_HASH, hashGlossary, loadGlossaries } from "../glossary/glossary.js";
 import type { AdapterExtractOptions, FileTypeAdapter } from "../parsing/adapter.js";
-import { rewriteInternalLinks, type RewriteInternalLinksOptions } from "../parsing/rewrite-links.js";
+import { rewriteInternalLinks, rewriteUrlIfInternal, type RewriteInternalLinksOptions } from "../parsing/rewrite-links.js";
 import { getAdapter, listRegisteredExtensions } from "../parsing/registry.js";
 import { readOverride } from "../source/overrides.js";
 import { runWithConcurrency } from "../source/pool.js";
@@ -158,26 +160,66 @@ async function writeStagedTranslation(args: {
 }
 
 /**
- * Resolve which per-glob → key-paths map an adapter consumes. Markdown
- * uses the `frontmatter` option; structured-data adapters (M3+) use
- * their own per-type maps (`tomlKeys`, `jsonKeys`, `yamlKeys`). For
- * extensions an adapter doesn't claim, this returns `{}` so the
+ * Resolve which per-glob → key-paths map an adapter consumes for
+ * translatable scalars. Markdown reads `markdown.keys`; TOML reads
+ * `toml.keys`; future structured-data adapters get their own block.
+ * For extensions an adapter doesn't claim, this returns `{}` so the
  * adapter sees no translatable keys at all (a defensible default —
- * the source still passes through, segments are empty, no cache miss
- * is generated).
+ * the source still passes through, segments are empty, no cache
+ * miss is generated).
  */
 function pickTranslatableKeysForAdapter(adapter: FileTypeAdapter, resolved: PolyStellaResolvedOptions): Record<string, string[]> {
   for (const ext of adapter.extensions) {
     switch (ext) {
       case ".md":
       case ".mdx":
-        return resolved.frontmatter;
+        return resolved.markdown.keys;
       case ".toml":
-        return resolved.tomlKeys;
+        return resolved.toml.keys;
       // JSON / YAML adapter maps land here in M4 / M5.
     }
   }
   return {};
+}
+
+/**
+ * Resolve which per-glob → URL-path map an adapter consumes. Same
+ * dispatch shape as `pickTranslatableKeysForAdapter` but for URL
+ * fields. Markdown URLs cover frontmatter only; body inline links
+ * are handled separately by the bytes-level rewriter.
+ */
+function pickUrlKeysForAdapter(adapter: FileTypeAdapter, resolved: PolyStellaResolvedOptions): Record<string, string[]> {
+  for (const ext of adapter.extensions) {
+    switch (ext) {
+      case ".md":
+      case ".mdx":
+        return resolved.markdown.urls;
+      case ".toml":
+        return resolved.toml.urls;
+    }
+  }
+  return {};
+}
+
+/**
+ * Resolve the URL path list for a single source. Same logic as the
+ * translatable-keys resolver in the markdown extractor: union every
+ * matching glob's list, deduplicated, in insertion order.
+ */
+function resolveUrlPathsForSource(rules: Record<string, string[]>, sourcePath: string): string[] {
+  const matched: string[] = [];
+  const seen = new Set<string>();
+  for (const [pattern, paths] of Object.entries(rules)) {
+    if (picomatch.isMatch(sourcePath, pattern)) {
+      for (const p of paths) {
+        if (!seen.has(p)) {
+          seen.add(p);
+          matched.push(p);
+        }
+      }
+    }
+  }
+  return matched;
 }
 
 /**
@@ -418,13 +460,46 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
   // so already-prefixed `/${defaultLocale}/...` URLs (rare but
   // legitimate) aren't treated as rewriteable.
   const allLocalesForRewrite = [resolved.defaultLocale, ...resolved.locales];
-  const maybeRewrite = (bytes: string, locale: string): string => {
+  const buildRewriteOpts = (locale: string): RewriteInternalLinksOptions => ({
+    targetLocale: locale,
+    locales: allLocalesForRewrite,
+    ...(resolved.noPrefixUrls.length > 0 ? { noPrefixUrls: resolved.noPrefixUrls } : {}),
+  });
+  /**
+   * Apply all post-cache URL rewrites to staged bytes:
+   *
+   *   1. Adapter-specific key-path-based rewriting (frontmatter URL
+   *      keys for markdown; structured URL paths for TOML/etc.) via
+   *      `adapter.rewriteUrls?`. No-op when the adapter doesn't
+   *      implement it or `urlPathsForSource` is empty.
+   *   2. Markdown body inline-link rewriting via
+   *      `rewriteInternalLinks` over bytes — handled here only for
+   *      markdown extensions; structured-data formats have no body
+   *      links to rewrite.
+   *
+   * Both layers honour `noPrefixUrls` because they share
+   * `rewriteUrlIfInternal` underneath. Idempotent.
+   */
+  const maybeRewrite = (
+    bytes: string,
+    locale: string,
+    adapter: FileTypeAdapter,
+    urlPathsForSource: string[],
+  ): string => {
     if (!resolved.rewriteInternalLinks) return bytes;
-    const rewriteOpts: RewriteInternalLinksOptions = {
-      targetLocale: locale,
-      locales: allLocalesForRewrite,
-    };
-    return rewriteInternalLinks(bytes, rewriteOpts);
+    const rewriteOpts = buildRewriteOpts(locale);
+    let next = bytes;
+    if (adapter.rewriteUrls && urlPathsForSource.length > 0) {
+      const rewriter = (url: string) => rewriteUrlIfInternal(url, rewriteOpts);
+      next = adapter.rewriteUrls(next, { paths: urlPathsForSource, rewriter });
+    }
+    // Body-link rewriter is markdown-only (it parses with
+    // `parseMarkdown`). Structured-data formats short-circuit out.
+    const isMarkdown = adapter.extensions.includes(".md") || adapter.extensions.includes(".mdx");
+    if (isMarkdown) {
+      next = rewriteInternalLinks(next, rewriteOpts);
+    }
+    return next;
   };
 
   // Per-source body runs as a pool worker. State mutations across
@@ -447,6 +522,13 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
       sourcePath: source.relativePath,
       translatableKeys: pickTranslatableKeysForAdapter(adapter, resolved),
     };
+    // URL key paths apply per-source via the configured globs.
+    // Resolved once per source so the adapter's `applyTranslations`
+    // closure can re-use the same list across the per-locale loop.
+    const urlPathsForSource = resolveUrlPathsForSource(
+      pickUrlKeysForAdapter(adapter, resolved),
+      source.relativePath,
+    );
 
     // Computed once per source so all branches (noTranslate, override,
     // translate, error) push consistent report entries.
@@ -493,7 +575,7 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
           });
           continue;
         }
-        const overrideStaged = maybeRewrite(override, locale);
+        const overrideStaged = maybeRewrite(override, locale, adapter, urlPathsForSource);
         await writeStagedTranslation({
           stagingDir,
           locale,
@@ -543,7 +625,7 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
           // Run the rewriter on overrides so an operator's hand-
           // translated file with raw internal links still gets locale-
           // prefixed. Idempotent.
-          const overrideStaged = maybeRewrite(override, locale);
+          const overrideStaged = maybeRewrite(override, locale, adapter, urlPathsForSource);
           await writeStagedTranslation({
             stagingDir,
             locale,
@@ -701,10 +783,12 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
 
         // Link rewrite happens AFTER the cache layer so cached bytes
         // store the translation-only output; toggling
-        // `rewriteInternalLinks` doesn't invalidate the cache, and
-        // the rewriter's idempotent guard prevents double-prefixing
-        // on cache hits.
-        const stagedBody = maybeRewrite(result.body, locale);
+        // `rewriteInternalLinks` (or editing `noPrefixUrls`) doesn't
+        // invalidate the cache, and the rewriter's idempotent guard
+        // prevents double-prefixing on cache hits. Same applies to
+        // adapter-driven URL rewriting (frontmatter URL keys for
+        // markdown, structured paths for TOML).
+        const stagedBody = maybeRewrite(result.body, locale, adapter, urlPathsForSource);
         await writeStagedTranslation({
           stagingDir,
           locale,

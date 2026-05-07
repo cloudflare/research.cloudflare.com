@@ -1,7 +1,12 @@
 import picomatch from "picomatch";
 import { parse as parseToml, stringify as stringifyToml } from "smol-toml";
 
-import type { AdapterApplyOptions, AdapterExtractOptions, FileTypeAdapter } from "../adapter.js";
+import type {
+  AdapterApplyOptions,
+  AdapterExtractOptions,
+  AdapterRewriteUrlsOptions,
+  FileTypeAdapter,
+} from "../adapter.js";
 import type { Segment } from "../extract.js";
 import { expandPath, parsePath, readAtPath, writeAtPath, type PathSegment } from "../key-paths.js";
 
@@ -138,6 +143,39 @@ export const tomlAdapter: FileTypeAdapter<TomlData> = {
   peekNoTranslate(parsed: TomlData): boolean {
     if (parsed === null || typeof parsed !== "object") return false;
     return (parsed as Record<string, unknown>).noTranslate === true;
+  },
+
+  /**
+   * Walk configured URL paths in the parsed bytes and rewrite
+   * matched string values via `opts.rewriter`. Re-parses the bytes
+   * (rather than receiving a parsed structure) because the pipeline
+   * calls this AFTER `applyTranslations` returns serialised bytes
+   * — keeps cached bytes URL-rewrite-naïve so a `noPrefixUrls`
+   * config edit doesn't bust the cache.
+   *
+   * Wildcards (`[*]`, `.*`) expand against the post-apply structure
+   * so URL paths can target dynamic shapes like `tags[*].url`. No-op
+   * when the configured paths produce no concrete matches or every
+   * matched value passes the rewriter unchanged.
+   */
+  rewriteUrls(bytes: string, opts: AdapterRewriteUrlsOptions): string {
+    if (opts.paths.length === 0) return bytes;
+    const parsed = parseToml(bytes) as TomlData;
+    const out = structuredClone(parsed) as TomlData;
+    let mutated = false;
+    for (const rule of opts.paths) {
+      for (const concrete of expandPath(rule, out)) {
+        const { segments } = parsePath(concrete);
+        const value = readAtPath(out, segments as PathSegment[]);
+        if (typeof value !== "string") continue;
+        const rewritten = opts.rewriter(value);
+        if (rewritten === null || rewritten === value) continue;
+        writeAtPath(out, segments as PathSegment[], rewritten);
+        mutated = true;
+      }
+    }
+    if (!mutated) return bytes;
+    return stringifyToml(out as Record<string, unknown>);
   },
 };
 

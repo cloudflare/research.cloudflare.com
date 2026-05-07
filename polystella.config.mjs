@@ -90,31 +90,57 @@ const config = {
   // …or keep `include` broad and exclude the rest:
   //   exclude: ["people/**", "presentations/**", "tags/**"],
 
-  // ─── Per-collection frontmatter rules (markdown adapter) ─────────────
-  // Map of glob (against the file's relative source path) → array of
-  // frontmatter keys that should be translated. Frontmatter keys not
-  // listed here are passed through verbatim.
+  // ─── Per-format translatable / URL key paths ─────────────────────────
   //
-  frontmatter: {
-    "publications/**": ["title", "metaDescription", "related_interests"],
-    //"people/**": ["bio"],
-    //"tags/**": ["title", "description"],
+  // Each file format has its own block with two axes:
+  //
+  //   - `keys`  — translatable scalars (sent to the AI translator).
+  //   - `urls`  — URL fields locale-prefixed at staging time (e.g.
+  //               `/foo` → `/pt-BR/foo`). External URLs and anchors
+  //               pass through unchanged.
+  //
+  // Both are maps: glob (against the file's relative source path)
+  // → array of key paths. Markdown uses flat frontmatter keys;
+  // structured-data formats use dotted/bracketed key paths
+  // (wildcards `[*]` / `.*` expand against the parsed structure).
+  //
+  // A given path MUST NOT appear in both `keys` and `urls` for the
+  // same glob — the resolver errors at startup if it does.
+  //
+  // Markdown body inline links are rewritten automatically by the
+  // markdown adapter and need no config; `markdown.urls` only
+  // applies to frontmatter URL fields.
+  markdown: {
+    keys: {
+      "publications/**": ["title", "metaDescription", "related_interests"],
+      //"people/**": ["bio"],
+      //"tags/**": ["title", "description"],
+    },
+    // urls: {
+    //   "publications/**": ["heroImage", "pdfLink"],
+    // },
   },
-  // frontmatter: {},
 
-  // ─── TOML key paths (TOML adapter, v0.1.x) ───────────────────────────
-  // Translatable scalars inside `.toml` files. Same shape as
-  // `frontmatter`: glob → array of dotted/bracketed key paths inside
-  // the parsed TOML. Wildcards `[*]` and `.*` expand at extract time.
-  //
   // `site.toml`'s structure: a single top-level entry (`main`) holds
-  // `featuredResearch` with translatable strings. Astro's `file()`
-  // loader produces one entry per top-level TOML table, so the
-  // schema in `src/content.config.ts` validates against
-  // `entry.data.featuredResearch`.
-  tomlKeys: {
-    "site.toml": ["main.featuredResearch.title", "main.featuredResearch.description", "main.featuredResearch.buttonLabel"],
+  // `featuredResearch` with translatable strings and a `link` that
+  // points at an internal page. Astro's `file()` loader produces one
+  // entry per top-level TOML table, so the schema in
+  // `src/content.config.ts` validates against `entry.data.featuredResearch`.
+  toml: {
+    keys: {
+      "site.toml": ["main.featuredResearch.title", "main.featuredResearch.description", "main.featuredResearch.buttonLabel"],
+    },
+    urls: {
+      "site.toml": ["main.featuredResearch.link"],
+    },
   },
+
+  // ─── Internal URLs to leave unprefixed ───────────────────────────────
+  // Picomatch globs against the URL path. Useful for declaring
+  // single-locale internal pages that shouldn't be rewritten even
+  // when referenced from a translated file.
+  // noPrefixUrls: ["/api-docs", "/api-docs/**", "/legal/*"],
+  // frontmatter: {},
 
   // ─── Standalone-mode routing ─────────────────────────────────────────
   // Source pages PolyStella generates locale-prefixed shims for. Each

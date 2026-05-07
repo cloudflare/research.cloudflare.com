@@ -115,27 +115,73 @@ export const polystellaOptionsSchema = z
     include: z.array(z.string()).default(["**/*.md", "**/*.mdx"]),
     exclude: z.array(z.string()).default([]),
 
-    // Per-collection frontmatter rules; globs against relative source path.
-    // Markdown adapter (`.md` / `.mdx`) consumes this map.
-    frontmatter: z.record(z.string(), z.array(z.string())).default({}),
+    /**
+     * Per-format configuration. Each format has the same internal
+     * shape:
+     *   - `keys` — translatable scalars (per-glob → key-path list).
+     *   - `urls` — URL fields that should be locale-prefixed at
+     *     staging time (per-glob → key-path list).
+     *
+     * Both are optional. A path listed in `keys` is sent to the
+     * translator; a path listed in `urls` runs through the URL
+     * rewriter (see `noPrefixUrls` for exemptions). The same path
+     * MUST NOT appear in both `keys` and `urls` for a given glob —
+     * a translatable URL would be both AI-rewritten and locale-
+     * prefixed, and we error at config-resolve time to surface this
+     * loudly.
+     *
+     * Markdown specifics:
+     *   - `markdown.keys` covers frontmatter keys; body translation
+     *     happens automatically over inline text spans.
+     *   - `markdown.urls` covers frontmatter URL keys only; body
+     *     inline links are rewritten automatically by the markdown
+     *     adapter and need no config.
+     *
+     * Example:
+     *
+     *     markdown: {
+     *       keys: { "publications/**": ["title", "metaDescription"] },
+     *       urls: { "publications/**": ["heroImage"] },
+     *     },
+     *     toml: {
+     *       keys: { "site.toml": ["main.featuredResearch.title"] },
+     *       urls: { "site.toml": ["main.featuredResearch.link"] },
+     *     },
+     */
+    markdown: z
+      .object({
+        keys: z.record(z.string(), z.array(z.string())).default({}),
+        urls: z.record(z.string(), z.array(z.string())).default({}),
+      })
+      .strict()
+      .default({ keys: {}, urls: {} }),
+
+    toml: z
+      .object({
+        keys: z.record(z.string(), z.array(z.string())).default({}),
+        urls: z.record(z.string(), z.array(z.string())).default({}),
+      })
+      .strict()
+      .default({ keys: {}, urls: {} }),
 
     /**
-     * Translatable key paths for `.toml` files. Same shape as
-     * `frontmatter`: glob against the relative source path → array
-     * of dotted/bracketed key paths inside the parsed TOML.
+     * Internal URL paths to leave unprefixed by the link rewriter.
+     * Picomatch globs match against the URL path (after splitting
+     * query/fragment). Applied uniformly wherever rewriting happens
+     * — markdown body links, markdown frontmatter URLs, structured-
+     * data URL fields. External URLs (`http://`, `https://`,
+     * `mailto:`, etc.) and anchor-only URLs already bail out before
+     * this list is consulted.
      *
-     * Wildcards `[*]` and `.*` expand against the parsed structure
-     * at extract time. Example for a single-file `site.toml`:
+     * Use case: declaring that a specific internal path is single-
+     * locale and shouldn't get locale-prefixed even when it's
+     * referenced from a translatable file.
      *
-     *     tomlKeys: {
-     *       "site.toml": [
-     *         "main.featuredResearch.title",
-     *         "main.featuredResearch.description",
-     *         "main.featuredResearch.buttonLabel",
-     *       ],
-     *     }
+     * Example:
+     *
+     *     noPrefixUrls: ["/api-docs", "/api-docs/**", "/legal/*"]
      */
-    tomlKeys: z.record(z.string(), z.array(z.string())).default({}),
+    noPrefixUrls: z.array(z.string()).default([]),
 
     /**
      * Source pages to inject locale-prefixed shims for. Each entry
@@ -289,12 +335,24 @@ export function resolveOptions(raw: unknown, astroI18n: AstroI18nLike | undefine
         return `  • ${path}: ${issue.message}`;
       });
 
+  // Cross-check: a single key path in both `keys` and `urls` for the
+  // same glob would have the AI translate the URL string AND the
+  // rewriter prefix the result — never the operator's intent.
+  // Surface as a loud error so the typo is fixed before any (file,
+  // locale) pair is processed.
+  const overlapIssues = parsed.success ? findKeysUrlsOverlaps(parsed.data) : [];
+
   const i18nIssues = validateAstroI18n(astroI18n);
 
-  if (optionIssues.length > 0 || i18nIssues.length > 0) {
+  if (optionIssues.length > 0 || overlapIssues.length > 0 || i18nIssues.length > 0) {
     const sections: string[] = [];
     if (optionIssues.length > 0) {
       sections.push(`Invalid PolyStella options:\n${optionIssues.join("\n")}`);
+    }
+    if (overlapIssues.length > 0) {
+      sections.push(
+        `Invalid PolyStella options (a path can't be in both \`keys\` and \`urls\` for the same glob):\n${overlapIssues.join("\n")}`,
+      );
     }
     if (i18nIssues.length > 0) {
       sections.push(`Invalid Astro \`i18n\` config (PolyStella derives locales from it):\n${i18nIssues.join("\n")}`);
@@ -371,5 +429,36 @@ function validateAstroI18n(i18n: AstroI18nLike | undefined): string[] {
     );
   }
 
+  return issues;
+}
+
+/**
+ * Walk the per-format `keys` / `urls` maps for any glob whose
+ * `keys[glob]` and `urls[glob]` lists intersect. Each format is
+ * checked independently — a markdown overlap and a TOML overlap
+ * surface as separate bullets.
+ *
+ * Returns a flat list of pre-bulleted issue strings ready for the
+ * aggregated error message.
+ */
+function findKeysUrlsOverlaps(opts: z.output<typeof polystellaOptionsSchema>): string[] {
+  const issues: string[] = [];
+  const formats: Array<{ name: string; keys: Record<string, string[]>; urls: Record<string, string[]> }> = [
+    { name: "markdown", keys: opts.markdown.keys, urls: opts.markdown.urls },
+    { name: "toml", keys: opts.toml.keys, urls: opts.toml.urls },
+  ];
+  for (const format of formats) {
+    for (const glob of Object.keys(format.keys)) {
+      const keysList = format.keys[glob] ?? [];
+      const urlsList = format.urls[glob] ?? [];
+      if (keysList.length === 0 || urlsList.length === 0) continue;
+      const overlap = keysList.filter((k) => urlsList.includes(k));
+      if (overlap.length > 0) {
+        issues.push(
+          `  • ${format.name}: glob "${glob}" lists ${overlap.map((k) => `"${k}"`).join(", ")} in both \`keys\` and \`urls\`. Pick one — translatable scalars and URL fields are mutually exclusive.`,
+        );
+      }
+    }
+  }
   return issues;
 }

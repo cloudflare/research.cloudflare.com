@@ -73,6 +73,67 @@ describe("rewriteUrlIfInternal", () => {
   });
 });
 
+describe("rewriteUrlIfInternal — noPrefixUrls", () => {
+  // The fifth bailout: operator-declared internal paths that should
+  // not be locale-prefixed. Runs after the existing external-URL,
+  // anchor, idempotency, and locale-overlap bailouts; matches against
+  // the URL path (with query/fragment stripped) via picomatch.
+
+  it("leaves an exact-match path unprefixed", () => {
+    expect(
+      rewriteUrlIfInternal("/api-docs", { ...opts, noPrefixUrls: ["/api-docs"] }),
+    ).toBeNull();
+  });
+
+  it("leaves descendants of a glob-matched path unprefixed", () => {
+    const o = { ...opts, noPrefixUrls: ["/api-docs/**"] };
+    expect(rewriteUrlIfInternal("/api-docs/intro", o)).toBeNull();
+    expect(rewriteUrlIfInternal("/api-docs/v2/zones", o)).toBeNull();
+  });
+
+  it("does not match unrelated paths via the glob", () => {
+    const o = { ...opts, noPrefixUrls: ["/api-docs/**"] };
+    expect(rewriteUrlIfInternal("/blog", o)).toBe("/pt-BR/blog");
+    // Sibling paths that share a prefix but not the directory.
+    expect(rewriteUrlIfInternal("/api", o)).toBe("/pt-BR/api");
+  });
+
+  it("strips query / fragment before matching", () => {
+    // A noPrefixUrls glob targets paths, not query strings — a `?ref=`
+    // suffix shouldn't change whether the path matches.
+    const o = { ...opts, noPrefixUrls: ["/api-docs"] };
+    expect(rewriteUrlIfInternal("/api-docs?ref=home", o)).toBeNull();
+    expect(rewriteUrlIfInternal("/api-docs#section", o)).toBeNull();
+  });
+
+  it("does not interfere with external-URL bailout", () => {
+    // External URLs still bail out before noPrefixUrls is consulted,
+    // so a glob like `/api-docs/**` doesn't accidentally affect
+    // `https://...` URLs that happen to share path syntax.
+    const o = { ...opts, noPrefixUrls: ["/api-docs/**"] };
+    expect(rewriteUrlIfInternal("https://example.com/api-docs/x", o)).toBeNull();
+  });
+
+  it("supports multiple globs", () => {
+    const o = { ...opts, noPrefixUrls: ["/api-docs", "/legal/*", "/keep"] };
+    expect(rewriteUrlIfInternal("/api-docs", o)).toBeNull();
+    expect(rewriteUrlIfInternal("/legal/privacy", o)).toBeNull();
+    expect(rewriteUrlIfInternal("/keep", o)).toBeNull();
+    expect(rewriteUrlIfInternal("/elsewhere", o)).toBe("/pt-BR/elsewhere");
+  });
+
+  it("treats an empty noPrefixUrls list as a no-op", () => {
+    expect(rewriteUrlIfInternal("/api-docs", { ...opts, noPrefixUrls: [] })).toBe("/pt-BR/api-docs");
+  });
+
+  it("preserves rewriting for paths that fall outside any glob", () => {
+    const o = { ...opts, noPrefixUrls: ["/api-docs/**"] };
+    expect(rewriteUrlIfInternal("/publications/Davidson2018", o)).toBe(
+      "/pt-BR/publications/Davidson2018",
+    );
+  });
+});
+
 describe("rewriteInternalLinks", () => {
   it("rewrites a single inline link inside a paragraph", () => {
     const input = "See [the docs](/docs/intro) for more.";
@@ -192,5 +253,13 @@ describe("rewriteInternalLinks", () => {
     const input = ["| Col | Link |", "| --- | ---- |", "| a   | [x](/x) |", ""].join("\n");
     const output = rewriteInternalLinks(input, opts);
     expect(output).toBe(["| Col | Link |", "| --- | ---- |", "| a   | [x](/pt-BR/x) |", ""].join("\n"));
+  });
+
+  it("honours noPrefixUrls for body inline links", () => {
+    // Same exemption rules apply to body links as to standalone URL
+    // values, because both go through `rewriteUrlIfInternal`.
+    const input = "See [API docs](/api-docs) and [the blog](/blog).";
+    const output = rewriteInternalLinks(input, { ...opts, noPrefixUrls: ["/api-docs"] });
+    expect(output).toBe("See [API docs](/api-docs) and [the blog](/pt-BR/blog).");
   });
 });

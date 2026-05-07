@@ -612,3 +612,202 @@ describe("runTranslationPass — early returns", () => {
     expect(result.entries).toHaveLength(0);
   });
 });
+
+describe("runTranslationPass — URL rewriting", () => {
+  // End-to-end: prove the pipeline ties `markdown.urls` /
+  // `noPrefixUrls` config to staged-bytes URL rewriting. Each test
+  // builds a tiny project with a known frontmatter URL and inspects
+  // the staged file.
+
+  // A minimal markdown source with a frontmatter URL field. The body
+  // also has an internal link so we can verify both rewrite paths.
+  const URL_SAMPLE_MD = [
+    "---",
+    "title: Hello",
+    "heroImage: /images/hero.png",
+    "pdfLink: /docs/paper.pdf",
+    "---",
+    "",
+    "See [the API docs](/api-docs) and [the blog](/blog).",
+    "",
+  ].join("\n");
+
+  it("rewrites configured frontmatter URL keys to be locale-prefixed", async () => {
+    const { rootDir, stagingDir } = await makeProjectFixture({
+      files: { "content/publications/sample.md": URL_SAMPLE_MD },
+    });
+    const r2 = makeInMemoryR2();
+    const translator = makeStubTranslator("stub/url-1");
+    const resolved = resolveOptions(
+      {
+        sourceDir: "./content",
+        include: ["**/*.md"],
+        markdown: {
+          keys: { "publications/**": ["title"] },
+          urls: { "publications/**": ["heroImage", "pdfLink"] },
+        },
+      },
+      { defaultLocale: "en", locales: ["en", "pt-BR"] },
+    );
+    resolved.provider = {
+      kind: "workers-ai",
+      accountId: "fake",
+      apiToken: "fake",
+      model: "stub/url-1",
+      maxTokens: 8192,
+    };
+
+    await runTranslationPass({
+      resolved,
+      rootDir,
+      stagingDir,
+      logger: NULL_LOGGER,
+      polystellaVersion: "0.2.0",
+      r2Override: r2.client,
+      translatorOverrides: new Map([["pt-BR", translator]]),
+    });
+
+    const ptBody = await readFile(path.join(stagingDir, "pt-BR", "publications/sample.md"), "utf8");
+    expect(ptBody).toContain("heroImage: /pt-BR/images/hero.png");
+    expect(ptBody).toContain("pdfLink: /pt-BR/docs/paper.pdf");
+    // Body links rewritten by the existing rewriteInternalLinks pass.
+    expect(ptBody).toContain("(/pt-BR/api-docs)");
+    expect(ptBody).toContain("(/pt-BR/blog)");
+  });
+
+  it("honours noPrefixUrls for both frontmatter and body links", async () => {
+    const { rootDir, stagingDir } = await makeProjectFixture({
+      files: { "content/publications/sample.md": URL_SAMPLE_MD },
+    });
+    const r2 = makeInMemoryR2();
+    const translator = makeStubTranslator("stub/url-2");
+    const resolved = resolveOptions(
+      {
+        sourceDir: "./content",
+        include: ["**/*.md"],
+        markdown: {
+          keys: { "publications/**": ["title"] },
+          urls: { "publications/**": ["heroImage", "pdfLink"] },
+        },
+        // pdfLink-style paths AND body /api-docs are exempt — both
+        // should pass through unchanged.
+        noPrefixUrls: ["/docs/**", "/api-docs"],
+      },
+      { defaultLocale: "en", locales: ["en", "pt-BR"] },
+    );
+    resolved.provider = {
+      kind: "workers-ai",
+      accountId: "fake",
+      apiToken: "fake",
+      model: "stub/url-2",
+      maxTokens: 8192,
+    };
+
+    await runTranslationPass({
+      resolved,
+      rootDir,
+      stagingDir,
+      logger: NULL_LOGGER,
+      polystellaVersion: "0.2.0",
+      r2Override: r2.client,
+      translatorOverrides: new Map([["pt-BR", translator]]),
+    });
+
+    const ptBody = await readFile(path.join(stagingDir, "pt-BR", "publications/sample.md"), "utf8");
+    // Frontmatter: heroImage prefixed (no exemption); pdfLink exempted.
+    expect(ptBody).toContain("heroImage: /pt-BR/images/hero.png");
+    expect(ptBody).toContain("pdfLink: /docs/paper.pdf");
+    // Body: /blog prefixed; /api-docs exempted.
+    expect(ptBody).toContain("(/pt-BR/blog)");
+    expect(ptBody).toContain("(/api-docs)");
+    expect(ptBody).not.toContain("(/pt-BR/api-docs)");
+  });
+
+  it("does not bake URL rewrites into cached R2 bytes (cache stays URL-naïve)", async () => {
+    // The whole point of running URL rewriting AFTER the cache layer:
+    // R2-stored bytes are URL-rewrite-naïve, so editing `noPrefixUrls`
+    // doesn't bust the cache. To prove this, we run the same source
+    // twice with different `noPrefixUrls` configs and check the cached
+    // R2 object stays identical across runs (cache hit, identical
+    // bytes), while the staged file reflects each run's exemption.
+    const { rootDir, stagingDir } = await makeProjectFixture({
+      files: { "content/publications/sample.md": URL_SAMPLE_MD },
+    });
+    const r2 = makeInMemoryR2();
+    const translator = makeStubTranslator("stub/url-3");
+
+    const baseResolved = resolveOptions(
+      {
+        sourceDir: "./content",
+        include: ["**/*.md"],
+        markdown: {
+          keys: { "publications/**": ["title"] },
+          urls: { "publications/**": ["heroImage"] },
+        },
+      },
+      { defaultLocale: "en", locales: ["en", "pt-BR"] },
+    );
+    baseResolved.provider = {
+      kind: "workers-ai",
+      accountId: "fake",
+      apiToken: "fake",
+      model: "stub/url-3",
+      maxTokens: 8192,
+    };
+
+    // First run, no exemptions: heroImage prefixed.
+    await runTranslationPass({
+      resolved: baseResolved,
+      rootDir,
+      stagingDir,
+      logger: NULL_LOGGER,
+      polystellaVersion: "0.2.0",
+      r2Override: r2.client,
+      translatorOverrides: new Map([["pt-BR", translator]]),
+    });
+    expect(translator.calls).toBe(1);
+    // Capture cached R2 bytes (only one pt-BR object should exist).
+    const r2Keys = [...r2.store.keys()];
+    expect(r2Keys).toHaveLength(1);
+    const cachedBytesAfterRun1 = new TextDecoder().decode(r2.store.get(r2Keys[0]!)!.body);
+
+    // Second run with `noPrefixUrls` adding heroImage's path. Same
+    // source bytes → same cache key → cache HIT, no translator call.
+    // Stale staging file gets cleared so we re-stage from scratch.
+    const { rootDir: rootDir2, stagingDir: stagingDir2 } = await makeProjectFixture({
+      files: { "content/publications/sample.md": URL_SAMPLE_MD },
+    });
+    const exemptResolved = resolveOptions(
+      {
+        sourceDir: "./content",
+        include: ["**/*.md"],
+        markdown: {
+          keys: { "publications/**": ["title"] },
+          urls: { "publications/**": ["heroImage"] },
+        },
+        noPrefixUrls: ["/images/**"],
+      },
+      { defaultLocale: "en", locales: ["en", "pt-BR"] },
+    );
+    exemptResolved.provider = baseResolved.provider;
+    translator.calls = 0;
+
+    await runTranslationPass({
+      resolved: exemptResolved,
+      rootDir: rootDir2,
+      stagingDir: stagingDir2,
+      logger: NULL_LOGGER,
+      polystellaVersion: "0.2.0",
+      r2Override: r2.client,
+      translatorOverrides: new Map([["pt-BR", translator]]),
+    });
+    expect(translator.calls).toBe(0); // pure cache hit
+    // Cached R2 bytes did NOT change.
+    const cachedBytesAfterRun2 = new TextDecoder().decode(r2.store.get(r2Keys[0]!)!.body);
+    expect(cachedBytesAfterRun2).toBe(cachedBytesAfterRun1);
+    // But the staged file reflects the new exemption.
+    const ptBody = await readFile(path.join(stagingDir2, "pt-BR", "publications/sample.md"), "utf8");
+    expect(ptBody).toContain("heroImage: /images/hero.png");
+    expect(ptBody).not.toContain("heroImage: /pt-BR/images/hero.png");
+  });
+});

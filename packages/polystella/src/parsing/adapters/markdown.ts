@@ -1,6 +1,7 @@
-import type { Root } from "mdast";
+import type { Root, Yaml } from "mdast";
+import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 
-import type { AdapterApplyOptions, AdapterExtractOptions, FileTypeAdapter } from "../adapter.js";
+import type { AdapterApplyOptions, AdapterExtractOptions, AdapterRewriteUrlsOptions, FileTypeAdapter } from "../adapter.js";
 import { applyTranslations } from "../apply.js";
 import { extractSegments, peekNoTranslate, selectTranslatableFrontmatter } from "../extract.js";
 import type { Segment } from "../extract.js";
@@ -61,5 +62,42 @@ export const markdownAdapter: FileTypeAdapter<Root> = {
 
   peekNoTranslate(parsed: Root): boolean {
     return peekNoTranslate(parsed);
+  },
+
+  /**
+   * Frontmatter URL rewriter. Body inline links are NOT touched
+   * here — the pipeline runs `rewriteInternalLinks` over body bytes
+   * separately. Rationale: body link rewriting is span-based
+   * (mdast `link` nodes byte-spliced in place), so it has no shared
+   * code with key-path-based URL rewriting and folding it in here
+   * would be a behaviour change with no upside.
+   *
+   * Re-parses `bytes` to find the frontmatter span, walks the
+   * configured URL keys, and splices a re-stringified YAML block
+   * back in. No-op when there's no frontmatter, no configured keys,
+   * or no value at any configured key passes the rewriter check.
+   */
+  rewriteUrls(bytes: string, opts: AdapterRewriteUrlsOptions): string {
+    if (opts.paths.length === 0) return bytes;
+    const ast = parseMarkdown(bytes);
+    const fm = ast.children.find((child): child is Yaml => child.type === "yaml");
+    if (!fm || typeof fm.position?.start?.offset !== "number" || typeof fm.position?.end?.offset !== "number") {
+      return bytes;
+    }
+    const data = parseYaml(fm.value) as Record<string, unknown>;
+    let mutated = false;
+    for (const key of opts.paths) {
+      const value = data[key];
+      if (typeof value !== "string") continue;
+      const rewritten = opts.rewriter(value);
+      if (rewritten === null || rewritten === value) continue;
+      data[key] = rewritten;
+      mutated = true;
+    }
+    if (!mutated) return bytes;
+    const newInner = stringifyYaml(data).replace(/\n+$/, "");
+    const start = fm.position.start.offset;
+    const end = fm.position.end.offset;
+    return `${bytes.slice(0, start)}---\n${newInner}\n---${bytes.slice(end)}`;
   },
 };

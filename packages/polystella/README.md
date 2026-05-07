@@ -14,6 +14,7 @@ The full design lives in `polystella-design-collections-c011ec.md`; this README 
 - **Per-locale model selection.** Latin-script and CJK locales can use different models.
 - **Glossary control.** A YAML file per locale pins do-not-translate terms, preferred translations, and free-form translator notes. Edits to the glossary re-translate only the pages that need it.
 - **Hand-translation overrides.** Drop a markdown file at `i18n/overrides/{locale}/<mirrored-path>` and it wins over AI output verbatim.
+- **Internal-link rewriting.** Both inline markdown links and configured URL fields (frontmatter, structured-data) are locale-prefixed at staging. External URLs and operator-declared exemptions (`noPrefixUrls`) pass through unchanged.
 - **Manual UI strings.** Short chrome text (nav, CTAs) stays hand-authored with build-time drift detection across locales. Includes a React hook for client-side islands.
 - **Standalone or Starlight.** Ships its own route shim today (standalone). Starlight integration is the next milestone.
 - **CLI.** `pnpm translate` runs the pipeline outside `astro build` for one-off re-translations or CI dispatch, with branch-aware R2 prefixes.

@@ -90,6 +90,24 @@ export interface FileTypeAdapter<TParsed = unknown> {
    * level `noTranslate: true` key.
    */
   peekNoTranslate(parsed: TParsed): boolean;
+
+  /**
+   * Rewrite key-path-based URL fields in `bytes`, returning new
+   * bytes with each matched URL passed through `opts.rewriter`.
+   * Operates on serialised bytes (post-`applyTranslations`,
+   * post-cache) so the cache layer stores URL-rewrite-naïve content.
+   *
+   * Adapters that don't expose URL fields by key path MAY omit
+   * this method — markdown body inline links, for example, are
+   * handled separately via `rewriteInternalLinks` over bytes.
+   * Markdown's implementation here covers ONLY frontmatter URL
+   * fields; TOML/JSON/YAML implementations cover the structured
+   * URL paths declared in the user's config.
+   *
+   * Implementations should be idempotent on already-rewritten
+   * inputs and pass non-string / missing values through unchanged.
+   */
+  rewriteUrls?(bytes: string, opts: AdapterRewriteUrlsOptions): string;
 }
 
 /**
@@ -125,4 +143,23 @@ export interface AdapterApplyOptions {
    * - TOML / JSON / YAML: written as top-level keys.
    */
   topLevelAdditions?: Record<string, unknown>;
+}
+
+/**
+ * Per-pair options threaded through `rewriteUrls` (post-cache URL
+ * rewriting). Adapters that don't have key-path-based URL fields
+ * MAY omit `rewriteUrls` entirely — the pipeline treats absence as
+ * a no-op.
+ *
+ * URL rewriting runs AFTER `applyTranslations` and on already-staged
+ * bytes (as opposed to the parsed structure) so cached bytes are
+ * URL-rewrite-naïve: changing `noPrefixUrls` doesn't bust the cache.
+ *
+ * `paths` are adapter-format key paths (markdown frontmatter: flat
+ * keys; TOML: dotted/bracketed). `rewriter` returns the new URL
+ * string, or `null` when the URL should be left unchanged.
+ */
+export interface AdapterRewriteUrlsOptions {
+  paths: string[];
+  rewriter: (url: string) => string | null;
 }
