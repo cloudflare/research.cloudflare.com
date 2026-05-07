@@ -146,10 +146,19 @@ const config = {
   // Source pages PolyStella generates locale-prefixed shims for. Each
   // entry produces a shim at `<cacheDir>/polystella-shims/route-N.astro`
   // and an `injectRoute({ pattern: "/[lang]/<sourcePattern>" })` call
-  // at config:setup. Until the source page is migrated to
-  // `getLocalizedEntry` (planned milestone), the locale routes render
-  // source-language content under the locale-prefixed URLs.
-  routes: ["src/pages/index.astro", "src/pages/[slug].astro"],
+  // at config:setup. Source pages should call `getLocalizedEntry`
+  // (instead of `getEntry`) to read translated content for the
+  // locale-prefixed URLs.
+  //
+  // Entries can be literal paths or globs (picomatch syntax). Globs
+  // expand at config:setup against the actual files on disk. Auto-
+  // exclusions for glob expansion only:
+  //   - `404.astro` (Astro's special fallback page)
+  //   - any path with an `_`-prefixed segment (Astro convention for
+  //     non-route files: layouts, helpers, etc.)
+  // Literal paths are NEVER auto-excluded — listing `404.astro`
+  // explicitly is a recognised opt-in.
+  routes: ["src/pages/**/*.astro"],
 
   // ─── Shim CSS injection ──────────────────────────────────────────────
   // Astro's per-route `<link rel="stylesheet">` injection follows

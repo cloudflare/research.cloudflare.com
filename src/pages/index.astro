@@ -10,7 +10,6 @@ import Icon from "@/components/Icon.astro";
 import { getCollection } from "astro:content";
 import { CONSTANTS } from "@/lib/constants";
 import SeeMore from "@/components/SeeMore.astro";
-import { linkDescriptions } from "@/data/seo";
 
 const { t, lhref } = Astro.locals;
 
@@ -49,7 +48,7 @@ const recentPublications = (await getCollection("publications", ({ data }) => da
         title={t("globals.morePrivate")}
         seeMore={lhref("/focus/private")}
         className="w-[calc(100%-2px)] md:w-[calc(49%-2px)] lg:w-[calc(33%-8px)]"
-        description={linkDescriptions.private}
+        description={t("seo.morePrivate")}
       >
         {t("home.focusAreas.morePrivate.blurb")}
       </FocusArea>
@@ -58,7 +57,7 @@ const recentPublications = (await getCollection("publications", ({ data }) => da
         title={t("globals.safer")}
         seeMore={lhref("/focus/safe")}
         className="w-[calc(100%-2px)] md:w-[calc(49%-2px)] lg:w-[calc(33%-8px)]"
-        description={linkDescriptions.safe}
+        description={t("seo.safer")}
       >
         {t("home.focusAreas.safer.blurb")}
       </FocusArea>
@@ -67,7 +66,7 @@ const recentPublications = (await getCollection("publications", ({ data }) => da
         title={t("globals.faster")}
         seeMore={lhref("/focus/fast")}
         className="w-[calc(100%-2px)] md:w-[calc(49%-2px)] lg:w-[calc(33%-8px)]"
-        description={linkDescriptions.fast}
+        description={t("seo.faster")}
       >
         {t("home.focusAreas.faster.blurb")}
       </FocusArea>
@@ -76,7 +75,7 @@ const recentPublications = (await getCollection("publications", ({ data }) => da
         title={t("globals.moreReliable")}
         seeMore={lhref("/focus/reliable")}
         className="w-[calc(100%-2px)] md:w-[calc(49%-2px)] lg:w-[calc(33%-8px)]"
-        description={linkDescriptions.reliable}
+        description={t("seo.moreReliable")}
       >
         {t("home.focusAreas.moreReliable.blurb")}
       </FocusArea>
@@ -85,7 +84,7 @@ const recentPublications = (await getCollection("publications", ({ data }) => da
         title={t("globals.moreMeasurable")}
         seeMore={lhref("/focus/measurable")}
         className="w-[calc(100%-2px)] md:w-[calc(49%-2px)] lg:w-[calc(33%-8px)]"
-        description={linkDescriptions.measurable}
+        description={t("seo.moreMeasurable")}
       >
         {t("home.focusAreas.moreMeasurable.blurb")}
       </FocusArea>

@@ -6,14 +6,13 @@ import Section from "../components/Section.astro";
 import NarrowContent from "../components/NarrowContent.astro";
 import { getCollection } from "astro:content";
 import { getLocalizedEntry } from "polystella/runtime";
-import { getTranslations } from "polystella/i18n";
 
 export async function getStaticPaths() {
   const publications = await getCollection("publications");
   return publications.map((pub) => ({ params: { slug: pub.id } }));
 }
 
-const t = await getTranslations(Astro.currentLocale);
+const { t, lhref } = Astro.locals;
 
 // get the slug from the URL
 const { slug } = Astro.params;
@@ -54,7 +53,7 @@ const authors = resolvedAuthors?.filter((author): author is NonNullable<typeof a
                   {author.data.type === "external" ? (
                     <span>{author.data.title}</span>
                   ) : (
-                    <a href={`/people/${author.id}`} class="hover:text-page-text hover:underline">
+                    <a href={lhref(`/people/${author.id}`)} class="hover:text-page-text hover:underline">
                       {author.data.title}
                     </a>
                   )}

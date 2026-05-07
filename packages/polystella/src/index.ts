@@ -1,5 +1,5 @@
 import type { AstroIntegration } from "astro";
-import { mkdir, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -7,7 +7,9 @@ import { resolveOptions, type PolyStellaOptions, type PolyStellaResolvedOptions 
 import { formatDriftIssues, loadAndCheckDrift } from "./i18n/drift.js";
 import { computeBuildReportTotals, emitBuildReport, type BuildReport } from "./storage/report.js";
 import { DEFAULT_STAGING_DIR } from "./storage/paths.js";
+import { expandRoutes } from "./routing/expand-routes.js";
 import { deriveUrlPattern, generateShimSource } from "./routing/shim.js";
+import { walkPages } from "./routing/walk-pages.js";
 import { runTranslationPass, type RunTranslationResult } from "./translation/run.js";
 
 /**
@@ -219,13 +221,40 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
           logger.info("registered Astro.locals middleware (t + lhref)");
         }
 
-        // For each `routes` entry, generate a shim under
+        // Stale-shim cleanup. Astro caches generated shims under
+        // `<cacheDir>/polystella-shims/`; a previous build with a
+        // different `routes` config can leave entries that match
+        // dynamic patterns the operator no longer wants. We `rm -rf`
+        // unconditionally so the regenerated set below is the
+        // authoritative one.
+        const shimDir = path.resolve(cacheDirPath, "polystella-shims");
+        await rm(shimDir, { recursive: true, force: true });
+
+        // Glob-expand `routes` entries against the actual page
+        // files on disk. Literal paths pass through verbatim;
+        // globs (`**/*.astro` etc.) match every available file
+        // outside the auto-exclusion list (404.astro, `_*` segments).
+        // See `routing/expand-routes.ts`.
+        const availablePages = await walkPages(rootDirPath);
+        const expandedRoutes = expandRoutes(resolved.routes, availablePages);
+        if (resolved.routes.length > 0 && expandedRoutes.length === 0) {
+          logger.warn(
+            `routes config produced no matches against the project. Configured patterns: ${resolved.routes.map((r) => r.source).join(", ")}`,
+          );
+        } else if (expandedRoutes.length !== resolved.routes.length) {
+          // Glob expansion happened — surface the resolved count so
+          // the operator knows what they actually got.
+          logger.info(
+            `routes: ${resolved.routes.length} pattern(s) → ${expandedRoutes.length} resolved page(s)`,
+          );
+        }
+
+        // For each resolved route, generate a shim under
         // `<cacheDir>/polystella-shims/route-<idx>.astro` that
         // imports the source page and re-exports its `getStaticPaths`
         // expanded over non-default locales. See `routing/shim.ts`
         // for the templates.
-        if (resolved.routes.length > 0) {
-          const shimDir = path.resolve(cacheDirPath, "polystella-shims");
+        if (expandedRoutes.length > 0) {
           await mkdir(shimDir, { recursive: true });
 
           // Resolve global `routesImports` once — the same set is
@@ -234,8 +263,8 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
           // places without producing a duplicate import line.
           const globalImportsAbs = resolved.routesImports.map((p) => path.resolve(rootDirPath, p));
 
-          for (let i = 0; i < resolved.routes.length; i++) {
-            const route = resolved.routes[i]!;
+          for (let i = 0; i < expandedRoutes.length; i++) {
+            const route = expandedRoutes[i]!;
             const sourceRel = route.source;
             const sourceAbs = path.resolve(rootDirPath, sourceRel);
             const { pattern, isDynamic } = deriveUrlPattern(sourceRel);
