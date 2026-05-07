@@ -76,6 +76,21 @@ export function buildPrompt(input: BuildPromptInput): BuiltPrompt {
     }
   }
 
+  if (glossary.styleRules.length > 0) {
+    systemLines.push("");
+    systemLines.push("STYLE RULES (apply these throughout):");
+    for (const rule of glossary.styleRules) {
+      systemLines.push(`- [${rule.category}] ${rule.instruction}`);
+      if (rule.example !== undefined) {
+        // Two-space indent so the example visually nests under its
+        // rule. Keeping it on a separate line (rather than inlining
+        // with " — example: …") makes the structure scannable for
+        // the model and keeps each rule on bounded line widths.
+        systemLines.push(`  Example: ${rule.example}`);
+      }
+    }
+  }
+
   const trimmedNotes = glossary.notes.trim();
   if (trimmedNotes.length > 0) {
     systemLines.push("");

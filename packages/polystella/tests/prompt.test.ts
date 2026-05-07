@@ -12,6 +12,10 @@ const sampleGlossary: Glossary = {
   version: "2026-04",
   doNotTranslate: ["Cloudflare", "TLS"],
   preferredTranslations: { edge: "borda" },
+  styleRules: [
+    { category: "tone", instruction: "Use formal academic register." },
+    { category: "numbers", instruction: "Use comma as decimal separator.", example: "21.3 → 21,3" },
+  ],
   notes: "Use Brazilian Portuguese spelling.",
 };
 
@@ -66,6 +70,70 @@ describe("buildPrompt", () => {
     expect(systemPrompt).toMatch(/Use Brazilian Portuguese spelling\./);
   });
 
+  it("renders styleRules as a bracketed-category list", () => {
+    const { systemPrompt } = buildPrompt({
+      segments: sampleSegments,
+      glossary: sampleGlossary,
+      sourceLocale: "en",
+      targetLocale: "pt-BR",
+    });
+    expect(systemPrompt).toMatch(/STYLE RULES \(apply these throughout\):/);
+    expect(systemPrompt).toMatch(/- \[tone\] Use formal academic register\./);
+    expect(systemPrompt).toMatch(/- \[numbers\] Use comma as decimal separator\./);
+  });
+
+  it("indents a rule's example with two spaces on the next line", () => {
+    const { systemPrompt } = buildPrompt({
+      segments: sampleSegments,
+      glossary: sampleGlossary,
+      sourceLocale: "en",
+      targetLocale: "pt-BR",
+    });
+    expect(systemPrompt).toMatch(/- \[numbers\] Use comma as decimal separator\.\n {2}Example: 21\.3 → 21,3/);
+  });
+
+  it("places STYLE RULES between PREFERRED TRANSLATIONS and ADDITIONAL NOTES", () => {
+    // Order matters because the model treats later sections as
+    // having more precedence in case of conflict — terminology rules
+    // come first, then categorical style, then free-form notes.
+    const { systemPrompt } = buildPrompt({
+      segments: sampleSegments,
+      glossary: sampleGlossary,
+      sourceLocale: "en",
+      targetLocale: "pt-BR",
+    });
+    const idxPref = systemPrompt.indexOf("PREFERRED TRANSLATIONS");
+    const idxStyle = systemPrompt.indexOf("STYLE RULES");
+    const idxNotes = systemPrompt.indexOf("ADDITIONAL NOTES");
+    expect(idxPref).toBeGreaterThan(-1);
+    expect(idxStyle).toBeGreaterThan(idxPref);
+    expect(idxNotes).toBeGreaterThan(idxStyle);
+  });
+
+  it("omits the STYLE RULES section when the rule list is empty", () => {
+    const { systemPrompt } = buildPrompt({
+      segments: sampleSegments,
+      glossary: { ...sampleGlossary, styleRules: [] },
+      sourceLocale: "en",
+      targetLocale: "pt-BR",
+    });
+    expect(systemPrompt).not.toMatch(/STYLE RULES/);
+  });
+
+  it("renders rules without an example as a single line (no Example: prefix)", () => {
+    const { systemPrompt } = buildPrompt({
+      segments: sampleSegments,
+      glossary: {
+        ...sampleGlossary,
+        styleRules: [{ category: "tone", instruction: "Use formal academic register." }],
+      },
+      sourceLocale: "en",
+      targetLocale: "pt-BR",
+    });
+    expect(systemPrompt).toMatch(/- \[tone\] Use formal academic register\./);
+    expect(systemPrompt).not.toMatch(/Example:/);
+  });
+
   it("omits the doNotTranslate section when the list is empty", () => {
     const { systemPrompt } = buildPrompt({
       segments: sampleSegments,
@@ -105,6 +173,7 @@ describe("buildPrompt", () => {
     });
     expect(systemPrompt).not.toMatch(/MUST NOT BE TRANSLATED/);
     expect(systemPrompt).not.toMatch(/PREFERRED TRANSLATIONS/);
+    expect(systemPrompt).not.toMatch(/STYLE RULES/);
     expect(systemPrompt).not.toMatch(/ADDITIONAL NOTES/);
     // The output-format clause is unconditional.
     expect(systemPrompt).toMatch(/OUTPUT FORMAT/);

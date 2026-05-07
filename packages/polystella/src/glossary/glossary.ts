@@ -7,17 +7,34 @@ import { parse as parseYaml } from "yaml";
 import type { PolyStellaResolvedOptions } from "../config/options.js";
 
 /**
+ * A single categorised style rule. `category` is a short tag that
+ * groups related rules in the rendered prompt (e.g. `numbers`,
+ * `dates`, `tone`). `instruction` is the imperative the model must
+ * follow. `example` is an optional source-→-target illustration —
+ * leave it off when the instruction stands alone.
+ */
+export interface StyleRule {
+  category: string;
+  instruction: string;
+  example?: string;
+}
+
+/**
  * Validated, normalised glossary for one locale.
  *
  * Normalisation: `doNotTranslate` deduped + sorted, preferred-
- * translation keys sorted on serialisation, optional fields default
- * to `""`. Two glossaries with the same semantic content hash
- * identically regardless of YAML formatting, key order, or comments.
+ * translation keys sorted on serialisation, `styleRules` preserved
+ * in author order (curator intent matters; reordering the YAML is
+ * a meaningful edit and re-hashes), optional fields default to
+ * `""` / `[]` / `{}`. Two glossaries with the same semantic content
+ * hash identically regardless of YAML formatting, key order, or
+ * comments — but reordering style rules DOES change the hash.
  */
 export interface Glossary {
   version: string;
   doNotTranslate: string[];
   preferredTranslations: Record<string, string>;
+  styleRules: StyleRule[];
   notes: string;
 }
 
@@ -26,14 +43,24 @@ export const EMPTY_GLOSSARY: Glossary = {
   version: "",
   doNotTranslate: [],
   preferredTranslations: {},
+  styleRules: [],
   notes: "",
 };
+
+const styleRuleSchema = z
+  .object({
+    category: z.string().min(1),
+    instruction: z.string().min(1),
+    example: z.string().min(1).optional(),
+  })
+  .strict();
 
 const glossaryDataSchema = z
   .object({
     version: z.string().optional(),
     doNotTranslate: z.array(z.string().min(1)).optional(),
     preferredTranslations: z.record(z.string().min(1), z.string().min(1)).optional(),
+    styleRules: z.array(styleRuleSchema).optional(),
     notes: z.string().optional(),
   })
   .strict();
@@ -92,17 +119,41 @@ export async function loadGlossaries(opts: LoadGlossariesOptions): Promise<Map<s
 
 /**
  * SHA-256 hex of the glossary's canonical content. Stable across
- * YAML formatting, key order, and comments. Folded into the cache
- * key so glossary edits invalidate only the affected locale.
+ * YAML formatting, key order in the top-level object, and comments.
+ * Folded into the cache key so glossary edits invalidate only the
+ * affected locale.
+ *
+ * `styleRules` is hashed in author order — the curator's sequence
+ * is rendered verbatim into the prompt, so reordering rules in the
+ * YAML is a meaningful edit. Within each rule object, JSON.stringify
+ * always emits keys in property-definition order (`category`,
+ * `instruction`, `example`), which matches our `StyleRule` interface,
+ * so YAML key reordering at the rule level doesn't perturb the hash.
  */
 export function hashGlossary(glossary: Glossary): string {
   const canonical = JSON.stringify({
     version: glossary.version,
     doNotTranslate: glossary.doNotTranslate,
     preferredTranslations: sortedRecord(glossary.preferredTranslations),
+    styleRules: glossary.styleRules.map(canonicaliseStyleRule),
     notes: glossary.notes,
   });
   return createHash("sha256").update(canonical, "utf8").digest("hex");
+}
+
+/**
+ * Force a stable property order on `StyleRule` so the hash is
+ * insensitive to whatever order Zod / YAML produced them in. We
+ * also drop `example` when undefined so a rule with `example:
+ * undefined` and a rule without the key produce identical bytes.
+ */
+function canonicaliseStyleRule(rule: StyleRule): { category: string; instruction: string; example?: string } {
+  const out: { category: string; instruction: string; example?: string } = {
+    category: rule.category,
+    instruction: rule.instruction,
+  };
+  if (rule.example !== undefined) out.example = rule.example;
+  return out;
 }
 
 /**
@@ -128,6 +179,13 @@ function validateGlossary(raw: unknown, context: string): Glossary {
     version: data.version ?? "",
     doNotTranslate: dedupeAndSort(data.doNotTranslate ?? []),
     preferredTranslations: data.preferredTranslations ?? {},
+    styleRules: (data.styleRules ?? []).map((rule) => ({
+      category: rule.category,
+      instruction: rule.instruction,
+      // Drop `example` entirely when absent so consumers don't have
+      // to distinguish `undefined` from "missing key".
+      ...(rule.example !== undefined ? { example: rule.example } : {}),
+    })),
     notes: data.notes ?? "",
   };
 }

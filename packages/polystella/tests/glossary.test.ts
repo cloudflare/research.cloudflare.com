@@ -89,11 +89,71 @@ describe("loadGlossaries", () => {
     expect(pt!.version).toBe("2025-04");
     expect(pt!.doNotTranslate).toEqual(["Cloudflare", "Workers"]);
     expect(pt!.preferredTranslations).toEqual({ edge: "borda" });
+    expect(pt!.styleRules).toEqual([]);
     expect(pt!.notes).toBe("Use Brazilian Portuguese.");
 
     const ja = result.get("ja-JP");
     expect(ja!.preferredTranslations).toEqual({ edge: "エッジ" });
+    expect(ja!.styleRules).toEqual([]);
     expect(glossaryDir).toContain("glossary"); // sanity: tmp path was used
+  });
+
+  it("loads styleRules with optional example fields", async () => {
+    writeFileSync(
+      path.join(tmpDir, "i18n/glossary/pt-BR.yaml"),
+      [
+        "styleRules:",
+        "  - category: tone",
+        '    instruction: "Use formal academic register."',
+        "  - category: numbers",
+        '    instruction: "Use comma as decimal separator."',
+        '    example: "21.3 → 21,3"',
+      ].join("\n"),
+      { flag: "wx" },
+    );
+
+    const result = await loadGlossaries({
+      config: makeConfig({
+        locales: ["pt-BR"],
+        glossary: { file: "./i18n/glossary/{locale}.yaml" },
+      }),
+      projectRoot,
+    });
+
+    const pt = result.get("pt-BR")!;
+    expect(pt.styleRules).toHaveLength(2);
+    // Author order is preserved — the first authored rule comes first.
+    expect(pt.styleRules[0]).toEqual({
+      category: "tone",
+      instruction: "Use formal academic register.",
+    });
+    // The rule with no `example` does NOT carry an `example` key, so
+    // consumers can use `in`/`!== undefined` checks without accounting
+    // for an `example: undefined` shape.
+    expect("example" in pt.styleRules[0]!).toBe(false);
+    expect(pt.styleRules[1]).toEqual({
+      category: "numbers",
+      instruction: "Use comma as decimal separator.",
+      example: "21.3 → 21,3",
+    });
+  });
+
+  it("rejects styleRules with empty category or instruction", async () => {
+    writeFileSync(
+      path.join(tmpDir, "i18n/glossary/pt-BR.yaml"),
+      ["styleRules:", "  - category: \"\"", '    instruction: "x"'].join("\n"),
+      { flag: "wx" },
+    );
+
+    await expect(
+      loadGlossaries({
+        config: makeConfig({
+          locales: ["pt-BR"],
+          glossary: { file: "./i18n/glossary/{locale}.yaml" },
+        }),
+        projectRoot,
+      }),
+    ).rejects.toThrow(/invalid glossary/);
   });
 
   it("silently skips locales whose glossary file does not exist", async () => {
@@ -201,6 +261,10 @@ describe("hashGlossary", () => {
     version: "2025-04",
     doNotTranslate: ["Cloudflare", "R2", "Workers"],
     preferredTranslations: { blog: "blog", edge: "borda" },
+    styleRules: [
+      { category: "tone", instruction: "Formal register." },
+      { category: "numbers", instruction: "Comma decimal.", example: "21.3 → 21,3" },
+    ],
     notes: "Brazilian Portuguese.",
   };
 
@@ -267,6 +331,53 @@ describe("hashGlossary", () => {
 
   it("differs when notes change", () => {
     expect(hashGlossary(sample)).not.toBe(hashGlossary({ ...sample, notes: "different notes" }));
+  });
+
+  it("differs when a style rule's instruction changes", () => {
+    expect(hashGlossary(sample)).not.toBe(
+      hashGlossary({
+        ...sample,
+        styleRules: [{ ...sample.styleRules[0]!, instruction: "Different." }, sample.styleRules[1]!],
+      }),
+    );
+  });
+
+  it("differs when a style rule gains or loses an example", () => {
+    expect(hashGlossary(sample)).not.toBe(
+      hashGlossary({
+        ...sample,
+        styleRules: [{ ...sample.styleRules[0]!, example: "new" }, sample.styleRules[1]!],
+      }),
+    );
+  });
+
+  it("differs when style rules are reordered (author order is significant)", () => {
+    // Unlike doNotTranslate (sorted) and preferredTranslations (key-
+    // sorted on hash), styleRules are hashed in author order because
+    // the prompt renders them in that same order. Reordering the
+    // YAML changes the prompt, so it must change the hash.
+    expect(hashGlossary(sample)).not.toBe(
+      hashGlossary({
+        ...sample,
+        styleRules: [sample.styleRules[1]!, sample.styleRules[0]!],
+      }),
+    );
+  });
+
+  it("is stable across rule-key reorderings within a single rule", () => {
+    // YAML key order inside a rule shouldn't matter — the canonical
+    // form forces `category, instruction, example`. We can't reorder
+    // TS object keys at runtime in a way the engine respects, so the
+    // best we can do here is verify that an equivalent rule built
+    // with a different literal order hashes the same.
+    const reorderedRule: Glossary["styleRules"][number] = (() => {
+      const r: Record<string, string> = {};
+      r.example = "21.3 → 21,3";
+      r.instruction = "Comma decimal.";
+      r.category = "numbers";
+      return r as unknown as Glossary["styleRules"][number];
+    })();
+    expect(hashGlossary({ ...sample, styleRules: [sample.styleRules[0]!, reorderedRule] })).toBe(hashGlossary(sample));
   });
 
   it("EMPTY_GLOSSARY_HASH equals hashGlossary(EMPTY_GLOSSARY)", () => {

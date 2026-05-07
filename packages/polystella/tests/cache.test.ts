@@ -427,12 +427,14 @@ describe("translateOrLoadFromCache — glossary-edit invalidation", () => {
       version: "v1",
       doNotTranslate: ["Cloudflare", "TLS"],
       preferredTranslations: { edge: "borda" },
+      styleRules: [],
       notes: "",
     };
     const initialJaJP: Glossary = {
       version: "v1",
       doNotTranslate: ["Cloudflare", "TLS"],
       preferredTranslations: {},
+      styleRules: [],
       notes: "",
     };
 

@@ -9,7 +9,7 @@
 # Bump `version` whenever you make a meaningful edit so the cache
 # invalidation is intentional and reviewable in version control.
 
-version: "2026-04"
+version: "2026-05"
 
 # Terms that must NOT be translated. They appear verbatim in output.
 # Japanese technical writing routinely keeps protocol and crypto
@@ -126,12 +126,57 @@ doNotTranslate:
 # the default model output may waver between hiragana / katakana / kanji.
 preferredTranslations:
   edge: エッジ
+  latency: 遅延
+  bandwidth: 帯域幅
+  encryption: 暗号化
+  handshake: ハンドシェイク
+  certificate: 証明書
   blog post: ブログ記事
   research paper: 研究論文
   publication: 論文
   publications: 論文一覧
   presentation: 発表
   keynote: 基調講演
+
+# Categorised style rules. Author order is preserved in the rendered
+# prompt and folded into the hash, so reorder deliberately.
+#
+# Curated from the Smartling ja-JP ASG, narrowed to mechanical rules
+# the model still gets wrong without explicit nudging (punctuation
+# width, date format, list-item style). Tone framing remains in the
+# notes block below.
+styleRules:
+  - category: punctuation
+    instruction: >-
+      Use full-width punctuation (、 。) for Japanese prose. ASCII commas
+      and periods stay only inside code identifiers, URLs, and
+      Latin-script author names.
+  - category: punctuation
+    instruction: >-
+      Use 「…」 for inline quotations and 『…』 for nested quotations or
+      titles of works. Do not substitute ASCII straight quotes.
+  - category: punctuation
+    instruction: >-
+      Use full-width parentheses （…） around Japanese text and ASCII
+      parentheses (…) around Latin-script identifiers, even when the
+      surrounding sentence is in Japanese.
+  - category: dates
+    instruction: >-
+      Format dates as "YYYY年M月D日" (no leading zeros). Use the wave
+      dash 〜 — not an en-dash or hyphen — for date or time ranges.
+    example: "October 13–16, 2024 → 2024年10月13日〜16日"
+  - category: numbers
+    instruction: >-
+      Use ASCII digits (1, 2, 3) and ASCII commas as thousands separators
+      in technical writing, even within Japanese prose. Do not use
+      full-width digits except in body prose where a small integer reads
+      naturally as a Japanese counter ("3つの理由").
+    example: "1,000 users → 1,000ユーザー"
+  - category: list-items
+    instruction: >-
+      Bullet items that are factual labels or noun phrases (no
+      second-person addressing) may use the である / noun-ending style for
+      compactness. Full sentences in body prose stay in です・ます.
 
 # Free-text instructions appended verbatim to the translator prompt.
 notes: |

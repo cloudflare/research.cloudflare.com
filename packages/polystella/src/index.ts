@@ -32,6 +32,7 @@ export {
   loadGlossaries,
   type Glossary,
   type LoadGlossariesOptions,
+  type StyleRule,
 } from "./glossary/glossary.js";
 export { applyTranslations } from "./parsing/apply.js";
 export { rewriteInternalLinks, rewriteUrlIfInternal, type RewriteInternalLinksOptions } from "./parsing/rewrite-links.js";

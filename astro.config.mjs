@@ -17,11 +17,11 @@ export default defineConfig({
   output: "static",
   // Locale set: source of truth for both Astro routing and PolyStella.
   // Existing English routes stay at their current paths; non-default
-  // locales mount under `/pt-BR/...` and `/ja-JP/...` once PolyStella's
-  // route injection lands.
+  // locales mount under `/pt-BR/...`, `/ja-JP/...`, and `/es-ES/...`
+  // once PolyStella's route injection lands.
   i18n: {
     defaultLocale: "en",
-    locales: ["en", "pt-BR", "ja-JP"],
+    locales: ["en", "pt-BR", "ja-JP", "es-ES"],
     routing: { prefixDefaultLocale: false },
   },
   fonts: [

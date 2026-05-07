@@ -16,10 +16,15 @@ import "dotenv/config";
  *
  *   1. Local build (`pnpm build` / `pnpm dev`, no env signals):
  *      Read main's `i18n/` prefix, never write to R2. A developer's
- *      build can never overwrite production data; if their edits
- *      change the source hash, translation still happens but the
- *      bytes only land in local staging — paid by the dev's
- *      Workers AI quota and discarded at the next clean.
+ *      build can never overwrite production data. Translation is
+ *      skipped by default (`dryRun: true`) to avoid burning Workers
+ *      AI quota on routine content edits — previously-staged files
+ *      remain on disk so existing translations still render.
+ *
+ *      Opt in explicitly with `POLYSTELLA_TRANSLATE=1 pnpm build`
+ *      (or the convenience script `pnpm translate:build`) to run
+ *      the AI pass locally; the bytes still only land in local
+ *      staging and are discarded at the next clean.
  *
  *   2. CI build (Workers Builds, `WORKERS_CI_BRANCH` set by the
  *      runtime): main writes to `i18n/`, every other branch writes
@@ -33,11 +38,6 @@ import "dotenv/config";
  *      developer write to R2 from outside CI; the explicit
  *      invocation is the consent.
  *
- * Detection cascade:
- *   - `inCi`         — `WORKERS_CI_BRANCH` is set (ONLY Workers
- *                      Builds sets this; local shells don't).
- *   - `inCli`        — `POLYSTELLA_CLI === "1"` (set by our CLI).
- *   - `isLocalBuild` — neither of the above.
  *
  * Branch sanitisation:
  *   Branch names commonly contain `/` (e.g. `diogo/polystella-v1`).
@@ -113,11 +113,7 @@ const config = {
   // schema in `src/content.config.ts` validates against
   // `entry.data.featuredResearch`.
   tomlKeys: {
-    "site.toml": [
-      "main.featuredResearch.title",
-      "main.featuredResearch.description",
-      "main.featuredResearch.buttonLabel",
-    ],
+    "site.toml": ["main.featuredResearch.title", "main.featuredResearch.description", "main.featuredResearch.buttonLabel"],
   },
 
   // ─── Standalone-mode routing ─────────────────────────────────────────
@@ -213,6 +209,10 @@ const config = {
       // model — wrong fit for prose translation). Qwen family is
       // best-in-class for CJK per the RFC's reasoning.
       "ja-JP": "@cf/qwen/qwen3-30b-a3b-fp8",
+      // es-ES intentionally falls back to the default. Llama 3.1
+      // handles Spanish prose well; revisit if native-speaker review
+      // surfaces consistent issues with academic register or with the
+      // formal/impersonal constructions pinned in the glossary.
     },
     // endpoint: "https://...",            // override the default WAI endpoint
   },
@@ -273,8 +273,10 @@ const config = {
   // concurrency: 4,
 
   // When `true`, log what would happen but do not call R2 or the
-  // provider. Useful for CI smoke checks.
-  // dryRun: false,
+  // provider. Local builds default to dry-run to avoid burning
+  // Workers AI quota on routine edits; opt in with
+  // `POLYSTELLA_TRANSLATE=1 pnpm build` or `pnpm translate:build`.
+  dryRun: isLocalBuild && process.env.POLYSTELLA_TRANSLATE !== "1",
 
   // Lifecycle hooks the integration runs in. Production builds always
   // include "build"; "dev" enables in-process translation while you

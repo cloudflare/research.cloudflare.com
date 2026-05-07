@@ -12,7 +12,8 @@
     "ui": "NODE_TLS_REJECT_UNAUTHORIZED=0 pnpm dlx shadcn@latest add",
     "format": "prettier --write .",
     "translate": "tsx packages/polystella/src/cli.ts",
-    "translate:dry": "tsx packages/polystella/src/cli.ts --dry-run"
+    "translate:dry": "tsx packages/polystella/src/cli.ts --dry-run",
+    "translate:build": "POLYSTELLA_TRANSLATE=1 pnpm build"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.1.10",
