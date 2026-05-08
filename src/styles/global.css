@@ -319,6 +319,11 @@
 
 @layer base, page, components;
 
+/* Translation-notice anti-flash; paired with TranslationNotice.astro */
+[data-translation-notice="dismissed"] .translation-banner {
+  display: none;
+}
+
 @layer base {
   html,
   body {

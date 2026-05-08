@@ -4,26 +4,20 @@ import { getLocalizedEntry } from "polystella/runtime";
 
 import HeaderPhilosophy from "@/components/HeaderPhilosophy.astro";
 import InteriorLayout from "@/layouts/interior.astro";
+import { computeTranslationStatus } from "@/lib/i18n-utils";
 
-// Thin wrapper around `src/content/pages/philosophy.mdx`. The MDX
-// file owns the prose and per-section layout (Section / NarrowContent
-// wrappers); this file owns chrome (the localised header, the
-// outer page layout) and orchestrates the locale-aware entry lookup.
-//
-// `<HeaderPhilosophy />` stays here (not in the MDX) because its
-// title/subtitle come from the UI-strings system, not from prose
-// translation. Same reasoning for `metaTitle` / `metaDescription`:
-// short, slow-changing strings that already live in the UI-strings
-// pipeline. The MDX's own frontmatter `metaTitle` is used as a
-// fallback when a translation has been produced.
+// Thin wrapper around `src/content/pages/philosophy.mdx`. The MDX file
+// owns the prose; this file owns the localised header + page chrome
+// and orchestrates the locale-aware entry lookup.
 const entry = await getLocalizedEntry("pages", "philosophy", Astro.currentLocale);
 if (!entry) {
   throw new Error("[philosophy] missing content/pages/philosophy.mdx entry");
 }
 const { Content } = await render(entry);
+const aiTranslationStatus = computeTranslationStatus(Astro.currentLocale, entry);
 ---
 
-<InteriorLayout metaTitle={entry.data.title}>
+<InteriorLayout metaTitle={entry.data.title} aiTranslationStatus={aiTranslationStatus}>
   <HeaderPhilosophy />
   <div class="[&_h2]:heading-label [&_h2]:mb-4">
     <Content />

@@ -1,15 +1,30 @@
 /**
  * `polystellaCollections` — public entry-point for the content-config
  * helper. Imports Astro's real `defineCollection`/`glob`/`file` and
- * feeds them into the pure core in `./build.ts` (which tests use
- * directly with synthetic deps, since `astro:content` doesn't
- * resolve outside Vite).
+ * the resolved locale set from `polystella:runtime-config` (which the
+ * integration's `astro:config:setup` hook populates from
+ * `astro.config.mjs`'s `i18n` block), then feeds the merged inputs
+ * into the pure core in `./build.ts`.
+ *
+ * Single source of truth: callers configure `i18n.locales` and
+ * `i18n.defaultLocale` exactly once, in `astro.config.mjs`. They are
+ * never repeated in `src/content.config.ts` — drift between the two
+ * configs is impossible by construction.
+ *
+ * Tests bypass this wrapper and call `buildCollections` from
+ * `./build.ts` directly with synthetic deps (since `astro:content`
+ * and `polystella:runtime-config` only resolve inside Vite).
  */
 
 import { defineCollection as astroDefineCollection } from "astro:content";
 import { glob as astroGlob, file as astroFile } from "astro/loaders";
+import { defaultLocale as configuredDefaultLocale, locales as configuredLocales } from "polystella:runtime-config";
 
-import { buildCollections, type PolystellaCollectionsOptions, type PolystellaCollectionsOutput } from "./build.js";
+import {
+  buildCollections,
+  type BuildCollectionsOptions,
+  type PolystellaCollectionsOutput,
+} from "./build.js";
 
 export {
   buildCollections,
@@ -17,8 +32,8 @@ export {
   type LoaderOverride,
   type LocaleSiblings,
   type PolystellaCollectionsDeps,
-  type PolystellaCollectionsOptions,
   type PolystellaCollectionsOutput,
+  type BuildCollectionsOptions,
 } from "./build.js";
 
 /**
@@ -29,21 +44,42 @@ export {
 export { file, readRecordedSourcePath, POLYSTELLA_SOURCE_PATH_KEY, type PolystellaFileLoader } from "./file-loader.js";
 
 /**
+ * Public-facing options for `polystellaCollections`. Locales and
+ * defaultLocale are auto-derived from `polystella:runtime-config` —
+ * users declare them once in `astro.config.mjs` and never repeat
+ * them here.
+ */
+export type PolystellaCollectionsOptions<TSource extends Record<string, unknown>> = Omit<
+  BuildCollectionsOptions<TSource, ReadonlyArray<string>>,
+  "locales" | "defaultLocale"
+>;
+
+/**
  * Returns `{ ...source, ...siblings }` — the right-hand side of
  * `export const collections = ...` in `src/content.config.ts`.
  *
- * `TLocales` is inferred from the caller's literal-typed `locales`
- * array, so sibling keys (`publications__pt-BR` etc.) are typed
- * identically to the source collection. Without this, every
- * `entry.data.*` access in consumer pages silently degrades to
- * `any`.
+ * The `string`-typed second generic parameter on the output reflects
+ * that locales are read at runtime from the integration's resolved
+ * config (not statically from a literal tuple at the call site). The
+ * mapped sibling-key type stays useful for indexed access — e.g.
+ * `out["publications__pt-BR"]` resolves to the publications schema —
+ * because Astro's content-types generator (`.astro/types.d.ts`)
+ * produces correct per-collection types from the actual files on
+ * disk anyway, independent of this object's TypeScript shape.
  */
-export function polystellaCollections<TSource extends Record<string, unknown>, TLocales extends readonly string[]>(
-  opts: PolystellaCollectionsOptions<TSource, TLocales>,
-): PolystellaCollectionsOutput<TSource, TLocales[number]> {
-  return buildCollections(opts, {
-    defineCollection: astroDefineCollection,
-    glob: astroGlob,
-    file: astroFile,
-  });
+export function polystellaCollections<TSource extends Record<string, unknown>>(
+  opts: PolystellaCollectionsOptions<TSource>,
+): PolystellaCollectionsOutput<TSource, string> {
+  return buildCollections(
+    {
+      ...opts,
+      locales: configuredLocales,
+      defaultLocale: configuredDefaultLocale,
+    },
+    {
+      defineCollection: astroDefineCollection,
+      glob: astroGlob,
+      file: astroFile,
+    },
+  );
 }

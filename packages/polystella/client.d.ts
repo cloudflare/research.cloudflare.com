@@ -1,12 +1,13 @@
 /**
- * Ambient type declaration for the runtime-config virtual module the
- * integration registers in `astro:config:setup`. The post-pivot
- * runtime is a pure dispatcher — picks between
- * `<collection>__<locale>` siblings and the source collection — so
- * the constants here are exactly the data the runtime needs at
- * page-render time. The integration's Vite plugin resolves the
- * import at build time; this declaration only exists to make
- * TypeScript and editors happy inside the package source.
+ * Ambient type declarations for PolyStella's virtual modules.
+ *
+ * Consumers should add the following triple-slash reference to their
+ * `src/env.d.ts` (or any other ambient declaration file) so editors
+ * and `tsc` can resolve `polystella:runtime-config` imports:
+ *
+ *     /// <reference types="polystella/client" />
+ *
+ * Mirrors Astro's own `astro/client` pattern.
  */
 
 declare module "polystella:runtime-config" {

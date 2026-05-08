@@ -25,7 +25,7 @@ TODO: Update to refer to install via github
 
 ## Quick start
 
-Three files participate in a typical setup.
+Four files participate in a typical setup.
 
 **1. `astro.config.mjs`** — register the integration. Locale set lives here (single source of truth).
 
@@ -45,7 +45,7 @@ export default defineConfig({
 
 **2. `polystella.config.mjs`** — provider, glossary, R2, format-specific keys. The repo root's `polystella.config.mjs` is the working reference; every option is documented inline.
 
-**3. `src/content.config.ts`** — register sibling content collections so Astro's content layer picks up the translations.
+**3. `src/content.config.ts`** — register sibling content collections so Astro's content layer picks up the translations. Locale set is auto-derived from `astro.config.mjs`'s `i18n` block.
 
 ```ts
 import { defineCollection } from "astro:content";
@@ -57,12 +57,16 @@ import { publications, people /* ... */ } from "./content-schemas";
 export const collections = {
   ...polystellaCollections({
     source: { publications, people },
-    locales: ["en-US", "pt-BR", "ja-JP"],
-    defaultLocale: "en-US",
   }),
   // Hand-authored UI-strings collection, drift-detected at build.
   i18n: defineCollection({ loader: i18nLoader(), schema: i18nSchema() }),
 };
+```
+
+**4. `src/env.d.ts`** — pick up types for PolyStella's virtual modules (`polystella:runtime-config`). Mirrors Astro's own `astro/client` pattern.
+
+```ts
+/// <reference types="polystella/client" />
 ```
 
 In a page, use `getLocalizedEntry` instead of `getEntry`:

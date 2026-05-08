@@ -8,8 +8,10 @@ import Section from "@/components/Section.astro";
 import ButtonLink from "@/components/ButtonLink.astro";
 import Icon from "@/components/Icon.astro";
 import { getCollection } from "astro:content";
+import { getLocalizedEntry } from "polystella/runtime";
 import { CONSTANTS } from "@/lib/constants";
 import SeeMore from "@/components/SeeMore.astro";
+import { computeTranslationStatus } from "@/lib/i18n-utils";
 
 const { t, lhref } = Astro.locals;
 
@@ -21,9 +23,19 @@ const recentPublications = (await getCollection("publications", ({ data }) => da
     return dateB.getTime() - dateA.getTime();
   })
   .slice(0, 3);
+
+// Load the featured-research entry here (in addition to inside
+// `<FeaturedResearch />`) to drive `aiTranslationStatus` from its
+// `aiTranslated` marker. Astro's content layer caches the lookup.
+const siteEntry = await getLocalizedEntry("site", "main", Astro.currentLocale);
+const aiTranslationStatus = computeTranslationStatus(Astro.currentLocale, siteEntry);
 ---
 
-<BaseLayout bodyClassName="home" metaDescription={t("home.metaDescription")}>
+<BaseLayout
+  bodyClassName="home"
+  metaDescription={t("home.metaDescription")}
+  aiTranslationStatus={aiTranslationStatus}
+>
   <Fragment slot="head">
     <link rel="preload" href="/unicornStudio.umd.js" as="script" />
     <link rel="preload" href="/blue_liquid.json" as="fetch" crossorigin />

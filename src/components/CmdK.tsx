@@ -1,4 +1,3 @@
-import React from "react";
 import Icon from "./Icon";
 import { Dialog, DialogTrigger, DialogContent } from "./ui/dialog";
 

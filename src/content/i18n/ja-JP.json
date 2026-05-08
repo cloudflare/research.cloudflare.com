@@ -104,5 +104,10 @@
   "seo.moreMeasurable": "インターネット測定、検証可能なシステム、より透明なウェブを保証するオープンスタンダードに関する論文とインサイトにアクセスできます。",
 
   "a11y.toggleMenu": "メニューを切り替える",
-  "a11y.closeMenu": "メニューを閉じる"
+  "a11y.closeMenu": "メニューを閉じる",
+
+  "notice.aiTranslated.body": "このコンテンツは自動機械翻訳サービスによる翻訳版であり、皆さまの便宜のために提供しています。原本の英語版と異なる誤り、省略、解釈の微妙な違いが含まれる場合があります。ご不明な点がある場合は、英語版原本をご確認ください。",
+  "notice.aiTranslated.viewOriginal": "英語版原本を見る",
+  "notice.aiTranslated.dismiss": "閉じる",
+  "notice.aiTranslated.badge": "機械翻訳"
 }

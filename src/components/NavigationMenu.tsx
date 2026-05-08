@@ -14,20 +14,24 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { CONSTANTS } from "@/lib/constants";
+import { locales, localeName, swapLocale } from "@/lib/i18n-utils";
 import { useLocalizedHref, useTranslations } from "polystella/react";
 
 interface NavMenuProps {
   dict: Record<string, string>;
   locale: string;
+  /** `Astro.url.pathname` for the mobile drawer's locale links. */
+  pathname: string;
 }
 
-export function NavMenu({ dict, locale }: NavMenuProps) {
+export function NavMenu({ dict, locale, pathname }: NavMenuProps) {
   const t = useTranslations(dict);
   const lhref = useLocalizedHref(locale);
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [focusAreasOpen, setFocusAreasOpen] = React.useState(false);
   const [aboutOpen, setAboutOpen] = React.useState(false);
+  const [languageOpen, setLanguageOpen] = React.useState(false);
 
   const components: { title: string; href: string; description: string }[] = React.useMemo(
     () => [
@@ -164,6 +168,39 @@ export function NavMenu({ dict, locale }: NavMenuProps) {
                     >
                       {t("nav.philosophy")}
                     </a>
+                  </div>
+                )}
+              </div>
+
+              {/* Language section */}
+              <div>
+                <button
+                  onClick={() => setLanguageOpen(!languageOpen)}
+                  className="text-lg font-medium text-page-text hover:text-baby-blue-eyes transition-colors w-full text-left flex items-center justify-between"
+                  aria-label={t("nav.localePicker.label")}
+                  aria-expanded={languageOpen}
+                >
+                  {t("nav.localePicker.label")}
+                  <span className="text-sm pr-3">{languageOpen ? "−" : "+"}</span>
+                </button>
+                {languageOpen && (
+                  <div className="mt-4 space-y-4 pl-4">
+                    {locales.map((targetLocale) => {
+                      const isCurrent = targetLocale === locale;
+                      return (
+                        <a
+                          key={targetLocale}
+                          href={swapLocale(pathname, targetLocale)}
+                          hrefLang={targetLocale}
+                          lang={targetLocale}
+                          aria-current={isCurrent ? "true" : undefined}
+                          className={`block text-base text-page-text hover:text-baby-blue-eyes transition-colors ${isCurrent ? "font-medium" : ""}`}
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          {localeName(targetLocale)}
+                        </a>
+                      );
+                    })}
                   </div>
                 )}
               </div>

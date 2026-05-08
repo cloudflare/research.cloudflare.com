@@ -34,12 +34,16 @@
       "types": "./src/react/index.ts",
       "default": "./src/react/index.ts"
     },
+    "./client": {
+      "types": "./client.d.ts"
+    },
     "./components/LocalePicker.astro": "./components/LocalePicker.astro"
   },
   "files": [
     "src",
     "components",
-    "dist"
+    "dist",
+    "client.d.ts"
   ],
   "scripts": {
     "test": "vitest run",

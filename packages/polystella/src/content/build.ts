@@ -59,19 +59,25 @@ export type PolystellaCollectionsOutput<TSource extends Record<string, unknown>,
   LocaleSiblings<TSource, TLocales>;
 
 /**
- * Options for `polystellaCollections`. The helper preserves `source`
- * verbatim and adds locale-suffixed siblings alongside.
+ * Options consumed by the pure-core `buildCollections` (this file).
+ * Distinct from the public `PolystellaCollectionsOptions` exported by
+ * `./index.ts`, which omits `locales` / `defaultLocale` and lets the
+ * wrapper read them from `polystella:runtime-config` for a
+ * single-source-of-truth contract with `astro.config.mjs`. Tests
+ * reach this internal shape directly so they can pin literal locale
+ * tuples without booting the integration.
  */
-export interface PolystellaCollectionsOptions<
+export interface BuildCollectionsOptions<
   TSource extends Record<string, unknown>,
   TLocales extends readonly string[] = readonly string[],
 > {
   /** User's source collections, keyed by name. */
   source: TSource;
   /**
-   * Target locales. Typically mirrors `i18n.locales` from
-   * `astro.config.mjs`. Pass `defaultLocale` separately so the helper
-   * can filter it out — a `publications__en` sibling on top of
+   * Target locales. The pure core takes them explicitly; the public
+   * wrapper injects them from `polystella:runtime-config`.
+   * `defaultLocale` is filtered out of this set before sibling
+   * generation — a `publications__en` sibling on top of
    * `publications` would self-translate.
    */
   locales: TLocales;
@@ -135,7 +141,7 @@ const DEFAULT_SOURCE_DIR = "./content";
  * warn-and-skip; suppress via `skipLocalize` or `loaderOverrides`.
  */
 export function buildCollections<TSource extends Record<string, unknown>, TLocales extends readonly string[]>(
-  opts: PolystellaCollectionsOptions<TSource, TLocales>,
+  opts: BuildCollectionsOptions<TSource, TLocales>,
   deps: PolystellaCollectionsDeps,
 ): PolystellaCollectionsOutput<TSource, TLocales[number]> {
   const {

@@ -6,6 +6,7 @@ import Section from "../components/Section.astro";
 import NarrowContent from "../components/NarrowContent.astro";
 import { getCollection } from "astro:content";
 import { getLocalizedEntry } from "polystella/runtime";
+import { computeTranslationStatus } from "@/lib/i18n-utils";
 
 export async function getStaticPaths() {
   const publications = await getCollection("publications");
@@ -31,9 +32,11 @@ const resolvedAuthors = publication?.data.authors
 
 // Filter out any undefined entries (missing authors)
 const authors = resolvedAuthors?.filter((author): author is NonNullable<typeof author> => author !== undefined);
+
+const aiTranslationStatus = computeTranslationStatus(Astro.currentLocale, publication);
 ---
 
-<InteriorLayout metaTitle="Blog">
+<InteriorLayout metaTitle="Blog" aiTranslationStatus={aiTranslationStatus}>
   <Section>
     <NarrowContent>
       <div class="mb-3">

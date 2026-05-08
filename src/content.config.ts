@@ -119,15 +119,14 @@ const i18n = defineCollection({
 //    `<collection>__<locale>` whose loader points at
 //    `.astro/i18n-staging/<locale>/<collection>/<rest>`. The build
 //    hook stages translated content there during `astro build`.
+//
+//    Locales and defaultLocale are auto-derived from
+//    `astro.config.mjs`'s `i18n` block (via `polystella:runtime-config`),
+//    so they're declared exactly once across the whole project.
 export const collections = {
   i18n,
   ...polystellaCollections({
     source: { site, people, publications, tags, presentations, blog, pages },
-    // Mirror Astro's `i18n.locales` from astro.config.mjs. The helper
-    // strips `defaultLocale` defensively so we don't register a
-    // self-translation sibling.
-    locales: ["en-US", "pt-BR", "ja-JP"],
-    defaultLocale: "en-US",
     loaderOverrides: {
       // `blog` uses a custom loader; opting it out so the warning goes
       // away. Blog posts are English-only by design today.

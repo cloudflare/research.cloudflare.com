@@ -1,5 +1,7 @@
 ---
 import Footer from "../components/Footer.astro";
+import TranslationNotice from "../components/TranslationNotice.astro";
+import { defaultLocale, type TranslationStatus } from "@/lib/i18n-utils";
 import "../styles/global.css";
 import { Font } from "astro:assets";
 
@@ -7,12 +9,24 @@ type Props = {
   metaTitle?: string;
   metaDescription?: string;
   bodyClassName?: string;
+  /**
+   * Page's translation provenance. Drives the AI-translation banner +
+   * footer badge. Pages with a primary localized entry pass the
+   * precise value computed via `computeTranslationStatus`; otherwise
+   * defaults to `"ai"` for non-default locales, `"source"` otherwise.
+   */
+  aiTranslationStatus?: TranslationStatus;
 };
 
-const { metaTitle, metaDescription, bodyClassName = "" } = Astro.props;
+const { metaTitle, metaDescription, bodyClassName = "", aiTranslationStatus } = Astro.props;
+
+const currentLocale = Astro.currentLocale ?? defaultLocale;
+const isNonDefaultLocale = currentLocale !== defaultLocale;
+const resolvedTranslationStatus = aiTranslationStatus ?? (isNonDefaultLocale ? "ai" : "source");
+const showTranslationNotice = resolvedTranslationStatus === "ai";
 ---
 
-<html lang={Astro.currentLocale ?? "en-US"}>
+<html lang={currentLocale}>
   <head>
     <meta charset="utf-8" />
     <link rel="icon" type="image/png" href="/favicon.png" />
@@ -37,12 +51,41 @@ const { metaTitle, metaDescription, bodyClassName = "" } = Astro.props;
     <Font cssVariable="--font-inter" preload />
     <Font cssVariable="--font-roboto-mono" preload />
 
+    {
+      /*
+       * Translation-notice anti-flash. Runs synchronously before any
+       * body content paints; reads localStorage and sets
+       * `data-translation-notice="dismissed"` on `<html>` if the
+       * visitor has previously dismissed the banner for this locale.
+       * The CSS rule in `global.css` then hides `.translation-banner`
+       * before its first paint. Pair: dismiss handler in
+       * `TranslationNotice.astro`. Version literal `v1` must match
+       * that file's `NOTICE_VERSION`.
+       *
+       * Only injected on non-default locales — default locale never
+       * shows the banner, so the read would be wasted work.
+       */
+    }
+    {/* Anti-flash for the translation notice; pairs with TranslationNotice.astro */}
+    {
+      isNonDefaultLocale && (
+        <script is:inline define:vars={{ locale: currentLocale, version: "v1" }}>
+          try {
+            if (localStorage.getItem("polystella:notice:" + locale + ":" + version) === "dismissed") {
+              document.documentElement.dataset.translationNotice = "dismissed";
+            }
+          } catch (e) {}
+        </script>
+      )
+    }
+
     <slot name="head" />
   </head>
   <body class={bodyClassName || ""}>
     <main class={`w-full max-w-page mx-auto ${bodyClassName !== "home" ? "md:dashed-borders" : ""}`}>
       <slot />
-      <Footer />
+      <Footer aiTranslationStatus={resolvedTranslationStatus} />
     </main>
+    {showTranslationNotice && <TranslationNotice />}
   </body>
 </html>

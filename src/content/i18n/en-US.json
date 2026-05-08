@@ -104,5 +104,10 @@
   "seo.moreMeasurable": "Access publications and insights on internet measurement, verifiable systems, and the open standards ensuring a more transparent web",
 
   "a11y.toggleMenu": "Toggle menu",
-  "a11y.closeMenu": "Close menu"
+  "a11y.closeMenu": "Close menu",
+
+  "notice.aiTranslated.body": "This content has been translated using an automated machine translation service and it's provided for your convenience. It may contain errors, omissions, or interpretational nuances that differ from the original English version. Please refer to the original English version in case of doubts.",
+  "notice.aiTranslated.viewOriginal": "View original in English",
+  "notice.aiTranslated.dismiss": "Dismiss",
+  "notice.aiTranslated.badge": "Machine-translated"
 }
