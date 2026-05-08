@@ -5,7 +5,7 @@ import type { AdapterApplyOptions, AdapterExtractOptions, AdapterRewriteUrlsOpti
 import { applyTranslations } from "../apply.js";
 import { extractSegments, peekNoTranslate, selectTranslatableFrontmatter } from "../extract.js";
 import type { Segment } from "../extract.js";
-import { parseMarkdown } from "../parse.js";
+import { parseMarkdown, parseMdx } from "../parse.js";
 
 /**
  * Markdown / MDX adapter. Wraps the existing `parse.ts` / `extract.ts`
@@ -29,7 +29,21 @@ import { parseMarkdown } from "../parse.js";
 export const markdownAdapter: FileTypeAdapter<Root> = {
   extensions: [".md", ".mdx"],
 
-  parse: parseMarkdown,
+  /**
+   * Dispatch parser by file extension: `.mdx` opts into MDX-aware
+   * parsing (recognising `import`/`export`, JSX components, and
+   * expression bindings as first-class AST nodes); `.md` (or no
+   * hint) uses pure markdown. The hint is optional for backward
+   * compatibility — callers pre-dating the multi-format dispatch
+   * still get plain-markdown parsing, which matches the historical
+   * behaviour for `.mdx` files (treated as markdown with HTML).
+   */
+  parse(source: string, sourcePath?: string): Root {
+    if (sourcePath !== undefined && sourcePath.toLowerCase().endsWith(".mdx")) {
+      return parseMdx(source);
+    }
+    return parseMarkdown(source);
+  },
 
   extractSegments(parsed: Root, source: string, opts: AdapterExtractOptions): Segment[] {
     // The existing extractor takes the user-facing `frontmatter` map;

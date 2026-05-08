@@ -10,7 +10,7 @@ The full design lives in `polystella-design-collections-c011ec.md`; this README 
 
 - **Build-time translation.** Translates `.md` (and other formats — see below) into additional locales during `astro build`. Visitors get static bytes; no runtime AI calls.
 - **R2-cached.** Translations are content-addressed by source bytes + glossary + model. Unchanged pages cost zero on rebuild. Translations are never committed to the repo.
-- **Pluggable file formats.** Currently Markdown and TOML. YAML, JSON, MDX, and an OpenAPI preset are planned.
+- **Pluggable file formats.** Currently Markdown, MDX, and TOML. YAML, JSON, and an OpenAPI preset are planned.
 - **Per-locale model selection.** Latin-script and CJK locales can use different models.
 - **Glossary control.** A YAML file per locale pins do-not-translate terms, preferred translations, and free-form translator notes. Edits to the glossary re-translate only the pages that need it.
 - **Hand-translation overrides.** Drop a markdown file at `i18n/overrides/{locale}/<mirrored-path>` and it wins over AI output verbatim.
@@ -178,7 +178,7 @@ A developer's local build cannot overwrite production. Preview branches stay iso
 | Build report (`i18n-r2-report.json`) | Shipped         |
 | YAML / JSON adapters                 | Planned         |
 | OpenAPI preset                       | Planned         |
-| Real MDX support                     | Planned (v0.2)  |
+| MDX adapter                          | Shipped         |
 | Starlight mode                       | Planned (v0.2)  |
 | `hreflang` sitemap                   | Planned (v0.2)  |
 | Public npm release                   | Not yet (v0.3+) |

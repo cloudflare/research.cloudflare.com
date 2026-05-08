@@ -42,8 +42,14 @@ export interface FileTypeAdapter<TParsed = unknown> {
    * Pure: no I/O, no Astro coupling. Throws on syntactic errors so
    * the per-pair try/catch in `runTranslationPass` can surface them
    * without aborting the build.
+   *
+   * `sourcePath` (optional) lets adapters that claim multiple
+   * extensions dispatch on the actual file type — the markdown
+   * adapter uses it to choose between `.md` (plain markdown) and
+   * `.mdx` (MDX-aware) parsing. Adapters that own a single extension
+   * can ignore it.
    */
-  parse(source: string): TParsed;
+  parse(source: string, sourcePath?: string): TParsed;
 
   /**
    * Extract translatable segments. `source` is passed through so

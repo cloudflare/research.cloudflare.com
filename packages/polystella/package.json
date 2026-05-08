@@ -51,6 +51,7 @@
     "picomatch": "^4.0.2",
     "remark-frontmatter": "^5.0.0",
     "remark-gfm": "^4.0.1",
+    "remark-mdx": "^3.1.1",
     "remark-parse": "^11.0.0",
     "s3mini": "^0.9.4",
     "smol-toml": "^1.6.1",

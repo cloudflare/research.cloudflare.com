@@ -82,7 +82,7 @@ const config = {
   // Glob patterns relative to `sourceDir`. A file is considered for
   // translation if it matches at least one `include` and no `exclude`.
   // include: ["**/*.md", "**/*.mdx"],
-  include: ["publications/*.md", "site.toml"],
+  include: ["publications/*.md", "site.toml", "pages/*.mdx"],
   // exclude: [],
   //
   // Staged-rollout example — translate publications first:
@@ -113,6 +113,7 @@ const config = {
   markdown: {
     keys: {
       "publications/**": ["title", "metaDescription", "related_interests"],
+      "pages/**": ["title"],
       //"people/**": ["bio"],
       //"tags/**": ["title", "description"],
     },
@@ -280,16 +281,6 @@ const config = {
   prompt: {
     context:
       "Specialise in technical research content from the Cloudflare Research portal: cryptography, networking, distributed systems, and applied security.",
-  },
-
-  // ─── Debug: preview-output directory ─────────────────────────────────
-  // Until the cache + route-injection layers land, translated MDX is
-  // discarded after each successful build. Setting `debug.previewDir`
-  // dumps every (locale, file) result to disk so you can diff/spot-check
-  // the translations. Path is relative to the Astro project root and is
-  // gitignored. Remove this block once the cache layer takes over.
-  debug: {
-    previewDir: "./i18n/.preview",
   },
 
   // ─── Hand-written translation overrides ──────────────────────────────

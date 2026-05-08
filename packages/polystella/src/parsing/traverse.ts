@@ -9,8 +9,35 @@ import type { Heading, Paragraph, Root, TableCell } from "mdast";
 /** Block-level nodes carrying translatable inline text. */
 const TRANSLATABLE_BLOCK_TYPES = new Set(["paragraph", "heading", "tableCell"]);
 
-/** Containers we descend into without emitting a segment for the container itself. */
-const RECURSE_INTO_TYPES = new Set(["root", "blockquote", "list", "listItem", "table", "tableRow", "footnoteDefinition"]);
+/**
+ * Containers we descend into without emitting a segment for the
+ * container itself. Includes MDX block-level JSX components
+ * (`mdxJsxFlowElement`) so prose written inside `<Section>`...
+ * `</Section>` reaches the extractor — without this, MDX files would
+ * treat component-wrapped content as opaque.
+ *
+ * `mdxJsxTextElement` is NOT here: it's an inline node, only ever
+ * a child of paragraphs / headings / table cells. Inline nodes are
+ * inside the byte-spliced inline span, so the byte-splicer handles
+ * them transparently — recursing into them at the block level would
+ * double-process.
+ *
+ * Other MDX node types intentionally absent (= ignored, byte-perfect
+ * preserved):
+ *   - `mdxjsEsm` — ESM imports/exports at the file root.
+ *   - `mdxFlowExpression` — block-level `{...}` expressions.
+ *   - `mdxTextExpression` — inline `{...}` (handled by inline span).
+ */
+const RECURSE_INTO_TYPES = new Set([
+  "root",
+  "blockquote",
+  "list",
+  "listItem",
+  "table",
+  "tableRow",
+  "footnoteDefinition",
+  "mdxJsxFlowElement",
+]);
 
 export type TranslatableBlock = Paragraph | Heading | TableCell;
 

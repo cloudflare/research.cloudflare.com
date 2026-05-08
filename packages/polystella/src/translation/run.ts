@@ -387,7 +387,7 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
         return;
       }
       const body = await readFile(source.absolutePath, "utf8");
-      const parsed = adapter.parse(body);
+      const parsed = adapter.parse(body, source.relativePath);
       const adapterOpts: AdapterExtractOptions = {
         sourcePath: source.relativePath,
         translatableKeys: pickTranslatableKeysForAdapter(adapter, resolved),
@@ -526,7 +526,7 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
       return;
     }
     const body = await readFile(source.absolutePath, "utf8");
-    const parsed = adapter.parse(body);
+    const parsed = adapter.parse(body, source.relativePath);
     const adapterOpts: AdapterExtractOptions = {
       sourcePath: source.relativePath,
       translatableKeys: pickTranslatableKeysForAdapter(adapter, resolved),
