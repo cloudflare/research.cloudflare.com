@@ -186,17 +186,14 @@ import polystella, { astroSitemapI18n } from "polystella";
 // routing, PolyStella translation, AND the sitemap helper. One source
 // of truth for the locale list; the three integrations stay in sync.
 const i18n = {
-  defaultLocale: "en",
-  locales: ["en", "pt-BR", "ja-JP", "es-ES"],
+  defaultLocale: "en-US",
+  locales: ["en-US", "pt-BR", "ja-JP", "es-ES"],
   routing: { prefixDefaultLocale: false },
 };
 
 export default defineConfig({
   i18n,
-  integrations: [
-    sitemap(astroSitemapI18n(i18n, { hreflang: { en: "en-US" } })),
-    polystella(polystellaConfig),
-  ],
+  integrations: [sitemap(astroSitemapI18n(i18n, { hreflang: { en: "en-US" } })), polystella(polystellaConfig)],
 });
 ```
 
@@ -208,7 +205,7 @@ Compose with other sitemap options via spread:
 sitemap({
   ...astroSitemapI18n(i18n, { hreflang: { en: "en-US" } }),
   filter: (page) => !page.includes("/draft/"),
-})
+});
 ```
 
 Validation: `defaultLocale` must appear in `locales`, locale codes must be unique, and any `hreflang` override key must match a configured locale. Default behavior is identity-mapping (locale code is its own hreflang); the optional `hreflang` map is for cases where the URL prefix differs from the BCP 47 string you want emitted (most commonly `en` URL → `en-US` hreflang). The object form of Astro locales (`{ codes: [...], path: "..." }`, used for multi-code path groups) is currently rejected — configure `@astrojs/sitemap`'s `i18n` option manually for that case.

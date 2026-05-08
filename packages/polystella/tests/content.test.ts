@@ -240,8 +240,8 @@ describe("buildCollections — defaultLocale filtering", () => {
         // Mirrors `i18n.locales` which by Astro's contract includes
         // the default. The helper should not register a self-translation
         // sibling.
-        locales: ["en", "pt-BR", "ja-JP"],
-        defaultLocale: "en",
+        locales: ["en-US", "pt-BR", "ja-JP"],
+        defaultLocale: "en-US",
       },
       deps,
     );
@@ -516,8 +516,8 @@ describe("buildCollections — empty inputs", () => {
     const out = buildCollections(
       {
         source: { publications },
-        locales: ["en"],
-        defaultLocale: "en",
+        locales: ["en-US"],
+        defaultLocale: "en-US",
       },
       deps,
     );
@@ -614,10 +614,7 @@ describe("buildCollections — file() auto-detection (polystella's wrapped loade
       recordedPath: "./content/configs/site.toml",
     });
 
-    buildCollections(
-      { source: { site }, locales: ["pt-BR"], sourceDir: "./content" },
-      deps,
-    );
+    buildCollections({ source: { site }, locales: ["pt-BR"], sourceDir: "./content" }, deps);
 
     expect(fileCalls).toEqual([{ path: ".astro/i18n-staging/pt-BR/configs/site.toml" }]);
   });
@@ -628,10 +625,7 @@ describe("buildCollections — file() auto-detection (polystella's wrapped loade
       recordedPath: "./src/data/site.toml",
     });
 
-    buildCollections(
-      { source: { site }, locales: ["pt-BR"], sourceDir: "./src/data" },
-      deps,
-    );
+    buildCollections({ source: { site }, locales: ["pt-BR"], sourceDir: "./src/data" }, deps);
 
     expect(fileCalls).toEqual([{ path: ".astro/i18n-staging/pt-BR/site.toml" }]);
   });
@@ -647,10 +641,7 @@ describe("buildCollections — file() auto-detection (polystella's wrapped loade
       recordedPath: "./other/site.toml",
     });
 
-    const out = buildCollections(
-      { source: { site }, locales: ["pt-BR"], sourceDir: "./content", logger },
-      deps,
-    );
+    const out = buildCollections({ source: { site }, locales: ["pt-BR"], sourceDir: "./content", logger }, deps);
 
     // No sibling registered.
     expect(Object.keys(out)).toEqual(["site"]);
@@ -715,10 +706,7 @@ describe("buildCollections — file() auto-detection (polystella's wrapped loade
     const logger = { warn: vi.fn() };
     const site = makeFileSource({ schema: { tag: "site-schema" } });
 
-    const out = buildCollections(
-      { source: { site }, locales: ["pt-BR"], logger },
-      deps,
-    );
+    const out = buildCollections({ source: { site }, locales: ["pt-BR"], logger }, deps);
 
     expect(Object.keys(out)).toEqual(["site"]);
     expect(fileCalls).toEqual([]);
@@ -842,8 +830,7 @@ describe("buildCollections — AI marker schema extension (integration)", () => 
 
   it("function-form schemas are wrapped — invocation returns extended ZodObject", () => {
     const { deps } = makeRealDeps();
-    const factorySchema = ({ image }: { image: () => z.ZodTypeAny }) =>
-      z.object({ title: z.string(), cover: image() });
+    const factorySchema = ({ image }: { image: () => z.ZodTypeAny }) => z.object({ title: z.string(), cover: image() });
     const publications = {
       loader: { name: "glob-loader" },
       schema: factorySchema,
@@ -855,8 +842,6 @@ describe("buildCollections — AI marker schema extension (integration)", () => 
     expect(typeof sourceConfig.schema).toBe("function");
 
     const resolved = sourceConfig.schema({ image: () => z.string() });
-    expect(Object.keys(resolved.shape).sort()).toEqual(
-      ["aiTranslated", "aiTranslatedAt", "aiTranslationModel", "cover", "title"].sort(),
-    );
+    expect(Object.keys(resolved.shape).sort()).toEqual(["aiTranslated", "aiTranslatedAt", "aiTranslationModel", "cover", "title"].sort());
   });
 });

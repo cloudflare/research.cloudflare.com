@@ -29,7 +29,7 @@ import { z } from "astro/zod";
 /** Relative to project root. */
 export const DEFAULT_I18N_BASE = "./src/content/i18n";
 
-/** `**\/*.json` so subdirectory layouts (`nav/en.json` etc.) work. */
+/** `**\/*.json` so subdirectory layouts (`nav/en-US.json` etc.) work. */
 export const DEFAULT_I18N_PATTERN = "**/*.json";
 
 export interface I18nLoaderOptions {

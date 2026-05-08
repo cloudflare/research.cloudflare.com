@@ -15,7 +15,7 @@ const { lhref } = Astro.locals;
     </a>
   </div>
   <nav class="flex-1 flex justify-end md:justify-end lg:justify-center">
-    <NavMenu client:load dict={dict} locale={Astro.currentLocale ?? "en"} />
+    <NavMenu client:load dict={dict} locale={Astro.currentLocale ?? "en-US"} />
   </nav>
   <div class="hidden lg:block w-[197px] text-page-text text-right">&nbsp;</div>
 </div>

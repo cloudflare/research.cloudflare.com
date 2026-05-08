@@ -77,12 +77,12 @@ const config = {
   // ─── Source files ────────────────────────────────────────────────────
   // Where to look for translatable markdown, relative to the Astro
   // project root.
-  // sourceDir: "./content",
+  sourceDir: "./content",
 
   // Glob patterns relative to `sourceDir`. A file is considered for
   // translation if it matches at least one `include` and no `exclude`.
   // include: ["**/*.md", "**/*.mdx"],
-  include: ["publications/*.md", "site.toml", "pages/*.mdx"],
+
   // exclude: [],
   //
   // Staged-rollout example — translate publications first:

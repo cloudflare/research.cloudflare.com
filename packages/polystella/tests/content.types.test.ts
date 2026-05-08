@@ -36,8 +36,8 @@ const people = {
 const out = buildCollections(
   {
     source: { publications, people },
-    locales: ["en", "pt-BR", "ja-JP"] as const,
-    defaultLocale: "en",
+    locales: ["en-US", "pt-BR", "ja-JP"] as const,
+    defaultLocale: "en-US",
   },
   {
     defineCollection: (config) => config,

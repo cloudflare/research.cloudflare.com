@@ -8,6 +8,9 @@ import { astroSitemapI18n } from "../src/i18n/sitemap.js";
 
 describe("astroSitemapI18n type compatibility with @astrojs/sitemap", () => {
   it("output is assignable to sitemap() argument (default xDefault)", () => {
+    // Use the `en` → `en-US` override scenario: a codebase with the
+    // bare `en` locale wants `en-US` hreflang. Exercises the
+    // override-bearing branch through the type boundary.
     const i18n = { defaultLocale: "en", locales: ["en", "pt-BR"] };
     const _result = sitemap(astroSitemapI18n(i18n, { hreflang: { en: "en-US" } }));
   });
@@ -21,7 +24,7 @@ describe("astroSitemapI18n type compatibility with @astrojs/sitemap", () => {
   });
 
   it("output is assignable when xDefault: false (no serialize)", () => {
-    const i18n = { defaultLocale: "en", locales: ["en", "pt-BR"] };
+    const i18n = { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] };
     const _result = sitemap(astroSitemapI18n(i18n, { xDefault: false }));
   });
 });

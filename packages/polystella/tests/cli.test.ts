@@ -36,8 +36,8 @@ function makeResolved(
         }
       : {},
     {
-      defaultLocale: "en",
-      locales: ["en", ...(overrides.locales ?? ["pt-BR", "ja-JP"])],
+      defaultLocale: "en-US",
+      locales: ["en-US", ...(overrides.locales ?? ["pt-BR", "ja-JP"])],
     },
   );
 }

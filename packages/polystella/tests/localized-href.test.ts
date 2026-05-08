@@ -10,10 +10,10 @@ import { resolveLocalizedHref, type LocalizedHrefDeps } from "../src/runtime/loc
  */
 
 const DEPS: LocalizedHrefDeps = {
-  defaultLocale: "en",
+  defaultLocale: "en-US",
   // Includes the default; the helper checks "is this URL already
   // prefixed with any known locale?" against this full list.
-  locales: ["en", "pt-BR", "ja-JP"],
+  locales: ["en-US", "pt-BR", "ja-JP"],
 };
 
 describe("resolveLocalizedHref — short-circuit branches", () => {
@@ -28,7 +28,7 @@ describe("resolveLocalizedHref — short-circuit branches", () => {
   it("returns href unchanged when locale equals defaultLocale", () => {
     // Default-locale routes live at the unprefixed root with the
     // canonical `prefixDefaultLocale: false` setup; nothing to do.
-    expect(resolveLocalizedHref("/Smith2017", "en", DEPS)).toBe("/Smith2017");
+    expect(resolveLocalizedHref("/Smith2017", "en-US", DEPS)).toBe("/Smith2017");
   });
 
   it("returns href unchanged when input is empty", () => {
@@ -79,9 +79,9 @@ describe("resolveLocalizedHref — idempotency on already-prefixed URLs", () => 
   });
 
   it("leaves a URL prefixed with the default locale alone", () => {
-    // Operators sometimes author `/en/...` paths explicitly to opt
+    // Operators sometimes author `/en-US/...` paths explicitly to opt
     // out of locale-prefixing. Treat as already-prefixed.
-    expect(resolveLocalizedHref("/en/Smith2017", "pt-BR", DEPS)).toBe("/en/Smith2017");
+    expect(resolveLocalizedHref("/en-US/Smith2017", "pt-BR", DEPS)).toBe("/en-US/Smith2017");
   });
 
   it("treats a bare `/{locale}` (no trailing slash) as already prefixed", () => {
@@ -129,9 +129,7 @@ describe("resolveLocalizedHref — noPrefixUrls", () => {
   // silently leak into prefix-mismatch on component-rendered hrefs.
 
   it("leaves an exact-match path unprefixed", () => {
-    expect(
-      resolveLocalizedHref("/api-docs", "pt-BR", { ...DEPS, noPrefixUrls: ["/api-docs"] }),
-    ).toBe("/api-docs");
+    expect(resolveLocalizedHref("/api-docs", "pt-BR", { ...DEPS, noPrefixUrls: ["/api-docs"] })).toBe("/api-docs");
   });
 
   it("leaves descendants of a glob-matched path unprefixed", () => {
@@ -148,9 +146,7 @@ describe("resolveLocalizedHref — noPrefixUrls", () => {
 
   it("does not interfere with the external-URL bailout", () => {
     const deps = { ...DEPS, noPrefixUrls: ["/api-docs/**"] };
-    expect(resolveLocalizedHref("https://example.com/api-docs/x", "pt-BR", deps)).toBe(
-      "https://example.com/api-docs/x",
-    );
+    expect(resolveLocalizedHref("https://example.com/api-docs/x", "pt-BR", deps)).toBe("https://example.com/api-docs/x");
   });
 
   it("preserves rewriting for paths outside the glob", () => {
@@ -159,8 +155,6 @@ describe("resolveLocalizedHref — noPrefixUrls", () => {
   });
 
   it("treats an empty noPrefixUrls list as a no-op", () => {
-    expect(
-      resolveLocalizedHref("/api-docs", "pt-BR", { ...DEPS, noPrefixUrls: [] }),
-    ).toBe("/pt-BR/api-docs");
+    expect(resolveLocalizedHref("/api-docs", "pt-BR", { ...DEPS, noPrefixUrls: [] })).toBe("/pt-BR/api-docs");
   });
 });

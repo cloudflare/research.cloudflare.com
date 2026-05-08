@@ -70,12 +70,18 @@ export async function buildTranslator(
   deps: Pick<MiddlewareDeps, "defaultLocale" | "getEntry">,
 ): Promise<TranslateFn> {
   const passthrough: TranslateFn = (key: string) => key;
-  const effectiveLocale = locale && locale.length > 0 ? locale.toLowerCase() : deps.defaultLocale;
+  // Astro stores content-collection entry IDs lowercased. We
+  // lowercase BOTH the visitor locale (when provided) and the
+  // default locale fallback so a configured locale like `en-US`
+  // resolves to entry id `en-us` regardless of which branch we
+  // come through.
+  const defaultLocaleId = deps.defaultLocale.toLowerCase();
+  const effectiveLocale = locale && locale.length > 0 ? locale.toLowerCase() : defaultLocaleId;
   try {
     const entry = await deps.getEntry("i18n", effectiveLocale);
     if (entry?.data) return buildTranslateFn(entry.data);
-    if (effectiveLocale !== deps.defaultLocale) {
-      const fallback = await deps.getEntry("i18n", deps.defaultLocale.toLowerCase());
+    if (effectiveLocale !== defaultLocaleId) {
+      const fallback = await deps.getEntry("i18n", defaultLocaleId);
       if (fallback?.data) return buildTranslateFn(fallback.data);
     }
   } catch {

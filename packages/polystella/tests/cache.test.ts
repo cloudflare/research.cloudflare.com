@@ -147,7 +147,7 @@ function makeOptions(
     r2: overrides.r2 ?? null,
     translator,
     glossary: EMPTY_GLOSSARY,
-    sourceLocale: "en",
+    sourceLocale: "en-US",
     metadata: buildCacheMetadata({
       sourcePath: "publications/sample.md",
       locale: "pt-BR",

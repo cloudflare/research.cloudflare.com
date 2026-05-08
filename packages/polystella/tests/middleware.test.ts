@@ -1,11 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  buildLocalizedHref,
-  buildTranslator,
-  createMiddleware,
-  type MiddlewareDeps,
-} from "../src/runtime/middleware-core.js";
+import { buildLocalizedHref, buildTranslator, createMiddleware, type MiddlewareDeps } from "../src/runtime/middleware-core.js";
 
 /**
  * Tests for the polystella request middleware. Exercises the
@@ -28,12 +23,12 @@ function makeGetEntry(entries: Record<string, Record<string, string> | undefined
 
 function makeDeps(overrides: Partial<MiddlewareDeps> = {}): MiddlewareDeps {
   return {
-    defaultLocale: "en",
-    locales: ["en", "pt-BR", "ja-JP"],
+    defaultLocale: "en-US",
+    locales: ["en-US", "pt-BR", "ja-JP"],
     noPrefixUrls: [],
     mode: "auto",
     getEntry: makeGetEntry({
-      "i18n:en": EN_DICT,
+      "i18n:en-us": EN_DICT,
       "i18n:pt-br": PT_BR_DICT,
     }),
     ...overrides,
@@ -49,25 +44,25 @@ function makeContext(currentLocale: string | undefined) {
 
 describe("buildLocalizedHref — locale-bound closure", () => {
   it("rewrites internal paths for the bound locale", () => {
-    const link = buildLocalizedHref("pt-BR", { defaultLocale: "en", locales: ["en", "pt-BR"], noPrefixUrls: [] });
+    const link = buildLocalizedHref("pt-BR", { defaultLocale: "en-US", locales: ["en-US", "pt-BR"], noPrefixUrls: [] });
     expect(link("/foo")).toBe("/pt-BR/foo");
     expect(link("/foo/bar?ref=home")).toBe("/pt-BR/foo/bar?ref=home");
   });
 
   it("returns externals untouched", () => {
-    const link = buildLocalizedHref("pt-BR", { defaultLocale: "en", locales: ["en", "pt-BR"], noPrefixUrls: [] });
+    const link = buildLocalizedHref("pt-BR", { defaultLocale: "en-US", locales: ["en-US", "pt-BR"], noPrefixUrls: [] });
     expect(link("https://example.com/foo")).toBe("https://example.com/foo");
     expect(link("#section")).toBe("#section");
   });
 
   it("honours noPrefixUrls", () => {
-    const link = buildLocalizedHref("pt-BR", { defaultLocale: "en", locales: ["en", "pt-BR"], noPrefixUrls: ["/api-docs/**"] });
+    const link = buildLocalizedHref("pt-BR", { defaultLocale: "en-US", locales: ["en-US", "pt-BR"], noPrefixUrls: ["/api-docs/**"] });
     expect(link("/api-docs/intro")).toBe("/api-docs/intro");
     expect(link("/blog")).toBe("/pt-BR/blog");
   });
 
   it("returns input unchanged for the default locale", () => {
-    const link = buildLocalizedHref("en", { defaultLocale: "en", locales: ["en", "pt-BR"], noPrefixUrls: [] });
+    const link = buildLocalizedHref("en-US", { defaultLocale: "en-US", locales: ["en-US", "pt-BR"], noPrefixUrls: [] });
     expect(link("/foo")).toBe("/foo");
   });
 });
@@ -75,8 +70,8 @@ describe("buildLocalizedHref — locale-bound closure", () => {
 describe("buildTranslator — locale fallback chain", () => {
   it("returns the visitor-locale dictionary when present", async () => {
     const t = await buildTranslator("pt-BR", {
-      defaultLocale: "en",
-      getEntry: makeGetEntry({ "i18n:en": EN_DICT, "i18n:pt-br": PT_BR_DICT }),
+      defaultLocale: "en-US",
+      getEntry: makeGetEntry({ "i18n:en-us": EN_DICT, "i18n:pt-br": PT_BR_DICT }),
     });
     expect(t("nav.home")).toBe("Início");
     expect(t("greeting", { name: "Diogo" })).toBe("Olá, Diogo");
@@ -84,15 +79,15 @@ describe("buildTranslator — locale fallback chain", () => {
 
   it("falls back to the default-locale dictionary on missing visitor entry", async () => {
     const t = await buildTranslator("ja-JP", {
-      defaultLocale: "en",
-      getEntry: makeGetEntry({ "i18n:en": EN_DICT, "i18n:ja-jp": undefined }),
+      defaultLocale: "en-US",
+      getEntry: makeGetEntry({ "i18n:en-us": EN_DICT, "i18n:ja-jp": undefined }),
     });
     expect(t("nav.home")).toBe("Home");
   });
 
   it("returns the literal key when no dictionary loads", async () => {
     const t = await buildTranslator("xx", {
-      defaultLocale: "en",
+      defaultLocale: "en-US",
       getEntry: makeGetEntry({}),
     });
     expect(t("any.key")).toBe("any.key");
@@ -100,7 +95,7 @@ describe("buildTranslator — locale fallback chain", () => {
 
   it("returns the literal key when the loader throws", async () => {
     const t = await buildTranslator("pt-BR", {
-      defaultLocale: "en",
+      defaultLocale: "en-US",
       getEntry: vi.fn().mockRejectedValue(new Error("boom")),
     });
     expect(t("nav.home")).toBe("nav.home");
@@ -109,16 +104,16 @@ describe("buildTranslator — locale fallback chain", () => {
   it("lowercases the visitor locale for the entry lookup", async () => {
     // Astro stores entry IDs lowercased; `Astro.currentLocale` keeps
     // the configured casing. The translator bridges that gap.
-    const getEntry = makeGetEntry({ "i18n:en": EN_DICT, "i18n:pt-br": PT_BR_DICT });
-    const t = await buildTranslator("PT-BR", { defaultLocale: "en", getEntry });
+    const getEntry = makeGetEntry({ "i18n:en-us": EN_DICT, "i18n:pt-br": PT_BR_DICT });
+    const t = await buildTranslator("PT-BR", { defaultLocale: "en-US", getEntry });
     expect(t("nav.home")).toBe("Início");
   });
 
   it("falls back to default locale when the visitor locale is empty / undefined", async () => {
-    const getEntry = makeGetEntry({ "i18n:en": EN_DICT });
-    const t1 = await buildTranslator(undefined, { defaultLocale: "en", getEntry });
+    const getEntry = makeGetEntry({ "i18n:en-us": EN_DICT });
+    const t1 = await buildTranslator(undefined, { defaultLocale: "en-US", getEntry });
     expect(t1("nav.home")).toBe("Home");
-    const t2 = await buildTranslator("", { defaultLocale: "en", getEntry });
+    const t2 = await buildTranslator("", { defaultLocale: "en-US", getEntry });
     expect(t2("nav.home")).toBe("Home");
   });
 });
@@ -153,7 +148,7 @@ describe("createMiddleware — locals population", () => {
   });
 
   it("does not call getEntry in starlight mode (avoids unnecessary work)", async () => {
-    const getEntry = makeGetEntry({ "i18n:en": EN_DICT });
+    const getEntry = makeGetEntry({ "i18n:en-us": EN_DICT });
     const middleware = createMiddleware(makeDeps({ mode: "starlight", getEntry }));
     await middleware(makeContext("pt-BR"), vi.fn());
     expect(getEntry).not.toHaveBeenCalled();
@@ -188,7 +183,7 @@ describe("createMiddleware — locals population", () => {
 
   it("works for the default locale (no prefix added)", async () => {
     const middleware = createMiddleware(makeDeps());
-    const ctx = makeContext("en");
+    const ctx = makeContext("en-US");
     await middleware(ctx, vi.fn());
     const link = ctx.locals.lhref as (h: string) => string;
     expect(link("/foo")).toBe("/foo");

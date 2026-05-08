@@ -112,9 +112,9 @@ describe("resolveTranslations", () => {
 
   it("uses the requested locale's dictionary on hit", async () => {
     const t = await resolveTranslations("pt-BR", {
-      defaultLocale: "en",
+      defaultLocale: "en-US",
       getI18nEntry: makeGetEntry({
-        en: { "nav.home": "Home" },
+        "en-US": { "nav.home": "Home" },
         "pt-BR": { "nav.home": "Início" },
       }),
     });
@@ -123,9 +123,9 @@ describe("resolveTranslations", () => {
 
   it("falls back to default-locale on missing key in the requested locale", async () => {
     const t = await resolveTranslations("pt-BR", {
-      defaultLocale: "en",
+      defaultLocale: "en-US",
       getI18nEntry: makeGetEntry({
-        en: { "nav.home": "Home", "nav.about": "About" },
+        "en-US": { "nav.home": "Home", "nav.about": "About" },
         "pt-BR": { "nav.home": "Início" },
       }),
     });
@@ -134,9 +134,9 @@ describe("resolveTranslations", () => {
 
   it("returns key string when it's missing from both", async () => {
     const t = await resolveTranslations("pt-BR", {
-      defaultLocale: "en",
+      defaultLocale: "en-US",
       getI18nEntry: makeGetEntry({
-        en: { "nav.home": "Home" },
+        "en-US": { "nav.home": "Home" },
         "pt-BR": { "nav.home": "Início" },
       }),
     });
@@ -146,32 +146,32 @@ describe("resolveTranslations", () => {
   it("does not load the fallback when the requested locale IS the default", async () => {
     // Optimisation: same locale → no fallback needed → `getEntry`
     // called once, not twice.
-    const get = makeGetEntry({ en: { "nav.home": "Home" } });
-    await resolveTranslations("en", {
-      defaultLocale: "en",
+    const get = makeGetEntry({ "en-US": { "nav.home": "Home" } });
+    await resolveTranslations("en-US", {
+      defaultLocale: "en-US",
       getI18nEntry: get,
     });
     expect(get).toHaveBeenCalledTimes(1);
-    expect(get).toHaveBeenCalledWith("en");
+    expect(get).toHaveBeenCalledWith("en-US");
   });
 
   it("treats `undefined` locale as the default locale", async () => {
-    const get = makeGetEntry({ en: { "nav.home": "Home" } });
+    const get = makeGetEntry({ "en-US": { "nav.home": "Home" } });
     const t = await resolveTranslations(undefined, {
-      defaultLocale: "en",
+      defaultLocale: "en-US",
       getI18nEntry: get,
     });
     expect(t("nav.home")).toBe("Home");
     // Same single-call optimisation as the explicit-default case.
     expect(get).toHaveBeenCalledTimes(1);
-    expect(get).toHaveBeenCalledWith("en");
+    expect(get).toHaveBeenCalledWith("en-US");
   });
 
   it("returns a usable t() even when neither dict exists", async () => {
     // Defensive: drift detection makes this unreachable in practice,
     // but the helper shouldn't throw on a content-layer miss.
     const t = await resolveTranslations("ja-JP", {
-      defaultLocale: "en",
+      defaultLocale: "en-US",
       getI18nEntry: makeGetEntry({}),
     });
     expect(t("any.key")).toBe("any.key");

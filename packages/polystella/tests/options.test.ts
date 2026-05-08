@@ -18,22 +18,22 @@ import { resolveOptions, type AstroI18nLike } from "../src/config/options.js";
 const MINIMAL_USER_OPTS = {} as const;
 
 const HAPPY_I18N: AstroI18nLike = {
-  defaultLocale: "en",
-  locales: ["en", "pt-BR", "ja-JP"],
+  defaultLocale: "en-US",
+  locales: ["en-US", "pt-BR", "ja-JP"],
   routing: { prefixDefaultLocale: false },
 };
 
 describe("resolveOptions — locale derivation from Astro's i18n config", () => {
   it("derives defaultLocale and target locales (default filtered out) from a happy i18n block", () => {
     const resolved = resolveOptions(MINIMAL_USER_OPTS, HAPPY_I18N);
-    expect(resolved.defaultLocale).toBe("en");
+    expect(resolved.defaultLocale).toBe("en-US");
     expect(resolved.locales).toEqual(["pt-BR", "ja-JP"]);
   });
 
   it("preserves the order of i18n.locales when filtering out the default", () => {
     const resolved = resolveOptions(MINIMAL_USER_OPTS, {
-      defaultLocale: "en",
-      locales: ["pt-BR", "en", "ja-JP"],
+      defaultLocale: "en-US",
+      locales: ["pt-BR", "en-US", "ja-JP"],
     });
     // Order from i18n.locales matters: it's the order Astro's router
     // and our staging writer iterate in, so a stable derivation keeps
@@ -46,7 +46,7 @@ describe("resolveOptions — locale derivation from Astro's i18n config", () => 
     expect(resolved.sourceDir).toBe("./custom-content");
     expect(resolved.overridesDir).toBe("./custom-overrides");
     // Sanity: derivation didn't clobber the rest of the resolved shape.
-    expect(resolved.defaultLocale).toBe("en");
+    expect(resolved.defaultLocale).toBe("en-US");
     expect(resolved.locales).toEqual(["pt-BR", "ja-JP"]);
   });
 });
@@ -58,14 +58,14 @@ describe("resolveOptions — Astro i18n cross-check failures", () => {
       // block — that's the operator-facing contract this milestone
       // promises. If the wording ever drifts, this test should drift
       // with it (and a human reviewer should sanity-check the change).
-      /i18n: \{[\s\S]+defaultLocale: "en"[\s\S]+locales: \[/,
+      /i18n: \{[\s\S]+defaultLocale: "en-US"[\s\S]+locales: \[/,
     );
   });
 
   it("throws when defaultLocale is missing from i18n.locales", () => {
     expect(() =>
       resolveOptions(MINIMAL_USER_OPTS, {
-        defaultLocale: "en",
+        defaultLocale: "en-US",
         locales: ["pt-BR", "ja-JP"],
       }),
     ).toThrowError(/i18n\.locales` must include `defaultLocale`/);
@@ -74,8 +74,8 @@ describe("resolveOptions — Astro i18n cross-check failures", () => {
   it("throws when i18n.locales contains object-form entries", () => {
     expect(() =>
       resolveOptions(MINIMAL_USER_OPTS, {
-        defaultLocale: "en",
-        locales: ["en", { path: "pt", codes: ["pt-BR", "pt-PT"] }],
+        defaultLocale: "en-US",
+        locales: ["en-US", { path: "pt", codes: ["pt-BR", "pt-PT"] }],
       } as AstroI18nLike),
     ).toThrowError(/object-form entries.*only supports plain string locales/);
   });
@@ -92,7 +92,7 @@ describe("resolveOptions — Astro i18n cross-check failures", () => {
   it("throws when i18n.locales is empty", () => {
     expect(() =>
       resolveOptions(MINIMAL_USER_OPTS, {
-        defaultLocale: "en",
+        defaultLocale: "en-US",
         locales: [],
       }),
     ).toThrowError(/`i18n\.locales` is required/);
@@ -101,8 +101,8 @@ describe("resolveOptions — Astro i18n cross-check failures", () => {
   it("throws when i18n.locales contains duplicates", () => {
     expect(() =>
       resolveOptions(MINIMAL_USER_OPTS, {
-        defaultLocale: "en",
-        locales: ["en", "pt-BR", "pt-BR"],
+        defaultLocale: "en-US",
+        locales: ["en-US", "pt-BR", "pt-BR"],
       }),
     ).toThrowError(/contains duplicates: pt-BR/);
   });
@@ -362,10 +362,7 @@ describe("resolveOptions — noPrefixUrls", () => {
   });
 
   it("accepts a list of glob strings", () => {
-    const resolved = resolveOptions(
-      { noPrefixUrls: ["/api-docs", "/api-docs/**", "/legal/*"] },
-      HAPPY_I18N,
-    );
+    const resolved = resolveOptions({ noPrefixUrls: ["/api-docs", "/api-docs/**", "/legal/*"] }, HAPPY_I18N);
     expect(resolved.noPrefixUrls).toEqual(["/api-docs", "/api-docs/**", "/legal/*"]);
   });
 });

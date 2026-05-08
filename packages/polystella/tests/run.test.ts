@@ -155,7 +155,7 @@ describe("runTranslationPass — staging output", () => {
         // Schema requires r2 fields when r2 block is present; we
         // skip the block entirely (caching handled via r2Override).
       },
-      { defaultLocale: "en", locales: ["en", "pt-BR", "ja-JP"] },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR", "ja-JP"] },
     );
     // Schema requires `provider` for live mode; we satisfy by
     // injecting translator overrides AND faking the provider field
@@ -206,7 +206,10 @@ describe("runTranslationPass — staging output", () => {
     const r2 = makeInMemoryR2();
     const translator = makeStubTranslator("stub/m1");
 
-    const resolved = resolveOptions({ sourceDir: "./content", include: ["**/*.md"] }, { defaultLocale: "en", locales: ["en", "pt-BR"] });
+    const resolved = resolveOptions(
+      { sourceDir: "./content", include: ["**/*.md"] },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
+    );
     resolved.provider = {
       kind: "workers-ai",
       accountId: "fake",
@@ -279,7 +282,7 @@ describe("runTranslationPass — branch-isolation knobs", () => {
           readOnly: true,
         },
       },
-      { defaultLocale: "en", locales: ["en", "pt-BR"] },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
     );
     resolved.provider = {
       kind: "workers-ai",
@@ -343,7 +346,7 @@ describe("runTranslationPass — branch-isolation knobs", () => {
           prefix: "i18n/",
         },
       },
-      { defaultLocale: "en", locales: ["en", "pt-BR"] },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
     );
     productionResolved.provider = {
       kind: "workers-ai",
@@ -383,7 +386,7 @@ describe("runTranslationPass — branch-isolation knobs", () => {
           readOnly: true,
         },
       },
-      { defaultLocale: "en", locales: ["en", "pt-BR"] },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
     );
     previewResolved.provider = productionResolved.provider;
 
@@ -423,7 +426,10 @@ describe("runTranslationPass — local staging index", () => {
     });
     const r2 = makeInMemoryR2();
     const translator = makeStubTranslator("stub/m1");
-    const resolved = resolveOptions({ sourceDir: "./content", include: ["**/*.md"] }, { defaultLocale: "en", locales: ["en", "pt-BR"] });
+    const resolved = resolveOptions(
+      { sourceDir: "./content", include: ["**/*.md"] },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
+    );
     resolved.provider = {
       kind: "workers-ai",
       accountId: "fake",
@@ -478,7 +484,10 @@ describe("runTranslationPass — local staging index", () => {
     });
     const r2 = makeInMemoryR2();
     const translator = makeStubTranslator("stub/m1");
-    const resolved = resolveOptions({ sourceDir: "./content", include: ["**/*.md"] }, { defaultLocale: "en", locales: ["en", "pt-BR"] });
+    const resolved = resolveOptions(
+      { sourceDir: "./content", include: ["**/*.md"] },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
+    );
     resolved.provider = {
       kind: "workers-ai",
       accountId: "fake",
@@ -529,7 +538,10 @@ describe("runTranslationPass — local staging index", () => {
     });
     const r2 = makeInMemoryR2();
     const translator = makeStubTranslator("stub/m1");
-    const resolved = resolveOptions({ sourceDir: "./content", include: ["**/*.md"] }, { defaultLocale: "en", locales: ["en", "pt-BR"] });
+    const resolved = resolveOptions(
+      { sourceDir: "./content", include: ["**/*.md"] },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
+    );
     resolved.provider = {
       kind: "workers-ai",
       accountId: "fake",
@@ -563,7 +575,10 @@ describe("runTranslationPass — early returns", () => {
     const { rootDir, stagingDir } = await makeProjectFixture({
       files: { "content/something-else.txt": "not markdown" },
     });
-    const resolved = resolveOptions({ sourceDir: "./content", include: ["**/*.md"] }, { defaultLocale: "en", locales: ["en", "pt-BR"] });
+    const resolved = resolveOptions(
+      { sourceDir: "./content", include: ["**/*.md"] },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
+    );
     resolved.provider = {
       kind: "workers-ai",
       accountId: "fake",
@@ -589,7 +604,7 @@ describe("runTranslationPass — early returns", () => {
     });
     const resolved = resolveOptions(
       { sourceDir: "./content", include: ["**/*.md"], dryRun: true },
-      { defaultLocale: "en", locales: ["en", "pt-BR"] },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
     );
     resolved.provider = {
       kind: "workers-ai",
@@ -647,7 +662,7 @@ describe("runTranslationPass — URL rewriting", () => {
           urls: { "publications/**": ["heroImage", "pdfLink"] },
         },
       },
-      { defaultLocale: "en", locales: ["en", "pt-BR"] },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
     );
     resolved.provider = {
       kind: "workers-ai",
@@ -693,7 +708,7 @@ describe("runTranslationPass — URL rewriting", () => {
         // should pass through unchanged.
         noPrefixUrls: ["/docs/**", "/api-docs"],
       },
-      { defaultLocale: "en", locales: ["en", "pt-BR"] },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
     );
     resolved.provider = {
       kind: "workers-ai",
@@ -745,7 +760,7 @@ describe("runTranslationPass — URL rewriting", () => {
           urls: { "publications/**": ["heroImage"] },
         },
       },
-      { defaultLocale: "en", locales: ["en", "pt-BR"] },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
     );
     baseResolved.provider = {
       kind: "workers-ai",
@@ -787,7 +802,7 @@ describe("runTranslationPass — URL rewriting", () => {
         },
         noPrefixUrls: ["/images/**"],
       },
-      { defaultLocale: "en", locales: ["en", "pt-BR"] },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
     );
     exemptResolved.provider = baseResolved.provider;
     translator.calls = 0;

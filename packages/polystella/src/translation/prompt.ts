@@ -212,7 +212,7 @@ function escapeRegExp(s: string): string {
 
 function localeName(code: string): string {
   try {
-    return new Intl.DisplayNames(["en"], { type: "language" }).of(code) ?? code;
+    return new Intl.DisplayNames(["en-US"], { type: "language" }).of(code) ?? code;
   } catch {
     return code;
   }

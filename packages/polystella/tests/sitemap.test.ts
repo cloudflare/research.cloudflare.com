@@ -5,14 +5,14 @@ describe("astroSitemapI18n", () => {
   describe("i18n option", () => {
     it("identity-maps every locale to itself by default", () => {
       const result = astroSitemapI18n({
-        defaultLocale: "en",
-        locales: ["en", "pt-BR", "ja-JP", "es-ES"],
+        defaultLocale: "en-US",
+        locales: ["en-US", "pt-BR", "ja-JP", "es-ES"],
       });
 
       expect(result.i18n).toEqual({
-        defaultLocale: "en",
+        defaultLocale: "en-US",
         locales: {
-          en: "en",
+          "en-US": "en-US",
           "pt-BR": "pt-BR",
           "ja-JP": "ja-JP",
           "es-ES": "es-ES",
@@ -21,6 +21,9 @@ describe("astroSitemapI18n", () => {
     });
 
     it("applies hreflang overrides for the listed locales only", () => {
+      // Override scenario: a codebase that uses the bare `en` locale
+      // code (no region) wants to emit `en-US` in the hreflang
+      // attribute for region specificity. Other locales identity-map.
       const result = astroSitemapI18n({ defaultLocale: "en", locales: ["en", "pt-BR", "ja-JP"] }, { hreflang: { en: "en-US" } });
 
       expect(result.i18n.locales).toEqual({
@@ -35,10 +38,10 @@ describe("astroSitemapI18n", () => {
       // stable order makes diffs reviewable when the resolved config
       // is logged or serialized for debugging.
       const result = astroSitemapI18n({
-        defaultLocale: "en",
-        locales: ["es-ES", "ja-JP", "pt-BR", "en"],
+        defaultLocale: "en-US",
+        locales: ["es-ES", "ja-JP", "pt-BR", "en-US"],
       });
-      expect(Object.keys(result.i18n.locales)).toEqual(["es-ES", "ja-JP", "pt-BR", "en"]);
+      expect(Object.keys(result.i18n.locales)).toEqual(["es-ES", "ja-JP", "pt-BR", "en-US"]);
     });
   });
 
@@ -47,7 +50,7 @@ describe("astroSitemapI18n", () => {
       expect(() =>
         astroSitemapI18n({
           defaultLocale: "fr",
-          locales: ["en", "pt-BR"],
+          locales: ["en-US", "pt-BR"],
         }),
       ).toThrow(/defaultLocale "fr" is not present/);
     });
@@ -55,7 +58,7 @@ describe("astroSitemapI18n", () => {
     it("throws on an empty locales array", () => {
       expect(() =>
         astroSitemapI18n({
-          defaultLocale: "en",
+          defaultLocale: "en-US",
           locales: [],
         }),
       ).toThrow(/at least one locale/);
@@ -64,8 +67,8 @@ describe("astroSitemapI18n", () => {
     it("throws on duplicate locale codes", () => {
       expect(() =>
         astroSitemapI18n({
-          defaultLocale: "en",
-          locales: ["en", "pt-BR", "pt-BR"],
+          defaultLocale: "en-US",
+          locales: ["en-US", "pt-BR", "pt-BR"],
         }),
       ).toThrow(/duplicate locale "pt-BR"/);
     });
@@ -77,20 +80,23 @@ describe("astroSitemapI18n", () => {
       // configuration rather than silently producing a half-correct map.
       expect(() =>
         astroSitemapI18n({
-          defaultLocale: "en",
-          locales: ["en", { codes: ["es-ES", "es-MX"], path: "spanish" }],
+          defaultLocale: "en-US",
+          locales: ["en-US", { codes: ["es-ES", "es-MX"], path: "spanish" }],
         }),
       ).toThrow(/object form/);
     });
 
     it("throws when a hreflang override key is not a configured locale", () => {
-      // Catch typos like { "en-US": "en-US" } when the user meant { en: "en-US" }.
-      expect(() =>
-        astroSitemapI18n({ defaultLocale: "en", locales: ["en", "pt-BR"] }, { hreflang: { "en-US": "en-US" } }),
-      ).toThrow(/"en-US" is not a configured locale/);
+      // Catch typos like { "en-GB": "en-GB" } when the operator's
+      // configured locale is `en-US`.
+      expect(() => astroSitemapI18n({ defaultLocale: "en-US", locales: ["en-US", "pt-BR"] }, { hreflang: { "en-GB": "en-GB" } })).toThrow(
+        /"en-GB" is not a configured locale/,
+      );
     });
 
     it("does not mutate the input objects", () => {
+      // Use the `en` → `en-US` override scenario so the override map
+      // is non-trivial and the no-mutation guarantee is meaningful.
       const i18n = {
         defaultLocale: "en",
         locales: ["en", "pt-BR"] as const,
@@ -104,12 +110,12 @@ describe("astroSitemapI18n", () => {
 
   describe("x-default serialize", () => {
     it("returns a serialize callback by default (xDefault enabled)", () => {
-      const result = astroSitemapI18n({ defaultLocale: "en", locales: ["en", "pt-BR"] });
+      const result = astroSitemapI18n({ defaultLocale: "en-US", locales: ["en-US", "pt-BR"] });
       expect(typeof result.serialize).toBe("function");
     });
 
     it("appends an x-default link cloning the default-locale URL", () => {
-      const { serialize } = astroSitemapI18n({ defaultLocale: "en", locales: ["en", "pt-BR"] }, { hreflang: { en: "en-US" } });
+      const { serialize } = astroSitemapI18n({ defaultLocale: "en-US", locales: ["en-US", "pt-BR"] });
       const item = {
         url: "https://example.com/foo/",
         links: [
@@ -128,7 +134,9 @@ describe("astroSitemapI18n", () => {
     it("uses the default locale's hreflang override when looking up the default URL", () => {
       // If the default-locale URL has hreflang `en-US` (overridden),
       // x-default should clone the link tagged `en-US`, not the
-      // original locale code `en`.
+      // original locale code `en`. Tests the override-resolution
+      // path: the bound `defaultHreflang` must come from the
+      // post-override map, not from the raw locale code.
       const { serialize } = astroSitemapI18n({ defaultLocale: "en", locales: ["en", "pt-BR"] }, { hreflang: { en: "en-US" } });
       const item = {
         url: "https://example.com/foo/",
@@ -143,11 +151,11 @@ describe("astroSitemapI18n", () => {
     });
 
     it("identity-maps default locale when no override is given", () => {
-      const { serialize } = astroSitemapI18n({ defaultLocale: "en", locales: ["en", "pt-BR"] });
+      const { serialize } = astroSitemapI18n({ defaultLocale: "en-US", locales: ["en-US", "pt-BR"] });
       const item = {
         url: "https://example.com/",
         links: [
-          { url: "https://example.com/", lang: "en" },
+          { url: "https://example.com/", lang: "en-US" },
           { url: "https://example.com/pt-BR/", lang: "pt-BR" },
         ],
       };
@@ -160,13 +168,13 @@ describe("astroSitemapI18n", () => {
       // Standalone pages with no translation get no `links` array
       // from @astrojs/sitemap. Adding x-default to a single page is
       // meaningless and could confuse search engines.
-      const { serialize } = astroSitemapI18n({ defaultLocale: "en", locales: ["en", "pt-BR"] });
+      const { serialize } = astroSitemapI18n({ defaultLocale: "en-US", locales: ["en-US", "pt-BR"] });
       const item = { url: "https://example.com/standalone/" };
       expect(serialize!(item)).toBe(item);
     });
 
     it("passes through items with empty links arrays unchanged", () => {
-      const { serialize } = astroSitemapI18n({ defaultLocale: "en", locales: ["en", "pt-BR"] });
+      const { serialize } = astroSitemapI18n({ defaultLocale: "en-US", locales: ["en-US", "pt-BR"] });
       const item = { url: "https://example.com/foo/", links: [] };
       expect(serialize!(item)).toBe(item);
     });
@@ -176,7 +184,7 @@ describe("astroSitemapI18n", () => {
       // alternates without including the default locale. Returning
       // the item unchanged is safer than emitting an x-default with
       // the wrong target URL.
-      const { serialize } = astroSitemapI18n({ defaultLocale: "en", locales: ["en", "pt-BR"] });
+      const { serialize } = astroSitemapI18n({ defaultLocale: "en-US", locales: ["en-US", "pt-BR"] });
       const item = {
         url: "https://example.com/pt-BR/foo/",
         links: [
@@ -188,9 +196,9 @@ describe("astroSitemapI18n", () => {
     });
 
     it("does not mutate the input item or its links array", () => {
-      const { serialize } = astroSitemapI18n({ defaultLocale: "en", locales: ["en", "pt-BR"] });
+      const { serialize } = astroSitemapI18n({ defaultLocale: "en-US", locales: ["en-US", "pt-BR"] });
       const links = [
-        { url: "https://example.com/", lang: "en" },
+        { url: "https://example.com/", lang: "en-US" },
         { url: "https://example.com/pt-BR/", lang: "pt-BR" },
       ];
       const item = { url: "https://example.com/", links };
@@ -201,14 +209,14 @@ describe("astroSitemapI18n", () => {
     });
 
     it("omits the serialize callback when xDefault: false", () => {
-      const result = astroSitemapI18n({ defaultLocale: "en", locales: ["en", "pt-BR"] }, { xDefault: false });
+      const result = astroSitemapI18n({ defaultLocale: "en-US", locales: ["en-US", "pt-BR"] }, { xDefault: false });
       expect(result.serialize).toBeUndefined();
       // i18n is still returned regardless
-      expect(result.i18n.locales).toEqual({ en: "en", "pt-BR": "pt-BR" });
+      expect(result.i18n.locales).toEqual({ "en-US": "en-US", "pt-BR": "pt-BR" });
     });
 
     it("treats xDefault: undefined the same as the default (enabled)", () => {
-      const result = astroSitemapI18n({ defaultLocale: "en", locales: ["en", "pt-BR"] }, { xDefault: undefined });
+      const result = astroSitemapI18n({ defaultLocale: "en-US", locales: ["en-US", "pt-BR"] }, { xDefault: undefined });
       expect(typeof result.serialize).toBe("function");
     });
   });
@@ -219,7 +227,7 @@ describe("astroSitemapI18n", () => {
       // additional sitemap options via spread. Verifies the keys are
       // exactly { i18n, serialize? } and nothing else that could
       // collide with sitemap's option surface.
-      const result = astroSitemapI18n({ defaultLocale: "en", locales: ["en", "pt-BR"] });
+      const result = astroSitemapI18n({ defaultLocale: "en-US", locales: ["en-US", "pt-BR"] });
       const composed = {
         ...result,
         filter: (page: string) => !page.includes("/draft/"),

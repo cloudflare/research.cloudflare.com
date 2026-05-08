@@ -12,8 +12,8 @@ import polystella, { astroSitemapI18n } from "polystella";
 import polystellaConfig from "./polystella.config.mjs";
 
 const i18n = {
-  defaultLocale: "en",
-  locales: ["en", "pt-BR", "ja-JP", "es-ES"],
+  defaultLocale: "en-US",
+  locales: ["en-US", "pt-BR", "ja-JP", "es-ES"],
   routing: { prefixDefaultLocale: false },
 };
 
@@ -93,11 +93,7 @@ export default defineConfig({
     // block above. Without this, the locale-prefixed URLs PolyStella
     // injects appear in the sitemap as duplicate content rather than
     // as alternate-language pages, hurting SEO.
-    //
-    // The `hreflang` override maps Astro's URL prefix `en` to the
-    // BCP 47 region-specific `en-US` value, since this site's English
-    // content is American English. Other locales identity-map.
-    sitemap(astroSitemapI18n(i18n, { hreflang: { en: "en-US" } })),
+    sitemap(astroSitemapI18n(i18n)),
     polystella(polystellaConfig),
   ],
   redirects: {

@@ -12,7 +12,7 @@ import type { PolyStellaResolvedOptions } from "../src/config/options.js";
  */
 function makeConfig(overrides: Partial<PolyStellaResolvedOptions> = {}): PolyStellaResolvedOptions {
   return {
-    defaultLocale: "en",
+    defaultLocale: "en-US",
     locales: ["pt-BR", "ja-JP"],
     sourceDir: "./content",
     include: ["**/*.md"],
@@ -139,11 +139,9 @@ describe("loadGlossaries", () => {
   });
 
   it("rejects styleRules with empty category or instruction", async () => {
-    writeFileSync(
-      path.join(tmpDir, "i18n/glossary/pt-BR.yaml"),
-      ["styleRules:", "  - category: \"\"", '    instruction: "x"'].join("\n"),
-      { flag: "wx" },
-    );
+    writeFileSync(path.join(tmpDir, "i18n/glossary/pt-BR.yaml"), ["styleRules:", '  - category: ""', '    instruction: "x"'].join("\n"), {
+      flag: "wx",
+    });
 
     await expect(
       loadGlossaries({

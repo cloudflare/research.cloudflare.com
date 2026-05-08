@@ -20,7 +20,7 @@ import {
  * and never imports `astro:content`.
  */
 
-const DEFAULT_LOCALE = "en";
+const DEFAULT_LOCALE = "en-US";
 
 /**
  * Stub for `deps.getEntry`. Configured per-test via the `entries`

@@ -417,8 +417,8 @@ function validateAstroI18n(i18n: AstroI18nLike | undefined): string[] {
     following to your astro.config.mjs (adjust locales as needed):
 
         i18n: {
-          defaultLocale: "en",
-          locales: ["en", "pt-BR", "ja-JP"],
+          defaultLocale: "en-US",
+          locales: ["en-US", "pt-BR", "ja-JP"],
           routing: { prefixDefaultLocale: false },
         }`,
     ];

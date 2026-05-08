@@ -435,9 +435,46 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
     };
   }
 
+  const totalPairs = sources.length * resolved.locales.length;
   logger.info(
     `live: processing ${sources.length} × ${resolved.locales.length} (file, locale) pairs at concurrency ${resolved.concurrency}`,
   );
+
+  // Heartbeat: Astro emits "Waiting for integration..." once after 3s
+  // (see node_modules/astro/dist/integrations/hooks.js); after that it
+  // goes silent until our hook returns. With `verbose: false` (the
+  // default) the per-pair log lines below are suppressed, so a cold-
+  // cache live run can sit quiet for tens of seconds. Periodic
+  // progress lines through Astro's logger keep the build feed alive
+  // without TTY tricks (works the same in CI logs and local dev).
+  //
+  // Skipped for trivially small runs (the existing summary lines are
+  // enough) and respects `verbose` — verbose mode already prints one
+  // line per pair, so a heartbeat would be noise on top.
+  const heartbeatThreshold = 10;
+  let processedPairs = 0;
+  const heartbeatStart = Date.now();
+  const heartbeatEnabled = !resolved.verbose && totalPairs >= heartbeatThreshold;
+  const heartbeatHandle = heartbeatEnabled
+    ? setInterval(() => {
+        // Skip the very first tick if nothing has finished yet — the
+        // counts line is more informative once at least one pair has
+        // completed; before that the user already saw the "live:
+        // processing N × M" line.
+        if (processedPairs === 0) return;
+        const elapsedSec = Math.round((Date.now() - heartbeatStart) / 1000);
+        const pct = Math.floor((processedPairs / totalPairs) * 100);
+        logger.info(
+          `progress: ${processedPairs}/${totalPairs} pairs (${pct}%) — ${counts.hit} hit, ${counts.miss} miss, ${counts.override} override${
+            counts.localSkipped > 0 ? `, ${counts.localSkipped} local-skipped` : ""
+          }${counts.failed > 0 ? `, ${counts.failed} failed` : ""} — ${elapsedSec}s elapsed`,
+        );
+      }, 5000)
+    : null;
+  // Don't keep the Node event loop alive solely on the heartbeat
+  // (the pool's awaited promise is what we wait on; if a bug stalled
+  // it, we still want process exit to work normally).
+  heartbeatHandle?.unref();
 
   // On-disk staging index. Captures the source hash of every pair
   // we last staged at `<stagingDir>/<locale>/<source>` so the next
@@ -522,7 +559,9 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
     if (!adapter) {
       // Already warned in the dry-run pass above; silently drop here
       // so a single source file with an unsupported extension doesn't
-      // double-log on every run.
+      // double-log on every run. Account for the would-be pairs in
+      // the heartbeat denominator so progress still ticks toward 100%.
+      processedPairs += resolved.locales.length;
       return;
     }
     const body = await readFile(source.absolutePath, "utf8");
@@ -565,45 +604,49 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
       noTranslateSources++;
       for (const locale of resolved.locales) {
         const pairStart = Date.now();
-        const { modelId, sourceHash, r2Key } = reportKeysFor(locale);
-        const override = await readOverride({
-          rootDir,
-          overridesDir: resolved.overridesDir,
-          locale,
-          relativeSourcePath: source.relativePath,
-        });
-        if (override === null) {
+        try {
+          const { modelId, sourceHash, r2Key } = reportKeysFor(locale);
+          const override = await readOverride({
+            rootDir,
+            overridesDir: resolved.overridesDir,
+            locale,
+            relativeSourcePath: source.relativePath,
+          });
+          if (override === null) {
+            entries.push({
+              sourcePath: source.relativePath,
+              locale,
+              sourceHash,
+              r2Key,
+              outcome: "skipped-no-translate",
+              model: modelId,
+              durationMs: Date.now() - pairStart,
+            });
+            continue;
+          }
+          const overrideStaged = maybeRewrite(override, locale, adapter, urlPathsForSource);
+          await writeStagedTranslation({
+            stagingDir,
+            locale,
+            relativeSourcePath: source.relativePath,
+            bytes: overrideStaged,
+          });
+          counts.override++;
+          touchedPairs.add(encodeTouchedPair(locale, source.relativePath));
           entries.push({
             sourcePath: source.relativePath,
             locale,
             sourceHash,
             r2Key,
-            outcome: "skipped-no-translate",
+            outcome: "override",
             model: modelId,
             durationMs: Date.now() - pairStart,
           });
-          continue;
-        }
-        const overrideStaged = maybeRewrite(override, locale, adapter, urlPathsForSource);
-        await writeStagedTranslation({
-          stagingDir,
-          locale,
-          relativeSourcePath: source.relativePath,
-          bytes: overrideStaged,
-        });
-        counts.override++;
-        touchedPairs.add(encodeTouchedPair(locale, source.relativePath));
-        entries.push({
-          sourcePath: source.relativePath,
-          locale,
-          sourceHash,
-          r2Key,
-          outcome: "override",
-          model: modelId,
-          durationMs: Date.now() - pairStart,
-        });
-        if (resolved.verbose) {
-          logger.info(`◆ ${source.relativePath} → ${locale} [override, noTranslate-source]`);
+          if (resolved.verbose) {
+            logger.info(`◆ ${source.relativePath} → ${locale} [override, noTranslate-source]`);
+          }
+        } finally {
+          processedPairs++;
         }
       }
       if (resolved.verbose) {
@@ -847,7 +890,18 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
           durationMs: Date.now() - pairStart,
           errorMessage: message,
         });
+      } finally {
+        processedPairs++;
       }
+    }
+  }).finally(() => {
+    // Stop the heartbeat regardless of outcome. `runWithConcurrency`
+    // can throw (e.g. unrecoverable I/O); we don't want a stray
+    // interval pinning the event loop or leaking into a caller's
+    // process. `.finally` chains on the awaited promise so the throw
+    // still propagates up to our caller.
+    if (heartbeatHandle) {
+      clearInterval(heartbeatHandle);
     }
   });
 

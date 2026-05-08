@@ -378,7 +378,7 @@ describe("translateBatch", () => {
       translator: fakeTranslator,
       segments: [],
       glossary: EMPTY_GLOSSARY,
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
     });
     expect(out.size).toBe(0);
@@ -401,7 +401,7 @@ describe("translateBatch", () => {
       translator: fakeTranslator,
       segments,
       glossary: EMPTY_GLOSSARY,
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
     });
     expect(out.get("fm:title")).toBe("Um pedido de desculpas");
@@ -422,7 +422,7 @@ describe("translateBatch", () => {
         translator: fakeTranslator,
         segments,
         glossary: EMPTY_GLOSSARY,
-        sourceLocale: "en",
+        sourceLocale: "en-US",
         targetLocale: "pt-BR",
       }),
     ).rejects.toThrow(/no segment markers in the model response/);

@@ -17,10 +17,10 @@ import { checkI18nDrift, formatDriftIssues, loadAndCheckDrift } from "../src/i18
 describe("checkI18nDrift — pure", () => {
   it("returns ok when every locale has the same key set", () => {
     const result = checkI18nDrift({
-      defaultLocale: "en",
-      locales: ["en", "pt-BR", "ja-JP"],
+      defaultLocale: "en-US",
+      locales: ["en-US", "pt-BR", "ja-JP"],
       dictionaries: {
-        en: { "nav.home": "Home", "nav.about": "About" },
+        "en-US": { "nav.home": "Home", "nav.about": "About" },
         "pt-BR": { "nav.home": "Início", "nav.about": "Sobre" },
         "ja-JP": { "nav.home": "ホーム", "nav.about": "概要" },
       },
@@ -31,10 +31,10 @@ describe("checkI18nDrift — pure", () => {
 
   it("flags missing keys per locale", () => {
     const result = checkI18nDrift({
-      defaultLocale: "en",
-      locales: ["en", "pt-BR"],
+      defaultLocale: "en-US",
+      locales: ["en-US", "pt-BR"],
       dictionaries: {
-        en: { "nav.home": "Home", "nav.about": "About" },
+        "en-US": { "nav.home": "Home", "nav.about": "About" },
         "pt-BR": { "nav.home": "Início" }, // missing "nav.about"
       },
     });
@@ -50,10 +50,10 @@ describe("checkI18nDrift — pure", () => {
 
   it("flags extra keys per locale", () => {
     const result = checkI18nDrift({
-      defaultLocale: "en",
-      locales: ["en", "pt-BR"],
+      defaultLocale: "en-US",
+      locales: ["en-US", "pt-BR"],
       dictionaries: {
-        en: { "nav.home": "Home" },
+        "en-US": { "nav.home": "Home" },
         "pt-BR": { "nav.home": "Início", "stale.key": "obsoleto" },
       },
     });
@@ -63,10 +63,10 @@ describe("checkI18nDrift — pure", () => {
 
   it("flags missing AND extra keys in the same locale", () => {
     const result = checkI18nDrift({
-      defaultLocale: "en",
-      locales: ["en", "pt-BR"],
+      defaultLocale: "en-US",
+      locales: ["en-US", "pt-BR"],
       dictionaries: {
-        en: { "nav.home": "Home", "nav.about": "About" },
+        "en-US": { "nav.home": "Home", "nav.about": "About" },
         "pt-BR": { "nav.home": "Início", "stale.key": "obsoleto" },
       },
     });
@@ -79,10 +79,10 @@ describe("checkI18nDrift — pure", () => {
 
   it("flags a fully-missing locale file with missingFile=true", () => {
     const result = checkI18nDrift({
-      defaultLocale: "en",
-      locales: ["en", "pt-BR", "ja-JP"],
+      defaultLocale: "en-US",
+      locales: ["en-US", "pt-BR", "ja-JP"],
       dictionaries: {
-        en: { "nav.home": "Home", "nav.about": "About" },
+        "en-US": { "nav.home": "Home", "nav.about": "About" },
         "pt-BR": { "nav.home": "Início", "nav.about": "Sobre" },
         // ja-JP missing entirely.
       },
@@ -100,8 +100,8 @@ describe("checkI18nDrift — pure", () => {
     // Operator hasn't authored UI strings yet; we don't want to
     // force them to stub out an empty file before they start.
     const result = checkI18nDrift({
-      defaultLocale: "en",
-      locales: ["en", "pt-BR"],
+      defaultLocale: "en-US",
+      locales: ["en-US", "pt-BR"],
       dictionaries: {},
     });
     expect(result.ok).toBe(true);
@@ -112,10 +112,10 @@ describe("checkI18nDrift — pure", () => {
     // Once the operator HAS started authoring (the file exists, even
     // empty), other locales must also be empty to pass.
     const result = checkI18nDrift({
-      defaultLocale: "en",
-      locales: ["en", "pt-BR"],
+      defaultLocale: "en-US",
+      locales: ["en-US", "pt-BR"],
       dictionaries: {
-        en: {},
+        "en-US": {},
         "pt-BR": { "stale.key": "x" },
       },
     });
@@ -125,19 +125,19 @@ describe("checkI18nDrift — pure", () => {
 
   it("skips the default locale in its loop (default vs. default = trivially in sync)", () => {
     const result = checkI18nDrift({
-      defaultLocale: "en",
-      locales: ["en"],
-      dictionaries: { en: { "nav.home": "Home" } },
+      defaultLocale: "en-US",
+      locales: ["en-US"],
+      dictionaries: { "en-US": { "nav.home": "Home" } },
     });
     expect(result.ok).toBe(true);
   });
 
   it("sorts missing/extra lists for stable error messages", () => {
     const result = checkI18nDrift({
-      defaultLocale: "en",
-      locales: ["en", "pt-BR"],
+      defaultLocale: "en-US",
+      locales: ["en-US", "pt-BR"],
       dictionaries: {
-        en: { z: "z", a: "a", m: "m" },
+        "en-US": { z: "z", a: "a", m: "m" },
         "pt-BR": {},
       },
     });
@@ -200,28 +200,28 @@ describe("loadAndCheckDrift — disk", () => {
 
   it("returns ok when every JSON file exists with matching keys", async () => {
     const { rootDir, baseDir } = await makeFixture({
-      "en.json": JSON.stringify({ "nav.home": "Home" }),
+      "en-US.json": JSON.stringify({ "nav.home": "Home" }),
       "pt-BR.json": JSON.stringify({ "nav.home": "Início" }),
     });
     const result = await loadAndCheckDrift({
       rootDir,
       baseDir,
-      locales: ["en", "pt-BR"],
-      defaultLocale: "en",
+      locales: ["en-US", "pt-BR"],
+      defaultLocale: "en-US",
     });
     expect(result.ok).toBe(true);
   });
 
   it("flags missingFile when a locale's JSON is absent", async () => {
     const { rootDir, baseDir } = await makeFixture({
-      "en.json": JSON.stringify({ "nav.home": "Home" }),
+      "en-US.json": JSON.stringify({ "nav.home": "Home" }),
       // pt-BR.json deliberately not created
     });
     const result = await loadAndCheckDrift({
       rootDir,
       baseDir,
-      locales: ["en", "pt-BR"],
-      defaultLocale: "en",
+      locales: ["en-US", "pt-BR"],
+      defaultLocale: "en-US",
     });
     expect(result.ok).toBe(false);
     expect(result.issues[0]).toMatchObject({
@@ -235,36 +235,36 @@ describe("loadAndCheckDrift — disk", () => {
     const result = await loadAndCheckDrift({
       rootDir,
       baseDir,
-      locales: ["en", "pt-BR"],
-      defaultLocale: "en",
+      locales: ["en-US", "pt-BR"],
+      defaultLocale: "en-US",
     });
     expect(result.ok).toBe(true);
   });
 
   it("throws on malformed JSON (the file exists but parse fails)", async () => {
     const { rootDir, baseDir } = await makeFixture({
-      "en.json": "{ this is not valid JSON }",
+      "en-US.json": "{ this is not valid JSON }",
     });
     await expect(
       loadAndCheckDrift({
         rootDir,
         baseDir,
-        locales: ["en"],
-        defaultLocale: "en",
+        locales: ["en-US"],
+        defaultLocale: "en-US",
       }),
     ).rejects.toThrow(/failed to parse UI-strings JSON/);
   });
 
   it("throws when a JSON file is an array instead of an object", async () => {
     const { rootDir, baseDir } = await makeFixture({
-      "en.json": JSON.stringify(["not", "an", "object"]),
+      "en-US.json": JSON.stringify(["not", "an", "object"]),
     });
     await expect(
       loadAndCheckDrift({
         rootDir,
         baseDir,
-        locales: ["en"],
-        defaultLocale: "en",
+        locales: ["en-US"],
+        defaultLocale: "en-US",
       }),
     ).rejects.toThrow(/must be a JSON object/);
   });

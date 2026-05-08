@@ -3,7 +3,7 @@ import { rewriteInternalLinks, rewriteUrlIfInternal, type RewriteInternalLinksOp
 
 const opts: RewriteInternalLinksOptions = {
   targetLocale: "pt-BR",
-  locales: ["en", "pt-BR", "ja-JP"],
+  locales: ["en-US", "pt-BR", "ja-JP"],
 };
 
 describe("rewriteUrlIfInternal", () => {
@@ -62,7 +62,7 @@ describe("rewriteUrlIfInternal", () => {
     // A re-translation pass running on a sibling locale's cached
     // bytes shouldn't accidentally produce `/pt-BR/ja-JP/foo`.
     expect(rewriteUrlIfInternal("/ja-JP/foo", opts)).toBeNull();
-    expect(rewriteUrlIfInternal("/en/foo", opts)).toBeNull();
+    expect(rewriteUrlIfInternal("/en-US/foo", opts)).toBeNull();
   });
 
   it("does NOT treat substrings of locale codes as already-prefixed", () => {
@@ -80,9 +80,7 @@ describe("rewriteUrlIfInternal — noPrefixUrls", () => {
   // the URL path (with query/fragment stripped) via picomatch.
 
   it("leaves an exact-match path unprefixed", () => {
-    expect(
-      rewriteUrlIfInternal("/api-docs", { ...opts, noPrefixUrls: ["/api-docs"] }),
-    ).toBeNull();
+    expect(rewriteUrlIfInternal("/api-docs", { ...opts, noPrefixUrls: ["/api-docs"] })).toBeNull();
   });
 
   it("leaves descendants of a glob-matched path unprefixed", () => {
@@ -128,9 +126,7 @@ describe("rewriteUrlIfInternal — noPrefixUrls", () => {
 
   it("preserves rewriting for paths that fall outside any glob", () => {
     const o = { ...opts, noPrefixUrls: ["/api-docs/**"] };
-    expect(rewriteUrlIfInternal("/publications/Davidson2018", o)).toBe(
-      "/pt-BR/publications/Davidson2018",
-    );
+    expect(rewriteUrlIfInternal("/publications/Davidson2018", o)).toBe("/pt-BR/publications/Davidson2018");
   });
 });
 
@@ -228,7 +224,7 @@ describe("rewriteInternalLinks", () => {
     expect(ptBR).toBe("See [docs](/pt-BR/docs).");
     const jaJP = rewriteInternalLinks(ptBR, {
       targetLocale: "ja-JP",
-      locales: ["en", "pt-BR", "ja-JP"],
+      locales: ["en-US", "pt-BR", "ja-JP"],
     });
     expect(jaJP).toBe(ptBR);
   });

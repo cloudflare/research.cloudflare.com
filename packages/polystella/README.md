@@ -36,8 +36,8 @@ import polystellaConfig from "./polystella.config.mjs";
 
 export default defineConfig({
   i18n: {
-    defaultLocale: "en",
-    locales: ["en", "pt-BR", "ja-JP"],
+    defaultLocale: "en-US",
+    locales: ["en-US", "pt-BR", "ja-JP"],
   },
   integrations: [polystella(polystellaConfig)],
 });
@@ -57,8 +57,8 @@ import { publications, people /* ... */ } from "./content-schemas";
 export const collections = {
   ...polystellaCollections({
     source: { publications, people },
-    locales: ["en", "pt-BR", "ja-JP"],
-    defaultLocale: "en",
+    locales: ["en-US", "pt-BR", "ja-JP"],
+    defaultLocale: "en-US",
   }),
   // Hand-authored UI-strings collection, drift-detected at build.
   i18n: defineCollection({ loader: i18nLoader(), schema: i18nSchema() }),
@@ -111,13 +111,7 @@ const navDict = await getDictionary(Astro.currentLocale, "nav");
 ```tsx
 import { useTranslations, useLocalizedHref } from "polystella/react";
 
-export function NavMenu({
-  locale,
-  dict,
-}: {
-  locale: string | undefined;
-  dict: Record<string, string>;
-}) {
+export function NavMenu({ locale, dict }: { locale: string | undefined; dict: Record<string, string> }) {
   const t = useTranslations(dict);
   const link = useLocalizedHref(locale);
   return <a href={link("/foo")}>{t("nav.home")}</a>;

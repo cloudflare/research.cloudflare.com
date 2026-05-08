@@ -126,8 +126,8 @@ export const collections = {
     // Mirror Astro's `i18n.locales` from astro.config.mjs. The helper
     // strips `defaultLocale` defensively so we don't register a
     // self-translation sibling.
-    locales: ["en", "pt-BR", "ja-JP"],
-    defaultLocale: "en",
+    locales: ["en-US", "pt-BR", "ja-JP"],
+    defaultLocale: "en-US",
     loaderOverrides: {
       // `blog` uses a custom loader; opting it out so the warning goes
       // away. Blog posts are English-only by design today.

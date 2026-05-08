@@ -94,8 +94,8 @@ describe("emitBuildReport", () => {
         mode: "standalone",
         polystellaVersion: "0.1.0",
       },
-      locales: ["en", "pt-BR", "ja-JP"],
-      defaultLocale: "en",
+      locales: ["en-US", "pt-BR", "ja-JP"],
+      defaultLocale: "en-US",
       glossaries: {
         "pt-BR": { file: "i18n/glossary/pt-BR.yaml", sha256: "abc" },
         "ja-JP": { file: "i18n/glossary/ja-JP.yaml", sha256: "def" },

@@ -29,10 +29,10 @@ describe("buildPrompt", () => {
     const { systemPrompt } = buildPrompt({
       segments: sampleSegments,
       glossary: sampleGlossary,
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
     });
-    expect(systemPrompt).toMatch(/English \(en\)/);
+    expect(systemPrompt).toMatch(/American English \(en-US\)/);
     expect(systemPrompt).toMatch(/Brazilian Portuguese \(pt-BR\)/);
   });
 
@@ -40,7 +40,7 @@ describe("buildPrompt", () => {
     const { systemPrompt } = buildPrompt({
       segments: sampleSegments,
       glossary: sampleGlossary,
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
     });
     expect(systemPrompt).toMatch(/MUST NOT BE TRANSLATED/);
@@ -52,7 +52,7 @@ describe("buildPrompt", () => {
     const { systemPrompt } = buildPrompt({
       segments: sampleSegments,
       glossary: sampleGlossary,
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
     });
     expect(systemPrompt).toMatch(/PREFERRED TRANSLATIONS/);
@@ -63,7 +63,7 @@ describe("buildPrompt", () => {
     const { systemPrompt } = buildPrompt({
       segments: sampleSegments,
       glossary: sampleGlossary,
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
     });
     expect(systemPrompt).toMatch(/ADDITIONAL NOTES:/);
@@ -74,7 +74,7 @@ describe("buildPrompt", () => {
     const { systemPrompt } = buildPrompt({
       segments: sampleSegments,
       glossary: sampleGlossary,
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
     });
     expect(systemPrompt).toMatch(/STYLE RULES \(apply these throughout\):/);
@@ -86,7 +86,7 @@ describe("buildPrompt", () => {
     const { systemPrompt } = buildPrompt({
       segments: sampleSegments,
       glossary: sampleGlossary,
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
     });
     expect(systemPrompt).toMatch(/- \[numbers\] Use comma as decimal separator\.\n {2}Example: 21\.3 → 21,3/);
@@ -99,7 +99,7 @@ describe("buildPrompt", () => {
     const { systemPrompt } = buildPrompt({
       segments: sampleSegments,
       glossary: sampleGlossary,
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
     });
     const idxPref = systemPrompt.indexOf("PREFERRED TRANSLATIONS");
@@ -114,7 +114,7 @@ describe("buildPrompt", () => {
     const { systemPrompt } = buildPrompt({
       segments: sampleSegments,
       glossary: { ...sampleGlossary, styleRules: [] },
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
     });
     expect(systemPrompt).not.toMatch(/STYLE RULES/);
@@ -127,7 +127,7 @@ describe("buildPrompt", () => {
         ...sampleGlossary,
         styleRules: [{ category: "tone", instruction: "Use formal academic register." }],
       },
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
     });
     expect(systemPrompt).toMatch(/- \[tone\] Use formal academic register\./);
@@ -138,7 +138,7 @@ describe("buildPrompt", () => {
     const { systemPrompt } = buildPrompt({
       segments: sampleSegments,
       glossary: { ...sampleGlossary, doNotTranslate: [] },
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
     });
     expect(systemPrompt).not.toMatch(/MUST NOT BE TRANSLATED/);
@@ -148,7 +148,7 @@ describe("buildPrompt", () => {
     const { systemPrompt } = buildPrompt({
       segments: sampleSegments,
       glossary: { ...sampleGlossary, preferredTranslations: {} },
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
     });
     expect(systemPrompt).not.toMatch(/PREFERRED TRANSLATIONS/);
@@ -158,7 +158,7 @@ describe("buildPrompt", () => {
     const { systemPrompt } = buildPrompt({
       segments: sampleSegments,
       glossary: { ...sampleGlossary, notes: "   " },
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
     });
     expect(systemPrompt).not.toMatch(/ADDITIONAL NOTES/);
@@ -168,7 +168,7 @@ describe("buildPrompt", () => {
     const { systemPrompt } = buildPrompt({
       segments: sampleSegments,
       glossary: EMPTY_GLOSSARY,
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
     });
     expect(systemPrompt).not.toMatch(/MUST NOT BE TRANSLATED/);
@@ -183,7 +183,7 @@ describe("buildPrompt", () => {
     const { userPrompt } = buildPrompt({
       segments: sampleSegments,
       glossary: sampleGlossary,
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
     });
     expect(userPrompt).toContain("@@fm:title@@");
@@ -196,7 +196,7 @@ describe("buildPrompt", () => {
     const { systemPrompt } = buildPrompt({
       segments: sampleSegments,
       glossary: sampleGlossary,
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
     });
     expect(systemPrompt).toMatch(/marker line/);
@@ -216,7 +216,7 @@ describe("buildPrompt", () => {
     const { userPrompt } = buildPrompt({
       segments,
       glossary: EMPTY_GLOSSARY,
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
     });
     const idx0 = userPrompt.indexOf("@@body:0@@");
@@ -230,7 +230,7 @@ describe("buildPrompt", () => {
     const { systemPrompt } = buildPrompt({
       segments: sampleSegments,
       glossary: EMPTY_GLOSSARY,
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
     });
     expect(systemPrompt).toMatch(/^You are a professional translator\.$/m);
@@ -242,7 +242,7 @@ describe("buildPrompt", () => {
     const { systemPrompt } = buildPrompt({
       segments: sampleSegments,
       glossary: EMPTY_GLOSSARY,
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
       context: "Specialise in technical research content.",
     });
@@ -257,14 +257,14 @@ describe("buildPrompt", () => {
     const blank = buildPrompt({
       segments: sampleSegments,
       glossary: EMPTY_GLOSSARY,
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
       context: "   \n\t  ",
     });
     const omitted = buildPrompt({
       segments: sampleSegments,
       glossary: EMPTY_GLOSSARY,
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
     });
     expect(blank.systemPrompt).toBe(omitted.systemPrompt);
@@ -272,7 +272,7 @@ describe("buildPrompt", () => {
     const padded = buildPrompt({
       segments: sampleSegments,
       glossary: EMPTY_GLOSSARY,
-      sourceLocale: "en",
+      sourceLocale: "en-US",
       targetLocale: "pt-BR",
       context: "   Use formal register.   ",
     });
