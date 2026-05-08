@@ -428,3 +428,164 @@ describe("translateBatch", () => {
     ).rejects.toThrow(/no segment markers in the model response/);
   });
 });
+
+describe("translateBatch — retries", () => {
+  const segments: Segment[] = [
+    { id: "fm:title", text: "An apology" },
+    { id: "body:0", text: "We **regret** any inconvenience." },
+  ];
+
+  const goodResponse = [
+    "@@fm:title@@",
+    "Um pedido de desculpas",
+    "",
+    "@@body:0@@",
+    "Pedimos **desculpas** por qualquer inconveniência.",
+  ].join("\n");
+
+  it("does not retry when the first attempt succeeds", async () => {
+    const translate = vi.fn().mockResolvedValue(goodResponse);
+    const onRetry = vi.fn();
+
+    await translateBatch({
+      translator: { modelId: "test", translate },
+      segments,
+      glossary: EMPTY_GLOSSARY,
+      sourceLocale: "en-US",
+      targetLocale: "pt-BR",
+      maxRetries: 2,
+      onRetry,
+    });
+
+    expect(translate).toHaveBeenCalledTimes(1);
+    expect(onRetry).not.toHaveBeenCalled();
+  });
+
+  it("retries on parse failure and returns the second attempt's parsed map", async () => {
+    // First attempt: model returned an empty body for fm:title (the
+    // probabilistic-glitch case observed in the wild).
+    const emptyForFmTitle = [
+      "@@fm:title@@",
+      "",
+      "@@body:0@@",
+      "Pedimos **desculpas** por qualquer inconveniência.",
+    ].join("\n");
+    const translate = vi.fn().mockResolvedValueOnce(emptyForFmTitle).mockResolvedValueOnce(goodResponse);
+    const onRetry = vi.fn();
+
+    const out = await translateBatch({
+      translator: { modelId: "test", translate },
+      segments,
+      glossary: EMPTY_GLOSSARY,
+      sourceLocale: "en-US",
+      targetLocale: "pt-BR",
+      maxRetries: 2,
+      onRetry,
+    });
+
+    expect(translate).toHaveBeenCalledTimes(2);
+    expect(out.get("fm:title")).toBe("Um pedido de desculpas");
+
+    expect(onRetry).toHaveBeenCalledTimes(1);
+    const evt = onRetry.mock.calls[0]![0]!;
+    expect(evt.attempt).toBe(1);
+    expect(evt.totalAttempts).toBe(3);
+    expect(evt.error.message).toMatch(/empty translation/);
+  });
+
+  it("retries on translator-thrown errors (transient network / provider 5xx)", async () => {
+    const translate = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("Workers AI request failed: 503 Service Unavailable"))
+      .mockResolvedValueOnce(goodResponse);
+    const onRetry = vi.fn();
+
+    const out = await translateBatch({
+      translator: { modelId: "test", translate },
+      segments,
+      glossary: EMPTY_GLOSSARY,
+      sourceLocale: "en-US",
+      targetLocale: "pt-BR",
+      maxRetries: 1,
+      onRetry,
+    });
+
+    expect(translate).toHaveBeenCalledTimes(2);
+    expect(out.size).toBe(2);
+    expect(onRetry).toHaveBeenCalledOnce();
+  });
+
+  it("throws the LAST attempt's error when retries exhaust (not the first)", async () => {
+    const translate = vi
+      .fn()
+      .mockRejectedValueOnce(new Error("first failure"))
+      .mockRejectedValueOnce(new Error("middle failure"))
+      .mockRejectedValueOnce(new Error("final failure"));
+
+    await expect(
+      translateBatch({
+        translator: { modelId: "test", translate },
+        segments,
+        glossary: EMPTY_GLOSSARY,
+        sourceLocale: "en-US",
+        targetLocale: "pt-BR",
+        maxRetries: 2,
+      }),
+    ).rejects.toThrow(/final failure/);
+    expect(translate).toHaveBeenCalledTimes(3);
+  });
+
+  it("does NOT fire onRetry on the final (failing) attempt", async () => {
+    const translate = vi.fn().mockRejectedValue(new Error("boom"));
+    const onRetry = vi.fn();
+
+    await expect(
+      translateBatch({
+        translator: { modelId: "test", translate },
+        segments,
+        glossary: EMPTY_GLOSSARY,
+        sourceLocale: "en-US",
+        targetLocale: "pt-BR",
+        maxRetries: 2,
+        onRetry,
+      }),
+    ).rejects.toThrow(/boom/);
+    // 3 attempts total, 2 followed by retries → onRetry fires twice.
+    expect(translate).toHaveBeenCalledTimes(3);
+    expect(onRetry).toHaveBeenCalledTimes(2);
+  });
+
+  it("maxRetries: 0 disables retries (one attempt, throw on failure)", async () => {
+    const translate = vi.fn().mockRejectedValue(new Error("boom"));
+    const onRetry = vi.fn();
+
+    await expect(
+      translateBatch({
+        translator: { modelId: "test", translate },
+        segments,
+        glossary: EMPTY_GLOSSARY,
+        sourceLocale: "en-US",
+        targetLocale: "pt-BR",
+        maxRetries: 0,
+        onRetry,
+      }),
+    ).rejects.toThrow(/boom/);
+    expect(translate).toHaveBeenCalledTimes(1);
+    expect(onRetry).not.toHaveBeenCalled();
+  });
+
+  it("default behaviour (no maxRetries option) is single-attempt for backwards-compat", async () => {
+    const translate = vi.fn().mockRejectedValue(new Error("boom"));
+
+    await expect(
+      translateBatch({
+        translator: { modelId: "test", translate },
+        segments,
+        glossary: EMPTY_GLOSSARY,
+        sourceLocale: "en-US",
+        targetLocale: "pt-BR",
+      }),
+    ).rejects.toThrow(/boom/);
+    expect(translate).toHaveBeenCalledTimes(1);
+  });
+});

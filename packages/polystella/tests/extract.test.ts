@@ -162,6 +162,46 @@ describe("extractSegments — frontmatter", () => {
     expect(segments.filter((s) => s.id.startsWith("fm:"))).toEqual([{ id: "fm:title", text: "Hello" }]);
   });
 
+  it("skips empty-string scalar frontmatter values (no segment, no provider call)", () => {
+    // Empty source `description: ""` is meaningless to translate and
+    // provokes empty-response failures from small instruct models.
+    // Mirrors the body extractor's `text.length > 0` guard and the
+    // structured-data adapters' empty-string skip.
+    const src = ['---', 'description: ""', 'title: "Hello"', '---', "", "Body.", ""].join("\n");
+    const ast = parseMarkdown(src);
+    const segments = extractSegments(
+      ast,
+      {
+        sourcePath: "tags/empty.md",
+        frontmatter: { "tags/**": ["title", "description"] },
+      },
+      src,
+    );
+
+    expect(segments.filter((s) => s.id.startsWith("fm:"))).toEqual([{ id: "fm:title", text: "Hello" }]);
+  });
+
+  it("skips empty-string elements inside translatable arrays", () => {
+    const src = ["---", "title: Hello", "tags:", "  - alpha", '  - ""', "  - beta", "  - ''", "---", "", "Body.", ""].join("\n");
+    const ast = parseMarkdown(src);
+    const segments = extractSegments(
+      ast,
+      {
+        sourcePath: "publications/foo.md",
+        frontmatter: { "publications/**": ["tags"] },
+      },
+      src,
+    );
+
+    // Empty entries at indices 1 and 3 produce no segments; the
+    // remaining entries keep their original indices in the IDs so the
+    // applier writes back to the right slots.
+    expect(segments.filter((s) => s.id.startsWith("fm:"))).toEqual([
+      { id: "fm:tags[0]", text: "alpha" },
+      { id: "fm:tags[2]", text: "beta" },
+    ]);
+  });
+
   it("unions keys across all matching globs in declaration order", () => {
     const ast = parseMarkdown(docWithFrontmatter);
     const segments = extractSegments(

@@ -358,13 +358,38 @@ describe("parseResponse", () => {
     expect(() => parseResponse(raw, expected)).toThrow(/omitted segment "body:0".*Response appears truncated/s);
   });
 
-  it("throws when the model returns an unexpected segment id", () => {
+  it("silently skips unexpected segment ids when all expected ids are also present (hallucination tolerance)", () => {
+    // Small instruct models hallucinate `fm:abstract` /
+    // `fm:content` / typo'd `fn:author` markers on academic-shaped
+    // content even when the prompt explicitly forbids it. A strict
+    // throw makes the response unrecoverable on retry (the
+    // hallucination is often deterministic for that input). Skipping
+    // unexpected ids while still catching missing expected ones
+    // delivers the same correctness guarantees with much higher
+    // success rates against small models.
     const raw = buildMarkerResponse([
       ["fm:title", "T"],
+      ["fm:abstract", "Hallucinated abstract that wasn't asked for"],
       ["body:0", "B"],
-      ["body:99", "Surprise!"],
+      ["fn:author", "Typo'd marker prefix; also hallucinated"],
     ]);
-    expect(() => parseResponse(raw, expected)).toThrow(/unexpected segment id "body:99"/);
+    const out = parseResponse(raw, expected);
+    expect(out.get("fm:title")).toBe("T");
+    expect(out.get("body:0")).toBe("B");
+    expect(out.has("fm:abstract")).toBe(false);
+    expect(out.has("fn:author")).toBe(false);
+  });
+
+  it("still throws when an expected id is missing (even with hallucinated extras)", () => {
+    // Hallucination tolerance must not mask real omissions — the
+    // model only emitted `fm:abstract` (unexpected) and `body:0`,
+    // dropping the required `fm:title`. We skip the unexpected one,
+    // and the post-loop missing-id check trips.
+    const raw = buildMarkerResponse([
+      ["fm:abstract", "Hallucinated"],
+      ["body:0", "B"],
+    ]);
+    expect(() => parseResponse(raw, expected)).toThrow(/omitted segment "fm:title"/);
   });
 
   it("throws when the model omits an expected segment", () => {

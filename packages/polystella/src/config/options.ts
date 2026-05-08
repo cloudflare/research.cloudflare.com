@@ -284,6 +284,26 @@ export const polystellaOptionsSchema = z
 
     fallback: z.enum(["default-locale", "skip"]).default("default-locale"),
     concurrency: z.number().int().positive().default(4),
+    /**
+     * Number of retry attempts on transient translator failures —
+     * malformed model responses (empty translations, omitted segments,
+     * hallucinated segment ids), and provider-side errors that throw
+     * out of `translator.translate(...)`. Each retry rebuilds and
+     * re-issues the SAME prompt; the model's natural sampling
+     * variance is what makes a second / third attempt likely to
+     * succeed.
+     *
+     * `0` disables retries entirely (a single failed attempt fails
+     * the pair). Default `2` gives up to 3 total attempts, which
+     * empirically clears nearly all small-model glitches without
+     * meaningfully bloating provider cost on a healthy build (where
+     * retries fire on a small fraction of pairs at most).
+     *
+     * Network-layer retries (5xx, ECONNRESET, etc.) live below the
+     * provider's HTTP client and are out of scope here — `maxRetries`
+     * specifically covers the prompt → response → parse cycle.
+     */
+    maxRetries: z.number().int().min(0).default(2),
     dryRun: z.boolean().default(false),
     runOn: z.array(z.enum(["build", "dev"])).default(["build"]),
     // `auto` and `"standalone"` are equivalent today; both register

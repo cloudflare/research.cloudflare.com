@@ -174,15 +174,47 @@ export interface TranslateBatchOptions {
   targetLocale: string;
   /** Optional site-/domain-specific prompt extension; see `BuildPromptInput.context`. */
   context?: string;
+  /**
+   * Number of retries on translator/parse failure. `0` (default)
+   * preserves legacy behaviour — a single failed attempt throws.
+   * `N` retries the same prompt up to `N` more times before
+   * giving up. The model's natural sampling variance means a
+   * malformed first response (empty translation, omitted segment,
+   * hallucinated id) usually clears on the next attempt without
+   * any prompt-engineering changes.
+   */
+  maxRetries?: number;
+  /**
+   * Fires once per failed attempt that's followed by a retry —
+   * does NOT fire on the FINAL attempt (which throws). Useful for
+   * surfacing retries in the build log so an operator notices a
+   * model that's misbehaving more than usual.
+   */
+  onRetry?: (event: TranslateBatchRetryEvent) => void;
+}
+
+export interface TranslateBatchRetryEvent {
+  /** 1-indexed attempt number that just failed. */
+  attempt: number;
+  /** Total number of attempts that will be made (1 + maxRetries). */
+  totalAttempts: number;
+  /** Error from the failed attempt. */
+  error: Error;
 }
 
 /**
  * Build the prompt, call the provider, parse the response. Returns
  * `Map<segmentId, translatedText>` for `applyTranslations`. Empty
  * segments → empty map, no network call.
+ *
+ * On parse / translator failure, retries up to `maxRetries` times
+ * with the SAME prompt (sampling variance handles transient model
+ * glitches; deterministic failures still propagate after exhausting
+ * retries). The error thrown on final failure is the LAST attempt's
+ * error — not the first — so logs reflect the actual death mode.
  */
 export async function translateBatch(opts: TranslateBatchOptions): Promise<Map<string, string>> {
-  const { translator, segments, glossary, sourceLocale, targetLocale, context } = opts;
+  const { translator, segments, glossary, sourceLocale, targetLocale, context, maxRetries = 0, onRetry } = opts;
   if (segments.length === 0) return new Map();
 
   const { systemPrompt, userPrompt } = buildPrompt({
@@ -192,9 +224,27 @@ export async function translateBatch(opts: TranslateBatchOptions): Promise<Map<s
     targetLocale,
     context,
   });
-  const rawText = await translator.translate(systemPrompt, userPrompt);
-  return parseResponse(
-    rawText,
-    segments.map((s) => s.id),
-  );
+
+  const expectedIds = segments.map((s) => s.id);
+  const totalAttempts = Math.max(1, maxRetries + 1);
+  let lastError: Error | undefined;
+
+  for (let attempt = 1; attempt <= totalAttempts; attempt++) {
+    try {
+      const rawText = await translator.translate(systemPrompt, userPrompt);
+      return parseResponse(rawText, expectedIds);
+    } catch (err) {
+      lastError = err instanceof Error ? err : new Error(String(err));
+      if (attempt < totalAttempts) {
+        onRetry?.({ attempt, totalAttempts, error: lastError });
+        continue;
+      }
+      throw lastError;
+    }
+  }
+
+  // Unreachable: the loop above either returns or throws, but TS's
+  // control-flow analysis can't see it. Throwing the last error
+  // keeps the type narrow.
+  throw lastError ?? new Error("[polystella] translateBatch exhausted retries with no recorded error");
 }

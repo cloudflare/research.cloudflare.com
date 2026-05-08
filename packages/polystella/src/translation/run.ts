@@ -448,13 +448,51 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
   // progress lines through Astro's logger keep the build feed alive
   // without TTY tricks (works the same in CI logs and local dev).
   //
+  // Cadence is either-or:
+  //   - a 15s timer ensures something prints during long stretches
+  //     where progress is genuinely slow (a single AI call mid-flight),
+  //   - a 5%-progress threshold short-circuits the timer so a fast
+  //     burst surfaces immediately rather than waiting for the next
+  //     tick to confirm the build IS moving.
+  // The pool worker calls `maybeEmitProgress` after each pair finishes
+  // (cheap path: an integer compare); the timer is the safety net.
+  //
   // Skipped for trivially small runs (the existing summary lines are
-  // enough) and respects `verbose` — verbose mode already prints one
+  // enough) and when `verbose` is on — verbose already prints one
   // line per pair, so a heartbeat would be noise on top.
   const heartbeatThreshold = 10;
+  const heartbeatIntervalMs = 15_000;
+  const heartbeatPctStep = 5;
   let processedPairs = 0;
+  let lastReportedPct = 0;
+  let lastReportedAt = 0;
   const heartbeatStart = Date.now();
   const heartbeatEnabled = !resolved.verbose && totalPairs >= heartbeatThreshold;
+  const emitProgress = () => {
+    const elapsedSec = Math.round((Date.now() - heartbeatStart) / 1000);
+    const pct = Math.floor((processedPairs / totalPairs) * 100);
+    logger.info(
+      `progress: ${processedPairs}/${totalPairs} pairs (${pct}%) — ${counts.hit} hit, ${counts.miss} miss, ${counts.override} override${
+        counts.localSkipped > 0 ? `, ${counts.localSkipped} local-skipped` : ""
+      }${counts.failed > 0 ? `, ${counts.failed} failed` : ""} — ${elapsedSec}s elapsed`,
+    );
+    lastReportedPct = pct;
+    lastReportedAt = Date.now();
+  };
+  // Called by the pool worker after every completed pair. Fires only
+  // when the integer percentage has advanced by ≥5 since the last
+  // report — cheap and naturally rate-limited (every individual pair
+  // moves the percent by `100/totalPairs`%, so workers don't all
+  // race to log the same threshold crossing).
+  const maybeEmitProgress = heartbeatEnabled
+    ? () => {
+        if (processedPairs === 0) return;
+        const pct = Math.floor((processedPairs / totalPairs) * 100);
+        if (pct - lastReportedPct >= heartbeatPctStep) {
+          emitProgress();
+        }
+      }
+    : () => {};
   const heartbeatHandle = heartbeatEnabled
     ? setInterval(() => {
         // Skip the very first tick if nothing has finished yet — the
@@ -462,14 +500,12 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
         // completed; before that the user already saw the "live:
         // processing N × M" line.
         if (processedPairs === 0) return;
-        const elapsedSec = Math.round((Date.now() - heartbeatStart) / 1000);
-        const pct = Math.floor((processedPairs / totalPairs) * 100);
-        logger.info(
-          `progress: ${processedPairs}/${totalPairs} pairs (${pct}%) — ${counts.hit} hit, ${counts.miss} miss, ${counts.override} override${
-            counts.localSkipped > 0 ? `, ${counts.localSkipped} local-skipped` : ""
-          }${counts.failed > 0 ? `, ${counts.failed} failed` : ""} — ${elapsedSec}s elapsed`,
-        );
-      }, 5000)
+        // Don't double-print right after a 5%-step emit. The 15s
+        // window is the floor between consecutive lines regardless
+        // of which path triggered the previous one.
+        if (lastReportedAt > 0 && Date.now() - lastReportedAt < heartbeatIntervalMs) return;
+        emitProgress();
+      }, heartbeatIntervalMs)
     : null;
   // Don't keep the Node event loop alive solely on the heartbeat
   // (the pool's awaited promise is what we wait on; if a bug stalled
@@ -562,6 +598,7 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
       // double-log on every run. Account for the would-be pairs in
       // the heartbeat denominator so progress still ticks toward 100%.
       processedPairs += resolved.locales.length;
+      maybeEmitProgress();
       return;
     }
     const body = await readFile(source.absolutePath, "utf8");
@@ -647,6 +684,7 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
           }
         } finally {
           processedPairs++;
+          maybeEmitProgress();
         }
       }
       if (resolved.verbose) {
@@ -804,6 +842,16 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
           }),
           ...(resolved.r2?.readOnly ? { readOnly: true } : {}),
           ...(fallbackKeys.length > 0 ? { fallbackKeys } : {}),
+          maxRetries: resolved.maxRetries,
+          onRetry: ({ attempt, totalAttempts, error }) => {
+            // First line of the error keeps the log readable when the
+            // underlying message includes a multi-line `Raw response
+            // was:` dump.
+            const headline = error.message.split("\n", 1)[0];
+            logger.warn(
+              `↻ ${source.relativePath} → ${locale}: attempt ${attempt}/${totalAttempts} failed (${headline}); retrying`,
+            );
+          },
           events: {
             onWriteStart: () => {
               if (!cacheWritesAnnounced) {
@@ -892,6 +940,7 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
         });
       } finally {
         processedPairs++;
+        maybeEmitProgress();
       }
     }
   }).finally(() => {

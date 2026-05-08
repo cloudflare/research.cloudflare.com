@@ -1,6 +1,6 @@
 import type { Segment } from "../parsing/extract.js";
 import type { Glossary } from "../glossary/glossary.js";
-import { translateBatch, type Translator } from "../translation/provider.js";
+import { translateBatch, type TranslateBatchRetryEvent, type Translator } from "../translation/provider.js";
 import type { R2Client } from "./r2.js";
 
 /**
@@ -73,6 +73,18 @@ export interface TranslateOrLoadOptions {
    * deliberately decoupled from key construction.
    */
   fallbackKeys?: string[];
+  /**
+   * Number of retries on translator/parse failure. Forwarded to
+   * `translateBatch` verbatim — see its docstring for semantics.
+   * `0` (default) preserves legacy single-attempt behaviour.
+   */
+  maxRetries?: number;
+  /**
+   * Fires once per failed translator attempt that's followed by a
+   * retry. Forwarded to `translateBatch`; the cache layer doesn't
+   * inspect the events. See `TranslateBatchRetryEvent`.
+   */
+  onRetry?: (event: TranslateBatchRetryEvent) => void;
 }
 
 /**
@@ -125,6 +137,8 @@ export async function translateOrLoadFromCache(opts: TranslateOrLoadOptions): Pr
     events,
     readOnly,
     fallbackKeys,
+    maxRetries,
+    onRetry,
   } = opts;
 
   // `null` r2 = operator opted out; skip lookup, always translate.
@@ -170,6 +184,8 @@ export async function translateOrLoadFromCache(opts: TranslateOrLoadOptions): Pr
     sourceLocale,
     targetLocale: locale,
     context,
+    ...(maxRetries !== undefined ? { maxRetries } : {}),
+    ...(onRetry !== undefined ? { onRetry } : {}),
   });
   const translated = apply(translations);
 

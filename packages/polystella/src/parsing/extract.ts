@@ -49,11 +49,16 @@ export function extractSegments(ast: Root, opts: ExtractOptions, source: string)
       const data = parseYaml(frontmatterNode.value) as Record<string, unknown>;
       for (const key of keys) {
         const value = data[key];
-        if (typeof value === "string") {
+        // Empty strings emit no segment — translating "" is meaningless
+        // and provokes empty-response failures from small instruct
+        // models. Mirrors the `text.length > 0` guard the body
+        // extractor uses for inline spans, and the equivalent check
+        // in the structured-data adapters (TOML / JSON / YAML).
+        if (typeof value === "string" && value.length > 0) {
           segments.push({ id: `fm:${key}`, text: value });
         } else if (Array.isArray(value)) {
           value.forEach((item, i) => {
-            if (typeof item === "string") {
+            if (typeof item === "string" && item.length > 0) {
               segments.push({ id: `fm:${key}[${i}]`, text: item });
             }
           });

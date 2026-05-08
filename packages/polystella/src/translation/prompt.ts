@@ -154,6 +154,16 @@ export function parseResponse(rawText: string, expectedIds: string[]): Map<strin
   // Every emitted segment shows up as a (id, content) pair. Odd
   // indices in `parts` are ids; even indices ≥ 2 are the content
   // immediately following the preceding id.
+  //
+  // Unexpected ids (small models hallucinate `fm:abstract` /
+  // `fm:content` / `fn:author` etc. on academic-shaped content
+  // even when the prompt explicitly forbids it) are SILENTLY
+  // SKIPPED — the prompt told the model not to add them; we
+  // ignore the ones it added anyway. The "model omitted segment"
+  // check below still catches genuinely-malformed responses where
+  // a real expected id never made it out, so this tolerance
+  // doesn't mask real failures, only model misbehaviour the
+  // retry-loop above can't otherwise recover from.
   const expected = new Set(expectedIds);
   const result = new Map<string, string>();
   for (let i = 1; i + 1 < parts.length; i += 2) {
@@ -161,7 +171,11 @@ export function parseResponse(rawText: string, expectedIds: string[]): Map<strin
     const value = (parts[i + 1] ?? "").trim();
     if (id.length === 0) continue;
     if (!expected.has(id)) {
-      throw new Error(`[polystella] model returned unexpected segment id "${id}" (not in input)`);
+      // Hallucinated id — drop it and keep parsing. We don't have
+      // a logger at this layer; the retry-loop / per-pair report
+      // surface enough signal at the build-orchestrator level if
+      // hallucinations become persistent.
+      continue;
     }
     if (value.length === 0) {
       throw new Error(`[polystella] model returned an empty translation for segment "${id}"`);

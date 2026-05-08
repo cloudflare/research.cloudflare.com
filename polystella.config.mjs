@@ -114,8 +114,9 @@ const config = {
     keys: {
       "publications/**": ["title", "metaDescription", "related_interests"],
       "pages/**": ["title"],
-      //"people/**": ["bio"],
-      //"tags/**": ["title", "description"],
+      "people/**": ["position"],
+      "tags/**": ["name", "description"],
+      "presentations/**": ["title"],
     },
     // urls: {
     //   "publications/**": ["heroImage", "pdfLink"],
@@ -238,17 +239,30 @@ const config = {
     // below are placeholders; M10's bake-off will lock final picks
     // per locale based on native-speaker review.
     model: {
-      default: "@cf/meta/llama-3.1-8b-instruct",
+      // Llama 3.3 70B (FP8-quantised, "fast" variant) is the
+      // default for Latin-script locales (pt-BR, es-ES). The
+      // earlier 3.1-8B default produced a steady stream of
+      // marker-protocol failures on this corpus — empty bodies
+      // for short headings, hallucinated `fm:abstract` /
+      // `fm:content` ids on academic-shaped content, typo'd marker
+      // prefixes (`fn:author` instead of `fm:`). Llama 3.3 is
+      // dramatically better at instruction-following on the
+      // marker-delimited prompt, so retries clear the residue
+      // when they do occur. FP8-fast keeps inference latency
+      // close to the 8B model's footprint.
+      default: "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
       // Qwen 3rd-generation MoE, advertised "groundbreaking
       // multilingual support". Replaces the earlier
       // `@cf/qwen/qwen2.5-coder-32b-instruct` (a *code-specific*
       // model — wrong fit for prose translation). Qwen family is
       // best-in-class for CJK per the RFC's reasoning.
       "ja-JP": "@cf/qwen/qwen3-30b-a3b-fp8",
-      // es-ES intentionally falls back to the default. Llama 3.1
-      // handles Spanish prose well; revisit if native-speaker review
-      // surfaces consistent issues with academic register or with the
-      // formal/impersonal constructions pinned in the glossary.
+      // pt-BR + es-ES intentionally fall back to the default. If
+      // native-speaker review surfaces register or glossary-rule
+      // adherence issues, candidates to bake off against:
+      //   - @cf/qwen/qwen3-30b-a3b-fp8 (multilingual MoE; same as ja-JP)
+      //   - @cf/google/gemma-3-12b-it (140+ languages, 128k ctx)
+      //   - @cf/mistralai/mistral-small-3.1-24b-instruct
     },
     // endpoint: "https://...",            // override the default WAI endpoint
   },
