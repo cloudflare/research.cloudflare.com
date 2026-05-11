@@ -4,10 +4,14 @@
  * default), every request gets these properties set; consumers can
  * read them in any `.astro` template without imports:
  *
- *   <a href={Astro.locals.lhref("/foo")}>foo</a>
- *   <p>{Astro.locals.t("nav.home")}</p>
+ *   const { t, lhref, getLocalizedEntry, getLocalizedCollection } = Astro.locals;
  *
- * Both fields are typed as required because the integration's
+ *   <a href={lhref("/foo")}>{t("nav.home")}</a>
+ *
+ *   const publication = await getLocalizedEntry("publications", "antunes2025");
+ *   const people = await getLocalizedCollection("people", ({ data }) => data.type === "active");
+ *
+ * All fields are typed as required because the integration's
  * default config registers the middleware. If a consumer disables
  * middleware via `middleware: false` AND doesn't manually compose
  * polystella's middleware via `sequence(...)`, these fields will be
@@ -20,6 +24,9 @@
  * stays correct.
  */
 
+import type { CollectionEntry } from "astro:content";
+
+import type { CollectionEntryRef, LocalizedEntry } from "./get-localized-entry.js";
 import type { TranslateFn } from "../i18n/translate.js";
 
 declare global {
@@ -45,8 +52,65 @@ declare global {
        * (`polystella/runtime`'s `localizedHref(href, locale?)`).
        */
       lhref: (href: string) => string;
+
+      /**
+       * Locale-bound `getLocalizedEntry` — the request's locale is
+       * closed over by the middleware, so consumers don't need to
+       * thread `Astro.currentLocale` through every call site.
+       *
+       *   const entry = await Astro.locals.getLocalizedEntry("publications", "foo");
+       *   const author = await Astro.locals.getLocalizedEntry({ collection: "people", id: "alice" });
+       *
+       * For non-template contexts (`getStaticPaths`, build helpers,
+       * React islands), use the explicit-import surface:
+       * `getLocalizedEntry(collection, id, locale)` from
+       * `polystella/runtime`.
+       *
+       * The collection-pinned generic resolves the entry shape to
+       * Astro's `CollectionEntry<C>` so consumers (after `astro
+       * sync`) get full schema-aware inference on `entry.data.*`.
+       */
+      getLocalizedEntry: {
+        <C extends string>(
+          ref: { collection: C; id: string },
+        ): Promise<LocalizedEntry<CollectionEntry<C>> | undefined>;
+        <C extends string>(
+          collection: C,
+          id: string,
+        ): Promise<LocalizedEntry<CollectionEntry<C>> | undefined>;
+      };
+
+      /**
+       * Locale-bound `getLocalizedCollection` — drop-in for Astro's
+       * `getCollection` that returns the per-locale view: source
+       * entries replaced by their `<collection>__<locale>` siblings
+       * where translations exist, source entries kept (or dropped,
+       * per `fallback`/`noTranslateBehavior`) where they don't.
+       *
+       *   const items = await Astro.locals.getLocalizedCollection("people");
+       *   const active = await Astro.locals.getLocalizedCollection(
+       *     "people",
+       *     ({ data }) => data.type === "active",
+       *   );
+       *
+       * The filter receives the merged-and-tagged shape
+       * (`LocalizedEntry<CollectionEntry<C>>`), so it can branch on
+       * `entry.isLocalized` / `entry.locale` if it wants. Existing
+       * `({ data }) => ...` filters work unchanged because the
+       * extension fields don't shadow `data`.
+       *
+       * Like `getLocalizedEntry`, this is unavailable in
+       * `getStaticPaths` (which runs at build time outside the
+       * request lifecycle) — use the explicit-import
+       * `getLocalizedCollection(collection, filter?, locale?)` from
+       * `polystella/runtime` there.
+       */
+      getLocalizedCollection: <C extends string>(
+        collection: C,
+        filter?: (entry: LocalizedEntry<CollectionEntry<C>>) => boolean,
+      ) => Promise<LocalizedEntry<CollectionEntry<C>>[]>;
     }
   }
 }
 
-export {};
+export type { CollectionEntryRef, LocalizedEntry };

@@ -177,7 +177,18 @@ export async function resolveLocalizedEntry(input: ResolveLocalizedEntryInput): 
   return withExtensions(source, false, deps.defaultLocale);
 }
 
-/** Fresh shallow copy + extension fields; doesn't mutate the input. */
-function withExtensions(entry: SourceEntryShape, isLocalized: boolean, locale: string): LocalizedEntry {
+/**
+ * Fresh shallow copy + extension fields; doesn't mutate the input.
+ *
+ * Exported so `resolveLocalizedCollection` (in
+ * `./get-localized-collection.ts`) can produce entries with the same
+ * extension shape — keeping the `LocalizedEntry` contract canonical
+ * in one place.
+ */
+export function withExtensions<TEntry extends SourceEntryShape>(
+  entry: TEntry,
+  isLocalized: boolean,
+  locale: string,
+): LocalizedEntry<TEntry> {
   return { ...entry, isLocalized, locale };
 }

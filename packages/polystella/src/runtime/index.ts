@@ -1,7 +1,8 @@
 /// <reference path="./locals.d.ts" />
-import { getEntry, type CollectionEntry } from "astro:content";
+import { getCollection, getEntry, type CollectionEntry } from "astro:content";
 import { defaultLocale, fallback, locales, noPrefixUrls, noTranslateBehavior } from "polystella:runtime-config";
 
+import { resolveLocalizedCollection } from "./get-localized-collection.js";
 import {
   normaliseGetLocalizedEntryArgs,
   resolveLocalizedEntry,
@@ -69,6 +70,69 @@ export async function getLocalizedEntry<C extends string>(
 }
 
 /**
+ * Locale-aware collection fetcher; drop-in for Astro's `getCollection`
+ * (with locale tacked onto the tail).
+ *
+ *   - `getLocalizedCollection(collection)`               — default locale, no filter
+ *   - `getLocalizedCollection(collection, filter)`       — default locale, with filter
+ *   - `getLocalizedCollection(collection, filter, locale)` — explicit locale
+ *   - `getLocalizedCollection(collection, undefined, locale)` — locale, no filter
+ *
+ * Default-locale (or undefined / blank / matching) calls return the
+ * full source list verbatim, each entry tagged
+ * `{ isLocalized: false, locale: defaultLocale }`. Cross-locale calls
+ * fetch the source AND the `<collection>__<locale>` sibling in
+ * parallel, then merge per the configured `fallback` /
+ * `noTranslateBehavior` policies — same dispatch logic as
+ * `getLocalizedEntry`, applied entry-by-entry. The user's filter (if
+ * any) runs on the merged-and-tagged list.
+ *
+ * Filter argument receives the full `LocalizedEntry<CollectionEntry<C>>`
+ * shape so it can branch on `entry.isLocalized` / `entry.locale` if it
+ * wants to (e.g. `(e) => e.isLocalized` to hide untranslated entries).
+ * Existing `({ data }) => ...` filters work unchanged because
+ * `LocalizedEntry` is `CollectionEntry<C> & {isLocalized; locale}`.
+ *
+ * The collection-pinned generic `C` resolves the entry shape to
+ * `CollectionEntry<C>` so consumers (after `astro sync`) get full
+ * schema-aware inference on `entry.data.*`.
+ *
+ * For locale-bound usage in `.astro` templates, prefer the
+ * pre-bound `Astro.locals.getLocalizedCollection` — it closes over
+ * the request's locale automatically, matching the `lhref` / `t`
+ * pattern.
+ */
+export async function getLocalizedCollection<C extends string>(
+  collection: C,
+  filter?: (entry: LocalizedEntry<CollectionEntry<C>>) => boolean,
+  locale?: string,
+): Promise<LocalizedEntry<CollectionEntry<C>>[]> {
+  const result = await resolveLocalizedCollection({
+    collection,
+    locale,
+    // Filter is widened from `LocalizedEntry<CollectionEntry<C>>` to
+    // `LocalizedEntry<SourceEntryShape>` for the pure-core call;
+    // structurally lossless because `CollectionEntry<C>` extends
+    // `SourceEntryShape` (both have `collection`/`id`/`data`).
+    filter: filter as ((entry: LocalizedEntry<SourceEntryShape>) => boolean) | undefined,
+    deps: {
+      defaultLocale,
+      fallback,
+      noTranslateBehavior,
+      // First arg widened to `string` because the dispatcher
+      // synthesises `<collection>__<locale>` names not statically
+      // known to Astro's generic `getCollection`. The structural
+      // cast is lossless: `CollectionEntry<C>` always has
+      // `{collection, id, data}` plus extras that survive the
+      // `{...source}` spread inside the dispatcher.
+      getCollection: (c) =>
+        (getCollection as (c: string) => Promise<unknown[]>)(c) as Promise<SourceEntryShape[]>,
+    },
+  });
+  return result as LocalizedEntry<CollectionEntry<C>>[];
+}
+
+/**
  * Locale-aware URL prefixer for component-level links. Mirrors the
  * URL classification rules of the build-time markdown link rewriter
  * so component links and inlined-body links stay consistent.
@@ -91,5 +155,10 @@ export function localizedHref(href: string, locale?: string): string {
 }
 
 export { normaliseGetLocalizedEntryArgs, type CollectionEntryRef, type LocalizedEntry } from "./get-localized-entry.js";
+export {
+  resolveLocalizedCollection,
+  type ResolveLocalizedCollectionDeps,
+  type ResolveLocalizedCollectionInput,
+} from "./get-localized-collection.js";
 export { resolveLocalizedHref, type LocalizedHrefDeps } from "./localized-href.js";
 export { polystellaMiddleware, buildLocalizedHref, type PolystellaMiddleware } from "./middleware.js";

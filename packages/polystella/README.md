@@ -69,27 +69,42 @@ export const collections = {
 /// <reference types="polystella/client" />
 ```
 
-In a page, use `getLocalizedEntry` instead of `getEntry`:
+In a page, use `Astro.locals.getLocalizedEntry` and `Astro.locals.getLocalizedCollection` — the integration auto-registers a request middleware that pre-binds the request's locale to all four locale-aware locals (`t`, `lhref`, `getLocalizedEntry`, `getLocalizedCollection`):
 
 ```astro
 ---
-import { getLocalizedEntry } from "polystella/runtime";
+const { t, lhref, getLocalizedEntry, getLocalizedCollection } = Astro.locals;
+
+// Single entry — locale closed over by the middleware.
 const { slug } = Astro.params;
-const entry = await getLocalizedEntry("publications", slug, Astro.currentLocale);
+const entry = await getLocalizedEntry("publications", slug);
+
+// Whole collection, optionally filtered. Filter receives the merged
+// shape (`LocalizedEntry<CollectionEntry<C>>`) so it can branch on
+// `entry.isLocalized` / `entry.locale` if it wants — existing
+// `({ data }) => ...` filters work unchanged.
+const activePeople = await getLocalizedCollection("people", ({ data }) => data.type === "active");
 ---
 ```
 
-For UI strings and locale-prefixed URLs in templates, use `Astro.locals` directly — the integration auto-registers a request middleware that populates both per request, no imports needed:
+UI strings and locale-prefixed URLs sit alongside on `Astro.locals`:
 
 ```astro
----
-// any page, no frontmatter wrapper
----
 <a href={Astro.locals.lhref("/foo")}>{Astro.locals.t("nav.foo")}</a>
 <img src={Astro.locals.lhref("/hero.png")} alt={Astro.locals.t("hero.alt")} />
 ```
 
-`Astro.locals.t` and `Astro.locals.lhref` mirror Starlight's `Astro.locals.t` shape so the surface is consistent. The short `lhref` name keeps templates terse — for non-template contexts (utility scripts, etc.), import the verbose-named `localizedHref(href, locale?)` from `polystella/runtime` directly. In starlight mode, polystella defers to Starlight's i18next-backed `t` and only sets `lhref`. To opt out and compose middleware manually, set `middleware: false` in your polystella config and call `polystellaMiddleware()` from `src/middleware.ts` via `astro:middleware`'s `sequence(...)`.
+`Astro.locals.t` and `Astro.locals.lhref` mirror Starlight's `Astro.locals.t` shape. The short `lhref` name keeps templates terse; the entry/collection fetchers take the full names so IDE autocomplete works against `Astro.locals.`. For non-template contexts (`getStaticPaths`, utility scripts, build helpers, React islands), import the explicit forms from `polystella/runtime` directly:
+
+```ts
+import {
+  getLocalizedEntry,        // (collection, id, locale?)
+  getLocalizedCollection,   // (collection, filter?, locale?)
+  localizedHref,            // (href, locale?)
+} from "polystella/runtime";
+```
+
+In starlight mode, polystella defers to Starlight's i18next-backed `t` and skips that one local; the other three install in every mode. To opt out of auto-registration entirely, set `middleware: false` in your polystella config and call `polystellaMiddleware()` from `src/middleware.ts` via `astro:middleware`'s `sequence(...)`.
 
 For non-template contexts (utility scripts, build helpers), the explicit lookups remain available:
 
@@ -155,7 +170,7 @@ A developer's local build cannot overwrite production. Preview branches stay iso
 | ------------------------------------------ | ------------------------------------------------------------------------------ |
 | `polystella`                               | The Astro integration default export.                                          |
 | `polystella/content`                       | `polystellaCollections({ ... })` for `content.config.ts`.                      |
-| `polystella/runtime`                       | `getLocalizedEntry`, `localizedHref`.                                          |
+| `polystella/runtime`                       | `getLocalizedEntry`, `getLocalizedCollection`, `localizedHref`, `polystellaMiddleware`. |
 | `polystella/i18n`                          | `i18nLoader`, `i18nSchema`, `getTranslations`, `getDictionary`, drift helpers. |
 | `polystella/react`                         | `useTranslations(dictionary)` for React islands.                               |
 | `polystella/components/LocalePicker.astro` | Unstyled, accessible locale switcher.                                          |
@@ -193,7 +208,7 @@ A developer's local build cannot overwrite production. Preview branches stay iso
 pnpm --filter polystella test
 ```
 
-The package has ~450 unit tests across parsing, extraction, translation prompt round-trips, R2 cache logic, routing, and UI-strings drift detection. CI runs them on every PR.
+The package has ~900 unit tests across parsing, extraction, translation prompt round-trips, R2 cache logic, routing, runtime dispatch (locale-aware entry / collection fetching), middleware bindings, and UI-strings drift detection. CI runs them on every PR.
 
 ## License
 

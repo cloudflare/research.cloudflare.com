@@ -5,13 +5,11 @@ import Section from "@/components/Section.astro";
 import PersonCard from "@/components/PersonCard.astro";
 import AlumniCard from "@/components/AlumniCard.astro";
 import { cn } from "@/lib/utils";
-import { getCollection } from "astro:content";
 
-const { t } = Astro.locals;
+const { t, getLocalizedCollection } = Astro.locals;
 
-// get all people from the content collection
-const activePeople = await getCollection("people", ({ data }) => data.type === "active");
-const alumni = await getCollection("people", ({ data }) => data.type === "alumni");
+const activePeople = await getLocalizedCollection("people", ({ data }) => data.type === "active");
+const alumni = await getLocalizedCollection("people", ({ data }) => data.type === "alumni");
 ---
 
 <InteriorLayout metaTitle={t("people.heading")} metaDescription={t("people.metaDescription")}>

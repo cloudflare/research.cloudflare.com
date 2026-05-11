@@ -33,6 +33,19 @@ declare module "astro:content" {
   export function getEntry(collection: string, slug: string): Promise<CollectionEntry | undefined>;
 
   /**
+   * Astro's `getCollection`. The real signature has rich generics
+   * for per-collection inference; we accept plain strings + an
+   * optional filter because PolyStella's runtime forwards untyped
+   * names from the dispatch logic. Inside this package the entry
+   * shape resolves to the minimal `CollectionEntry`; inside a
+   * consumer project, Astro's `astro sync` types take precedence.
+   */
+  export function getCollection(
+    collection: string,
+    filter?: (entry: CollectionEntry) => boolean,
+  ): Promise<CollectionEntry[]>;
+
+  /**
    * Astro's `defineCollection`. Real shape is generic over the
    * loader and schema; we accept `unknown` because the
    * `polystellaCollections` helper threads opaque collection
