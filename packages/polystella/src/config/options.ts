@@ -1,15 +1,11 @@
 import { z } from "astro/zod";
 
 /**
- * PolyStella options schema.
- *
- * `defaultLocale` and `locales` are NOT here — they're derived from
- * Astro's native `config.i18n` at `astro:config:setup` to keep one
- * source of truth (see `resolveOptions`).
- *
- * `r2` and `provider` are zod-optional so dry-run / parse / glossary
- * work can proceed without credentials provisioned. They're enforced
- * as required at the point of consumption.
+ * PolyStella options schema. `defaultLocale` / `locales` are derived
+ * from Astro's `config.i18n` (single source of truth, see
+ * `resolveOptions`). `r2` and `provider` are zod-optional so dry-run
+ * / parse / glossary work can proceed without credentials; enforced
+ * required at point of consumption.
  */
 
 const r2OptionsSchema = z.object({
@@ -24,35 +20,21 @@ const r2OptionsSchema = z.object({
     .optional()
     .describe("Override the default R2 endpoint (`https://<accountId>.r2.cloudflarestorage.com`). Useful for testing."),
   /**
-   * When `true`, the cache layer skips PUTs and the post-translation
-   * prune step. GETs (against `prefix` and any `readFallbackPrefixes`)
-   * still happen.
-   *
-   * Designed for builds that should consume the cache without
-   * polluting it — the canonical use case is preview-branch builds
-   * that read main's translations but don't get to write back. Pairs
-   * naturally with `readFallbackPrefixes` for branch isolation
-   * without translation cost.
+   * Skip PUTs and the post-translation prune. GETs against `prefix`
+   * and `readFallbackPrefixes` still happen. Canonical use: preview-
+   * branch builds that read main's translations but don't write back.
    */
   readOnly: z.boolean().default(false),
   /**
-   * Ordered list of additional prefixes to consult on a cache miss
-   * against the primary `prefix`. First hit wins; bytes are returned
-   * verbatim and NOT promoted to the primary prefix (no implicit
-   * cross-prefix copies — keeps writes deterministic and isolated).
-   *
-   * Each entry MUST end with `/` (same constraint as `prefix`).
-   *
-   * Branch-isolation use case: a preview build configured with
-   * `prefix: "previews/<branch>/i18n/"` and
-   * `readFallbackPrefixes: ["i18n/"]` reads main's translations
-   * for unchanged content, only translating PR-edited files into
-   * its own private prefix.
+   * Additional prefixes consulted on cache miss. First hit wins.
+   * Bytes are returned verbatim — NOT promoted into the primary
+   * prefix. Each entry MUST end with `/`. Used for branch isolation
+   * (e.g. `previews/<branch>/i18n/` + `readFallbackPrefixes: ["i18n/"]`).
    */
   readFallbackPrefixes: z.array(z.string()).default([]),
   /**
-   * Count-based pruning: per (locale, sourcePath), keep only the N
-   * most-recent hash variants. `false` disables pruning.
+   * Per (locale, sourcePath), keep only N most-recent hash variants.
+   * `false` disables pruning.
    */
   keepLastN: z.union([z.number().int().positive(), z.literal(false)]).default(5),
 });
@@ -63,15 +45,14 @@ const workersAiProviderSchema = z.object({
   apiToken: z.string().min(1, "provider.apiToken is required"),
   endpoint: z.string().url().optional(),
   /**
-   * Either a single model id, or a per-locale map with a `default`
-   * key. The resolved model id is part of the cache key, so changing
-   * it invalidates that locale's cached translations.
+   * Single model id or per-locale map with a `default` key. Model id
+   * is part of the cache key — changing it invalidates that locale's
+   * cached translations.
    */
   model: z.union([z.string().min(1), z.object({ default: z.string().min(1) }).catchall(z.string().min(1))]),
   /**
-   * Max output tokens per call. Workers AI's default ceiling (~256)
-   * truncates multi-segment translations mid-string and breaks JSON
-   * parsing. 8192 fits under llama-3.1-8b's 8k output cap.
+   * Max output tokens. Workers AI's default ceiling (~256) truncates
+   * multi-segment translations. 8192 fits under llama-3.1-8b's cap.
    */
   maxTokens: z.number().int().positive().default(8192),
 });
@@ -116,37 +97,24 @@ export const polystellaOptionsSchema = z
     exclude: z.array(z.string()).default([]),
 
     /**
-     * Per-format configuration. Each format has the same internal
-     * shape:
-     *   - `keys` — translatable scalars (per-glob → key-path list).
-     *   - `urls` — URL fields that should be locale-prefixed at
-     *     staging time (per-glob → key-path list).
+     * Per-format config. Each format has the same shape:
+     *   - `keys` (per-glob → key-paths) — translatable scalars,
+     *     fed to the translator.
+     *   - `urls` (per-glob → key-paths) — URL fields locale-prefixed
+     *     at staging.
      *
-     * Both are optional. A path listed in `keys` is sent to the
-     * translator; a path listed in `urls` runs through the URL
-     * rewriter (see `noPrefixUrls` for exemptions). The same path
-     * MUST NOT appear in both `keys` and `urls` for a given glob —
-     * a translatable URL would be both AI-rewritten and locale-
-     * prefixed, and we error at config-resolve time to surface this
-     * loudly.
+     * The same path MUST NOT appear in both `keys` and `urls` for a
+     * given glob — would double-process. Errors at config-resolve.
      *
-     * Markdown specifics:
-     *   - `markdown.keys` covers frontmatter keys; body translation
-     *     happens automatically over inline text spans.
-     *   - `markdown.urls` covers frontmatter URL keys only; body
-     *     inline links are rewritten automatically by the markdown
-     *     adapter and need no config.
+     * Markdown: `keys` is frontmatter only (body inline text is
+     * automatic); `urls` is frontmatter only (body links are
+     * automatic).
      *
      * Example:
-     *
      *     markdown: {
      *       keys: { "publications/**": ["title", "metaDescription"] },
      *       urls: { "publications/**": ["heroImage"] },
-     *     },
-     *     toml: {
-     *       keys: { "site.toml": ["main.featuredResearch.title"] },
-     *       urls: { "site.toml": ["main.featuredResearch.link"] },
-     *     },
+     *     }
      */
     markdown: z
       .object({
@@ -181,48 +149,26 @@ export const polystellaOptionsSchema = z
       .default({ keys: {}, urls: {} }),
 
     /**
-     * Internal URL paths to leave unprefixed by the link rewriter.
-     * Picomatch globs match against the URL path (after splitting
-     * query/fragment). Applied uniformly wherever rewriting happens
-     * — markdown body links, markdown frontmatter URLs, structured-
-     * data URL fields. External URLs (`http://`, `https://`,
-     * `mailto:`, etc.) and anchor-only URLs already bail out before
-     * this list is consulted.
+     * Internal URL paths the link rewriter leaves unprefixed. Globs
+     * match against the path (after splitting query/fragment).
+     * External URLs and anchor-only URLs bail out before this list.
      *
-     * Use case: declaring that a specific internal path is single-
-     * locale and shouldn't get locale-prefixed even when it's
-     * referenced from a translatable file.
-     *
-     * Example:
-     *
-     *     noPrefixUrls: ["/api-docs", "/api-docs/**", "/legal/*"]
+     * Example: `noPrefixUrls: ["/api-docs", "/api-docs/**", "/legal/*"]`
      */
     noPrefixUrls: z.array(z.string()).default([]),
 
     /**
      * Source pages to inject locale-prefixed shims for. Each entry
-     * is either a bare path string or an object `{ source, imports }`
-     * where `imports` are extra modules (typically CSS) the shim
-     * should pull in.
+     * is `string` or `{ source, imports }` where `imports` are extra
+     * modules (typically CSS) the shim should pull in.
      *
-     * Why per-shim imports matter: Astro's per-route `<link
-     * rel="stylesheet">` injection only follows CSS dependencies that
-     * are direct first-degree imports of the route's own module.
-     * When a shim imports a source page (`import SourcePage from
-     * "..."`) and renders it via `<SourcePage />`, the source's
-     * transitive CSS imports (global.css → through layout → through
-     * BaseLayout) compile into Vite chunks correctly, but Astro's
-     * link injection doesn't follow that chain. Result: the shim's
-     * routes render with no styles linked.
-     *
-     * The `imports` field — combined with the top-level
-     * `routesImports` default applied to every shim — fixes this by
-     * making CSS a first-degree import of the shim itself. Vite then
-     * groups CSS chunks per import graph, and Astro emits a `<link>`
-     * to whichever chunk(s) that import resolves into. For Tailwind-
-     * style projects where all CSS lives in one chunk, importing the
-     * single global stylesheet is enough; for projects with split
-     * CSS bundles, list every relevant file.
+     * `imports` exists because Astro's per-route `<link
+     * rel="stylesheet">` injection only follows direct first-degree
+     * imports of the route's own module. A shim that renders a
+     * source page via `<SourcePage />` won't pull in the source's
+     * transitive CSS unless the shim itself imports it. Combined
+     * with the top-level `routesImports` default, this makes CSS
+     * first-degree and triggers Astro's link emission.
      */
     routes: z
       .array(
@@ -285,32 +231,18 @@ export const polystellaOptionsSchema = z
     fallback: z.enum(["default-locale", "skip"]).default("default-locale"),
     concurrency: z.number().int().positive().default(4),
     /**
-     * Number of retry attempts on transient translator failures —
-     * malformed model responses (empty translations, omitted segments,
-     * hallucinated segment ids), and provider-side errors that throw
-     * out of `translator.translate(...)`. Each retry rebuilds and
-     * re-issues the SAME prompt; the model's natural sampling
-     * variance is what makes a second / third attempt likely to
-     * succeed.
-     *
-     * `0` disables retries entirely (a single failed attempt fails
-     * the pair). Default `2` gives up to 3 total attempts, which
-     * empirically clears nearly all small-model glitches without
-     * meaningfully bloating provider cost on a healthy build (where
-     * retries fire on a small fraction of pairs at most).
-     *
-     * Network-layer retries (5xx, ECONNRESET, etc.) live below the
-     * provider's HTTP client and are out of scope here — `maxRetries`
-     * specifically covers the prompt → response → parse cycle.
+     * Retry attempts on transient translator failures (malformed
+     * model responses, provider throws). Each retry re-issues the
+     * same prompt; sampling variance is what makes attempt N+1
+     * succeed. `0` disables retries; default 2 = up to 3 attempts.
+     * Network-layer retries (5xx, ECONNRESET) live below the HTTP
+     * client and are out of scope here.
      */
     maxRetries: z.number().int().min(0).default(2),
     dryRun: z.boolean().default(false),
     runOn: z.array(z.enum(["build", "dev"])).default(["build"]),
-    // `auto` and `"standalone"` are equivalent today; both register
-    // sibling collections via `polystellaCollections`. `"starlight"`
-    // is rejected at parse time — it'll auto-detect `@astrojs/starlight`
-    // and route `docs`/`i18n` through Starlight's native loaders when
-    // that work lands.
+    // `auto` and `"standalone"` are equivalent today. `"starlight"`
+    // is rejected at parse time — planned for a later milestone.
     mode: z
       .enum(["auto", "standalone", "starlight"])
       .default("auto")
@@ -322,22 +254,13 @@ export const polystellaOptionsSchema = z
           });
         }
       }),
-    /**
-     * When true, log one line per (file, locale) pair processed.
-     * Off by default; only the closing summary and failures log.
-     */
+    /** Log one line per (file, locale) pair. Off by default. */
     verbose: z.boolean().default(false),
 
     /**
-     * Auto-register the polystella request middleware. When `true`
-     * (default), the integration calls `addMiddleware` at config-
-     * setup time so every request gets `Astro.locals.t` and
-     * `Astro.locals.localizedHref` populated.
-     *
-     * Set to `false` to disable auto-registration — useful when
-     * composing polystella's middleware manually with other
-     * middleware via `sequence(...)`. The factory is still exported
-     * as `polystellaMiddleware` from `polystella/runtime`.
+     * Auto-register the polystella request middleware. `false`
+     * disables auto-registration so you can compose manually via
+     * `sequence(...)`. Factory exported as `polystellaMiddleware`.
      */
     middleware: z.boolean().default(true),
   })
@@ -353,9 +276,9 @@ export type PolyStellaResolvedOptions = z.output<typeof polystellaOptionsSchema>
 };
 
 /**
- * Minimal structural type for the slice of Astro's `i18n` config we
- * read. Defined locally so the schema stays decoupled from Astro's
- * type surface and tests can pass plain objects.
+ * Structural type for the slice of Astro's `i18n` config we read.
+ * Decouples the schema from Astro's type surface; tests pass plain
+ * objects.
  */
 export interface AstroI18nLike {
   defaultLocale: string;
@@ -370,10 +293,9 @@ export interface AstroI18nLike {
 }
 
 /**
- * Parse user options + derive the locale set from Astro's `config.i18n`.
- * Aggregates all errors (user options + i18n cross-check) into a single
- * thrown Error so the operator fixes everything in one pass. PolyStella
- * never writes to Astro's config.
+ * Parse user options + derive locales from `config.i18n`. Aggregates
+ * all errors into a single throw so the operator fixes everything in
+ * one pass. Never writes to Astro's config.
  */
 export function resolveOptions(raw: unknown, astroI18n: AstroI18nLike | undefined): PolyStellaResolvedOptions {
   const parsed = polystellaOptionsSchema.safeParse(raw);
@@ -384,11 +306,9 @@ export function resolveOptions(raw: unknown, astroI18n: AstroI18nLike | undefine
         return `  • ${path}: ${issue.message}`;
       });
 
-  // Cross-check: a single key path in both `keys` and `urls` for the
-  // same glob would have the AI translate the URL string AND the
-  // rewriter prefix the result — never the operator's intent.
-  // Surface as a loud error so the typo is fixed before any (file,
-  // locale) pair is processed.
+  // A path in both `keys` and `urls` would be double-processed (AI
+  // translates the URL string AND the rewriter prefixes the result).
+  // Always a typo — fail loudly.
   const overlapIssues = parsed.success ? findKeysUrlsOverlaps(parsed.data) : [];
 
   const i18nIssues = validateAstroI18n(astroI18n);
@@ -425,10 +345,8 @@ export function resolveOptions(raw: unknown, astroI18n: AstroI18nLike | undefine
 }
 
 /**
- * Cross-check Astro's `i18n` block. Returns a flat list of
- * human-readable error lines (already prefixed with bullets) suitable
- * for inclusion in the aggregated `resolveOptions` error message.
- * Empty array means "this slice of config is acceptable".
+ * Cross-check Astro's `i18n` block. Returns bullet-prefixed error
+ * lines for `resolveOptions` to aggregate. Empty = acceptable.
  */
 function validateAstroI18n(i18n: AstroI18nLike | undefined): string[] {
   if (i18n === undefined) {
@@ -482,13 +400,8 @@ function validateAstroI18n(i18n: AstroI18nLike | undefined): string[] {
 }
 
 /**
- * Walk the per-format `keys` / `urls` maps for any glob whose
- * `keys[glob]` and `urls[glob]` lists intersect. Each format is
- * checked independently — a markdown overlap and a TOML overlap
- * surface as separate bullets.
- *
- * Returns a flat list of pre-bulleted issue strings ready for the
- * aggregated error message.
+ * Per-format check: any glob whose `keys[glob]` and `urls[glob]`
+ * lists intersect. Each format reports independently.
  */
 function findKeysUrlsOverlaps(opts: z.output<typeof polystellaOptionsSchema>): string[] {
   const issues: string[] = [];

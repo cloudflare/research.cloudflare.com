@@ -1,28 +1,21 @@
 /**
- * Locale-aware content lookup. Dispatcher only.
- *
- * `polystellaCollections` (in `polystella/content`) registers a
- * sibling collection per `(collection, locale)` pair, named
- * `<collection>__<locale>`. This helper picks the sibling matching
- * the requested locale, or falls back to the source collection per
- * the configured policy. Translated entries flow through Astro's
- * content layer like any other — schema validation, MDX compilation,
- * `entry.rendered.html`, and `reference()` resolution all work.
+ * Locale-aware content lookup dispatcher.
+ * `polystellaCollections` registers `<collection>__<locale>` siblings;
+ * this helper picks the right one or falls back per policy.
+ * Translated entries flow through Astro's content layer normally —
+ * schema validation, MDX, `rendered.html`, `reference()` all work.
  */
 
-/**
- * Reference shape for the cross-collection lookup form. Mirrors what
- * Astro surfaces for `reference()` fields and `getEntry`'s ref overload.
- */
+/** Cross-collection ref shape — mirrors Astro's `reference()`/`getEntry` ref. */
 export interface CollectionEntryRef {
   collection: string;
   id: string;
 }
 
 /**
- * Flatten the two `getLocalizedEntry` overloads into a uniform shape:
+ * Flatten overloads:
  *   - String first arg → `(collection, id, locale)` tuple.
- *   - Object first arg → `(ref, locale)`; second arg is the locale.
+ *   - Object first arg → `(ref, locale)`.
  */
 export function normaliseGetLocalizedEntryArgs(
   collectionOrRef: string | CollectionEntryRef,
@@ -47,9 +40,8 @@ export function normaliseGetLocalizedEntryArgs(
 }
 
 /**
- * Minimum entry shape the dispatcher reads. Production Astro entries
- * have additional fields (`filePath`, `digest`, `rendered`, `body`)
- * which survive the {...source} spread.
+ * Minimum entry shape the dispatcher reads. Astro's additional
+ * fields (`filePath`, `digest`, `rendered`, `body`) survive {...spread}.
  */
 export interface SourceEntryShape {
   collection: string;
@@ -59,22 +51,13 @@ export interface SourceEntryShape {
 }
 
 /**
- * The shape `getLocalizedEntry` returns: the underlying entry
- * (preserving every Astro-computed field — `filePath`, `digest`,
- * `rendered`, schema-validated refs, `body`) intersected with two
- * PolyStella extension fields.
+ * Return shape: underlying entry (preserving every Astro-computed
+ * field) plus:
+ *   - `isLocalized`: true on sibling hit; false on source fallback.
+ *   - `locale`: requested locale on hit, default locale on fallback.
  *
- *   - `isLocalized`: `true` when a translated sibling collection
- *     entry was found and returned; `false` when the helper fell
- *     back to source content (default-locale call, missing sibling
- *     entry).
- *   - `locale`: the locale this entry represents — the requested
- *     `locale` on a hit, or the default locale on any fallback path.
- *
- * The generic defaults to `SourceEntryShape` for tests; the public
- * wrapper substitutes Astro's `CollectionEntry<C>` so consumers get
- * full schema-aware inference (`data.authors` typed as the resolved
- * `reference("people")` array, etc.).
+ * Generic defaults to `SourceEntryShape` for tests; public wrapper
+ * substitutes Astro's `CollectionEntry<C>` for schema-aware inference.
  */
 export type LocalizedEntry<TEntry extends SourceEntryShape = SourceEntryShape> = TEntry & {
   isLocalized: boolean;
@@ -100,15 +83,11 @@ export type NoTranslatePolicy = "fallback" | "404";
 export interface ResolveLocalizedEntryDeps {
   /** From Astro's `i18n.defaultLocale`. */
   defaultLocale: string;
-  /** Defaults to `"default-locale"` when absent. */
+  /** Defaults to `"default-locale"`. */
   fallback?: LocalizedFallbackPolicy;
-  /** Defaults to `"fallback"` when absent. */
+  /** Defaults to `"fallback"`. */
   noTranslateBehavior?: NoTranslatePolicy;
-  /**
-   * Astro's `getEntry` (or a test stub). Called twice on cross-locale
-   * lookups: sibling first, source on miss. `undefined` is the
-   * standard "entry not found" sentinel.
-   */
+  /** Astro's `getEntry` (or test stub). Called sibling-then-source on miss. */
   getEntry: (collection: string, slug: string) => Promise<SourceEntryShape | undefined>;
 }
 
@@ -122,29 +101,16 @@ export interface ResolveLocalizedEntryInput {
 
 /**
  * Three branches:
- *   1. Default-locale (or missing) request → source entry directly.
- *   2. Cross-locale hit → sibling entry, already schema-validated
- *      and MDX-compiled through Astro's normal pipeline.
- *   3. Cross-locale miss → policy-dependent fallback (see below).
+ *   1. Default-locale → source entry directly.
+ *   2. Cross-locale hit → sibling (schema-validated, MDX-compiled).
+ *   3. Cross-locale miss → policy fallback. `noTranslateBehavior`
+ *      wins when source has `noTranslate: true`; `fallback` covers
+ *      generic untranslated case. Both → `undefined` short-circuits
+ *      the source lookup.
  *
- * On miss, two policies apply in priority order:
- *   - `noTranslateBehavior` wins when the source has
- *     `noTranslate: true` (per-entry operator intent).
- *   - `fallback` covers the generic untranslated case.
- *
- * Source is fetched on miss to inspect the `noTranslate` flag.
- * Optimisation: when both policies converge on `undefined`
- * (`skip` + `404`), short-circuit before the source lookup.
- *
- * Fallback paths return entries tagged with `defaultLocale`, not the
- * requested locale — the entry IS in the default locale; tagging it
- * with the requested locale would mislead consumer code reading
- * `entry.locale`.
- *
- * The sibling-collection naming (`__` separator) is bound by
- * convention with `polystellaCollections`'s registration — the two
- * run in different module graphs (content config vs. page render),
- * so a shared constant isn't workable.
+ * Fallback entries are tagged with `defaultLocale` (the entry IS
+ * in the default locale; tagging with requested locale would mislead).
+ * Sibling naming `__` is the convention bound to `polystellaCollections`.
  */
 export async function resolveLocalizedEntry(input: ResolveLocalizedEntryInput): Promise<LocalizedEntry | undefined> {
   const { collection, slug, locale, deps } = input;
@@ -158,11 +124,9 @@ export async function resolveLocalizedEntry(input: ResolveLocalizedEntryInput): 
   const localizedCollection = `${collection}__${locale}`;
   const localized = await deps.getEntry(localizedCollection, slug);
   if (localized !== undefined) {
-    // Normalise `collection` to the source name. Astro stores the
-    // sibling entry with `collection: "blog__pt-BR"`; consumer code
-    // branching on `entry.collection === "blog"` would break for
-    // translated entries otherwise. The localization is a polystella
-    // internal — page code shouldn't have to know about it.
+    // Normalise `collection` back to the source name — sibling is
+    // a polystella internal; consumer code branching on
+    // `entry.collection === "blog"` shouldn't care.
     return withExtensions({ ...localized, collection } as SourceEntryShape, true, locale);
   }
 
@@ -183,12 +147,9 @@ export async function resolveLocalizedEntry(input: ResolveLocalizedEntryInput): 
 }
 
 /**
- * Fresh shallow copy + extension fields; doesn't mutate the input.
- *
- * Exported so `resolveLocalizedCollection` (in
- * `./get-localized-collection.ts`) can produce entries with the same
- * extension shape — keeping the `LocalizedEntry` contract canonical
- * in one place.
+ * Fresh shallow copy + extension fields. Exported so
+ * `resolveLocalizedCollection` produces the same shape — keeps the
+ * `LocalizedEntry` contract canonical.
  */
 export function withExtensions<TEntry extends SourceEntryShape>(
   entry: TEntry,

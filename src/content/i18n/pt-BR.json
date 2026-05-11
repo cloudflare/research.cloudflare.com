@@ -112,7 +112,7 @@
   "a11y.closeMenu": "Fechar menu",
 
   "notice.aiTranslated.body": "Este conteúdo foi traduzido por um serviço de tradução automática e é disponibilizado para sua conveniência. Pode conter erros, omissões ou nuances de interpretação que diferem da versão original em inglês. Em caso de dúvidas, consulte a versão original em inglês.",
-  "notice.aiTranslated.viewOriginal": "Ver versão original em inglês",
+  "notice.aiTranslated.viewOriginal": "Ver original",
   "notice.aiTranslated.dismiss": "Dispensar",
   "notice.aiTranslated.badge": "Traduzido automaticamente"
 }

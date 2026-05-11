@@ -1,152 +1,68 @@
 /**
- * Build the i18n-driven options for `@astrojs/sitemap` from the same
- * Astro `i18n` block PolyStella reads.
+ * Build `@astrojs/sitemap` options from Astro's `i18n` block.
  *
- * The default sitemap output for a multilingual site doesn't include
- * any cross-language linkage: each locale-prefixed URL appears as a
- * stand-alone entry. Search engines then treat the language variants
- * as duplicate content rather than alternates of one logical page,
- * which dilutes ranking signals and risks wrong-locale targeting.
- *
- * `astroSitemapI18n` produces two coordinated sitemap options:
- *
- *   - `i18n` — wires `@astrojs/sitemap`'s built-in alternates support,
- *     emitting `<xhtml:link rel="alternate" hreflang="…">` for every
- *     locale variant of a URL.
- *
- *   - `serialize` — appends a `hreflang="x-default"` annotation
- *     pointing at the default-locale URL of each group. This is a
- *     recommended SEO best practice (`x-default` tells search engines
- *     which URL to fall back to when no preferred-language match is
- *     available) and is enabled by default; pass `xDefault: false` to
- *     opt out.
- *
- * Drop the result directly into `sitemap()`:
+ * Default sitemap output treats locale variants as duplicate
+ * content. This helper emits `<xhtml:link rel="alternate" hreflang>`
+ * cross-links via the `i18n` option, plus an `x-default` annotation
+ * via `serialize` (disable with `xDefault: false`).
  *
  *   sitemap(astroSitemapI18n(i18n, { hreflang: { en: "en-US" } }))
  *
- * Or compose with other sitemap options via spread:
- *
- *   sitemap({
- *     ...astroSitemapI18n(i18n, ...),
- *     filter: (page) => !page.includes("/draft/"),
- *   })
- *
- * Pure synchronous helper — no Astro hook integration, no I/O. Same
- * output regardless of how PolyStella resolves options later in
- * `astro:config:setup`.
+ * Pure synchronous helper — no hooks, no I/O.
  */
 
-/**
- * Subset of Astro's `i18n` config shape that the helper needs. We
- * declare it locally rather than importing from `astro` so polystella
- * doesn't grow a runtime astro dependency just for a structural type.
- */
+/** Subset of Astro's `i18n` shape the helper reads (declared locally to avoid a runtime astro dep). */
 export interface AstroSitemapI18nInput {
   defaultLocale: string;
   /**
-   * Astro accepts both string codes and `{ codes, path }` objects in
-   * `i18n.locales`. Only the string form is supported here; the
-   * object form (multi-code path groups, e.g. `{ codes: ['es-ES',
-   * 'es-MX'], path: 'spanish' }`) requires fan-out logic that's
-   * outside this helper's contract.
+   * Only the string form is supported. Object form
+   * (`{ codes, path }` multi-code groups) requires fan-out outside
+   * this helper's contract.
    */
   locales: ReadonlyArray<string | { codes: ReadonlyArray<string>; path: string }>;
 }
 
 export interface AstroSitemapI18nOptions {
   /**
-   * Override the BCP 47 hreflang values emitted for specific locales.
-   * Keys must be locale codes present in `i18n.locales`. Values are
-   * the BCP 47 strings that appear in `<xhtml:link hreflang="…">`.
-   *
-   * Default is identity: the locale code itself (e.g., `pt-BR`) is
-   * used as its own hreflang value. Override when the URL prefix you
-   * want differs from the hreflang string (most commonly `en` URL →
-   * `en-US` hreflang for region specificity).
+   * Override BCP 47 hreflang values per locale. Default: identity
+   * (`pt-BR` URL → `pt-BR` hreflang). Override when URL prefix
+   * differs from hreflang (e.g. `en` URL → `en-US` hreflang).
    */
   hreflang?: Record<string, string>;
-  /**
-   * Emit a `<xhtml:link rel="alternate" hreflang="x-default">`
-   * annotation pointing at the default-locale URL of each group.
-   * Recommended SEO best practice. Default: `true`.
-   *
-   * Set to `false` if you'd rather rely on per-locale `Accept-Language`
-   * matching alone, or if you're going to author your own `serialize`
-   * callback that handles `x-default` differently.
-   */
+  /** Emit `hreflang="x-default"`. Default: `true`. */
   xDefault?: boolean;
 }
 
 /**
- * Shape of an entry as `@astrojs/sitemap` passes it to the `serialize`
- * callback. We only access `links` (and pass everything else through
- * via spread), so this type intentionally lists ONLY the fields we
- * care about — `url` (required by sitemap, always present) and the
- * `links` alternates array. Other `SitemapItem` fields (`lastmod`,
- * `changefreq`, `priority`) flow through the spread untouched and
- * don't need to appear in our type.
+ * Subset of `@astrojs/sitemap`'s SitemapItem we touch.
  *
- * Subtle but load-bearing details:
- *
- *   - `links` must be a MUTABLE `Array`, not `ReadonlyArray`. Mutable
- *     arrays are subtypes of readonly arrays in TypeScript (you can
- *     read from them but also write); a function returning a
- *     readonly array can't stand in for one returning a mutable
- *     array, which is what `@astrojs/sitemap`'s `serialize` signature
- *     declares.
- *
- *   - Each link must include the optional `hreflang?` field. The
- *     underlying `sitemap` package's `LinkItem` interface declares
- *     it even though `@astrojs/sitemap` itself never sets it.
- *     Omitting it from our element shape makes the array types
- *     incompatible at the boundary.
- *
- *   - We deliberately do NOT declare `lastmod`, `changefreq`,
- *     `priority`. Adding them would either force us to import the
- *     `EnumChangefreq` enum from `sitemap` (a hard dep we don't
- *     want) or use a wider type like `string` that's not assignable
- *     to the enum, breaking the structural compatibility. Leaving
- *     them off makes our type a structural SUBSET of `SitemapItem`,
- *     which TypeScript accepts: the missing optionals don't need to
- *     match anything.
+ * Type details that aren't obvious:
+ *   - `links` must be MUTABLE `Array` (sitemap's `serialize` signature
+ *     declares it that way; `ReadonlyArray` would be incompatible).
+ *   - `LinkItem.hreflang?` exists in the underlying `sitemap`
+ *     package's type even though `@astrojs/sitemap` doesn't set it.
+ *   - We omit `lastmod`/`changefreq`/`priority` so we stay a
+ *     structural subset (avoids importing `EnumChangefreq`).
  */
 interface SitemapItemLike {
   url: string;
   links?: Array<{ url: string; lang: string; hreflang?: string }>;
 }
 
-/**
- * The piece of `@astrojs/sitemap`'s options object that this helper
- * produces. Intentionally shaped to be `...spread`-friendly so other
- * sitemap options (`filter`, `customPages`, `lastmod`, etc.) can sit
- * alongside without conflict.
- */
+/** Spread-friendly subset of `@astrojs/sitemap`'s options. */
 export interface AstroSitemapI18nOutput {
   i18n: { defaultLocale: string; locales: Record<string, string> };
-  /**
-   * Present when `xDefault` is enabled (the default). Injects an
-   * `x-default` link into each item that has language alternates.
-   * Items without alternates (utility pages, redirects with no
-   * translation) pass through unchanged.
-   */
+  /** Present when `xDefault` is on. Items without alternates pass through unchanged. */
   serialize?: (item: SitemapItemLike) => SitemapItemLike;
 }
 
 /**
- * Build i18n-driven options for `@astrojs/sitemap` from Astro's
- * `i18n` config.
- *
- * Validates that `defaultLocale` appears in `locales`, that locales
- * are non-empty and unique, and that any `hreflang` override key
- * matches a configured locale — all of which would silently produce
- * a malformed sitemap if accepted.
+ * Validates `defaultLocale` ∈ `locales`, non-empty / unique locales,
+ * and hreflang override keys — all silent-malformation paths.
  */
 export function astroSitemapI18n(input: AstroSitemapI18nInput, options: AstroSitemapI18nOptions = {}): AstroSitemapI18nOutput {
-  // Astro permits string-or-object entries; we only handle strings.
-  // Throwing on the object form is intentional — silently dropping or
-  // flattening would produce incorrect hreflang output and the user
-  // wouldn't know.
+  // Only string form supported — object form would silently produce
+  // wrong hreflang output.
   const localeCodes: string[] = [];
   for (const entry of input.locales) {
     if (typeof entry === "string") {

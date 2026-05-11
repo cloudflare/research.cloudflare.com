@@ -16,17 +16,8 @@ import { walkPages } from "./routing/walk-pages.js";
 import { createTranslator, type Translator } from "./translation/provider.js";
 import { runTranslationPass, type RunTranslationResult } from "./translation/run.js";
 
-/**
- * PolyStella's externally-visible version. Baked into R2 metadata
- * + the build report; lives at module scope so the integration AND
- * the standalone CLI/`runTranslationPass` callers all stamp the
- * same value (no per-caller drift).
- *
- * TODO: derive from `package.json` once a build step is in place;
- * keeping it manual today avoids needing to thread JSON imports
- * through the export shape.
- */
-export const POLYSTELLA_VERSION = "0.2.0";
+export { POLYSTELLA_VERSION } from "./version.js";
+import { POLYSTELLA_VERSION } from "./version.js";
 
 export type { PolyStellaOptions, PolyStellaResolvedOptions };
 export { computeSourceHash, type HashInput } from "./storage/hash.js";
@@ -114,42 +105,23 @@ export { astroSitemapI18n, type AstroSitemapI18nInput, type AstroSitemapI18nOpti
 /**
  * PolyStella — AI-driven content localization for Astro.
  *
- * At `astro:config:setup`:
- *   - validate options + cross-check Astro's `i18n` block,
- *   - register the `polystella:runtime-config` virtual module,
- *   - inject locale-prefixed route shims,
- *   - run UI-strings drift detection,
- *   - in live mode (provider configured + `dryRun: false`), call
- *     `runTranslationPass` to walk `sourceDir` and process each
- *     (file, locale) pair through the cache-aware orchestrator.
- *     Translated bytes land in `<root>/.astro/i18n-staging/{locale}/...`
- *     where `polystellaCollections` (called from the user's
- *     `content.config.ts`) picks them up via per-locale sibling
- *     content collections.
- *
- * At `astro:build:done`, emit `dist/i18n-r2-report.json`.
- *
- * The orchestration loop itself lives in `translation/run.ts` so
- * the same code path runs from the standalone `polystella-translate`
- * CLI without booting Astro.
+ * Two hooks: `astro:config:setup` runs the full pipeline (validate,
+ * stage translations, register virtual module + middleware, inject
+ * shims, drift-check); `astro:build:done` emits the build report.
+ * Orchestration lives in `translation/run.ts` so the same code path
+ * powers the standalone CLI. See ARCHITECTURE.md §1, §2.
  */
 export default function polystella(options: PolyStellaOptions): AstroIntegration {
   let resolved: PolyStellaResolvedOptions | undefined;
 
-  // Cross-hook state. Astro's hook signatures don't pass state
-  // between hooks, so the build-report bookkeeping lives in closure
-  // — populated during setup, read at done.
+  // Cross-hook state lives in closure since Astro's hook signatures
+  // don't pass state between hooks. `bridgeReportSink` is shared with
+  // the runtime bridge — custom-loader siblings push per-(entry,
+  // locale) outcomes at content-sync time, `build:done` surfaces them.
   const reportState: {
     startedAt: string;
     startedAtMs: number;
     runResult: RunTranslationResult | undefined;
-    /**
-     * Sink array shared with the runtime bridge. Custom-loader
-     * sibling loaders push per-(entry, locale) outcomes here at
-     * content-sync time; `build:done` reads from it to surface
-     * custom-loader translation counts alongside the file-based
-     * pipeline's report.
-     */
     bridgeReportSink: CustomLoaderTranslateRecord[];
   } = {
     startedAt: new Date().toISOString(),
@@ -167,21 +139,17 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
           `validated options: defaultLocale=${resolved.defaultLocale}, locales=[${resolved.locales.join(", ")}], mode=${resolved.mode}`,
         );
 
-        // Staging at `<root>/.astro/i18n-staging` (project root, NOT
-        // `config.cacheDir` — `cacheDir` resolves to
-        // `<root>/node_modules/.astro/` by default and would desync
-        // from where `polystellaCollections` reads). Shims, by
-        // contrast, can live under `cacheDir` because Astro imports
-        // them via the path returned from `injectRoute`.
+        // Staging lives under the project root, not `config.cacheDir`,
+        // so `polystellaCollections` reads from the same place. See
+        // ARCHITECTURE.md §3.
         const cacheDirPath = fileURLToPath(config.cacheDir);
         const rootDirPath = fileURLToPath(config.root);
         const stagingDir = path.resolve(rootDirPath, DEFAULT_STAGING_DIR);
 
-        // Register the `polystella:runtime-config` virtual module so
-        // `getLocalizedEntry` and `localizedHref` can read the
-        // resolved locale set + fallback policies at page-render time.
-        // The `\0` prefix on the resolved id is Vite's convention for
-        // virtual modules.
+        // Virtual module read by `getLocalizedEntry` / `localizedHref`
+        // / the middleware at page-render time. `\0` prefix is Vite's
+        // virtual-module convention. `mode` is exposed so the
+        // middleware can defer to Starlight's `t` when that mode lands.
         const allLocalesIncludingDefault = [resolved.defaultLocale, ...resolved.locales];
         const runtimeConfigSource = [
           `export const defaultLocale = ${JSON.stringify(resolved.defaultLocale)};`,
@@ -189,9 +157,6 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
           `export const fallback = ${JSON.stringify(resolved.fallback)};`,
           `export const noTranslateBehavior = ${JSON.stringify(resolved.noTranslateBehavior)};`,
           `export const noPrefixUrls = ${JSON.stringify(resolved.noPrefixUrls)};`,
-          // `mode` is exposed so the runtime middleware can defer to
-          // Starlight's own `Astro.locals.t` when starlight mode lands;
-          // standalone/auto runs install polystella's translator.
           `export const mode = ${JSON.stringify(resolved.mode)};`,
           "",
         ].join("\n");
@@ -217,38 +182,24 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
           },
         });
 
-        // Auto-register the per-request middleware that exposes
-        // `Astro.locals.t` and `Astro.locals.lhref`. Order is `pre`
-        // so user-defined middleware (in `src/middleware.ts`) can
-        // read these locals downstream. Consumers can opt out via
-        // `middleware: false` in their polystella config and compose
-        // manually via `astro:middleware`'s `sequence(...)`.
-        //
-        // Entrypoint is a package specifier (not a `file://` URL)
-        // so Vite resolves it through the package's `exports` map.
-        // That keeps the source-vs-built distinction inside the
-        // package — Vite picks `./src/runtime/middleware.ts` today;
-        // a future build step that ships `./dist/...` would change
-        // only the package.json mapping, not this call.
+        // Auto-register per-request middleware exposing `Astro.locals.t`
+        // and `lhref`. Order `pre` so user middleware reads these
+        // downstream. Entrypoint is a package specifier (not a file
+        // URL) so Vite resolves through the package's `exports` map.
+        // Opt out via `middleware: false` + manual `sequence(...)`.
         if (resolved.middleware) {
           addMiddleware({ entrypoint: "polystella/runtime/middleware", order: "pre" });
           logger.info("registered Astro.locals middleware (t + lhref)");
         }
 
-        // Stale-shim cleanup. Astro caches generated shims under
-        // `<cacheDir>/polystella-shims/`; a previous build with a
-        // different `routes` config can leave entries that match
-        // dynamic patterns the operator no longer wants. We `rm -rf`
-        // unconditionally so the regenerated set below is the
-        // authoritative one.
+        // Nuke stale shims unconditionally — a previous build with a
+        // different `routes` config can leave entries we no longer want.
         const shimDir = path.resolve(cacheDirPath, "polystella-shims");
         await rm(shimDir, { recursive: true, force: true });
 
-        // Glob-expand `routes` entries against the actual page
-        // files on disk. Literal paths pass through verbatim;
-        // globs (`**/*.astro` etc.) match every available file
-        // outside the auto-exclusion list (404.astro, `_*` segments).
-        // See `routing/expand-routes.ts`.
+        // Glob-expand `routes` against on-disk pages. Literals pass
+        // through; globs match every available page outside the
+        // auto-exclusion list (404.astro, `_*` segments).
         const availablePages = await walkPages(rootDirPath);
         const expandedRoutes = expandRoutes(resolved.routes, availablePages);
         if (resolved.routes.length > 0 && expandedRoutes.length === 0) {
@@ -256,23 +207,19 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
             `routes config produced no matches against the project. Configured patterns: ${resolved.routes.map((r) => r.source).join(", ")}`,
           );
         } else if (expandedRoutes.length !== resolved.routes.length) {
-          // Glob expansion happened — surface the resolved count so
-          // the operator knows what they actually got.
-          logger.info(`routes: ${resolved.routes.length} pattern(s) → ${expandedRoutes.length} resolved page(s)`);
+          logger.info(
+            `routes: ${resolved.routes.length} pattern(s) → ${expandedRoutes.length} resolved page(s)`,
+          );
         }
 
-        // For each resolved route, generate a shim under
-        // `<cacheDir>/polystella-shims/route-<idx>.astro` that
-        // imports the source page and re-exports its `getStaticPaths`
-        // expanded over non-default locales. See `routing/shim.ts`
-        // for the templates.
+        // For each resolved route, write a shim that imports the
+        // source page and re-exports `getStaticPaths` expanded over
+        // non-default locales. See `routing/shim.ts` + ARCHITECTURE.md §14.
         if (expandedRoutes.length > 0) {
           await mkdir(shimDir, { recursive: true });
 
-          // Resolve global `routesImports` once — the same set is
-          // applied to every shim, deduped against per-route extras
-          // at emission time so the user can list a path in both
-          // places without producing a duplicate import line.
+          // Global `routesImports` apply to every shim; deduped against
+          // per-route extras by absolute path at emission.
           const globalImportsAbs = resolved.routesImports.map((p) => path.resolve(rootDirPath, p));
 
           for (let i = 0; i < expandedRoutes.length; i++) {
@@ -285,11 +232,8 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
             const shimDirOfFile = path.dirname(shimPath);
             const importPath = path.relative(shimDirOfFile, sourceAbs).replace(/\\/g, "/");
 
-            // Combine global + per-route imports, resolve each to an
-            // absolute path, then convert to a path relative to the
-            // shim file. Dedupe by absolute path so a shared global
-            // file listed in both `routesImports` and the route's
-            // `imports` only emits one import line.
+            // Combine global + per-route, dedupe by absolute path,
+            // emit relative-to-shim.
             const perRouteAbs = route.imports.map((p) => path.resolve(rootDirPath, p));
             const allAbs = [...globalImportsAbs, ...perRouteAbs];
             const seen = new Set<string>();
@@ -311,9 +255,7 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
               "utf8",
             );
 
-            // Empty `pattern` means the source was an index (or the
-            // homepage); the locale-prefixed pattern collapses to
-            // just `/[lang]` in that case.
+            // Empty pattern = index/homepage; collapse to `/[lang]`.
             const injectPattern = pattern === "" ? "/[lang]" : `/[lang]/${pattern}`;
             injectRoute({
               pattern: injectPattern,
@@ -327,10 +269,9 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
           }
         }
 
-        // UI-strings drift detection. Runs before translation so a
-        // missing-key list lands early in the build log. Silent
-        // no-op when the default-locale JSON doesn't exist (operators
-        // can onboard incrementally).
+        // UI-strings drift detection runs before translation so a
+        // missing-key list lands early. Silent no-op when the default-
+        // locale JSON doesn't exist (incremental onboarding).
         const driftResult = await loadAndCheckDrift({
           rootDir: rootDirPath,
           baseDir: "./src/content/i18n",
@@ -347,33 +288,9 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
           );
         }
 
-        // Populate the runtime bridge so the custom-loader siblings
-        // generated by `polystellaCollections` (which runs LATER, at
-        // content-sync time, AFTER our `config:setup` returns) can
-        // serve translated content. The bridge holds the stagingDir
-        // (which sibling loaders read disk files from) and — when
-        // live translation is allowed by `runOn` + `dryRun` — the R2
-        // client / translators / glossaries needed for fresh AI calls.
-        //
-        // CRITICAL: publish the bridge BEFORE the `runOn` gate. Astro
-        // calls sibling loaders on every content sync (build AND dev),
-        // regardless of polystella's `runOn`. If we only published in
-        // build mode, `pnpm dev` (default `runOn: ["build"]`) would
-        // leave the bridge null and the sibling loader would skip the
-        // staging fast-path — even when `translate:build` had just
-        // populated `.astro/i18n-staging/<locale>/<name>/`. Always
-        // publishing means dev mode reads on-disk translations
-        // automatically.
-        //
-        // The translation pipeline itself (below) IS gated by `runOn`
-        // — that's correct behaviour, dev shouldn't make AI calls by
-        // default. But the bridge must exist regardless.
-        //
-        // Deps are duplicated from `runTranslationPass`'s internal
-        // setup. The cost is small (one extra glossary file read +
-        // cheap JS object construction) and avoids refactoring run.ts.
-        // A future consolidation can share the dep builder if profiling
-        // ever shows the duplicate cost mattering.
+        // Publish the runtime bridge so custom-loader siblings (which
+        // run later, at content-sync time) can translate captured
+        // entries inline. See ARCHITECTURE.md §4.
         const bridgeReportSink: CustomLoaderTranslateRecord[] = [];
         reportState.bridgeReportSink = bridgeReportSink;
         await publishRuntimeBridge({
@@ -383,18 +300,13 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
           bridgeReportSink,
         });
 
-        // Translation pipeline. Runs HERE (in config:setup), not in
-        // `astro:build:start`, because `polystellaCollections` registers
-        // per-locale sibling collections whose loaders read from
-        // `<stagingDir>/<locale>/<collection>/...`. Astro syncs the
-        // content layer between config:setup and build:start — if we
-        // staged in build:start, the siblings would already be empty
-        // when sync ran and the runtime dispatcher would always fall
-        // back to source.
+        // Translation runs HERE (config:setup), not in `build:start`.
+        // See ARCHITECTURE.md §2 — this is the single most surprising
+        // ordering constraint in the integration.
         //
-        // Explicit `command` narrowing because Astro can pass commands
-        // beyond `"build"`/`"dev"` (e.g. `"sync"`, `"preview"`); a
-        // bare cast would let those slip past the `runOn` check.
+        // Explicit `command` narrowing — Astro can pass `"sync"`,
+        // `"preview"`, etc.; a bare cast would let those slip past
+        // the `runOn` check.
         if (command !== "build" && command !== "dev") {
           return;
         }
@@ -413,11 +325,9 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
       "astro:build:done": async ({ dir, logger }) => {
         if (!resolved) return;
 
-        // Custom-loader outcomes from the runtime bridge run BEFORE
-        // the file-based report check so we still surface them in
-        // dev / dryRun builds where the file pipeline returns
-        // entries empty. The file-based report itself stays gated
-        // (skip when there's nothing to write).
+        // Custom-loader summary runs first so dev / dryRun builds
+        // (where the file pipeline produces no entries) still surface
+        // sibling-loader outcomes.
         const sink = reportState.bridgeReportSink;
         if (sink.length > 0) {
           const counts = sink.reduce(
@@ -433,9 +343,8 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
           logger.info(`i18n custom-loader summary: ${sink.length} entry/locale pair(s) — ${summary}`);
         }
 
-        // Emit the build report. No-op when the integration never
-        // ran in live mode (entries empty), so dev / dryRun builds
-        // don't clutter the dist directory.
+        // Emit `dist/i18n-r2-report.json`. No-op when nothing ran
+        // in live mode, so dev / dryRun builds stay clean.
         const runResult = reportState.runResult;
         if (!runResult || runResult.entries.length === 0) return;
 
@@ -471,24 +380,14 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
 }
 
 /**
- * Build the per-build runtime bridge and publish it via
- * `setRuntimeBridge`. Called from `astro:config:setup` after
- * `runTranslationPass`; the bridge's contents are read at content-
- * sync time by the per-locale sibling loaders auto-derived from
- * `polystellaLoader`-wrapped sources.
+ * Build + publish the per-build runtime bridge. Read at content-sync
+ * time by per-locale sibling loaders derived from `polystellaLoader`-
+ * wrapped sources. Deps duplicate `runTranslationPass`'s setup; the
+ * cost is one glossary read per locale — kept separate to avoid
+ * refactoring `runTranslationPass`'s signature. See ARCHITECTURE.md §4.
  *
- * Deps overlap with what `runTranslationPass` builds internally —
- * keeping them separate today (single-call duplication is cheap)
- * avoids refactoring `runTranslationPass`'s signature. A future
- * consolidation can extract a shared helper without changing the
- * sibling-loader contract.
- *
- * Translator construction is conditional on `resolved.provider` AND
- * `!resolved.dryRun` AND the `runOn` gate already having passed
- * (caller ensures we reach this only when those line up). When
- * the translator map is empty, the sibling loader degrades to
- * "passthrough" — source entries flow through to the per-locale
- * collection untranslated so the routes still render.
+ * Empty translator map ⇒ sibling loader degrades to passthrough so
+ * routes still render with source content.
  */
 async function publishRuntimeBridge(opts: {
   resolved: PolyStellaResolvedOptions;
@@ -498,10 +397,6 @@ async function publishRuntimeBridge(opts: {
 }): Promise<void> {
   const { resolved, rootDirPath, stagingDir, bridgeReportSink } = opts;
 
-  // Load glossaries + compute per-locale hashes. Same shape as
-  // `runTranslationPass`'s internal logic. We re-read the files
-  // because the parsed glossary objects don't escape that function;
-  // file I/O cost is one fs read per configured locale.
   const glossaries: Map<string, Glossary> = await loadGlossaries({
     config: resolved,
     projectRoot: pathToFileURL(rootDirPath + path.sep),
@@ -512,9 +407,6 @@ async function publishRuntimeBridge(opts: {
     glossaryHashByLocale.set(locale, glossary ? hashGlossary(glossary) : EMPTY_GLOSSARY_HASH);
   }
 
-  // Translators per locale. Skip when no provider is configured or
-  // dryRun is on — sibling loaders detect the empty map and skip
-  // translation per entry.
   const translatorsByLocale = new Map<string, Translator>();
   if (resolved.provider && !resolved.dryRun) {
     for (const locale of resolved.locales) {
@@ -522,9 +414,8 @@ async function publishRuntimeBridge(opts: {
     }
   }
 
-  // R2 client; `null` when no R2 config (translation runs without
-  // caching). `readOnly` is preserved so preview builds don't write
-  // back to the primary cache.
+  // `readOnly` is preserved so preview builds don't write back to
+  // the primary cache.
   const r2: R2Client | null = resolved.r2
     ? createR2Client({
         accountId: resolved.r2.accountId,

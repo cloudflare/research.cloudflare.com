@@ -1,19 +1,10 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 /**
- * `polystella-translate` — standalone CLI runner for the translation
- * pipeline. Loads the project's `astro.config.mjs` (for the
- * `i18n` block) and `polystella.config.mjs`, then invokes
- * `runTranslationPass` with the same orchestration logic the Astro
- * integration uses.
- *
- * Designed to be called via `pnpm translate` from the project root;
- * the workspace's `tsx` bin handles the TypeScript runtime so this
- * file can stay alongside the rest of polystella's source.
- *
- * Flag contract is enforced via `parseCliArgs`. Every flag has a
- * single, documented effect on the resolved options; the CLI never
- * mutates the actual config files on disk.
+ * `polystella-translate` — standalone CLI for the translation
+ * pipeline. Loads the project's `astro.config.mjs` (i18n block) and
+ * `polystella.config.mjs`, invokes `runTranslationPass`. Never
+ * mutates config files on disk.
  */
 
 import { execFileSync } from "node:child_process";
@@ -26,8 +17,7 @@ import { resolveOptions, type AstroI18nLike, type PolyStellaResolvedOptions } fr
 import { computeBuildReportTotals, emitBuildReport, type BuildReport } from "./storage/report.js";
 import { DEFAULT_STAGING_DIR } from "./storage/paths.js";
 import { runTranslationPass, type Logger } from "./translation/run.js";
-
-const POLYSTELLA_VERSION = "0.2.0";
+import { POLYSTELLA_VERSION } from "./version.js";
 
 interface CliArgs {
   branch?: string;
@@ -79,19 +69,16 @@ Exit codes:
 `;
 
 /**
- * Parse argv into a typed CliArgs. Throws (with a usage hint) on any
- * unknown flag or missing required value — accept-then-reject would
- * silently swallow typos.
+ * Parse argv → CliArgs. Throws on unknown flag or missing value
+ * (accept-then-reject would silently swallow typos).
  */
 export function parseCliArgs(argv: ReadonlyArray<string>): CliArgs {
   const out: CliArgs = { dryRun: false, help: false };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]!;
     switch (arg) {
-      // POSIX-style "end of options" separator. pnpm/npm forward it
-      // through script invocations (`pnpm translate -- --branch x`),
-      // and our CLI takes no positional args, so silently dropping
-      // it keeps both invocation styles working.
+      // POSIX "end of options" — pnpm/npm forward it through
+      // `pnpm translate -- --branch x` style invocations.
       case "--":
         continue;
       case "--help":
@@ -148,12 +135,7 @@ export function parseCliArgs(argv: ReadonlyArray<string>): CliArgs {
   return out;
 }
 
-/**
- * Console-backed logger. Channels match the Astro logger's contract
- * (info → stderr keeps stdout clean for downstream piping; we mirror
- * Astro's choice of stdout for info to match operator expectations
- * during interactive runs).
- */
+/** Console-backed logger matching Astro's channel contract. */
 const cliLogger: Logger = {
   info: (msg) => console.log(msg),
   warn: (msg) => console.warn(msg),
@@ -162,13 +144,7 @@ const cliLogger: Logger = {
   debug: process.env["LOG_LEVEL"] === "debug" ? (msg) => console.log(msg) : () => {},
 };
 
-/**
- * Load `astro.config.mjs` from `cwd` and pluck out the bits
- * `resolveOptions` needs (just `i18n`). Defined here rather than
- * inlining to keep `main()` readable and to make the failure mode
- * explicit (the config could be a function, a default-export object,
- * or async — we handle the common cases).
- */
+/** Load `astro.config.mjs` and pluck `i18n`. */
 async function loadAstroI18n(cwd: string): Promise<AstroI18nLike | undefined> {
   const candidatePath = path.resolve(cwd, "astro.config.mjs");
   let module: { default?: unknown };
@@ -177,10 +153,8 @@ async function loadAstroI18n(cwd: string): Promise<AstroI18nLike | undefined> {
   } catch (err) {
     throw new Error(`failed to load ${candidatePath}: ${(err as Error).message}`);
   }
-  // Astro's `defineConfig` is a no-op identity wrapper, so the
-  // default export is plain object-shaped. We support both `default`
-  // and a top-level `i18n` (defensive, though Astro itself only
-  // accepts the default-export form).
+  // `defineConfig` is identity; support both default export and a
+  // top-level `i18n` defensively.
   const exported = module.default ?? module;
   if (typeof exported !== "object" || exported === null) {
     return undefined;
@@ -205,13 +179,7 @@ async function loadPolystellaConfig(cwd: string): Promise<unknown> {
   }
 }
 
-/**
- * Apply CLI flag overrides to an already-resolved options object.
- * Lives outside `main()` so it's testable in isolation — the
- * branch-prefix dispatch is the most error-prone bit of the CLI
- * surface, and a dedicated function makes it easy to pin the
- * contract.
- */
+/** Apply CLI flag overrides to a resolved options object. */
 export function applyCliOverrides(resolved: PolyStellaResolvedOptions, args: CliArgs): PolyStellaResolvedOptions {
   let next = resolved;
 
@@ -249,31 +217,17 @@ export function applyCliOverrides(resolved: PolyStellaResolvedOptions, args: Cli
 }
 
 /**
- * Read the current git branch via `git rev-parse --abbrev-ref HEAD`.
- *
- * Returns `null` when:
- *   - git isn't on PATH (returns null on ENOENT / non-zero exit),
- *   - the working tree has no `.git/` (rev-parse fails),
- *   - HEAD is detached (rev-parse prints the literal `"HEAD"`),
- *   - rev-parse prints empty string (defensive — shouldn't happen).
- *
- * The CLI uses this to default `--branch` when neither
- * `WORKERS_CI_BRANCH` nor `--branch` is supplied, so
- * `pnpm translate` from your `diogo/polystella-v1` checkout writes
- * to the matching preview prefix without any flag plumbing.
- *
- * Exported so the unit tests can drive it directly + so a future
- * caller (e.g. an editor extension) can introspect the same default
- * the CLI would pick.
+ * Current git branch via `git rev-parse --abbrev-ref HEAD`.
+ * Returns `null` on: git not on PATH, no `.git/`, detached HEAD,
+ * empty output. Used to default `--branch` so `pnpm translate` from
+ * a feature branch writes to the matching preview prefix.
  */
 export function detectGitBranch(): string | null {
   let raw: string;
   try {
     raw = execFileSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
       encoding: "utf8",
-      // Suppress git's stderr — we surface our own error message
-      // upstream when this returns null. Letting git's "fatal: not a
-      // git repository" leak would double-log the failure.
+      // Suppress git's stderr — we surface our own error upstream.
       stdio: ["ignore", "pipe", "ignore"],
     });
   } catch {
@@ -285,20 +239,9 @@ export function detectGitBranch(): string | null {
 }
 
 /**
- * Resolve the branch the CLI should target. Precedence:
- *   1. Explicit `--branch <name>` flag (highest).
- *   2. `WORKERS_CI_BRANCH` from the environment (set by Workers
- *      Builds, or by a parent shell that pre-staged it).
- *   3. Git's current HEAD via `detectGitBranch`.
- *
- * Returns a `{ ok: true, branch }` shape on success, or
- * `{ ok: false, reason }` so the caller can format a copy-pasteable
- * remediation hint. The choice not to throw keeps the CLI's error
- * path uniform — every failure mode goes through `main()`'s
- * `console.error` + return-non-zero path.
- *
- * `gitBranchProvider` is injected for testability; production calls
- * pass `detectGitBranch`.
+ * Branch precedence: `--branch` flag → `WORKERS_CI_BRANCH` env →
+ * `gitBranchProvider()`. Returns `{ ok, reason }` instead of
+ * throwing so `main()` formats remediation hints uniformly.
  */
 export function resolveCliBranch(args: {
   flag: string | undefined;
@@ -337,16 +280,13 @@ async function main(): Promise<number> {
     return 0;
   }
 
-  // Mark this run as the explicit-CLI dispatch BEFORE the config is
-  // imported. `polystella.config.mjs` reads this to distinguish a
-  // CLI invocation from an incidental local `astro build` — only
-  // the CLI is allowed to write to R2 from outside CI.
+  // Mark CLI dispatch BEFORE the config imports — config reads
+  // this to allow R2 writes from outside CI.
   process.env["POLYSTELLA_CLI"] = "1";
 
-  // Resolve the target branch from (in order): the --branch flag,
-  // an existing WORKERS_CI_BRANCH env var, or git's current HEAD.
-  // Setting WORKERS_CI_BRANCH BEFORE importing the config means the
-  // same dispatch logic that runs in CI runs here.
+  // Branch precedence: --branch flag, WORKERS_CI_BRANCH env, git HEAD.
+  // Setting WORKERS_CI_BRANCH before importing the config means the
+  // same dispatch logic runs here as in CI.
   const branchResolution = resolveCliBranch({
     flag: args.branch,
     envBranch: process.env["WORKERS_CI_BRANCH"],
@@ -358,9 +298,8 @@ async function main(): Promise<number> {
   }
   process.env["WORKERS_CI_BRANCH"] = branchResolution.branch;
   if (branchResolution.source === "git") {
-    // Loud one-liner so an operator running `pnpm translate` from
-    // an unexpected branch sees what they're about to do before
-    // any provider/R2 calls fire.
+    // Loud one-liner so an unexpected-branch run is visible
+    // before any provider/R2 calls fire.
     console.log(`[polystella-translate] no --branch / WORKERS_CI_BRANCH; using current git branch: ${branchResolution.branch}`);
   }
 
@@ -382,9 +321,8 @@ async function main(): Promise<number> {
     return 1;
   }
 
-  // Mirror the integration's staging dir layout exactly so the
-  // sibling content collections pick up CLI-staged files without
-  // any reconfiguration. `mkdir({ recursive: true })` is idempotent.
+  // Mirror integration staging-dir layout so sibling collections
+  // pick up CLI-staged files without reconfiguration.
   const stagingDir = path.resolve(cwd, DEFAULT_STAGING_DIR);
   await mkdir(stagingDir, { recursive: true });
 
@@ -400,10 +338,8 @@ async function main(): Promise<number> {
     polystellaVersion: POLYSTELLA_VERSION,
   });
 
-  // Emit a build report unconditionally for live runs (matches the
-  // integration's behaviour at `astro:build:done`). Default location
-  // is the project root rather than `dist/` because the CLI doesn't
-  // produce a build artefact directory; `--report` overrides.
+  // Build report for live runs (matches integration's `build:done`).
+  // Default: project root (no `dist/` from a CLI run); `--report` overrides.
   if (result.liveRan && result.entries.length > 0) {
     const report: BuildReport = {
       build: {
@@ -438,8 +374,8 @@ async function main(): Promise<number> {
   return result.counts.failed > 0 ? 2 : 0;
 }
 
-// Run if invoked directly (not imported). The `import.meta.url` check
-// keeps the module importable from tests.
+// Run if invoked directly. `import.meta.url` check keeps the module
+// importable from tests.
 const invokedDirectly = import.meta.url === pathToFileURL(process.argv[1] ?? "").href;
 if (invokedDirectly) {
   main().then(

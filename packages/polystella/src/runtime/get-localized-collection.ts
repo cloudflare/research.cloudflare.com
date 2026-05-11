@@ -1,37 +1,18 @@
 /**
- * Locale-aware collection lookup. Dispatcher only.
+ * Locale-aware collection dispatcher. Per-entry sibling-vs-source
+ * resolution mirrors `resolveLocalizedEntry`, applied across the
+ * whole collection then filtered.
  *
- * Sibling to `resolveLocalizedEntry` (`./get-localized-entry.ts`).
- * Whereas the entry helper looks up one (collection, slug) pair, the
- * collection helper materialises every entry in a collection through
- * the same sibling-vs-source dispatch logic, then applies the user's
- * filter to the merged-and-tagged list.
- *
- * Resolution branches:
- *
- *   1. Default-locale (or undefined/empty/= defaultLocale) →
- *      `getCollection(name)` verbatim, every entry tagged
+ * Branches:
+ *   1. Default locale → `getCollection(name)`, tagged
  *      `{ isLocalized: false, locale: defaultLocale }`.
+ *   2. Cross-locale → parallel `Promise.all` fetch of source +
+ *      `${name}__${locale}` siblings, merged per
+ *      hit / fallback / noTranslate policy.
  *
- *   2. Cross-locale → fetch source AND `${name}__${locale}` siblings
- *      in parallel (Promise.all). Index siblings by `id`. For each
- *      source entry:
- *        - sibling hit → tag `{ isLocalized: true, locale }`.
- *        - sibling miss + `noTranslate: true` → consult
- *          `noTranslateBehavior` (`"fallback"` keeps source as
- *          `isLocalized: false`; `"404"` drops the entry).
- *        - sibling miss + no flag → consult `fallback`
- *          (`"default-locale"` keeps source; `"skip"` drops it).
- *
- *   3. Apply the user's filter to the merged-and-tagged list.
- *
- * The filter receives the FULL extended entry shape
- * (`LocalizedEntry<TEntry>`), so callers can branch on
- * `entry.isLocalized` or `entry.locale` if they want to (e.g. to
- * hide untranslated entries in a non-default locale). Existing
- * `({ data }) => ...` filters work unchanged because `LocalizedEntry`
- * is `TEntry & { isLocalized; locale }` — the source's `data` field
- * is preserved verbatim.
+ * Filter sees the merged `LocalizedEntry<TEntry>` so it can branch
+ * on `isLocalized` / `locale`. Existing `({ data }) => ...` filters
+ * keep working (data field is preserved verbatim).
  */
 
 import type { LocalizedEntry, LocalizedFallbackPolicy, NoTranslatePolicy, SourceEntryShape } from "./get-localized-entry.js";
@@ -40,19 +21,11 @@ import { withExtensions } from "./get-localized-entry.js";
 export interface ResolveLocalizedCollectionDeps<TEntry extends SourceEntryShape = SourceEntryShape> {
   /** From Astro's `i18n.defaultLocale`. */
   defaultLocale: string;
-  /** Defaults to `"default-locale"` when absent. */
+  /** Defaults to `"default-locale"`. */
   fallback?: LocalizedFallbackPolicy;
-  /** Defaults to `"fallback"` when absent. */
+  /** Defaults to `"fallback"`. */
   noTranslateBehavior?: NoTranslatePolicy;
-  /**
-   * Astro's `getCollection` (or a test stub). Called once with the
-   * source name on the default-locale path, twice (in parallel) on
-   * the cross-locale path: source name + sibling name.
-   *
-   * Sibling-collection naming (`${name}__${locale}`) is bound by
-   * convention with `polystellaCollections` — same convention
-   * `resolveLocalizedEntry` uses.
-   */
+  /** Astro's `getCollection` (or test stub). */
   getCollection: (collection: string) => Promise<TEntry[]>;
 }
 
@@ -61,45 +34,14 @@ export interface ResolveLocalizedCollectionInput<TEntry extends SourceEntryShape
   /** Visitor's locale; `undefined` means "the default locale". */
   locale: string | undefined;
   /**
-   * Optional filter applied to the merged-and-tagged entries.
-   * Receives the extended `LocalizedEntry<TEntry>` shape so callers
-   * can read `isLocalized` / `locale`. When omitted, all merged
-   * entries are returned.
-   *
-   * Return type is `unknown` (not `boolean`) to match Astro's
-   * `getCollection` filter convention — `Array.prototype.filter`
-   * coerces any return value to a boolean, so callers can write
-   * `(pub) => pub.data.authors?.some(...)` without coercing the
-   * optional-chain return to `boolean` themselves. Existing
-   * `(e) => e.data.foo === "bar"` filters keep working since
-   * `boolean` is assignable to `unknown`.
+   * Filter applied to merged-and-tagged entries. Return type is
+   * `unknown` to match Astro's `getCollection` convention — callers
+   * can use optional-chain expressions without coercing to boolean.
    */
   filter?: (entry: LocalizedEntry<TEntry>) => unknown;
   deps: ResolveLocalizedCollectionDeps<TEntry>;
 }
 
-/**
- * Two branches:
- *   1. Default-locale (or missing / matching) request → source list
- *      tagged with `defaultLocale`, filter applied normally.
- *   2. Cross-locale → parallel sibling+source fetch, merge per
- *      sibling-hit / fallback / no-translate policy, filter applied
- *      to the merged list.
- *
- * The filter argument receives the extended shape so it can
- * optionally branch on translation status; the existing
- * `({ data }) => ...` idiom is unaffected.
- *
- * Sibling-collection naming (`__` separator) matches
- * `resolveLocalizedEntry`'s convention. The two run in different
- * module graphs (content config vs. page render); a shared constant
- * isn't workable.
- *
- * `Promise.all` parallelism on the cross-locale path matters at
- * scale: building 80 publications × 2 locales × 2 lookups would
- * serialize into 320 awaits without it; the parallel form halves
- * the wall-clock cost when Astro's content layer caches are cold.
- */
 export async function resolveLocalizedCollection<TEntry extends SourceEntryShape>(
   input: ResolveLocalizedCollectionInput<TEntry>,
 ): Promise<LocalizedEntry<TEntry>[]> {
@@ -114,10 +56,8 @@ export async function resolveLocalizedCollection<TEntry extends SourceEntryShape
   const localizedCollection = `${collection}__${locale}`;
   const [siblings, sources] = await Promise.all([deps.getCollection(localizedCollection), deps.getCollection(collection)]);
 
-  // Index siblings by id so per-source lookups stay O(1).
-  // Sibling entries carry the SAME `id` as their source — that's the
-  // contract `polystellaCollections` enforces by writing translated
-  // bytes to staging paths that mirror the source filename.
+  // O(1) per-source lookups. Siblings carry the same `id` as their
+  // source (enforced by mirroring staging paths in `polystellaCollections`).
   const siblingsById = new Map<string, TEntry>();
   for (const sibling of siblings) {
     siblingsById.set(sibling.id, sibling);
@@ -130,29 +70,21 @@ export async function resolveLocalizedCollection<TEntry extends SourceEntryShape
   for (const source of sources) {
     const sibling = siblingsById.get(source.id);
     if (sibling !== undefined) {
-      // Override `collection` on the sibling entry to the SOURCE
-      // collection name (e.g. "blog", not "blog__pt-BR"). Downstream
-      // consumers branching on `entry.collection === "blog"` should
-      // work uniformly across translated and source-fallback entries
-      // — the localization is an internal-detail of polystella, not
-      // something page code should have to special-case.
+      // Normalise `collection` to the source name so downstream code
+      // branching on `entry.collection` doesn't have to special-case siblings.
       const normalized = { ...sibling, collection: source.collection } as TEntry;
       merged.push(withExtensions(normalized, true, locale));
       continue;
     }
 
-    // Sibling miss — apply policy. The two policies match
-    // `resolveLocalizedEntry`'s exactly so the per-entry and
-    // per-collection helpers agree.
+    // Sibling miss — apply policy. Matches `resolveLocalizedEntry`.
     const isNoTranslate = source.data?.noTranslate === true;
     if (isNoTranslate) {
       if (noTranslatePolicy === "404") continue;
-      // "fallback" — keep source as default-locale entry.
       merged.push(withExtensions(source, false, deps.defaultLocale));
       continue;
     }
     if (fallbackPolicy === "skip") continue;
-    // "default-locale" — keep source as default-locale entry.
     merged.push(withExtensions(source, false, deps.defaultLocale));
   }
 

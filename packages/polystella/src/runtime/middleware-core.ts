@@ -1,11 +1,8 @@
 /**
- * Pure middleware core. Lives separately from `middleware.ts` so
- * vitest can import it without resolving the
- * `polystella:runtime-config` / `astro:content` virtual modules.
- *
- * `middleware.ts` re-exports these and pre-instantiates the public
- * `polystellaMiddleware()` / `onRequest` against the production
- * dependencies.
+ * Pure middleware core. Separated from `middleware.ts` so vitest
+ * can import without resolving virtual modules. `middleware.ts`
+ * pre-instantiates the public `polystellaMiddleware()` / `onRequest`
+ * against production deps.
  */
 
 import { buildTranslateFn, type TranslateFn } from "../i18n/translate.js";
@@ -22,10 +19,8 @@ import {
 import { resolveLocalizedHref } from "./localized-href.js";
 
 /**
- * Astro's MiddlewareHandler shape, narrowed to what we need. We
- * avoid importing `astro:middleware` directly to keep the module
- * importable in unit tests (vitest doesn't provide that virtual
- * module without an Astro runtime).
+ * Narrowed MiddlewareHandler shape; avoids importing `astro:middleware`
+ * so the module loads in vitest without an Astro runtime.
  */
 type MinimalContext = {
   currentLocale: string | undefined;
@@ -34,19 +29,10 @@ type MinimalContext = {
 export type PolystellaMiddleware = (context: MinimalContext, next: () => unknown) => Promise<unknown> | unknown;
 
 /**
- * Pure dependency surface for the middleware core. Lifted out of
- * the `polystella:runtime-config` / `astro:content` imports so the
- * core is testable from vitest without an Astro runtime providing
- * the virtual modules. Production callers go through
- * `polystellaMiddleware()` (in `./middleware.ts`) which closes over
- * the real imports.
- *
- * `getEntry` / `getCollection` are typed against `SourceEntryShape`
- * so the same deps satisfy both the i18n translator (which only
- * reads `.data`) and the localized-entry / localized-collection
- * bindings (which need the full entry shape). The translator narrows
- * `data` to `Record<string, string>` at its call site since the i18n
- * collection's schema enforces string values.
+ * Pure dependency surface — lifted out of virtual-module imports so
+ * vitest can drive the core directly. `getEntry` / `getCollection`
+ * type to `SourceEntryShape` so the same deps satisfy translator
+ * (reads `.data`) and localized fetchers (need full shape).
  */
 export interface MiddlewareDeps {
   defaultLocale: string;
@@ -63,12 +49,7 @@ export interface MiddlewareDeps {
   noTranslateBehavior?: NoTranslatePolicy;
 }
 
-/**
- * Build the locale-bound `localizedHref` closure used by both the
- * Astro middleware and (indirectly) the React hook. `deps` carries
- * the resolved locale set + `noPrefixUrls`; production callers
- * thread the production virtual-module imports through.
- */
+/** Locale-bound `localizedHref` closure for middleware + React hook. */
 export function buildLocalizedHref(
   locale: string | undefined,
   deps: Pick<MiddlewareDeps, "defaultLocale" | "locales" | "noPrefixUrls">,
@@ -82,22 +63,17 @@ export function buildLocalizedHref(
 }
 
 /**
- * Resolve a translator for the given locale. Encapsulated so the
- * middleware path and any future explicit-call surface share one
- * fallback chain: visitor locale → default locale → literal-key
- * passthrough. Errors resolve to the passthrough so a single
- * malformed dictionary doesn't break unrelated pages.
+ * Resolve a translator. Fallback chain: visitor locale →
+ * default → literal-key passthrough. Errors silently passthrough
+ * so one bad dictionary doesn't break unrelated pages.
  */
 export async function buildTranslator(
   locale: string | undefined,
   deps: Pick<MiddlewareDeps, "defaultLocale" | "getEntry">,
 ): Promise<TranslateFn> {
   const passthrough: TranslateFn = (key: string) => key;
-  // Astro stores content-collection entry IDs lowercased. We
-  // lowercase BOTH the visitor locale (when provided) and the
-  // default locale fallback so a configured locale like `en-US`
-  // resolves to entry id `en-us` regardless of which branch we
-  // come through.
+  // Astro stores entry IDs lowercased — lowercase both sides so
+  // `en-US` resolves to entry id `en-us`.
   const defaultLocaleId = deps.defaultLocale.toLowerCase();
   const effectiveLocale = locale && locale.length > 0 ? locale.toLowerCase() : defaultLocaleId;
   try {
@@ -108,20 +84,14 @@ export async function buildTranslator(
       if (fallback?.data) return buildTranslateFn(fallback.data as Record<string, string>);
     }
   } catch {
-    // Eaten on purpose — fall through to passthrough below. The
-    // missing dictionary is the operator's problem to fix; we
-    // don't want one bad locale to take the whole site down.
+    // Eaten on purpose — passthrough below.
   }
   return passthrough;
 }
 
 /**
- * Locale-bound `getLocalizedEntry` for `Astro.locals`. Mirrors the
- * import-side function's overload surface, minus the `locale` arg
- * (the binding closes over the request's locale).
- *
- *   await Astro.locals.getLocalizedEntry("publications", "foo")
- *   await Astro.locals.getLocalizedEntry({ collection: "people", id: "alice" })
+ * Locale-bound `getLocalizedEntry` for `Astro.locals`. Accepts
+ * tuple (`collection, id`) or ref (`{ collection, id }`) forms.
  */
 export type BoundGetLocalizedEntry = (
   collectionOrRef: string | CollectionEntryRef,
@@ -129,31 +99,16 @@ export type BoundGetLocalizedEntry = (
 ) => Promise<LocalizedEntry<SourceEntryShape> | undefined>;
 
 /**
- * Locale-bound `getLocalizedCollection` for `Astro.locals`. The
- * filter receives the merged-and-tagged shape so callers can
- * branch on `entry.isLocalized` / `entry.locale` if they want to;
- * existing `({ data }) => ...` filters work unchanged.
- *
- * Filter return type is `unknown` (not `boolean`) to match Astro's
- * `getCollection` filter convention — callers can write
- * `(pub) => pub.data.authors?.some(...)` without coercing the
- * optional-chain `boolean | undefined` to `boolean`.
+ * Locale-bound `getLocalizedCollection` for `Astro.locals`. Filter
+ * receives the merged-and-tagged shape; return type is `unknown` to
+ * match Astro's `getCollection` filter convention (callers can use
+ * optional-chain results without coercing to boolean).
  */
 export type BoundGetLocalizedCollection = (
   collection: string,
   filter?: (entry: LocalizedEntry<SourceEntryShape>) => unknown,
 ) => Promise<LocalizedEntry<SourceEntryShape>[]>;
 
-/**
- * Build the locale-bound `getLocalizedEntry` closure. Production
- * callers go through `createMiddleware`; tests call this directly
- * to verify the closure honours the bound locale across calls.
- *
- * The bound function accepts both the tuple form (`collection, id`)
- * and the ref form (`{ collection, id }`); disambiguation is
- * delegated to `normaliseGetLocalizedEntryArgs` so the two surfaces
- * stay in lockstep.
- */
 export function bindGetLocalizedEntry(
   locale: string | undefined,
   deps: Pick<MiddlewareDeps, "defaultLocale" | "fallback" | "noTranslateBehavior" | "getEntry">,
@@ -170,12 +125,9 @@ export function bindGetLocalizedEntry(
 }
 
 /**
- * Build the locale-bound `getLocalizedCollection` closure. Same
- * pattern as `bindGetLocalizedEntry` — locale closed over, deps
- * threaded through. Filter is forwarded verbatim to
- * `resolveLocalizedCollection`, which applies it post-merge so
- * the user's filter sees the resolved entry shape regardless of
- * whether each entry came from a sibling hit or a source fallback.
+ * Filter is forwarded to `resolveLocalizedCollection` which applies
+ * it post-merge — sees the resolved entry shape regardless of
+ * whether each entry came from sibling hit or source fallback.
  */
 export function bindGetLocalizedCollection(
   locale: string | undefined,
@@ -192,41 +144,19 @@ export function bindGetLocalizedCollection(
 }
 
 /**
- * Pure middleware factory taking explicit dependencies.
- * `polystellaMiddleware()` (in `./middleware.ts`) closes over the
- * virtual-module imports; tests inject mocks here to exercise
- * mode-specific branches without an Astro runtime.
- *
- * Locals populated per request:
+ * Per-request locals:
  *   - `lhref` — locale-bound `localizedHref`. Always installed.
- *   - `t` — translator. Skipped in starlight mode (Starlight owns
- *     `t` via i18next).
- *   - `getLocalizedEntry` / `getLocalizedCollection` — locale-bound
- *     content fetchers. Always installed (these don't conflict with
- *     anything Starlight provides).
+ *     (Short name keeps templates terse; the verbose
+ *     `localizedHref(href, locale?)` is on the explicit import path.)
+ *   - `t` — translator. Skipped in starlight mode (Starlight owns it).
+ *   - `getLocalizedEntry` / `getLocalizedCollection` — always installed.
  */
 export function createMiddleware(deps: MiddlewareDeps): PolystellaMiddleware {
   return async (context, next) => {
     const locale = context.currentLocale;
-    // Exposed as `lhref` rather than `localizedHref` so templates
-    // stay terse (`Astro.locals.lhref("/foo")`). The verbose name
-    // remains on the explicit import path
-    // (`localizedHref(href, locale?)` from `polystella/runtime`)
-    // and on the React hook (`useLocalizedHref`), where the import
-    // site already documents intent.
     context.locals.lhref = buildLocalizedHref(locale, deps);
-
-    // Locale-bound content fetchers. Long names match the
-    // import-side functions for IDE autocomplete + searchability;
-    // the destructure idiom keeps call sites concise:
-    //
-    //   const { getLocalizedEntry, getLocalizedCollection } = Astro.locals;
-    //
-    // Both install in every mode — unlike `t` (which Starlight
-    // owns), these don't conflict with anything Starlight provides.
     context.locals.getLocalizedEntry = bindGetLocalizedEntry(locale, deps);
     context.locals.getLocalizedCollection = bindGetLocalizedCollection(locale, deps);
-
     if (deps.mode !== "starlight") {
       context.locals.t = await buildTranslator(locale, deps);
     }

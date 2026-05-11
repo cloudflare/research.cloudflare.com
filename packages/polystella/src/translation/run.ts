@@ -27,30 +27,15 @@ import type { BuildReportEntry, BuildReportPruning } from "../storage/report.js"
 import { createTranslator, type Translator } from "./provider.js";
 
 /**
- * Standalone translation pass extracted from the Astro integration's
- * `astro:config:setup` hook. The same code path runs from:
- *   - the integration (passing Astro's logger + paths in), and
- *   - the `polystella-translate` CLI (passing a console-backed logger
- *     and the project root resolved from `process.cwd()`).
+ * Translation pass shared between the Astro integration and the
+ * standalone CLI. Zero direct dependency on Astro's types so the CLI
+ * can run without Astro on the import path.
  *
- * Lives separately from `index.ts` so it has zero direct dependency
- * on Astro's `AstroIntegration` types — the CLI must be runnable
- * without Astro on the import path.
- *
- * What this function does NOT do:
- *   - Inject Astro routes / shims (purely build-time concern).
- *   - Run UI-strings drift detection (the integration runs that
- *     before calling here so its error path matches the build's
- *     fail-fast behaviour; the CLI runs it separately if requested).
- *   - Emit the build report to disk (callers do that, since the
- *     output directory differs between `dist/` and CLI use cases).
+ * Does NOT inject routes/shims, run UI-strings drift detection, or
+ * write the build report — those are caller responsibilities.
  */
 
-/**
- * Minimal logger surface we lean on. Compatible with Astro's
- * `AstroIntegrationLogger` and easy to satisfy from a console-backed
- * stub in the CLI / tests.
- */
+/** Astro-compatible logger surface; trivially stub-able from console. */
 export interface Logger {
   info(message: string): void;
   warn(message: string): void;
@@ -59,45 +44,22 @@ export interface Logger {
 }
 
 export interface RunTranslationOptions {
-  /**
-   * Already-validated options. Callers must pass a fully-resolved
-   * config (run through `resolveOptions`) — `runTranslationPass`
-   * trusts the schema-level invariants (e.g. `r2.prefix` ends with
-   * `/`) instead of re-validating.
-   */
+  /** Pre-validated via `resolveOptions`; schema invariants are trusted. */
   resolved: PolyStellaResolvedOptions;
   /** Absolute path to the Astro project root. */
   rootDir: string;
-  /**
-   * Absolute path to the directory where translated files will land
-   * (typically `<rootDir>/.astro/i18n-staging`). Created if missing.
-   */
+  /** Absolute path for translated output (typically `<rootDir>/.astro/i18n-staging`). */
   stagingDir: string;
   logger: Logger;
-  /**
-   * Version string baked into R2 metadata + the build report. Threaded
-   * in (rather than hardcoded) so a single source-of-truth in
-   * `index.ts` doesn't get split when packagers add a build step.
-   */
+  /** Version baked into R2 metadata + the build report. */
   polystellaVersion: string;
   /**
-   * Bypass `createR2Client(resolved.r2)`. `null` skips caching even
-   * if `resolved.r2` is set; an R2Client redirects storage to a
-   * test fixture or a local development bucket. When `undefined`
-   * (the default), `runTranslationPass` builds the client from
-   * `resolved.r2` normally.
+   * Bypass `createR2Client(resolved.r2)`. `null` disables caching;
+   * an R2Client redirects to a fixture/local bucket. `undefined`
+   * (default) uses `resolved.r2`.
    */
   r2Override?: R2Client | null;
-  /**
-   * Per-locale Translator overrides. Locales present in the map skip
-   * `createTranslator(resolved.provider, locale)` and use the
-   * supplied translator instead; missing locales fall back to the
-   * standard factory.
-   *
-   * Used by tests for deterministic translators and by callers that
-   * want to swap the provider for a single run (e.g. a debug mode
-   * that records prompts to disk).
-   */
+  /** Per-locale Translator overrides. Used by tests + debug-mode callers. */
   translatorOverrides?: Map<string, Translator>;
 }
 
@@ -106,11 +68,7 @@ export interface RunTranslationCounts {
   miss: number;
   override: number;
   failed: number;
-  /**
-   * Pairs short-circuited by the on-disk staging index (matching
-   * source hash + staged file present, no R2 GET issued). Distinct
-   * from `hit` so reports and logs can quantify R2 traffic saved.
-   */
+  /** Pairs short-circuited by the on-disk staging index — no R2 GET issued. */
   localSkipped: number;
 }
 
@@ -119,34 +77,20 @@ export interface RunTranslationResult {
   entries: BuildReportEntry[];
   /** Prune outcome; `deletedKeys` empty when no prune ran. */
   pruning: BuildReportPruning;
-  /**
-   * Per-locale glossary metadata (file path + content hash) for
-   * locales whose glossary loaded successfully. Used by the build
-   * report's top-level glossary inventory.
-   */
+  /** Per-locale glossary metadata for the build report's inventory. */
   glossariesForReport: Record<string, { file: string; sha256: string }>;
-  /**
-   * Pairs the run actually processed (translated, cached-hit, or
-   * override-applied). Surfaced for tests + diagnostic logging; not
-   * required by callers that only need the build report.
-   */
+  /** Pairs the run processed (translated / hit / override). For diagnostics. */
   touchedPairs: Set<string>;
   counts: RunTranslationCounts;
-  /** Sources flagged with `noTranslate: true` and consequently skipped. */
+  /** Sources with `noTranslate: true`. */
   noTranslateSources: number;
-  /**
-   * `false` when the run skipped the actual translation step (no
-   * provider configured, `dryRun` true, or zero matching sources).
-   * Callers (e.g. the integration) use this to decide whether to
-   * emit a build report.
-   */
+  /** `false` when the run skipped translation (no provider, dryRun, no sources). */
   liveRan: boolean;
 }
 
 /**
- * Stage translated bytes at `<stagingDir>/<locale>/<relativeSourcePath>`.
- * Layout matches what `polystellaCollections` registers as the sibling
- * collection's glob base.
+ * Stage at `<stagingDir>/<locale>/<relativeSourcePath>` — matches the
+ * glob base `polystellaCollections` registers for sibling collections.
  */
 async function writeStagedTranslation(args: {
   stagingDir: string;
@@ -160,13 +104,8 @@ async function writeStagedTranslation(args: {
 }
 
 /**
- * Resolve which per-glob → key-paths map an adapter consumes for
- * translatable scalars. Markdown reads `markdown.keys`; TOML reads
- * `toml.keys`; JSON reads `json.keys`; YAML reads `yaml.keys`.
- * For extensions an adapter doesn't claim, this returns `{}` so the
- * adapter sees no translatable keys at all (a defensible default —
- * the source still passes through, segments are empty, no cache
- * miss is generated).
+ * Per-glob → translatable-keys map for an adapter. Unknown
+ * extensions return `{}` — segments empty, source passes through.
  */
 function pickTranslatableKeysForAdapter(adapter: FileTypeAdapter, resolved: PolyStellaResolvedOptions): Record<string, string[]> {
   for (const ext of adapter.extensions) {
@@ -187,10 +126,9 @@ function pickTranslatableKeysForAdapter(adapter: FileTypeAdapter, resolved: Poly
 }
 
 /**
- * Resolve which per-glob → URL-path map an adapter consumes. Same
- * dispatch shape as `pickTranslatableKeysForAdapter` but for URL
- * fields. Markdown URLs cover frontmatter only; body inline links
- * are handled separately by the bytes-level rewriter.
+ * Per-glob → URL-path map for an adapter. Markdown URLs are
+ * frontmatter-only; body inline links are rewritten separately at
+ * the bytes level.
  */
 function pickUrlKeysForAdapter(adapter: FileTypeAdapter, resolved: PolyStellaResolvedOptions): Record<string, string[]> {
   for (const ext of adapter.extensions) {
@@ -210,11 +148,7 @@ function pickUrlKeysForAdapter(adapter: FileTypeAdapter, resolved: PolyStellaRes
   return {};
 }
 
-/**
- * Resolve the URL path list for a single source. Same logic as the
- * translatable-keys resolver in the markdown extractor: union every
- * matching glob's list, deduplicated, in insertion order.
- */
+/** Union every matching glob's URL paths, deduped, insertion-ordered. */
 function resolveUrlPathsForSource(rules: Record<string, string[]>, sourcePath: string): string[] {
   const matched: string[] = [];
   const seen = new Set<string>();
@@ -231,11 +165,7 @@ function resolveUrlPathsForSource(rules: Record<string, string[]>, sourcePath: s
   return matched;
 }
 
-/**
- * Build the ordered list of fallback R2 keys for a (locale, hash, source)
- * tuple. Resolves each configured `readFallbackPrefixes` entry through
- * `buildR2Key` so callers don't need their own key concatenation logic.
- */
+/** Ordered fallback R2 keys (one per `readFallbackPrefixes` entry). */
 function buildFallbackKeys(args: { resolved: PolyStellaResolvedOptions; locale: string; sourcePath: string; hash: string }): string[] {
   const fallbackPrefixes = args.resolved.r2?.readFallbackPrefixes ?? [];
   if (fallbackPrefixes.length === 0) return [];
@@ -250,12 +180,9 @@ function buildFallbackKeys(args: { resolved: PolyStellaResolvedOptions; locale: 
 }
 
 /**
- * Execute the full translation pass: walk sources, load glossaries,
- * build translators + R2 client, run the cache-aware orchestrator
- * across every (file, locale) pair, then optionally prune.
- *
- * Returns the data necessary to emit a build report — the caller is
- * responsible for serialising it.
+ * Walk sources → load glossaries → build translators + R2 client →
+ * orchestrate every (file, locale) pair → optionally prune. Returns
+ * the data needed to emit a build report; caller serialises.
  */
 export async function runTranslationPass(opts: RunTranslationOptions): Promise<RunTranslationResult> {
   const { resolved, rootDir, stagingDir, logger, polystellaVersion, r2Override, translatorOverrides } = opts;
@@ -274,12 +201,9 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
   };
   let noTranslateSources = 0;
 
-  // Load + hash glossaries once. The hash is shared across every
-  // (file, locale) pair using the same glossary, so doing it here
-  // avoids re-hashing in the per-file loop.
-  // `pathToFileURL` produces an Astro-compatible `file://` URL even
-  // for paths containing spaces or unicode — manual concatenation
-  // would silently mishandle those.
+  // Load + hash glossaries once; shared across every (file, locale)
+  // pair using the same glossary. `pathToFileURL` handles spaces/
+  // unicode in paths that manual concatenation would mishandle.
   const glossaries = await loadGlossaries({
     config: resolved,
     projectRoot: pathToFileURL(rootDir + path.sep),
@@ -301,9 +225,8 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
     logger.info(`loaded glossaries for: ${[...glossaries.keys()].sort().join(", ")}`);
   }
 
-  // One Translator per locale. Empty when `provider` is omitted (the
-  // model-id field of the cache key collapses to ""). Per-locale
-  // overrides win when supplied.
+  // One Translator per locale. Empty when no provider — model-id in
+  // the cache key collapses to "". Per-locale overrides win.
   const translatorByLocale = new Map<string, Translator>();
   if (resolved.provider || translatorOverrides) {
     for (const locale of resolved.locales) {
@@ -321,10 +244,8 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
     }
   }
 
-  // `null` means the operator opted out of caching; the orchestrator
-  // skips both lookup and write-back in that case. `r2Override`
-  // (when supplied) wins — used by tests and by CLI users redirecting
-  // to a local fixture.
+  // `null` = caching opted out; orchestrator skips lookup + write.
+  // `r2Override` wins when supplied (tests, local fixtures).
   const r2: R2Client | null =
     r2Override !== undefined
       ? r2Override
@@ -344,9 +265,8 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
       const readOnlySummary = resolved.r2.readOnly ? ", readOnly=true" : "";
       logger.info(`R2 cache: bucket=${resolved.r2.bucket}, prefix=${resolved.r2.prefix}${readOnlySummary}${fallbackSummary}`);
     } else {
-      // `r2Override` was supplied without `resolved.r2`; keep the
-      // log line meaningful instead of asserting on credentials we
-      // don't have.
+      // `r2Override` without `resolved.r2` — log without asserting
+      // on credentials we don't have.
       logger.info(`R2 cache: using injected client`);
     }
   } else {
@@ -422,10 +342,9 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
     } × ${resolved.locales.length} locale${resolved.locales.length === 1 ? "" : "s"}`,
   );
 
-  // Live mode requires a provider AND dryRun off. When either is
-  // missing we return early with the dry-run-only counts so the
-  // caller can still log the planned key set without writing
-  // anywhere.
+  // Live mode requires a provider AND dryRun off. Otherwise return
+  // early with dry-run-only counts so callers can still log planned
+  // keys without writing.
   const liveMode = resolved.provider !== undefined && !resolved.dryRun;
   if (!liveMode) {
     return {
@@ -444,26 +363,8 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
     `live: processing ${sources.length} × ${resolved.locales.length} (file, locale) pairs at concurrency ${resolved.concurrency}`,
   );
 
-  // Heartbeat: Astro emits "Waiting for integration..." once after 3s
-  // (see node_modules/astro/dist/integrations/hooks.js); after that it
-  // goes silent until our hook returns. With `verbose: false` (the
-  // default) the per-pair log lines below are suppressed, so a cold-
-  // cache live run can sit quiet for tens of seconds. Periodic
-  // progress lines through Astro's logger keep the build feed alive
-  // without TTY tricks (works the same in CI logs and local dev).
-  //
-  // Cadence is either-or:
-  //   - a 15s timer ensures something prints during long stretches
-  //     where progress is genuinely slow (a single AI call mid-flight),
-  //   - a 5%-progress threshold short-circuits the timer so a fast
-  //     burst surfaces immediately rather than waiting for the next
-  //     tick to confirm the build IS moving.
-  // The pool worker calls `maybeEmitProgress` after each pair finishes
-  // (cheap path: an integer compare); the timer is the safety net.
-  //
-  // Skipped for trivially small runs (the existing summary lines are
-  // enough) and when `verbose` is on — verbose already prints one
-  // line per pair, so a heartbeat would be noise on top.
+  // Heartbeat keeps the build feed alive on cold-cache runs.
+  // See ARCHITECTURE.md §10 for the timing rationale.
   const heartbeatThreshold = 10;
   const heartbeatIntervalMs = 15_000;
   const heartbeatPctStep = 5;
@@ -483,11 +384,9 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
     lastReportedPct = pct;
     lastReportedAt = Date.now();
   };
-  // Called by the pool worker after every completed pair. Fires only
-  // when the integer percentage has advanced by ≥5 since the last
-  // report — cheap and naturally rate-limited (every individual pair
-  // moves the percent by `100/totalPairs`%, so workers don't all
-  // race to log the same threshold crossing).
+  // Called by the pool after every completed pair. Fires only on
+  // ≥5% advancement — naturally rate-limited since each pair moves
+  // the percent by `100/totalPairs`%.
   const maybeEmitProgress = heartbeatEnabled
     ? () => {
         if (processedPairs === 0) return;
@@ -499,73 +398,42 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
     : () => {};
   const heartbeatHandle = heartbeatEnabled
     ? setInterval(() => {
-        // Skip the very first tick if nothing has finished yet — the
-        // counts line is more informative once at least one pair has
-        // completed; before that the user already saw the "live:
-        // processing N × M" line.
+        // Skip the first tick if nothing's finished yet; the
+        // "live: processing N × M" line already covered that case.
         if (processedPairs === 0) return;
-        // Don't double-print right after a 5%-step emit. The 15s
-        // window is the floor between consecutive lines regardless
-        // of which path triggered the previous one.
+        // 15s is the floor between lines regardless of trigger.
         if (lastReportedAt > 0 && Date.now() - lastReportedAt < heartbeatIntervalMs) return;
         emitProgress();
       }, heartbeatIntervalMs)
     : null;
-  // Don't keep the Node event loop alive solely on the heartbeat
-  // (the pool's awaited promise is what we wait on; if a bug stalled
-  // it, we still want process exit to work normally).
+  // unref() so a stalled pool doesn't block process exit.
   heartbeatHandle?.unref();
 
-  // On-disk staging index. Captures the source hash of every pair
-  // we last staged at `<stagingDir>/<locale>/<source>` so the next
-  // run can short-circuit unchanged pairs (no R2 GET, no staging
-  // write). The index is loaded ONCE up front; per-pair workers
-  // both read from it (skip-decision) and write to a separate
-  // `nextLocalCacheIndex` Map that we persist at the end.
-  //
-  // Reading from `localCacheIndex` and writing to
-  // `nextLocalCacheIndex` keeps the skip decision deterministic for
-  // the duration of the run (a worker won't accidentally observe
-  // another worker's just-written entry as a "skip me" signal).
-  // Each pair's key is unique so there's no contention on the
-  // write side.
+  // On-disk staging index: skip pairs whose source hash matches the
+  // last run AND whose staged file is still present (no R2 GET, no
+  // staging write). Read map is immutable during the run; workers
+  // write to a separate `nextLocalCacheIndex` for deterministic
+  // skip decisions. See ARCHITECTURE.md §8.
   const localCacheIndex = await readLocalCacheIndex(stagingDir);
   const nextLocalCacheIndex = new Map<string, LocalCacheEntry>();
   if (localCacheIndex.size > 0) {
     logger.debug(`local staging index: ${localCacheIndex.size} entries from previous run`);
   }
 
-  // Cache-write bookkeeping. Single "starting writes…" line on the
-  // first PUT and a single closing summary, so per-write chatter
-  // doesn't drown the build log on a cold cache.
+  // Cache-write bookkeeping: announce on first PUT, summarise at end.
   let cacheWritesCount = 0;
   let cacheWritesFailed = 0;
   let cacheWritesAnnounced = false;
 
-  // Locale list passed to the link rewriter includes the default
-  // so already-prefixed `/${defaultLocale}/...` URLs (rare but
-  // legitimate) aren't treated as rewriteable.
+  // Include default locale in the rewriter's known set so already-
+  // prefixed `/${defaultLocale}/...` URLs aren't treated as rewriteable.
   const allLocalesForRewrite = [resolved.defaultLocale, ...resolved.locales];
   const buildRewriteOpts = (locale: string): RewriteInternalLinksOptions => ({
     targetLocale: locale,
     locales: allLocalesForRewrite,
     ...(resolved.noPrefixUrls.length > 0 ? { noPrefixUrls: resolved.noPrefixUrls } : {}),
   });
-  /**
-   * Apply all post-cache URL rewrites to staged bytes:
-   *
-   *   1. Adapter-specific key-path-based rewriting (frontmatter URL
-   *      keys for markdown; structured URL paths for TOML/etc.) via
-   *      `adapter.rewriteUrls?`. No-op when the adapter doesn't
-   *      implement it or `urlPathsForSource` is empty.
-   *   2. Markdown body inline-link rewriting via
-   *      `rewriteInternalLinks` over bytes — handled here only for
-   *      markdown extensions; structured-data formats have no body
-   *      links to rewrite.
-   *
-   * Both layers honour `noPrefixUrls` because they share
-   * `rewriteUrlIfInternal` underneath. Idempotent.
-   */
+  /** Apply post-cache URL rewrites to staged bytes. See ARCHITECTURE.md §12. */
   const maybeRewrite = (bytes: string, locale: string, adapter: FileTypeAdapter, urlPathsForSource: string[]): string => {
     if (!resolved.rewriteInternalLinks) return bytes;
     const rewriteOpts = buildRewriteOpts(locale);
@@ -574,8 +442,7 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
       const rewriter = (url: string) => rewriteUrlIfInternal(url, rewriteOpts);
       next = adapter.rewriteUrls(next, { paths: urlPathsForSource, rewriter });
     }
-    // Body-link rewriter is markdown-only (it parses with
-    // `parseMarkdown`). Structured-data formats short-circuit out.
+    // Body-link rewriter is markdown-only (parses with `parseMarkdown`).
     const isMarkdown = adapter.extensions.includes(".md") || adapter.extensions.includes(".mdx");
     if (isMarkdown) {
       next = rewriteInternalLinks(next, rewriteOpts);
@@ -631,8 +498,8 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
       return { modelId, sourceHash, r2Key };
     };
 
-    // `noTranslate: true` skips translation entirely. Overrides
-    // still apply (operator opt-back-in, per-locale).
+    // `noTranslate: true` skips translation entirely; overrides
+    // still apply (per-locale opt-back-in).
     if (adapter.peekNoTranslate(parsed)) {
       noTranslateSources++;
       for (const locale of resolved.locales) {
@@ -686,21 +553,18 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
       if (resolved.verbose) {
         logger.info(`⊘ ${source.relativePath} [noTranslate=true; skipping AI translation]`);
       }
-      // `return` (not `continue`) — this is the pool worker, not
-      // a for-loop body.
+      // `return`, not `continue` — this is the pool worker.
       return;
     }
 
     const segments = adapter.extractSegments(parsed, body, adapterOpts);
-    // Reused across the per-locale loop below.
     const selectedValues = adapter.selectedValuesForHash(parsed, body, adapterOpts);
 
     for (const locale of resolved.locales) {
       const pairStart = Date.now();
       try {
-        // Overrides take precedence over cache + translator and are
-        // deliberately NOT written to R2 (they're source-controlled
-        // artefacts, not machine-generated).
+        // Overrides win over cache + translator; deliberately NOT
+        // written to R2 (source-controlled, not machine-generated).
         const override = await readOverride({
           rootDir,
           overridesDir: resolved.overridesDir,
@@ -708,9 +572,8 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
           relativeSourcePath: source.relativePath,
         });
         if (override !== null) {
-          // Run the rewriter on overrides so an operator's hand-
-          // translated file with raw internal links still gets locale-
-          // prefixed. Idempotent.
+          // Rewrite overrides too so hand-translated files with raw
+          // internal links still get locale-prefixed. Idempotent.
           const overrideStaged = maybeRewrite(override, locale, adapter, urlPathsForSource);
           await writeStagedTranslation({
             stagingDir,
@@ -762,18 +625,10 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
           prefix: resolved.r2?.prefix,
         });
 
-        // Local-cache skip: if the on-disk index already records
-        // this exact source hash for this (locale, source) pair AND
-        // the staged file is still on disk, skip the R2 GET and the
-        // staging write entirely. The hash folds in body +
-        // frontmatter + glossary + model, so a match means the
-        // staged file IS the right translation.
-        //
-        // We still record an entry (with `local-skipped`) and add
-        // to `touchedPairs` so the prune step considers this pair
-        // alive (otherwise repeated unchanged builds would let the
-        // pruner gradually evict R2 variants the build wants to
-        // keep).
+        // Local-cache skip: hash match + staged file present means
+        // we can skip the R2 GET and staging write. Still record
+        // `local-skipped` and mark `touchedPairs` alive so the
+        // pruner doesn't evict R2 variants this build needs.
         const lcKey = localCacheKey(locale, source.relativePath);
         const cachedLocal = localCacheIndex.get(lcKey);
         if (cachedLocal?.hash === sourceHash && (await stagedFileExists(stagingDir, locale, source.relativePath))) {
@@ -788,7 +643,7 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
             model: translator.modelId,
             durationMs: Date.now() - pairStart,
           });
-          // Carry the entry forward so a later run skips it again.
+          // Carry forward so the next run skips this pair again.
           nextLocalCacheIndex.set(lcKey, cachedLocal);
           if (resolved.verbose) {
             logger.info(`▷ ${source.relativePath} → ${locale} [local-skipped] (${segments.length} segs)`);
@@ -802,13 +657,11 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
           sourcePath: source.relativePath,
           hash: sourceHash,
         });
-        // Single timestamp shared between the R2 metadata and the
-        // in-bytes `aiTranslatedAt` marker so they don't drift if
-        // anyone diffs cache vs. staged file.
+        // Single timestamp shared between R2 metadata and the in-bytes
+        // marker so cache/staged-file diffs stay consistent.
         const translatedAt = new Date().toISOString();
-        // AI-translation marker. Baked into the apply closure so it
-        // lands in the bytes BEFORE the R2 PUT, keeping `aiTranslatedAt`
-        // truthful on later cache hits.
+        // AI-translation marker baked in pre-PUT so cache hits return
+        // a truthful `aiTranslatedAt`. See ARCHITECTURE.md §11.
         const topLevelAdditions: Record<string, unknown> = {
           aiTranslated: true,
           aiTranslationModel: translator.modelId,
@@ -840,9 +693,8 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
           ...(fallbackKeys.length > 0 ? { fallbackKeys } : {}),
           maxRetries: resolved.maxRetries,
           onRetry: ({ attempt, totalAttempts, error }) => {
-            // First line of the error keeps the log readable when the
-            // underlying message includes a multi-line `Raw response
-            // was:` dump.
+            // First line only — provider errors may include multi-line
+            // `Raw response was:` dumps that clutter the log.
             const headline = error.message.split("\n", 1)[0];
             logger.warn(`↻ ${source.relativePath} → ${locale}: attempt ${attempt}/${totalAttempts} failed (${headline}); retrying`);
           },
@@ -875,13 +727,10 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
           durationMs: Date.now() - pairStart,
         });
 
-        // Link rewrite happens AFTER the cache layer so cached bytes
-        // store the translation-only output; toggling
-        // `rewriteInternalLinks` (or editing `noPrefixUrls`) doesn't
-        // invalidate the cache, and the rewriter's idempotent guard
-        // prevents double-prefixing on cache hits. Same applies to
-        // adapter-driven URL rewriting (frontmatter URL keys for
-        // markdown, structured paths for TOML).
+        // Rewrite happens POST-cache: cached bytes are translation-
+        // only output; toggling `rewriteInternalLinks` or editing
+        // `noPrefixUrls` doesn't invalidate the cache; rewriter is
+        // idempotent so cache hits don't double-prefix.
         const stagedBody = maybeRewrite(result.body, locale, adapter, urlPathsForSource);
         await writeStagedTranslation({
           stagingDir,
@@ -889,18 +738,17 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
           relativeSourcePath: source.relativePath,
           bytes: stagedBody,
         });
-        // Record the staged hash so the next run can skip this pair
-        // when the source is unchanged. We store AFTER the staging
-        // write so a crashed build (write threw) doesn't leave a
-        // "we have this staged" claim that contradicts disk state.
+        // Record staged hash AFTER the write so a crashed build
+        // can't leave a "we have this staged" claim that contradicts
+        // disk state.
         nextLocalCacheIndex.set(lcKey, {
           hash: sourceHash,
           stagedAt: translatedAt,
         });
 
         if (resolved.verbose) {
-          // Use a distinct marker for fallback hits so log readers
-          // can tell when a preview build pulled from main's cache.
+          // Distinct marker for fallback hits so log readers can
+          // tell when a preview build pulled from main's cache.
           let marker: string;
           if (result.outcome === "hit") {
             marker = result.hitKey && result.hitKey !== key ? "◐" : "●";
@@ -938,18 +786,14 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
       }
     }
   }).finally(() => {
-    // Stop the heartbeat regardless of outcome. `runWithConcurrency`
-    // can throw (e.g. unrecoverable I/O); we don't want a stray
-    // interval pinning the event loop or leaking into a caller's
-    // process. `.finally` chains on the awaited promise so the throw
-    // still propagates up to our caller.
+    // Stop the heartbeat regardless of outcome; throws still propagate.
     if (heartbeatHandle) {
       clearInterval(heartbeatHandle);
     }
   });
 
-  // Cache-write closing summary. Silent when nothing was written
-  // (all hits, `r2: null`, or readOnly).
+  // Closing summary. Silent when nothing was written (all hits,
+  // `r2: null`, or readOnly).
   if (cacheWritesCount > 0 || cacheWritesFailed > 0) {
     const writeWord = (n: number) => `${n} write${n === 1 ? "" : "s"}`;
     if (cacheWritesFailed === 0) {
@@ -961,17 +805,12 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
     }
   }
 
-  // Count-based prune. Walk only the (locale, sourcePath) pairs this
-  // build saw and keep at most `keepLastN` hash variants per pair.
-  // Gated on:
-  //   - R2 actually configured,
-  //   - `keepLastN` not explicitly disabled,
-  //   - `readOnly` not set (preview builds don't get to delete from
-  //     production's namespace),
-  //   - at least one pair was touched.
-  // Wrapped in try/catch so a flaky R2 list/del during prune doesn't
-  // fail the run — staging files are already written, and the next
-  // run will retry the prune.
+  // Count-based prune over (locale, sourcePath) pairs this build
+  // saw; keep at most `keepLastN` hash variants per pair. Gated:
+  // R2 configured, `keepLastN` enabled, not `readOnly` (preview
+  // builds don't delete from production), at least one touched pair.
+  // Wrapped in try/catch — staging files are already written; a
+  // flaky prune isn't worth failing the build for.
   if (r2 && resolved.r2 && resolved.r2.keepLastN !== false && !resolved.r2.readOnly && touchedPairs.size > 0) {
     const keepLastN = resolved.r2.keepLastN;
     const prunePrefix = resolved.r2.prefix;
@@ -983,9 +822,9 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
         prefix: prunePrefix,
       });
       pruning.deletedKeys.push(...pruneResult.deletedKeys);
-      // Locale extraction uses a regex built from the configured
-      // prefix so non-default namespaces (e.g.
-      // `previews/<branch>/i18n/`) extract correctly.
+      // Build the locale-extraction regex from the configured prefix
+      // so non-default namespaces (e.g. `previews/<branch>/i18n/`)
+      // extract correctly.
       const escapedPrefix = prunePrefix.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const localeRe = new RegExp(`^${escapedPrefix}([^/]+)/`);
       for (const k of pruneResult.deletedKeys) {
@@ -1006,10 +845,8 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
     }
   }
 
-  // Persist the local staging index. Failures here are non-fatal:
-  // the staged files are already on disk, and a missing/stale index
-  // just means the next run does a full pass (which it would have
-  // done anyway pre-optimisation).
+  // Persist the local staging index. Non-fatal on failure: a
+  // missing/stale index just means the next run does a full pass.
   try {
     await writeLocalCacheIndex(stagingDir, nextLocalCacheIndex);
   } catch (err) {

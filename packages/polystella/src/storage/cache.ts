@@ -4,25 +4,13 @@ import { translateBatch, type TranslateBatchRetryEvent, type Translator } from "
 import type { R2Client } from "./r2.js";
 
 /**
- * Cache-aware translation orchestrator. Single entry point per
- * (file, locale) pair: R2 GET → on hit return cached bytes; on miss,
- * translate via the provider, splice via the caller-supplied apply
- * callback, PUT back to R2 with metadata.
+ * Cache-aware translation orchestrator. One entry per (file, locale)
+ * pair: R2 GET → hit returns cached bytes; miss runs the translator,
+ * calls `apply(translations)` to splice, PUTs to R2 with metadata.
  *
- * The orchestrator is format-agnostic: callers pass `apply` as an
- * opaque "splice these translations into the source bytes" closure.
- * The markdown adapter's apply byte-splices inline ranges; structured-
- * data adapters (M3+) parse-mutate-stringify. Either way, the cache
- * layer just calls `apply(translations)` and receives final bytes.
- *
- * Any per-format AI-translation marker (e.g. `aiTranslated: true`
- * baked into frontmatter / top-level keys) is the caller's
- * responsibility to weave into the closure — bake it in BEFORE the
- * R2 PUT so later cache hits return the marker verbatim and timestamps
- * stay truthful.
- *
- * Lives separately from `index.ts` so the cache decision tree is
- * unit-testable with mocked R2 + Translator without booting Astro.
+ * Format-agnostic: `apply` is an opaque closure. Any AI-translation
+ * marker is the caller's responsibility — must be baked in BEFORE
+ * the PUT so hits return it verbatim. See ARCHITECTURE.md §11.
  */
 
 export type CacheOutcome = "hit" | "miss";
@@ -30,13 +18,10 @@ export type CacheOutcome = "hit" | "miss";
 export interface TranslateOrLoadOptions {
   segments: Segment[];
   /**
-   * Format-agnostic apply step. Called once per cache miss, AFTER
-   * the translator returns. Whatever closure the caller builds owns
-   * (a) parsing the source, (b) mutating it with `translations`, and
-   * (c) injecting any top-level marker fields (AI metadata, etc.).
-   *
-   * The cache layer treats the returned string as opaque bytes; it
-   * gets PUT to R2 verbatim and returned to the caller for staging.
+   * Called once per miss after the translator returns. Caller's
+   * closure parses, mutates with translations, and injects any
+   * top-level markers. Returned string is opaque bytes — PUT to R2
+   * verbatim and returned for staging.
    */
   apply: (translations: Map<string, string>) => string;
   locale: string;
@@ -53,52 +38,33 @@ export interface TranslateOrLoadOptions {
   /** Cache-write progress hooks; only fire on the miss path with `r2`. */
   events?: CacheEvents;
   /**
-   * When `true`, the cache layer skips the PUT after a miss-translate.
-   * The translated bytes are still returned to the caller for staging
-   * (the translator was already paid for) — `readOnly` only governs
-   * cache writes, not the translation pipeline.
-   *
-   * Use this on preview-branch builds that should consume but not
-   * mutate the primary cache.
+   * Skip the PUT after a miss-translate. Translated bytes still
+   * return so the caller can stage them. Used by preview builds.
    */
   readOnly?: boolean;
   /**
-   * Ordered list of additional R2 keys to GET if the primary `key`
-   * misses. First hit wins; bytes are returned verbatim and NOT
-   * promoted to the primary key (callers that want promotion must
-   * issue an explicit PUT).
-   *
-   * Each fallback key MUST already be the result of `buildR2Key`
-   * with the appropriate fallback prefix — the cache layer is
-   * deliberately decoupled from key construction.
+   * Additional keys to GET if `key` misses. First hit wins; bytes
+   * are NOT promoted to the primary key. Each must already be a
+   * `buildR2Key` result with the appropriate fallback prefix.
    */
   fallbackKeys?: string[];
   /**
-   * Number of retries on translator/parse failure. Forwarded to
-   * `translateBatch` verbatim — see its docstring for semantics.
-   * `0` (default) preserves legacy single-attempt behaviour.
+   * Retries on translator/parse failure. Forwarded to
+   * `translateBatch`. `0` (default) = single attempt.
    */
   maxRetries?: number;
-  /**
-   * Fires once per failed translator attempt that's followed by a
-   * retry. Forwarded to `translateBatch`; the cache layer doesn't
-   * inspect the events. See `TranslateBatchRetryEvent`.
-   */
+  /** Fires per failed-and-retried translator attempt. */
   onRetry?: (event: TranslateBatchRetryEvent) => void;
 }
 
 /**
  * Cache-write progress callbacks. Exactly one of `onWriteDone` or
- * `onWriteFailed` fires per `onWriteStart`.
+ * `onWriteFailed` fires per `onWriteStart`. PUT failures do NOT
+ * rethrow — the bytes are already returned for staging.
  */
 export interface CacheEvents {
   onWriteStart?: (event: { key: string; locale: string; bytes: number }) => void;
   onWriteDone?: (event: { key: string; locale: string; bytes: number; durationMs: number }) => void;
-  /**
-   * Fires when the R2 PUT throws. The orchestrator does NOT rethrow:
-   * the translator already succeeded and the bytes are returned to
-   * the caller for staging — a flaky R2 shouldn't kill the build.
-   */
   onWriteFailed?: (event: { key: string; locale: string; bytes: number; error: Error }) => void;
 }
 
@@ -109,18 +75,16 @@ export interface TranslateOrLoadResult {
   /** On hit, the cached object's metadata (`x-amz-meta-` prefix stripped). */
   cachedMetadata?: Record<string, string>;
   /**
-   * Key that actually produced the cached bytes. Equals `opts.key`
-   * on a primary hit; equals one of `opts.fallbackKeys` on a
-   * fallback hit. Undefined on miss. Useful for build-report
-   * provenance ("translation came from main's cache" vs. "from
-   * the PR's own cache").
+   * Key that produced the cached bytes. Equals `opts.key` on primary
+   * hit, one of `opts.fallbackKeys` on fallback hit, undefined on miss.
+   * Useful for build-report provenance.
    */
   hitKey?: string;
 }
 
 /**
- * Errors propagate so the caller's per-pair try/catch can log + count
- * the failure. Silent fallback would mask real provider/storage outages.
+ * Errors propagate so the caller's per-pair try/catch can log + count.
+ * Silent fallback would mask real provider/storage outages.
  */
 export async function translateOrLoadFromCache(opts: TranslateOrLoadOptions): Promise<TranslateOrLoadResult> {
   const {
@@ -152,14 +116,11 @@ export async function translateOrLoadFromCache(opts: TranslateOrLoadOptions): Pr
         hitKey: key,
       };
     }
-    // Primary miss → walk the fallback prefixes in order. First hit
-    // wins; we never write back to fallback prefixes (that's the
-    // upstream cache's job) and we never copy bytes from fallback
-    // to primary (avoids implicit cross-prefix writes).
+    // Primary miss → fallbacks in order. First hit wins; never
+    // promoted to primary (avoids implicit cross-prefix writes).
     if (fallbackKeys && fallbackKeys.length > 0) {
       for (const fbKey of fallbackKeys) {
-        // Defensive: skip a fallback that's accidentally identical
-        // to the primary key (would just retry the same GET).
+        // Defensive: skip a fallback identical to the primary.
         if (fbKey === key) continue;
         const fbHit = await r2.get(fbKey);
         if (fbHit) {
@@ -174,9 +135,8 @@ export async function translateOrLoadFromCache(opts: TranslateOrLoadOptions): Pr
     }
   }
 
-  // Cache miss. The caller's `apply` closure is responsible for any
-  // marker additions (AI metadata etc.) — they MUST be baked in
-  // BEFORE the PUT so later cache hits return the marker verbatim.
+  // Cache miss. `apply` bakes any markers in BEFORE the PUT so
+  // later hits return them verbatim.
   const translations = await translateBatch({
     translator,
     segments,
@@ -189,17 +149,9 @@ export async function translateOrLoadFromCache(opts: TranslateOrLoadOptions): Pr
   });
   const translated = apply(translations);
 
-  // PUT failures are caught (not rethrown): translator already ran
-  // and was billed; dropping the bytes would compound the cost. We
-  // surface the failure via `onWriteFailed` and return the bytes so
-  // the caller can still stage them; the next build will retranslate
-  // just that pair.
-  //
-  // `readOnly` short-circuits the PUT entirely — used by preview
-  // builds that consume but don't mutate the primary cache. We
-  // intentionally still return the freshly-translated bytes so the
-  // caller can stage them; readOnly only forbids the side effect on
-  // R2, not the translation work itself.
+  // PUT failures are caught, not rethrown — translator already
+  // ran; dropping bytes would compound the cost. `readOnly`
+  // short-circuits the PUT but still returns bytes for staging.
   if (r2 && !readOnly) {
     const bytes = Buffer.byteLength(translated, "utf8");
     events?.onWriteStart?.({ key, locale, bytes });
@@ -244,10 +196,7 @@ export interface BuildCacheMetadataInput {
   polystellaVersion: string;
 }
 
-/**
- * Build the `x-amz-meta-*` bag for a cache PUT. Keys kebab-case;
- * empty strings preserved so the metadata schema is uniform.
- */
+/** Build the `x-amz-meta-*` bag for a cache PUT. Keys kebab-case. */
 export function buildCacheMetadata(input: BuildCacheMetadataInput): Record<string, string> {
   return {
     "source-path": input.sourcePath,

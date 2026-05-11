@@ -1,34 +1,25 @@
 /**
- * Pure, deps-injected core of the `polystellaCollections` helper.
- * The wrapper in `./index.ts` imports the real Astro factories and
- * feeds them in.
- *
- * This helper exists because Astro integrations can't programmatically
- * register content collections — they must come from
- * `src/content.config.ts`. PolyStella ships this for the user to call
- * from there.
+ * Pure, deps-injected core of `polystellaCollections`. The wrapper
+ * in `./index.ts` feeds in real Astro factories. Exists because
+ * Astro integrations can't programmatically register content
+ * collections — they must come from `src/content.config.ts`.
  *
  * Conventions:
  *   - Sibling naming: `${collection}__${locale}` (`__` because
  *     hyphens collide with BCP-47 tags like `pt-BR`).
- *   - Default sibling loader: `glob({ pattern: "**\/*.{md,mdx}",
- *     base: "<stagingDir>/<locale>/<collection>" })`.
- *   - Sibling schemas share the source's Zod schema by reference, so
- *     translations validate against the same contract.
+ *   - Default sibling loader: glob `**\/*.{md,mdx}` under
+ *     `<stagingDir>/<locale>/<collection>`.
+ *   - Sibling schemas extend the source schema with the AI marker.
  *   - Unrecognised loaders auto-skip with a warning; use
- *     `loaderOverrides` for `file()`-based or fully-custom collections.
+ *     `loaderOverrides` for `file()`-based / fully-custom collections.
  */
 
 /**
- * Per-collection override for sibling loader construction. Variants:
- *   - `glob` — different glob pattern; `base` is always
- *     `<stagingDir>/<locale>/<collection>` (the staging-layout
- *     invariant the build hook depends on).
- *   - `file` — single-file collections (TOML/YAML/JSON via Astro's
- *     `file()` loader). The build hook stages to
- *     `<stagingDir>/<locale>/<collection>/<filename>`.
- *   - `custom` — arbitrary factory taking `(locale, stagingBase)`.
- *   - `skip` — explicit opt-out (the `reason` field documents why).
+ * Per-collection override for sibling loader construction.
+ *   - `glob` — different glob pattern; base is always the staging path.
+ *   - `file` — single-file collections (TOML/YAML/JSON via `file()`).
+ *   - `custom` — arbitrary factory `(locale, stagingBase) => loader`.
+ *   - `skip` — explicit opt-out; `reason` documents why.
  */
 export type LoaderOverride =
   | { kind: "glob"; pattern: string | string[] }
@@ -40,63 +31,41 @@ export type LoaderOverride =
   | { kind: "skip"; reason?: string };
 
 /**
- * Type-level fan-out. Each source key `K` becomes `${K}__${L}` for
- * every locale `L`, with the source value's type preserved. Astro's
- * `InferEntrySchema<"publications__pt-BR">` then resolves to the
- * publications schema, so consumer page code gets full schema-aware
- * inference on `entry.data.*` for translated entries.
+ * Type-level fan-out: each source key `K` becomes `${K}__${L}` for
+ * every locale `L`. `InferEntrySchema<"publications__pt-BR">` then
+ * resolves to the publications schema for consumer page code.
  */
 export type LocaleSiblings<TSource extends Record<string, unknown>, TLocales extends string> = {
   [K in keyof TSource as K extends string ? `${K}__${TLocales}` : never]: TSource[K];
 };
 
-/**
- * Source map intersected with typed sibling keys, so
- * `ContentConfig['collections'][C]` resolves to a concrete
- * `defineCollection` config rather than `unknown`.
- */
+/** Source map intersected with typed sibling keys. */
 export type PolystellaCollectionsOutput<TSource extends Record<string, unknown>, TLocales extends string> = TSource &
   LocaleSiblings<TSource, TLocales>;
 
 /**
- * Options consumed by the pure-core `buildCollections` (this file).
- * Distinct from the public `PolystellaCollectionsOptions` exported by
- * `./index.ts`, which omits `locales` / `defaultLocale` and lets the
- * wrapper read them from `polystella:runtime-config` for a
- * single-source-of-truth contract with `astro.config.mjs`. Tests
- * reach this internal shape directly so they can pin literal locale
- * tuples without booting the integration.
+ * Options for the pure-core `buildCollections`. Distinct from the
+ * public wrapper's shape — the wrapper reads `locales` /
+ * `defaultLocale` from `polystella:runtime-config` for single-source
+ * parity with `astro.config.mjs`. Tests pin locale tuples directly here.
  */
 export interface BuildCollectionsOptions<TSource extends Record<string, unknown>, TLocales extends readonly string[] = readonly string[]> {
   /** User's source collections, keyed by name. */
   source: TSource;
   /**
-   * Target locales. The pure core takes them explicitly; the public
-   * wrapper injects them from `polystella:runtime-config`.
-   * `defaultLocale` is filtered out of this set before sibling
-   * generation — a `publications__en` sibling on top of
-   * `publications` would self-translate.
+   * Target locales. `defaultLocale` is filtered out before sibling
+   * generation (no self-translation siblings).
    */
   locales: TLocales;
-  /**
-   * Optional default locale. Constrained to `TLocales[number]` so a
-   * typo becomes a TypeScript error rather than a silent
-   * self-translation sibling.
-   */
+  /** Constrained to `TLocales[number]` so typos surface as TS errors. */
   defaultLocale?: TLocales[number];
   /** Relative to project root. Default: `.astro/i18n-staging`. */
   stagingDir?: string;
   /**
-   * Where the user's source content lives, relative to the project
-   * root. Used to compute source-relative paths for single-file
-   * collections that use polystella's wrapped `file()` loader (so
-   * the auto-derived sibling lands at
-   * `<stagingDir>/<locale>/<source-relative-path>`, matching where
-   * the integration's translation pass stages the file).
-   *
-   * Default: `"./content"` — matches the integration's `sourceDir`
-   * default. If you've changed the integration's `sourceDir` in
-   * `polystella.config.mjs`, set the same value here.
+   * Source content directory, relative to project root. Used to
+   * compute source-relative paths for single-file collections via
+   * the wrapped `file()` loader. Default `"./content"` — keep in
+   * sync with the integration's `sourceDir`.
    */
   sourceDir?: string;
   /** Collections to leave un-localised. Source collection is kept; siblings skipped. */
@@ -122,22 +91,13 @@ import { readPolystellaCustomLoaderMarker } from "./custom-loader.js";
 import { extendSchemaWithAiMarker } from "./extend-schema.js";
 import { readRecordedSourcePath } from "./file-loader.js";
 
-/**
- * Default `sourceDir` matches the integration's default
- * (`./content`). Change both together if the consumer relocates
- * source content.
- */
+/** Matches the integration's `sourceDir` default. */
 const DEFAULT_SOURCE_DIR = "./content";
 
 /**
- * Iterate `source × locales` and return a map intersecting source
- * collections with their per-locale siblings. Exported so tests can
- * pass synthetic deps; production callers go through `./index.ts`.
- *
- * The runtime cast back to `TSource & LocaleSiblings<...>` is
- * structurally lossless: the convention path produces a sibling for
- * every non-skipped (source × locale) pair. Unrecognised loaders
- * warn-and-skip; suppress via `skipLocalize` or `loaderOverrides`.
+ * Iterate `source × locales`, return map of source + per-locale
+ * siblings. Tests reach this directly with synthetic deps; production
+ * goes through `./index.ts`. Unrecognised loaders warn-and-skip.
  */
 export function buildCollections<TSource extends Record<string, unknown>, TLocales extends readonly string[]>(
   opts: BuildCollectionsOptions<TSource, TLocales>,
@@ -154,29 +114,17 @@ export function buildCollections<TSource extends Record<string, unknown>, TLocal
     logger = console,
   } = opts;
 
-  // Filter `defaultLocale` out of `locales` defensively (Astro's
-  // contract includes the default in `i18n.locales`; we don't want
-  // a self-translation sibling).
+  // Filter `defaultLocale` out defensively — no self-translation siblings.
   const targetLocales = defaultLocale ? locales.filter((l) => l !== defaultLocale) : [...locales];
 
   const skipSet = new Set<string>(skipLocalize);
-  // Widen back to a string-keyed map for the `[collectionName]` lookup.
   const overrides: Record<string, LoaderOverride | undefined> = {
     ...(loaderOverrides as Record<string, LoaderOverride | undefined>),
   };
 
-  // Source collections wrapped with AI-marker schema extension; the
-  // wrap is structurally a no-op in field shape (loader, etc. all
-  // copied), but the schema becomes a superset that accepts the
-  // optional `aiTranslated` / `aiTranslationModel` / `aiTranslatedAt`
-  // fields. Siblings layered on top with the same extended schema.
-  //
-  // For collections opted out of localisation entirely (skipLocalize
-  // or `kind: "skip"`), we still extend the source schema — the
-  // marker fields stay optional/undefined on source content, but
-  // declaring them in the type means consumer code that uniformly
-  // reads `entry.data.aiTranslated` doesn't TS-error on those
-  // collections.
+  // Wrap every source collection's schema to accept the AI marker
+  // fields (even skipLocalize ones — keeps `entry.data.aiTranslated`
+  // typesafe everywhere). Siblings layer on the same extended schema.
   const out: Record<string, unknown> = {};
   for (const collectionName of Object.keys(source)) {
     out[collectionName] = wrapSourceWithExtendedSchema({
@@ -217,13 +165,8 @@ export function buildCollections<TSource extends Record<string, unknown>, TLocal
 
 /**
  * Wrap a source collection so its schema accepts the AI-translation
- * marker fields. Loader and any other config fields pass through
- * unchanged via spread; only the schema is replaced (with the
- * extended one when the schema is extendable, or the original when
- * the extender warns-and-skips).
- *
- * Returns the original collection by reference when the input has
- * no schema (loader-only collections need no extension).
+ * marker fields. Loader / other config pass through unchanged.
+ * Returns the original by reference when there's no schema to extend.
  */
 function wrapSourceWithExtendedSchema(args: {
   collectionName: string;
@@ -240,9 +183,7 @@ function wrapSourceWithExtendedSchema(args: {
   if (schema === undefined) return original;
 
   const extended = extendSchemaWithAiMarker(schema, { collectionName, logger });
-  // Identity short-circuit: when the extender returned the input
-  // unchanged (warn-and-skip path), don't bother re-wrapping the
-  // collection — preserves reference equality with the source.
+  // Identity short-circuit preserves reference equality on warn-and-skip.
   if (extended === schema) return original;
 
   return deps.defineCollection({
@@ -253,8 +194,7 @@ function wrapSourceWithExtendedSchema(args: {
 
 /**
  * Build a single sibling for `(collectionName, locale)`. Returns
- * `null` when the loader can't be derived (custom loader without an
- * override) — caller warns and skips. Exposed for unit tests.
+ * `null` when the loader can't be derived; caller warns and skips.
  */
 export function deriveSiblingCollection(args: {
   collectionName: string;
@@ -271,24 +211,14 @@ export function deriveSiblingCollection(args: {
 
   const stagingBase = `${stagingDir}/${locale}/${collectionName}`;
   const sourceSchema = readSchema(sourceCollection);
-  // Sibling schemas extend the source schema with the AI-translation
-  // marker so consumer code can read `entry.data.aiTranslated` on
-  // translated entries. The extender warns and preserves consumer
-  // declarations on collisions (see `extend-schema.ts`).
+  // Extend with AI marker so consumer code can read
+  // `entry.data.aiTranslated` everywhere. See `extend-schema.ts`.
   const schema = sourceSchema !== undefined ? extendSchemaWithAiMarker(sourceSchema, { collectionName, logger }) : undefined;
 
-  // Auto-detect a polystella-wrapped custom loader BEFORE the file()
-  // detect — these loaders need a special sibling (the runtime
-  // factory translates entries inline at content-sync time), not the
-  // generic glob/file overrides. When the marker is present, we
-  // short-circuit the normal sibling-derivation path entirely.
-  //
-  // The `name` on the marker MUST match the consumer-declared
-  // collection key — that's the v1 contract. A mismatch indicates
-  // the user wrapped the same loader under two collection names
-  // (or vice versa), which would break the cache-key/staging-path
-  // assumptions. Warn loudly and skip the sibling so the build
-  // doesn't silently produce wrong content.
+  // Detect polystella-wrapped custom loaders BEFORE file() detection —
+  // they need the inline-translation sibling, not glob/file overrides.
+  // The marker's `name` MUST match the collection key (v1 contract);
+  // mismatch ⇒ warn and skip so the build doesn't produce wrong content.
   if (!override) {
     const customMarker = readPolystellaCustomLoaderMarker(readLoader(sourceCollection));
     if (customMarker !== undefined) {
@@ -309,22 +239,11 @@ export function deriveSiblingCollection(args: {
     }
   }
 
-  // Auto-detect a polystella-wrapped `file()` loader. When the
-  // source collection's loader carries a recorded source path (set
-  // by polystella's `file()` wrapper in `./file-loader.ts`), we
-  // synthesise the `kind: "file"` override so consumers don't have
-  // to declare it manually. Path resolution: source-relative path =
-  // `path.relative(sourceDir, recordedPath)`. The integration's
-  // translation pass stages the file at
-  // `<stagingDir>/<locale>/<source-relative-path>` — the sibling
-  // loader points at that same path.
-  //
-  // Two failure modes are surfaced as warnings (not errors): the
-  // recorded path lying outside `sourceDir` (the user's `file()` call
-  // is reading a file the integration doesn't walk) and an explicit
-  // override of a different kind taking precedence (the override
-  // wins, so the user clearly wanted control). Both warnings include
-  // the specific paths so the actionable fix is obvious.
+  // Auto-detect polystella's wrapped `file()` and synthesise
+  // `kind: "file"` so consumers don't need to declare it manually.
+  // Path: `path.relative(sourceDir, recordedPath)`. Failure modes
+  // (file outside sourceDir, override of different kind) warn with
+  // specific paths so the fix is obvious.
   let effectiveOverride: LoaderOverride | undefined = override;
   if (!effectiveOverride) {
     const recordedPath = readRecordedSourcePath(readLoader(sourceCollection));
@@ -341,9 +260,9 @@ export function deriveSiblingCollection(args: {
     }
   }
 
-  // Explicit per-collection override path. Trust the user.
+  // Explicit override path. Trust the user.
   if (effectiveOverride) {
-    const override = effectiveOverride; // alias for readability below
+    const override = effectiveOverride; // alias for readability
     if (override.kind === "skip") return null;
     if (override.kind === "custom") {
       return override.factory(locale, stagingBase);
@@ -358,18 +277,10 @@ export function deriveSiblingCollection(args: {
       });
     }
     if (override.kind === "file") {
-      // Single-file collections (loaded via Astro's `file()` loader)
-      // live at `content/<filename>` in the source — NOT under a
-      // collection-named subdirectory. The translation pass stages
-      // them at `<stagingDir>/<locale>/<source-relative-path>`,
-      // which for a source at `content/site.toml` is
-      // `<stagingDir>/<locale>/site.toml`. The sibling loader must
-      // point at the same path; threading `collectionName` through
-      // here would mis-target the file by one extra path segment.
-      //
-      // For sub-directory'd file sources (e.g. `content/configs/site.toml`),
-      // the user passes `filename: "configs/site.toml"` so the path
-      // resolves correctly.
+      // Single-file sources live at `content/<filename>`, NOT under
+      // a collection-named subdir. Stage at
+      // `<stagingDir>/<locale>/<filename>` (no extra segment).
+      // For sub-dir sources, pass `filename: "configs/site.toml"`.
       return deps.defineCollection({
         loader: deps.file(`${stagingDir}/${locale}/${override.filename}`),
         ...(schema !== undefined ? { schema } : {}),
@@ -381,8 +292,7 @@ export function deriveSiblingCollection(args: {
     );
   }
 
-  // Convention path: assume a markdown/MDX collection rooted at the
-  // staging base.
+  // Convention path: markdown/MDX collection rooted at staging base.
   const recognised = isRecognisedSourceLoader(sourceCollection);
   if (!recognised) {
     logger.warn(
@@ -401,16 +311,12 @@ export function deriveSiblingCollection(args: {
 }
 
 /**
- * Recognise the built-in `glob()` loader so the convention path can
- * derive a sibling automatically. Astro's bare `file()` loader is
- * NOT auto-derived (the path is closed inside the loader's load
- * closure, opaque to introspection) — users either swap their
- * `file()` import for the polystella-wrapped one (which records the
- * path; auto-detection above kicks in) or supply
- * `loaderOverrides.<collection> = { kind: "file", filename: "..." }`.
- *
- * Conservative on purpose: a false positive (custom loader sniffed
- * as glob) would silently substitute our loader for theirs.
+ * Recognise the built-in `glob()` loader for the convention path.
+ * Bare `file()` is NOT auto-derived (path is opaque inside the
+ * closure) — users swap to the polystella-wrapped `file()` or
+ * supply `loaderOverrides.<collection> = { kind: "file", ... }`.
+ * Conservative on purpose: a false positive would silently
+ * substitute our loader for the user's custom one.
  */
 function isRecognisedSourceLoader(sourceCollection: unknown): boolean {
   const loader = readLoader(sourceCollection);
@@ -419,12 +325,7 @@ function isRecognisedSourceLoader(sourceCollection: unknown): boolean {
   return name === "glob-loader";
 }
 
-/**
- * Pull the `loader` field off a source collection definition.
- * Returns `undefined` when there's no loader-shaped object to read
- * (loader-only collection, non-object input, etc.). Shared between
- * `isRecognisedSourceLoader` and the file-loader path-record probe.
- */
+/** Pull `loader` off a collection definition. `undefined` if none. */
 function readLoader(sourceCollection: unknown): unknown {
   if (sourceCollection === null || typeof sourceCollection !== "object") {
     return undefined;
@@ -434,11 +335,7 @@ function readLoader(sourceCollection: unknown): unknown {
   return loader;
 }
 
-/**
- * Pull `schema` off the source collection. Astro's `defineCollection`
- * is identity-shaped, so `source.schema` is whatever the user
- * declared. `undefined` for loader-only collections.
- */
+/** Pull `schema` off a collection. `undefined` for loader-only. */
 function readSchema(sourceCollection: unknown): unknown {
   if (sourceCollection === null || typeof sourceCollection !== "object") {
     return undefined;
@@ -447,25 +344,14 @@ function readSchema(sourceCollection: unknown): unknown {
 }
 
 /**
- * Compute the source-relative path of a file the user passed to
- * `file()`. Returns `null` when the file lives outside `sourceDir`
- * (the relative form would start with `..`) — caller surfaces a
- * warning so the operator can fix sourceDir or move the file.
- *
- * Uses POSIX-style separators throughout so the staging path stays
- * forward-slashed across OS boundaries. We intentionally don't
- * resolve to absolute paths here: both inputs are relative to the
- * project root, and string-relative-to-string is sufficient.
+ * Source-relative path for a `file()`-loaded source. Returns `null`
+ * when outside `sourceDir` (caller warns). POSIX separators so
+ * staging paths stay forward-slashed cross-OS.
  */
 function computeSourceRelativePath(recordedPath: string, sourceDir: string): string | null {
-  // `path.posix.relative` handles the common cases ("./content",
-  // "./content/site.toml" → "site.toml") and emits "../foo/bar"
-  // when `recordedPath` falls outside `sourceDir`.
   const rel = pathPosix.relative(sourceDir, recordedPath);
   if (rel.startsWith("..")) return null;
-  // Defensive: an exact match (`recordedPath === sourceDir`) is
-  // semantically wrong (you can't load a directory via file()) but
-  // we treat it as "outside" rather than emit an empty string.
+  // Empty == sourceDir itself (you can't `file()` a directory).
   if (rel === "") return null;
   return rel;
 }

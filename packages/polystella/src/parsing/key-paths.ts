@@ -1,37 +1,23 @@
 /**
- * Dotted key-path utilities shared by structured-data adapters
- * (TOML / JSON / YAML).
+ * Dotted key-path utilities for structured-data adapters (TOML / JSON / YAML).
  *
- * **Path grammar.**
+ * Grammar:
+ *   `key` / `a.b.c`        nested scalars
+ *   `a[0]` / `a.b[3].c`    array index, mixed
+ *   `a[*]` / `a.*`         wildcards (array elements / object values)
+ *   `a[*].b.*.c`           compose
  *
- *   `key`                    top-level scalar
- *   `a.b.c`                  nested scalar
- *   `a[0]`                   array element by index
- *   `a.b[3].c`               mixed
- *   `a[*]`                   wildcard array (every element)
- *   `a.*`                    wildcard object (every value)
- *   `a[*].b.*.c`             wildcards compose
- *
- * **Wildcards are extract-time only.** They expand against the parsed
- * structure into a list of concrete paths, then the adapter reads /
- * writes scalars at each. Concrete paths never contain `*`.
- *
- * **Stable string ID.** Each concrete path serialises back to a
- * canonical dotted+bracket form; IDs round-trip through the
- * translator response and back to the apply step.
+ * Wildcards expand at extract time into concrete paths; concrete
+ * paths never contain `*`. Each path serialises to a canonical
+ * dotted+bracket form so IDs round-trip through the translator.
  */
 
 export type PathSegment = string | number;
 
 /**
- * Segment names that would traverse or mutate the JS prototype chain
- * if used as a property key. Rejected at `parsePath` time so a
- * misconfigured (or malicious) entry in `translatableKeys` can't
- * drive `readAtPath` into `Object.prototype` or `writeAtPath` into
- * polluting the global prototype. `Object.hasOwn` gates in the
- * traversal helpers provide defence in depth, but failing at parse
- * time gives operators a clean, actionable error rather than a
- * silent no-op.
+ * Prototype-chain segments rejected at `parsePath` time so
+ * misconfigured `translatableKeys` can't drive `readAtPath` into
+ * `Object.prototype` or pollute it via `writeAtPath`.
  */
 const FORBIDDEN_SEGMENT_NAMES = new Set(["__proto__", "prototype", "constructor"]);
 
@@ -46,14 +32,8 @@ function assertSafeSegment(seg: string, path: string): void {
 }
 
 /**
- * Parse a dotted/bracketed path into segments. Returns the parsed
- * segments plus a flag for whether any wildcards appeared.
- *
- * Throws on syntactically malformed input (mismatched brackets,
- * trailing dot) so misconfigured `tomlKeys` surfaces early in the
- * build, not silently mid-pair. Also rejects segment names that
- * would resolve into the prototype chain (`__proto__`,
- * `prototype`, `constructor`) — see `FORBIDDEN_SEGMENT_NAMES`.
+ * Parse a dotted/bracketed path. Throws on malformed input
+ * (mismatched brackets, trailing dot) and on prototype-chain segments.
  */
 export function parsePath(path: string): { segments: (PathSegment | "*")[]; hasWildcard: boolean } {
   if (path.length === 0) {
@@ -139,14 +119,9 @@ export function formatPath(segments: readonly PathSegment[]): string {
 }
 
 /**
- * Expand a (possibly wildcard-bearing) path against `data` into the
- * list of concrete paths the wildcards resolve to. Non-wildcard
- * paths return `[path]` verbatim, regardless of whether the path
- * actually points at anything in `data`.
- *
- * Wildcards over absent / non-iterable nodes silently expand to no
- * paths — better than throwing on partial data shapes (e.g. a TOML
- * file with no `paths.*` keys yet).
+ * Expand wildcards against `data`. Non-wildcard paths return
+ * `[path]` verbatim. Wildcards over absent/non-iterable nodes
+ * silently expand to no paths (partial data shapes are common).
  */
 export function expandPath(path: string, data: unknown): string[] {
   const { segments, hasWildcard } = parsePath(path);
@@ -154,11 +129,7 @@ export function expandPath(path: string, data: unknown): string[] {
   return expandSegments(segments, data, []);
 }
 
-/**
- * Recursive worker for `expandPath`. Walks `segments` left-to-right,
- * accumulating a concrete path; on `*` segments, branches once per
- * matching child of the current node.
- */
+/** Recursive `expandPath` worker; branches on `*` segments. */
 function expandSegments(segments: readonly (PathSegment | "*")[], node: unknown, acc: PathSegment[]): string[] {
   if (segments.length === 0) {
     return [formatPath(acc)];
@@ -263,9 +234,7 @@ export function writeAtPath(node: unknown, segments: readonly PathSegment[], val
       // preserves the original error shape while blocking
       // `current = current["__proto__"]` from landing on
       // `Object.prototype` (Semgrep js/prototype-pollution-loop).
-      current = Object.hasOwn(current as object, seg)
-        ? (current as Record<string, unknown>)[seg]
-        : undefined;
+      current = Object.hasOwn(current as object, seg) ? (current as Record<string, unknown>)[seg] : undefined;
     }
   }
   const last = segments[segments.length - 1]!;
@@ -287,9 +256,7 @@ export function writeAtPath(node: unknown, segments: readonly PathSegment[], val
     // satisfies Semgrep's pollution-loop detector at the actual
     // sink).
     if (FORBIDDEN_SEGMENT_NAMES.has(last)) {
-      throw new Error(
-        `[polystella] cannot write at ${formatPath(segments)}: terminal segment "${last}" is reserved (prototype-chain).`,
-      );
+      throw new Error(`[polystella] cannot write at ${formatPath(segments)}: terminal segment "${last}" is reserved (prototype-chain).`);
     }
     (current as Record<string, unknown>)[last] = value;
   }
@@ -305,21 +272,9 @@ export { default as picomatchMatcher } from "picomatch";
 import picomatch from "picomatch";
 
 /**
- * Resolve translatable key paths for a single source file. Walks
- * every glob in `translatableKeys` that matches `sourcePath`,
- * unions the listed key paths, expands any wildcards (`[*]`, `.*`)
- * against the parsed structure, and returns the deduplicated
- * concrete-path list.
- *
- * Shared across structured-data adapters (TOML / JSON / YAML) since
- * the resolution is identical — only the parser differs. Markdown
- * doesn't use this helper because its key paths target frontmatter
- * keys (a flat scalar map), not nested data.
- *
- * Order matters for ID stability: concrete paths are emitted in
- * the order rules appear in the user's config (within a glob, in
- * the user's listed order; across globs, in object-iteration order).
- * Dedup preserves first occurrence.
+ * Resolve concrete translatable paths for a source. Union matching
+ * globs' paths, expand wildcards against `parsed`, dedupe by first
+ * occurrence (order matters for ID stability).
  */
 export function resolveConcretePaths(args: { parsed: unknown; sourcePath: string; translatableKeys: Record<string, string[]> }): string[] {
   const { parsed, sourcePath, translatableKeys } = args;

@@ -2,51 +2,30 @@ import type { Segment } from "../parsing/extract.js";
 import type { Glossary } from "../glossary/glossary.js";
 
 /**
- * Prompt construction. We ask the model to emit each translated
- * segment as a delimited block:
+ * Prompt construction. Each translated segment is wrapped in a
+ * delimited block:
  *
  *   @@<segment-id>@@
  *   <translated text>
  *
- * This format replaces an earlier JSON-object protocol. The model
- * doesn't have to track nested syntax (braces, quotes, escaping),
- * which both saves output tokens and removes a class of failures
- * smaller models hit on long Portuguese / CJK content (truncation
- * before the closing `}`, unescaped scare-quotes inside strings,
- * etc.). Translated values are taken verbatim between markers, so
- * literal newlines, quotes, and backslashes pass through without
- * any escaping rules to follow.
+ * Beats a JSON-object protocol on small models: no nested syntax,
+ * fewer truncation/escaping failures on long Portuguese/CJK content,
+ * fewer output tokens. Translated bytes pass through verbatim
+ * between markers (no escaping rules).
  *
- * Pure — no I/O, no provider deps — so prompt and acceptance rules
- * live in one place and unit-test without a network.
+ * Pure — no I/O, no provider deps — unit-testable without a network.
  */
 
-/**
- * Marker delimiter used in both the user prompt and the parsed
- * response. `@@` is rare enough in technical/research prose that
- * collisions inside translated content are practically nil; the
- * parser still validates that every emitted id is one we asked for.
- */
+/** Marker delimiter — `@@` is rare in technical/research prose. */
 const MARKER = "@@";
 
 /**
- * Marker-line regex used by `parseResponse` to split the model's
- * response. Hardcoded as a literal (rather than built from `MARKER`
- * via `new RegExp(...)`) so static analysers can prove the pattern
- * isn't constructed from tainted input (Semgrep
- * detect-non-literal-regexp). MUST stay in sync with `MARKER`; the
- * guard below trips at import time if they drift.
- *
- * Pattern parts:
- *   `^`               with the `m` flag: start of a line
- *   `@@`              opening marker (= `MARKER`)
- *   `([^@\n]+?)`      lazy capture of the id; can't span `@` or `\n`,
- *                     so backtracking is bounded by line length →
- *                     overall linear, no ReDoS surface
- *   `@@`              closing marker (= `MARKER`)
- *   `\s*$`            optional trailing whitespace, end of line
- *   flags `gm`        global + multi-line so `String.split` slices on
- *                     every marker line in the response
+ * Marker-line regex for `parseResponse`. Hardcoded literal (not
+ * `new RegExp(MARKER + ...)`) so static analysers (e.g. Semgrep
+ * detect-non-literal-regexp) can prove the pattern isn't tainted.
+ * MUST stay in sync with `MARKER`; the import-time guard below trips
+ * if they drift. Lazy id capture (`[^@\n]+?`) is bounded by line
+ * length → linear, no ReDoS surface.
  */
 const MARKER_LINE_RE = /^@@([^@\n]+?)@@\s*$/gm;
 if (MARKER !== "@@") {
@@ -148,29 +127,16 @@ export function buildPrompt(input: BuildPromptInput): BuiltPrompt {
 }
 
 /**
- * Parse a marker-delimited response into `Map<segmentId, translatedText>`.
- *
- * Tolerant: strips code-fence wrapping if the model adds one,
- * accepts surrounding prose before the first marker (treated as
- * preamble and discarded). Strict on the id set — unknown or
- * omitted ids throw with a truncated dump for diagnostics.
+ * Parse marker-delimited response → `Map<segmentId, translation>`.
+ * Tolerant: strips code fences, discards preamble. Strict on id
+ * set: unknown ids dropped silently (small models hallucinate),
+ * omitted expected ids throw with a truncated dump.
  */
 export function parseResponse(rawText: string, expectedIds: string[]): Map<string, string> {
   const cleaned = stripCodeFences(rawText.trim());
 
-  // Split on `@@<id>@@` marker lines. The split keeps the captured id
-  // and the content between markers as alternating array elements:
-  //   parts[0]      = preamble (anything before the first marker)
-  //   parts[1]      = first id
-  //   parts[2]      = first content
-  //   parts[3]      = second id
-  //   parts[4]      = second content
-  //   …
-  // `MARKER_LINE_RE` is a hardcoded literal at module scope — see
-  // its definition for the pattern breakdown and the rationale for
-  // not constructing it dynamically. `String.prototype.split`
-  // resets `lastIndex` to 0 at the start of each call on a
-  // g-flagged regex, so sharing one frozen instance is safe.
+  // Split on `@@<id>@@` lines. Alternating array shape:
+  //   parts[0] = preamble; [1] = id1; [2] = content1; [3] = id2; ...
   const parts = cleaned.split(MARKER_LINE_RE);
 
   if (parts.length < 3) {
@@ -179,32 +145,16 @@ export function parseResponse(rawText: string, expectedIds: string[]): Map<strin
     );
   }
 
-  // Every emitted segment shows up as a (id, content) pair. Odd
-  // indices in `parts` are ids; even indices ≥ 2 are the content
-  // immediately following the preceding id.
-  //
-  // Unexpected ids (small models hallucinate `fm:abstract` /
-  // `fm:content` / `fn:author` etc. on academic-shaped content
-  // even when the prompt explicitly forbids it) are SILENTLY
-  // SKIPPED — the prompt told the model not to add them; we
-  // ignore the ones it added anyway. The "model omitted segment"
-  // check below still catches genuinely-malformed responses where
-  // a real expected id never made it out, so this tolerance
-  // doesn't mask real failures, only model misbehaviour the
-  // retry-loop above can't otherwise recover from.
+  // Odd indices = ids; even indices ≥ 2 = the following content.
+  // Hallucinated ids dropped silently; missing expected ids throw
+  // below (so this tolerance doesn't mask real failures).
   const expected = new Set(expectedIds);
   const result = new Map<string, string>();
   for (let i = 1; i + 1 < parts.length; i += 2) {
     const id = (parts[i] ?? "").trim();
     const value = (parts[i + 1] ?? "").trim();
     if (id.length === 0) continue;
-    if (!expected.has(id)) {
-      // Hallucinated id — drop it and keep parsing. We don't have
-      // a logger at this layer; the retry-loop / per-pair report
-      // surface enough signal at the build-orchestrator level if
-      // hallucinations become persistent.
-      continue;
-    }
+    if (!expected.has(id)) continue; // hallucinated id; drop
     if (value.length === 0) {
       throw new Error(`[polystella] model returned an empty translation for segment "${id}"`);
     }
@@ -213,17 +163,12 @@ export function parseResponse(rawText: string, expectedIds: string[]): Map<strin
 
   for (const id of expectedIds) {
     if (!result.has(id)) {
-      // Distinguish truncation (model started but didn't finish all
-      // segments) from a flat-out missing id (model produced markers
-      // for some other ids and skipped this one).
+      // Distinguish truncation (no marker for id) from skip
+      // (model emitted markers for other ids but not this one).
       const lastEmitted = [...result.keys()].at(-1);
       const totalCharsInResult = [...result.values()].reduce((n, v) => n + v.length, 0);
       const looksTruncated =
-        lastEmitted !== undefined &&
-        rawText.length > totalCharsInResult &&
-        // Model stopped mid-content for the last emitted id (no
-        // marker for the missing id at all).
-        !rawText.includes(`${MARKER}${id}${MARKER}`);
+        lastEmitted !== undefined && rawText.length > totalCharsInResult && !rawText.includes(`${MARKER}${id}${MARKER}`);
       const hint = looksTruncated
         ? ` Response appears truncated after segment "${lastEmitted}" — the model likely hit its output-token limit. Raise \`provider.maxTokens\` or split the source into smaller files.`
         : "";
@@ -235,48 +180,30 @@ export function parseResponse(rawText: string, expectedIds: string[]): Map<strin
 }
 
 /**
- * If `text` is wrapped in a triple-backtick code fence, return the
- * inner body trimmed; otherwise return `text` unchanged.
- *
- * Implemented with linear `startsWith` / `endsWith` / `indexOf`
- * scans rather than a regex like
- * `/^```(?:\w+)?\s*\n([\s\S]*?)\n```$/i` because that regex
- * backtracks quadratically on adversarial-shaped model output —
- * e.g. content starting with ```` ```\n ```` followed by many
- * `\n ` repetitions with no closing fence (CodeQL
- * js/polynomial-redos). Model output is the closest thing to
- * "uncontrolled input" we get in this codebase, so the linear
- * variant is worth the few extra lines.
+ * Unwrap a triple-backtick code fence if present. Linear scans
+ * instead of a regex — `/^```(?:\w+)?\s*\n([\s\S]*?)\n```$/i`
+ * backtracks quadratically on adversarial model output (CodeQL
+ * js/polynomial-redos). Model output is uncontrolled enough that
+ * the linear variant is worth the extra lines.
  */
 function stripCodeFences(text: string): string {
-  // Cheap rejection: must open AND close with ```; need at least
-  // ```\n\n``` (6 chars) to have any body to extract.
   if (!text.startsWith("```") || !text.endsWith("```") || text.length < 6) {
     return text;
   }
-  // Opening-fence line ends at the first \n; everything between the
-  // initial ``` and that \n is treated as the (optional) language
-  // tag and trailing whitespace, mirroring the old regex's
-  // `(?:\w+)?\s*` permissiveness.
+  // Opening-fence line ends at first \n. Anything between matches
+  // the old regex's `(?:\w+)?\s*` (optional lang tag + whitespace).
   const firstNewline = text.indexOf("\n");
   if (firstNewline === -1) return text;
-  // Closing fence is the trailing ``` — it must sit on its own line,
-  // i.e. be preceded by \n. `text.length - 3` is the index of the
-  // first backtick in the closing fence; the char before that must
-  // be a newline (char code 10).
+  // Closing ``` must be preceded by \n (own-line fence).
   const closeIdx = text.length - 3;
   if (text.charCodeAt(closeIdx - 1) !== 10 /* \n */) return text;
-  // The body spans [firstNewline + 1, closeIdx - 1) — i.e. after the
-  // opening-fence newline and before the closing-fence newline. If
-  // those collapse to nothing, treat as unfenced.
   if (closeIdx - 1 <= firstNewline) return text;
   return text.slice(firstNewline + 1, closeIdx - 1).trim();
 }
 
 function truncateRaw(text: string, max = 2000): string {
   if (text.length <= max) return text;
-  // Show head + tail so the cutoff point at the END is visible
-  // alongside the opening structure at the START.
+  // Head + tail so both opening structure and cutoff are visible.
   const headChars = Math.floor(max / 2);
   const tailChars = max - headChars;
   return `${text.slice(0, headChars)}\n... [truncated middle, total length ${text.length}] ...\n${text.slice(-tailChars)}`;
