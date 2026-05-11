@@ -1,5 +1,5 @@
-import { getCollection } from "astro:content";
 import type { CollectionEntry } from "astro:content";
+import { getLocalizedCollection } from "packages/polystella/src/runtime";
 
 type Pillar = "private" | "safe" | "fast" | "reliable" | "measurable";
 
@@ -10,9 +10,9 @@ type Pillar = "private" | "safe" | "fast" | "reliable" | "measurable";
  */
 export async function getArticlesByPillar(pillar: Pillar) {
   // Fetch publications and blog posts for this pillar
-  const publications = await getCollection("publications", (publication) => publication.data.pillar === pillar);
+  const publications = await getLocalizedCollection("publications", (publication) => publication.data.pillar === pillar);
 
-  const blogPosts = await getCollection("blog", (post) => post.data.pillar === pillar);
+  const blogPosts = await getLocalizedCollection("blog", (post) => post.data.pillar === pillar);
 
   // Combine publications and blog posts
   const combinedArticles: (CollectionEntry<"publications"> | CollectionEntry<"blog">)[] = [...publications, ...blogPosts];

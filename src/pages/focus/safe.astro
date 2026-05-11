@@ -5,14 +5,14 @@ import Section from "@/components/Section.astro";
 import ArticleGrid from "@/components/ArticleGrid.astro";
 import { getArticlesByPillar } from "@/lib/getArticlesByPillar";
 
-const combinedArticles = await getArticlesByPillar('safe');
+const combinedArticles = await getArticlesByPillar("safe");
+const { t } = Astro.locals;
 ---
 
-<InteriorLayout metaTitle="Safe Focus Area" metaDescription="Creating production-quality security defenses for the modern web. Explore Cloudflare Research on network interference, advanced cryptography, and the protocols ensuring safe, global connectivity against emerging threats.">
+<InteriorLayout metaTitle={t("nav.focusAreas.safer.metaTitle")} metaDescription={t("nav.focusAreas.safer.description")}>
   <HeaderSafe />
 
   <Section>
     <ArticleGrid publications={combinedArticles} />
   </Section>
-
 </InteriorLayout>
