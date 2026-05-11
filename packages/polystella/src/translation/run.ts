@@ -354,9 +354,13 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
   }
 
   const sources = await walkSources({
-    sourceDir: sourceDirAbs,
-    include: resolved.include,
-    exclude: resolved.exclude,
+    roots: [
+      {
+        baseDir: sourceDirAbs,
+        include: resolved.include,
+        exclude: resolved.exclude,
+      },
+    ],
   });
 
   if (sources.length === 0) {

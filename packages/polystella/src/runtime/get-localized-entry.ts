@@ -158,7 +158,12 @@ export async function resolveLocalizedEntry(input: ResolveLocalizedEntryInput): 
   const localizedCollection = `${collection}__${locale}`;
   const localized = await deps.getEntry(localizedCollection, slug);
   if (localized !== undefined) {
-    return withExtensions(localized, true, locale);
+    // Normalise `collection` to the source name. Astro stores the
+    // sibling entry with `collection: "blog__pt-BR"`; consumer code
+    // branching on `entry.collection === "blog"` would break for
+    // translated entries otherwise. The localization is a polystella
+    // internal — page code shouldn't have to know about it.
+    return withExtensions({ ...localized, collection } as SourceEntryShape, true, locale);
   }
 
   const fallbackPolicy = deps.fallback ?? "default-locale";

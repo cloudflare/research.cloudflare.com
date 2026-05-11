@@ -69,6 +69,23 @@ export const collections = {
 /// <reference types="polystella/client" />
 ```
 
+**Custom loaders.** Collections loaded via a custom Astro loader (e.g. fetched from an external API at build time, like the research site's `blog` collection) can be translated by wrapping the raw loader with `polystellaLoader`:
+
+```ts
+// src/loaders/blog.ts
+import { polystellaLoader } from "polystella/content";
+
+export function blogLoader() {
+  const raw = { name: "blog-loader", load: async (ctx) => { /* fetch + store.set */ } };
+  return polystellaLoader(raw, {
+    name: "blog",                          // matches the defineCollection key
+    translatableKeys: ["title", "excerpt"], // top-level data fields to translate
+  });
+}
+```
+
+`polystellaCollections` auto-detects the wrapper and generates per-locale sibling collections (`blog__pt-BR`, etc.) that translate captured entries inline at content-sync time. No `loaderOverrides` entry needed; entries flow through the same R2 cache + AI translator as file-based content. Other data fields (date, url, image, tags, …) pass through verbatim.
+
 In a page, use `Astro.locals.getLocalizedEntry` and `Astro.locals.getLocalizedCollection` — the integration auto-registers a request middleware that pre-binds the request's locale to all four locale-aware locals (`t`, `lhref`, `getLocalizedEntry`, `getLocalizedCollection`):
 
 ```astro
@@ -169,7 +186,7 @@ A developer's local build cannot overwrite production. Preview branches stay iso
 | Path                                       | Surface                                                                        |
 | ------------------------------------------ | ------------------------------------------------------------------------------ |
 | `polystella`                               | The Astro integration default export.                                          |
-| `polystella/content`                       | `polystellaCollections({ ... })` for `content.config.ts`.                      |
+| `polystella/content`                       | `polystellaCollections({ ... })`, `file()`, `polystellaLoader()` for `content.config.ts`. |
 | `polystella/runtime`                       | `getLocalizedEntry`, `getLocalizedCollection`, `localizedHref`, `polystellaMiddleware`. |
 | `polystella/i18n`                          | `i18nLoader`, `i18nSchema`, `getTranslations`, `getDictionary`, drift helpers. |
 | `polystella/react`                         | `useTranslations(dictionary)` for React islands.                               |
@@ -208,7 +225,7 @@ A developer's local build cannot overwrite production. Preview branches stay iso
 pnpm --filter polystella test
 ```
 
-The package has ~900 unit tests across parsing, extraction, translation prompt round-trips, R2 cache logic, routing, runtime dispatch (locale-aware entry / collection fetching), middleware bindings, and UI-strings drift detection. CI runs them on every PR.
+The package has ~940 unit tests across parsing, extraction, translation prompt round-trips, R2 cache logic, routing, runtime dispatch (locale-aware entry / collection fetching), middleware bindings, custom-loader wrapping + sibling translation, and UI-strings drift detection. CI runs them on every PR.
 
 ## License
 

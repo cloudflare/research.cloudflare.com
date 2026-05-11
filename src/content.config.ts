@@ -127,10 +127,5 @@ export const collections = {
   i18n,
   ...polystellaCollections({
     source: { site, people, publications, tags, presentations, blog, pages },
-    loaderOverrides: {
-      // `blog` uses a custom loader; opting it out so the warning goes
-      // away. Blog posts are English-only by design today.
-      //blog: { kind: "skip", reason: "blog posts are English-only" },
-    },
   }),
 };

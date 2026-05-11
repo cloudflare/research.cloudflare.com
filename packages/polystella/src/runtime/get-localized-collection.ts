@@ -138,7 +138,14 @@ export async function resolveLocalizedCollection<TEntry extends SourceEntryShape
   for (const source of sources) {
     const sibling = siblingsById.get(source.id);
     if (sibling !== undefined) {
-      merged.push(withExtensions(sibling, true, locale));
+      // Override `collection` on the sibling entry to the SOURCE
+      // collection name (e.g. "blog", not "blog__pt-BR"). Downstream
+      // consumers branching on `entry.collection === "blog"` should
+      // work uniformly across translated and source-fallback entries
+      // — the localization is an internal-detail of polystella, not
+      // something page code should have to special-case.
+      const normalized = { ...sibling, collection: source.collection } as TEntry;
+      merged.push(withExtensions(normalized, true, locale));
       continue;
     }
 

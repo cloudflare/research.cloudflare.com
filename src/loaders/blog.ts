@@ -1,6 +1,7 @@
 import type { Loader } from "astro/loaders";
 import fs from "node:fs";
 import path from "node:path";
+import { polystellaLoader } from "polystella/content";
 import { blogMappings } from "../data/blog-mappings";
 
 const PEOPLE_DIR = "./content/people";
@@ -84,9 +85,23 @@ function getBlogAuthorMap(): Record<string, string> {
 }
 
 /**
- * Custom Astro loader for Cloudflare blog posts
+ * Custom Astro loader for Cloudflare blog posts.
+ *
+ * Wrapped with `polystellaLoader` so polystella's content layer can
+ * auto-derive locale-sibling collections (`blog__pt-BR`, `blog__ja-JP`,
+ * etc.) and translate the `title` + `excerpt` fields per locale.
+ * Other fields (date, url, image, author, pillar, tags) pass through
+ * verbatim — the blog destinations themselves remain in English on
+ * cloudflare.com.
  */
 export function blogLoader(): Loader {
+  return polystellaLoader(rawBlogLoader(), {
+    name: "blog",
+    translatableKeys: ["title", "excerpt"],
+  });
+}
+
+function rawBlogLoader(): Loader {
   return {
     name: "blog-loader",
     load: async ({ store, logger, parseData, generateDigest }) => {

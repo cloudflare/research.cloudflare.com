@@ -119,7 +119,9 @@ export interface PolystellaCollectionsDeps {
 
 import { posix as pathPosix } from "node:path";
 
+import { createCustomLoaderSibling } from "../runtime/custom-loader-runtime.js";
 import { DEFAULT_STAGING_DIR, DEFAULT_STAGING_GLOB as DEFAULT_GLOB_PATTERN } from "../storage/paths.js";
+import { readPolystellaCustomLoaderMarker } from "./custom-loader.js";
 import { extendSchemaWithAiMarker } from "./extend-schema.js";
 import { readRecordedSourcePath } from "./file-loader.js";
 
@@ -287,6 +289,38 @@ export function deriveSiblingCollection(args: {
   // declarations on collisions (see `extend-schema.ts`).
   const schema =
     sourceSchema !== undefined ? extendSchemaWithAiMarker(sourceSchema, { collectionName, logger }) : undefined;
+
+  // Auto-detect a polystella-wrapped custom loader BEFORE the file()
+  // detect — these loaders need a special sibling (the runtime
+  // factory translates entries inline at content-sync time), not the
+  // generic glob/file overrides. When the marker is present, we
+  // short-circuit the normal sibling-derivation path entirely.
+  //
+  // The `name` on the marker MUST match the consumer-declared
+  // collection key — that's the v1 contract. A mismatch indicates
+  // the user wrapped the same loader under two collection names
+  // (or vice versa), which would break the cache-key/staging-path
+  // assumptions. Warn loudly and skip the sibling so the build
+  // doesn't silently produce wrong content.
+  if (!override) {
+    const customMarker = readPolystellaCustomLoaderMarker(readLoader(sourceCollection));
+    if (customMarker !== undefined) {
+      if (customMarker.name !== collectionName) {
+        logger.warn(
+          `[polystella] collection "${collectionName}" is wrapped with polystellaLoader({ name: "${customMarker.name}" }) — the wrapper's name MUST match the collection key. Auto-skipping the "${locale}" sibling. Either rename the collection to "${customMarker.name}" or change the wrapper's name to "${collectionName}".`,
+        );
+        return null;
+      }
+      // Sibling uses a polystella-provided loader that translates
+      // captured entries inline against the integration's runtime
+      // bridge. No staging dir, no glob — entries flow through
+      // Astro's content store directly.
+      return deps.defineCollection({
+        loader: createCustomLoaderSibling({ marker: customMarker, locale }),
+        ...(schema !== undefined ? { schema } : {}),
+      });
+    }
+  }
 
   // Auto-detect a polystella-wrapped `file()` loader. When the
   // source collection's loader carries a recorded source path (set

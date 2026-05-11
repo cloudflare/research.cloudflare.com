@@ -44,6 +44,22 @@ export {
 export { file, readRecordedSourcePath, POLYSTELLA_SOURCE_PATH_KEY, type PolystellaFileLoader } from "./file-loader.js";
 
 /**
+ * Polystella's custom-loader wrapper — opts a non-glob / non-file
+ * Astro loader into translation. The wrapper stamps a non-enumerable
+ * marker on the returned loader so `polystellaCollections` can
+ * auto-derive locale-sibling collections. See `./custom-loader.ts`.
+ */
+export {
+  polystellaLoader,
+  readPolystellaCustomLoaderMarker,
+  POLYSTELLA_CUSTOM_LOADER_KEY,
+  type CapturedEntry,
+  type PolystellaCustomLoaderMarker,
+  type PolystellaCustomLoaderOptions,
+  type PolystellaWrappedLoader,
+} from "./custom-loader.js";
+
+/**
  * Public-facing options for `polystellaCollections`. Locales and
  * defaultLocale are auto-derived from `polystella:runtime-config` —
  * users declare them once in `astro.config.mjs` and never repeat

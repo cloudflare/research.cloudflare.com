@@ -116,7 +116,7 @@ const config = {
       "pages/**": ["title"],
       "people/**": ["position"],
       "tags/**": ["name", "description"],
-      "presentations/**": ["title"],
+      "presentations/**": ["title", "related_interests"],
     },
     // urls: {
     //   "publications/**": ["heroImage", "pdfLink"],

@@ -7,16 +7,15 @@ import FeaturedResearch from "@/components/home/FeaturedResearch.astro";
 import Section from "@/components/Section.astro";
 import ButtonLink from "@/components/ButtonLink.astro";
 import Icon from "@/components/Icon.astro";
-import { getCollection } from "astro:content";
 import { getLocalizedEntry } from "polystella/runtime";
 import { CONSTANTS } from "@/lib/constants";
 import SeeMore from "@/components/SeeMore.astro";
 import { computeTranslationStatus } from "@/lib/i18n-utils";
 
-const { t, lhref } = Astro.locals;
+const { t, lhref, getLocalizedCollection } = Astro.locals;
 
 // Pull in 3 most recent publications (2025+), sorted by date
-const recentPublications = (await getCollection("publications", ({ data }) => data.year && data.year >= 2025))
+const recentPublications = (await getLocalizedCollection("publications", ({ data }) => data.year && data.year >= 2025))
   .sort((a, b) => {
     const dateA = a.data.date || new Date(a.data.year || 0, 11, 31);
     const dateB = b.data.date || new Date(b.data.year || 0, 11, 31);
@@ -31,11 +30,7 @@ const siteEntry = await getLocalizedEntry("site", "main", Astro.currentLocale);
 const aiTranslationStatus = computeTranslationStatus(Astro.currentLocale, siteEntry);
 ---
 
-<BaseLayout
-  bodyClassName="home"
-  metaDescription={t("home.metaDescription")}
-  aiTranslationStatus={aiTranslationStatus}
->
+<BaseLayout bodyClassName="home" metaDescription={t("home.metaDescription")} aiTranslationStatus={aiTranslationStatus}>
   <Fragment slot="head">
     <link rel="preload" href="/unicornStudio.umd.js" as="script" />
     <link rel="preload" href="/blue_liquid.json" as="fetch" crossorigin />

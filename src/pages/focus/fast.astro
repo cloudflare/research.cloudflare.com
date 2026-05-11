@@ -6,7 +6,7 @@ import ArticleGrid from "@/components/ArticleGrid.astro";
 import { getArticlesByPillar } from "@/lib/getArticlesByPillar";
 
 const { t } = Astro.locals;
-const combinedArticles = await getArticlesByPillar("fast");
+const combinedArticles = await getArticlesByPillar("fast", Astro.currentLocale);
 ---
 
 <InteriorLayout metaTitle={t("fast.metaTitle")} metaDescription={t("fast.metaDescription")}>

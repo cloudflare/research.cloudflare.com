@@ -146,7 +146,12 @@ describe("resolveLocalizedEntry — cross-locale hit path", () => {
     });
 
     expect(result).toEqual({
-      collection: "publications__pt-BR",
+      // The dispatcher normalises `collection` to the SOURCE name so
+      // downstream code branching on `entry.collection === "publications"`
+      // works for both source and translated entries — page code
+      // shouldn't need to know that polystella stores siblings under
+      // `publications__pt-BR` internally.
+      collection: "publications",
       id: "antunes2025",
       data: { title: "Antunes2025 (pt-BR)" },
       body: "Corpo traduzido.",
