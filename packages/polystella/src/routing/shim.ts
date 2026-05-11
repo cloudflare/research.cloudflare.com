@@ -25,12 +25,29 @@ export interface DerivedUrlPattern {
  * `src/pages/blog/[...slug].astro` → `{ "blog/[...slug]", dynamic }`
  */
 export function deriveUrlPattern(sourcePath: string): DerivedUrlPattern {
-  const normalised = sourcePath.replace(/\\/g, "/").replace(/^\/+/, "");
+  const normalised = stripLeadingSlashes(sourcePath.replaceAll("\\", "/"));
   const stripped = normalised.replace(/^src\/pages\//, "").replace(/\.astro$/, "");
   // Drop a trailing `/index` — section indexes route to the bare URL.
   const pattern = stripped.replace(/(^|\/)index$/, "");
-  const isDynamic = /\[[^\]]+\]/.test(pattern);
+  // `pattern` is dynamic iff it contains a `[param]` segment. We
+  // detect that via two `indexOf`s rather than a regex like
+  // `/\[[^\]]+\]/` because the regex is unanchored and backtracks
+  // quadratically on pathological inputs (CodeQL js/polynomial-redos).
+  // File paths never hit that path in practice, but the linear scan
+  // is just as readable and costs nothing.
+  const openBracket = pattern.indexOf("[");
+  const isDynamic = openBracket !== -1 && pattern.indexOf("]", openBracket + 1) !== -1;
   return { pattern, isDynamic };
+}
+
+/**
+ * Strip leading `/` characters in linear time. Equivalent to
+ * `.replace(/^\/+/, "")` but free of regex backtracking concerns.
+ */
+function stripLeadingSlashes(s: string): string {
+  let start = 0;
+  while (start < s.length && s.charCodeAt(start) === 47 /* "/" */) start++;
+  return start === 0 ? s : s.slice(start);
 }
 
 export interface GenerateShimSourceInput {
@@ -69,14 +86,14 @@ export interface GenerateShimSourceInput {
  */
 export function generateShimSource(input: GenerateShimSourceInput): string {
   const localesLiteral = JSON.stringify(input.locales);
-  const importPath = input.relativeImportPath.replace(/\\/g, "/");
+  const importPath = input.relativeImportPath.replaceAll("\\", "/");
 
   // Side-effect imports (`import "..."`) emitted BEFORE the source
   // page import. Order matters for CSS only insofar as Vite cares
   // about determinism; it doesn't affect cascade because each file
   // is its own scoped chunk. Backslash normalisation matches the
   // source-page import for cross-platform safety.
-  const extraImports = (input.imports ?? []).map((p) => `import "${p.replace(/\\/g, "/")}";`);
+  const extraImports = (input.imports ?? []).map((p) => `import "${p.replaceAll("\\", "/")}";`);
 
   // Locales literal is inlined inside `getStaticPaths` — Astro lifts
   // it into its own module for static-path generation and module-

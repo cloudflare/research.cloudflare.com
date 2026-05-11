@@ -96,7 +96,7 @@ export function buildR2Key({
   hash: string;
   prefix?: string;
 }): string {
-  const normalisedPath = sourcePath.replace(/\\/g, "/").replace(/^\/+/, "");
+  const normalisedPath = stripLeadingSlashes(sourcePath.replaceAll("\\", "/"));
   if (prefix.length > 0 && !prefix.endsWith("/")) {
     throw new Error(`[polystella] r2.prefix must end with "/" (got: ${JSON.stringify(prefix)})`);
   }
@@ -106,7 +106,7 @@ export function buildR2Key({
 /** Stateless R2 client; safe to share across concurrent operations. */
 export function createR2Client(opts: R2ConnectionOptions): R2Client {
   const baseEndpoint = opts.endpoint ?? `https://${opts.accountId}.r2.cloudflarestorage.com`;
-  const endpoint = `${baseEndpoint.replace(/\/+$/, "")}/${opts.bucket}`;
+  const endpoint = `${stripTrailingSlashes(baseEndpoint)}/${opts.bucket}`;
 
   const s3 = new S3mini({
     accessKeyId: opts.accessKeyId,
@@ -176,4 +176,27 @@ export function createR2Client(opts: R2ConnectionOptions): R2Client {
       await s3.deleteObject(key);
     },
   };
+}
+
+/**
+ * Strip leading `/` characters in linear time. Equivalent to
+ * `.replace(/^\/+/, "")` but free of regex backtracking concerns
+ * (CodeQL js/polynomial-redos flags the unanchored regex variant).
+ */
+function stripLeadingSlashes(s: string): string {
+  let start = 0;
+  while (start < s.length && s.charCodeAt(start) === 47 /* "/" */) start++;
+  return start === 0 ? s : s.slice(start);
+}
+
+/**
+ * Strip trailing `/` characters in linear time. Equivalent to
+ * `.replace(/\/+$/, "")`; the regex form is end-anchored only and
+ * V8 doesn't reliably reverse-scan, so it backtracks quadratically
+ * on long runs of slashes followed by a non-slash.
+ */
+function stripTrailingSlashes(s: string): string {
+  let end = s.length;
+  while (end > 0 && s.charCodeAt(end - 1) === 47 /* "/" */) end--;
+  return end === s.length ? s : s.slice(0, end);
 }

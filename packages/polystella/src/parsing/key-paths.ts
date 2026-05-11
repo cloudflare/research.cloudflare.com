@@ -24,12 +24,36 @@
 export type PathSegment = string | number;
 
 /**
+ * Segment names that would traverse or mutate the JS prototype chain
+ * if used as a property key. Rejected at `parsePath` time so a
+ * misconfigured (or malicious) entry in `translatableKeys` can't
+ * drive `readAtPath` into `Object.prototype` or `writeAtPath` into
+ * polluting the global prototype. `Object.hasOwn` gates in the
+ * traversal helpers provide defence in depth, but failing at parse
+ * time gives operators a clean, actionable error rather than a
+ * silent no-op.
+ */
+const FORBIDDEN_SEGMENT_NAMES = new Set(["__proto__", "prototype", "constructor"]);
+
+function assertSafeSegment(seg: string, path: string): void {
+  if (FORBIDDEN_SEGMENT_NAMES.has(seg)) {
+    throw new Error(
+      `[polystella] key path "${path}" contains reserved segment "${seg}". ` +
+        `Segments named __proto__, prototype, or constructor are rejected ` +
+        `because they traverse the JavaScript prototype chain.`,
+    );
+  }
+}
+
+/**
  * Parse a dotted/bracketed path into segments. Returns the parsed
  * segments plus a flag for whether any wildcards appeared.
  *
  * Throws on syntactically malformed input (mismatched brackets,
  * trailing dot) so misconfigured `tomlKeys` surfaces early in the
- * build, not silently mid-pair.
+ * build, not silently mid-pair. Also rejects segment names that
+ * would resolve into the prototype chain (`__proto__`,
+ * `prototype`, `constructor`) — see `FORBIDDEN_SEGMENT_NAMES`.
  */
 export function parsePath(path: string): { segments: (PathSegment | "*")[]; hasWildcard: boolean } {
   if (path.length === 0) {
@@ -80,6 +104,7 @@ export function parsePath(path: string): { segments: (PathSegment | "*")[]; hasW
       segments.push("*");
       hasWildcard = true;
     } else {
+      assertSafeSegment(key, path);
       segments.push(key);
     }
     i = j;
@@ -150,6 +175,8 @@ function expandSegments(segments: readonly (PathSegment | "*")[], node: unknown,
     }
     if (typeof node === "object") {
       const out: string[] = [];
+      // `Object.keys` only returns OWN enumerable string keys, so no
+      // prototype-chain entries leak into the expansion.
       for (const key of Object.keys(node as Record<string, unknown>)) {
         out.push(...expandSegments(rest, (node as Record<string, unknown>)[key], [...acc, key]));
       }
@@ -168,6 +195,11 @@ function expandSegments(segments: readonly (PathSegment | "*")[], node: unknown,
   }
   // String key.
   if (typeof node !== "object") return [];
+  // `Object.hasOwn` gates prototype-chain traversal. `parsePath`
+  // already rejects __proto__/prototype/constructor segments, but
+  // this is the same defence on the access side in case a caller
+  // builds `PathSegment[]` directly.
+  if (!Object.hasOwn(node as object, head as string)) return [];
   return expandSegments(rest, (node as Record<string, unknown>)[head as string], [...acc, head as string]);
 }
 
@@ -185,6 +217,13 @@ export function readAtPath(node: unknown, segments: readonly PathSegment[]): unk
       current = current[seg];
     } else {
       if (typeof current !== "object") return undefined;
+      // `Object.hasOwn` gates prototype-chain access so a segment like
+      // `__proto__` reads as "missing" rather than returning the
+      // object's prototype. `parsePath` already rejects those names;
+      // this is defence in depth for any caller that builds
+      // `PathSegment[]` directly (Semgrep
+      // js/prototype-pollution-loop).
+      if (!Object.hasOwn(current as object, seg)) return undefined;
       current = (current as Record<string, unknown>)[seg];
     }
   }
@@ -217,7 +256,16 @@ export function writeAtPath(node: unknown, segments: readonly PathSegment[], val
       if (typeof current !== "object") {
         throw new Error(`[polystella] cannot write at ${formatPath(segments)}: expected object at segment ${i}, got ${typeof current}`);
       }
-      current = (current as Record<string, unknown>)[seg];
+      // `Object.hasOwn` gates prototype-chain traversal. When the
+      // intermediate property doesn't exist we fall through to
+      // `undefined`, and the next iteration's null/undefined guard
+      // surfaces the existing "parent is null/undefined" error. This
+      // preserves the original error shape while blocking
+      // `current = current["__proto__"]` from landing on
+      // `Object.prototype` (Semgrep js/prototype-pollution-loop).
+      current = Object.hasOwn(current as object, seg)
+        ? (current as Record<string, unknown>)[seg]
+        : undefined;
     }
   }
   const last = segments[segments.length - 1]!;
@@ -232,6 +280,16 @@ export function writeAtPath(node: unknown, segments: readonly PathSegment[], val
   } else {
     if (typeof current !== "object") {
       throw new Error(`[polystella] cannot write at ${formatPath(segments)}: expected object as terminal parent`);
+    }
+    // Terminal write: forbid any segment that would land on the
+    // prototype chain. `parsePath` blocks these at config parse
+    // time; this guard catches direct `PathSegment[]` callers (and
+    // satisfies Semgrep's pollution-loop detector at the actual
+    // sink).
+    if (FORBIDDEN_SEGMENT_NAMES.has(last)) {
+      throw new Error(
+        `[polystella] cannot write at ${formatPath(segments)}: terminal segment "${last}" is reserved (prototype-chain).`,
+      );
     }
     (current as Record<string, unknown>)[last] = value;
   }

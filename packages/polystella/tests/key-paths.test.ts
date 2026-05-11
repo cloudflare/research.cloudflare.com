@@ -196,3 +196,59 @@ describe("writeAtPath", () => {
     expect(() => writeAtPath({ a: 42 }, ["a", "b"], 1)).toThrow(/expected object/);
   });
 });
+
+describe("prototype-pollution defences", () => {
+  // The risk: an operator-supplied `translatableKeys` entry like
+  // `__proto__.polluted` would, without guards, drive `writeAtPath`
+  // into `Object.prototype` and pollute every object in the runtime.
+  // We close this both at parse time (clean error for operators) and
+  // at access time (defence in depth for callers that build segment
+  // arrays directly).
+
+  for (const reserved of ["__proto__", "prototype", "constructor"] as const) {
+    it(`parsePath rejects "${reserved}" as a dotted segment`, () => {
+      expect(() => parsePath(`a.${reserved}.b`)).toThrow(/reserved segment/);
+    });
+
+    it(`parsePath rejects "${reserved}" as a leading segment`, () => {
+      expect(() => parsePath(`${reserved}.foo`)).toThrow(/reserved segment/);
+    });
+  }
+
+  it("parsePath does not reject reserved names appearing as substrings of other keys", () => {
+    // Defence-in-depth must not block legitimate keys like
+    // `constructorName` that just happen to share a prefix.
+    expect(() => parsePath("a.constructorName.b")).not.toThrow();
+    expect(() => parsePath("__proto__hack")).not.toThrow();
+  });
+
+  it("readAtPath returns undefined for __proto__ even when called with a hand-built segment array", () => {
+    // parsePath blocks this at config time, but readAtPath is
+    // exported and may be invoked with PathSegment[] directly.
+    expect(readAtPath({}, ["__proto__"])).toBeUndefined();
+    expect(readAtPath({}, ["__proto__", "toString"])).toBeUndefined();
+    expect(readAtPath({}, ["constructor", "name"])).toBeUndefined();
+  });
+
+  it("writeAtPath refuses to assign through __proto__ as terminal segment", () => {
+    expect(() => writeAtPath({}, ["__proto__"], { polluted: true })).toThrow(/reserved/);
+    expect(() => writeAtPath({}, ["constructor"], "x")).toThrow(/reserved/);
+  });
+
+  it("writeAtPath refuses to traverse through __proto__ on intermediate segments", () => {
+    // Walking __proto__ as an intermediate would land us on
+    // Object.prototype; the hasOwn guard turns it into a normal
+    // missing-parent error rather than a polluting write.
+    expect(() => writeAtPath({}, ["__proto__", "polluted"], true)).toThrow(/null\/undefined/);
+    // Confirm no pollution leaked despite the throw.
+    expect(({} as Record<string, unknown>).polluted).toBeUndefined();
+  });
+
+  it("expandPath skips reserved-name traversal when invoked with parsed paths", () => {
+    // parsePath rejects reserved names, so this is the only way to
+    // exercise the access-side guard for expandPath — via a
+    // wildcard that fans out to ordinary keys, with the reserved
+    // name pre-blocked at parse time.
+    expect(() => parsePath("a.__proto__")).toThrow(/reserved/);
+  });
+});

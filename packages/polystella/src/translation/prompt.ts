@@ -29,6 +29,33 @@ import type { Glossary } from "../glossary/glossary.js";
  */
 const MARKER = "@@";
 
+/**
+ * Marker-line regex used by `parseResponse` to split the model's
+ * response. Hardcoded as a literal (rather than built from `MARKER`
+ * via `new RegExp(...)`) so static analysers can prove the pattern
+ * isn't constructed from tainted input (Semgrep
+ * detect-non-literal-regexp). MUST stay in sync with `MARKER`; the
+ * guard below trips at import time if they drift.
+ *
+ * Pattern parts:
+ *   `^`               with the `m` flag: start of a line
+ *   `@@`              opening marker (= `MARKER`)
+ *   `([^@\n]+?)`      lazy capture of the id; can't span `@` or `\n`,
+ *                     so backtracking is bounded by line length →
+ *                     overall linear, no ReDoS surface
+ *   `@@`              closing marker (= `MARKER`)
+ *   `\s*$`            optional trailing whitespace, end of line
+ *   flags `gm`        global + multi-line so `String.split` slices on
+ *                     every marker line in the response
+ */
+const MARKER_LINE_RE = /^@@([^@\n]+?)@@\s*$/gm;
+if (MARKER !== "@@") {
+  throw new Error(
+    `[polystella] internal invariant violated: MARKER_LINE_RE assumes MARKER === "@@", got ${JSON.stringify(MARKER)}. ` +
+      `Update both together.`,
+  );
+}
+
 export interface BuildPromptInput {
   segments: Segment[];
   glossary: Glossary;
@@ -139,11 +166,12 @@ export function parseResponse(rawText: string, expectedIds: string[]): Map<strin
   //   parts[3]      = second id
   //   parts[4]      = second content
   //   …
-  // Multi-line flag so `^`/`$` match line starts/ends rather than
-  // string ends — the marker has to be on its own line so we don't
-  // mis-detect `@@something@@` if it appears mid-sentence.
-  const markerRe = new RegExp(`^${escapeRegExp(MARKER)}([^@\\n]+?)${escapeRegExp(MARKER)}\\s*$`, "gm");
-  const parts = cleaned.split(markerRe);
+  // `MARKER_LINE_RE` is a hardcoded literal at module scope — see
+  // its definition for the pattern breakdown and the rationale for
+  // not constructing it dynamically. `String.prototype.split`
+  // resets `lastIndex` to 0 at the start of each call on a
+  // g-flagged regex, so sharing one frozen instance is safe.
+  const parts = cleaned.split(MARKER_LINE_RE);
 
   if (parts.length < 3) {
     throw new Error(
@@ -206,9 +234,43 @@ export function parseResponse(rawText: string, expectedIds: string[]): Map<strin
   return result;
 }
 
+/**
+ * If `text` is wrapped in a triple-backtick code fence, return the
+ * inner body trimmed; otherwise return `text` unchanged.
+ *
+ * Implemented with linear `startsWith` / `endsWith` / `indexOf`
+ * scans rather than a regex like
+ * `/^```(?:\w+)?\s*\n([\s\S]*?)\n```$/i` because that regex
+ * backtracks quadratically on adversarial-shaped model output —
+ * e.g. content starting with ```` ```\n ```` followed by many
+ * `\n ` repetitions with no closing fence (CodeQL
+ * js/polynomial-redos). Model output is the closest thing to
+ * "uncontrolled input" we get in this codebase, so the linear
+ * variant is worth the few extra lines.
+ */
 function stripCodeFences(text: string): string {
-  const fenced = /^```(?:\w+)?\s*\n([\s\S]*?)\n```$/i.exec(text);
-  return fenced?.[1]?.trim() ?? text;
+  // Cheap rejection: must open AND close with ```; need at least
+  // ```\n\n``` (6 chars) to have any body to extract.
+  if (!text.startsWith("```") || !text.endsWith("```") || text.length < 6) {
+    return text;
+  }
+  // Opening-fence line ends at the first \n; everything between the
+  // initial ``` and that \n is treated as the (optional) language
+  // tag and trailing whitespace, mirroring the old regex's
+  // `(?:\w+)?\s*` permissiveness.
+  const firstNewline = text.indexOf("\n");
+  if (firstNewline === -1) return text;
+  // Closing fence is the trailing ``` — it must sit on its own line,
+  // i.e. be preceded by \n. `text.length - 3` is the index of the
+  // first backtick in the closing fence; the char before that must
+  // be a newline (char code 10).
+  const closeIdx = text.length - 3;
+  if (text.charCodeAt(closeIdx - 1) !== 10 /* \n */) return text;
+  // The body spans [firstNewline + 1, closeIdx - 1) — i.e. after the
+  // opening-fence newline and before the closing-fence newline. If
+  // those collapse to nothing, treat as unfenced.
+  if (closeIdx - 1 <= firstNewline) return text;
+  return text.slice(firstNewline + 1, closeIdx - 1).trim();
 }
 
 function truncateRaw(text: string, max = 2000): string {
@@ -218,10 +280,6 @@ function truncateRaw(text: string, max = 2000): string {
   const headChars = Math.floor(max / 2);
   const tailChars = max - headChars;
   return `${text.slice(0, headChars)}\n... [truncated middle, total length ${text.length}] ...\n${text.slice(-tailChars)}`;
-}
-
-function escapeRegExp(s: string): string {
-  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function localeName(code: string): string {

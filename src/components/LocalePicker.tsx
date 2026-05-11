@@ -46,7 +46,7 @@ export function LocalePicker({ dict, locale, pathname }: LocalePickerProps) {
               {localeName(locale)}
             </span>
           </NavigationMenuTrigger>
-          <NavigationMenuContent>
+          <NavigationMenuContent className="left-auto right-0">
             <ul className="grid gap-1 w-[180px] z-(--z-nav) relative p-2">
               {locales.map((targetLocale) => {
                 const isCurrent = targetLocale === locale;

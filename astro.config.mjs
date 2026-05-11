@@ -13,7 +13,7 @@ import polystellaConfig from "./polystella.config.mjs";
 
 const i18n = {
   defaultLocale: "en-US",
-  locales: ["en-US", "pt-BR", "ja-JP", "es-ES"],
+  locales: ["en-US", "es-ES", "pt-BR", "ja-JP"],
   routing: { prefixDefaultLocale: false },
 };
 

@@ -13,7 +13,7 @@ export { defaultLocale, locales };
 /** Native endonyms shown in the picker; falls back to the bare code. */
 export const LOCALE_NAMES: Record<string, string> = {
   "en-US": "English",
-  "pt-BR": "Português",
+  "pt-BR": "Português (Brasil)",
   "ja-JP": "日本語",
   "es-ES": "Español",
 };

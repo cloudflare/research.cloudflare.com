@@ -52,7 +52,7 @@
     "prepublishOnly": "pnpm build:cli"
   },
   "dependencies": {
-    "picomatch": "^4.0.2",
+    "picomatch": "^4.0.4",
     "remark-frontmatter": "^5.0.0",
     "remark-gfm": "^4.0.1",
     "remark-mdx": "^3.1.1",

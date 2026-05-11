@@ -172,6 +172,14 @@ export function NavMenu({ dict, locale, pathname }: NavMenuProps) {
                 )}
               </div>
 
+              <a
+                href={CONSTANTS.CLOUDFLARE_JOBS}
+                className="text-lg font-medium text-page-text hover:text-baby-blue-eyes transition-colors"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {t("nav.careers")}
+              </a>
+
               {/* Language section */}
               <div>
                 <button
@@ -204,14 +212,6 @@ export function NavMenu({ dict, locale, pathname }: NavMenuProps) {
                   </div>
                 )}
               </div>
-
-              <a
-                href={CONSTANTS.CLOUDFLARE_JOBS}
-                className="text-lg font-medium text-page-text hover:text-baby-blue-eyes transition-colors"
-                onClick={() => setMobileMenuOpen(false)}
-              >
-                {t("nav.careers")}
-              </a>
             </nav>
           </div>
         )}

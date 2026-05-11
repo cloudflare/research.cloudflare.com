@@ -7,10 +7,8 @@ import FeaturedResearch from "@/components/home/FeaturedResearch.astro";
 import Section from "@/components/Section.astro";
 import ButtonLink from "@/components/ButtonLink.astro";
 import Icon from "@/components/Icon.astro";
-import { getLocalizedEntry } from "polystella/runtime";
 import { CONSTANTS } from "@/lib/constants";
 import SeeMore from "@/components/SeeMore.astro";
-import { computeTranslationStatus } from "@/lib/i18n-utils";
 
 const { t, lhref, getLocalizedCollection } = Astro.locals;
 
@@ -23,14 +21,15 @@ const recentPublications = (await getLocalizedCollection("publications", ({ data
   })
   .slice(0, 3);
 
-// Load the featured-research entry here (in addition to inside
-// `<FeaturedResearch />`) to drive `aiTranslationStatus` from its
-// `aiTranslated` marker. Astro's content layer caches the lookup.
-const siteEntry = await getLocalizedEntry("site", "main", Astro.currentLocale);
-const aiTranslationStatus = computeTranslationStatus(Astro.currentLocale, siteEntry);
+// No `aiTranslationStatus` prop: the home's visible content is mostly UI
+// strings (translated via the i18n dictionary), not a single primary
+// entry. Let `BaseLayout`'s locale-based default ("ai" for non-default
+// locales) drive the banner so it shows whenever the page chrome is
+// in a non-default language, regardless of whether the optional
+// `site.toml` sidecar happens to be staged.
 ---
 
-<BaseLayout bodyClassName="home" metaDescription={t("home.metaDescription")} aiTranslationStatus={aiTranslationStatus}>
+<BaseLayout bodyClassName="home" metaDescription={t("home.metaDescription")}>
   <Fragment slot="head">
     <link rel="preload" href="/unicornStudio.umd.js" as="script" />
     <link rel="preload" href="/blue_liquid.json" as="fetch" crossorigin />
