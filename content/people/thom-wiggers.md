@@ -1,5 +1,5 @@
 ---
-title: thom-wiggers
+title: Thom Wiggers
 position: External Collaborator
 avatar: placeholder.png
 slug: thom-wiggers

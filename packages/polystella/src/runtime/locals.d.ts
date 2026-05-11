@@ -99,6 +99,13 @@ declare global {
        * `({ data }) => ...` filters work unchanged because the
        * extension fields don't shadow `data`.
        *
+       * Filter return type is `unknown` (matching Astro's
+       * `getCollection` convention) so callers can return a
+       * `boolean | undefined` from an optional chain
+       * (`(pub) => pub.data.authors?.some(...)`) without explicit
+       * coercion. `Array.prototype.filter` truthiness-checks the
+       * result at runtime.
+       *
        * Like `getLocalizedEntry`, this is unavailable in
        * `getStaticPaths` (which runs at build time outside the
        * request lifecycle) — use the explicit-import
@@ -107,7 +114,7 @@ declare global {
        */
       getLocalizedCollection: <C extends string>(
         collection: C,
-        filter?: (entry: LocalizedEntry<CollectionEntry<C>>) => boolean,
+        filter?: (entry: LocalizedEntry<CollectionEntry<C>>) => unknown,
       ) => Promise<LocalizedEntry<CollectionEntry<C>>[]>;
     }
   }

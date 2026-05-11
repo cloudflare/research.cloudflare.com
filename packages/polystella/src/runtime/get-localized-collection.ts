@@ -70,8 +70,16 @@ export interface ResolveLocalizedCollectionInput<TEntry extends SourceEntryShape
    * Receives the extended `LocalizedEntry<TEntry>` shape so callers
    * can read `isLocalized` / `locale`. When omitted, all merged
    * entries are returned.
+   *
+   * Return type is `unknown` (not `boolean`) to match Astro's
+   * `getCollection` filter convention — `Array.prototype.filter`
+   * coerces any return value to a boolean, so callers can write
+   * `(pub) => pub.data.authors?.some(...)` without coercing the
+   * optional-chain return to `boolean` themselves. Existing
+   * `(e) => e.data.foo === "bar"` filters keep working since
+   * `boolean` is assignable to `unknown`.
    */
-  filter?: (entry: LocalizedEntry<TEntry>) => boolean;
+  filter?: (entry: LocalizedEntry<TEntry>) => unknown;
   deps: ResolveLocalizedCollectionDeps<TEntry>;
 }
 

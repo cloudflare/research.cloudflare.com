@@ -130,7 +130,7 @@ export const collections = {
     loaderOverrides: {
       // `blog` uses a custom loader; opting it out so the warning goes
       // away. Blog posts are English-only by design today.
-      blog: { kind: "skip", reason: "blog posts are English-only" },
+      //blog: { kind: "skip", reason: "blog posts are English-only" },
     },
   }),
 };

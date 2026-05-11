@@ -565,6 +565,41 @@ describe("resolveLocalizedCollection — filter", () => {
     expect(result.map((e) => e.id)).toEqual(["a", "c"]);
   });
 
+  it("accepts filters that return boolean | undefined (matches Astro's getCollection)", async () => {
+    // Real-world pattern: filtering by a field reached through an
+    // optional chain (`pub.data.authors?.some(...)`) returns
+    // `boolean | undefined`. Astro's `getCollection` accepts this
+    // because its filter signature is `(entry) => unknown`. Pin
+    // that we behave the same way — the resolver passes the
+    // callback straight to `Array.prototype.filter`, which
+    // truthiness-checks the return.
+    const deps = makeDeps({
+      getCollection: makeGetCollection({
+        publications: [
+          entry("publications", "with-authors", { authors: [{ id: "alice" }] }),
+          entry("publications", "without-authors", {}),
+          entry("publications", "wrong-author", { authors: [{ id: "bob" }] }),
+        ],
+      }),
+    });
+
+    const slug = "alice";
+    const result = await resolveLocalizedCollection({
+      collection: "publications",
+      locale: undefined,
+      // Optional-chain return → `boolean | undefined`. Should
+      // type-check AND filter correctly at runtime.
+      filter: (e) =>
+        (e.data.authors as Array<{ id: string }> | undefined)?.some(
+          (author) => author.id === slug,
+        ),
+      deps,
+    });
+
+    expect(result).toHaveLength(1);
+    expect(result[0]?.id).toBe("with-authors");
+  });
+
   it("applies filter on translated data when available", async () => {
     // When the filter reads translatable fields, it sees the
     // translated value on sibling-hit entries and the source value

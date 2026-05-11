@@ -1,5 +1,4 @@
 import type { Loader } from "astro/loaders";
-import { z } from "astro/zod";
 import fs from "node:fs";
 import path from "node:path";
 import { blogMappings } from "../data/blog-mappings";
@@ -135,14 +134,9 @@ export function blogLoader(): Loader {
         for (const [blogAuthor, peopleSlug] of Object.entries(blogAuthorMap)) {
           let authorPosts: BlogPost[];
           try {
-            authorPosts = await fetchWithCache(
-              `/blog/author?name=${blogAuthor}`,
-              `blogposts_${blogAuthor}.json`
-            );
+            authorPosts = await fetchWithCache(`/blog/author?name=${blogAuthor}`, `blogposts_${blogAuthor}.json`);
           } catch (err) {
-            logger.warn(
-              `Failed to fetch posts for author "${blogAuthor}": ${err}`
-            );
+            logger.warn(`Failed to fetch posts for author "${blogAuthor}": ${err}`);
             continue;
           }
 
@@ -174,9 +168,7 @@ export function blogLoader(): Loader {
         }
 
         if (extraCount > 0) {
-          logger.info(
-            `Loaded ${extraCount} additional blog posts from per-author endpoints`
-          );
+          logger.info(`Loaded ${extraCount} additional blog posts from per-author endpoints`);
         }
       } catch (error) {
         logger.error(`Failed to load blog posts: ${error}`);

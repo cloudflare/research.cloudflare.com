@@ -1,5 +1,5 @@
 ---
-title: thomas-ristenpart
+title: Thomas Ristenpart
 position: External Collaborator
 avatar: placeholder.png
 slug: thomas-ristenpart

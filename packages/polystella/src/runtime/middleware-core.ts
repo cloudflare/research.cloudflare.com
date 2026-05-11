@@ -133,10 +133,15 @@ export type BoundGetLocalizedEntry = (
  * filter receives the merged-and-tagged shape so callers can
  * branch on `entry.isLocalized` / `entry.locale` if they want to;
  * existing `({ data }) => ...` filters work unchanged.
+ *
+ * Filter return type is `unknown` (not `boolean`) to match Astro's
+ * `getCollection` filter convention — callers can write
+ * `(pub) => pub.data.authors?.some(...)` without coercing the
+ * optional-chain `boolean | undefined` to `boolean`.
  */
 export type BoundGetLocalizedCollection = (
   collection: string,
-  filter?: (entry: LocalizedEntry<SourceEntryShape>) => boolean,
+  filter?: (entry: LocalizedEntry<SourceEntryShape>) => unknown,
 ) => Promise<LocalizedEntry<SourceEntryShape>[]>;
 
 /**

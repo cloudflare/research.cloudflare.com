@@ -1,5 +1,5 @@
 ---
-title: goutam-tamvada
+title: Goutam Tamvada
 position: External Collaborator
 avatar: placeholder.png
 slug: goutam-tamvada

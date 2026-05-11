@@ -1,5 +1,5 @@
 ---
-title: mike-rosulek
+title: Mike Rosulek
 position: External Collaborator
 avatar: placeholder.png
 slug: mike-rosulek

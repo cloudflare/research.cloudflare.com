@@ -104,7 +104,11 @@ export async function getLocalizedEntry<C extends string>(
  */
 export async function getLocalizedCollection<C extends string>(
   collection: C,
-  filter?: (entry: LocalizedEntry<CollectionEntry<C>>) => boolean,
+  // `unknown` return matches Astro's `getCollection` filter shape, so
+  // callers can write `(pub) => pub.data.authors?.some(...)` without
+  // coercing the optional-chain return. `Array.prototype.filter`
+  // truthiness-checks the result.
+  filter?: (entry: LocalizedEntry<CollectionEntry<C>>) => unknown,
   locale?: string,
 ): Promise<LocalizedEntry<CollectionEntry<C>>[]> {
   const result = await resolveLocalizedCollection({
@@ -114,7 +118,7 @@ export async function getLocalizedCollection<C extends string>(
     // `LocalizedEntry<SourceEntryShape>` for the pure-core call;
     // structurally lossless because `CollectionEntry<C>` extends
     // `SourceEntryShape` (both have `collection`/`id`/`data`).
-    filter: filter as ((entry: LocalizedEntry<SourceEntryShape>) => boolean) | undefined,
+    filter: filter as ((entry: LocalizedEntry<SourceEntryShape>) => unknown) | undefined,
     deps: {
       defaultLocale,
       fallback,
