@@ -34,12 +34,7 @@
  * is preserved verbatim.
  */
 
-import type {
-  LocalizedEntry,
-  LocalizedFallbackPolicy,
-  NoTranslatePolicy,
-  SourceEntryShape,
-} from "./get-localized-entry.js";
+import type { LocalizedEntry, LocalizedFallbackPolicy, NoTranslatePolicy, SourceEntryShape } from "./get-localized-entry.js";
 import { withExtensions } from "./get-localized-entry.js";
 
 export interface ResolveLocalizedCollectionDeps<TEntry extends SourceEntryShape = SourceEntryShape> {
@@ -117,10 +112,7 @@ export async function resolveLocalizedCollection<TEntry extends SourceEntryShape
   }
 
   const localizedCollection = `${collection}__${locale}`;
-  const [siblings, sources] = await Promise.all([
-    deps.getCollection(localizedCollection),
-    deps.getCollection(collection),
-  ]);
+  const [siblings, sources] = await Promise.all([deps.getCollection(localizedCollection), deps.getCollection(collection)]);
 
   // Index siblings by id so per-source lookups stay O(1).
   // Sibling entries carry the SAME `id` as their source — that's the

@@ -133,16 +133,7 @@ describe("markdownAdapter — MDX extraction", () => {
     // Sanity that two levels of JSX nesting work — both Section and
     // NarrowContent need to be recursed into for the inner prose to
     // surface.
-    const nested = [
-      "<Outer>",
-      "<Inner>",
-      "",
-      "Inside two layers.",
-      "",
-      "</Inner>",
-      "</Outer>",
-      "",
-    ].join("\n");
+    const nested = ["<Outer>", "<Inner>", "", "Inside two layers.", "", "</Inner>", "</Outer>", ""].join("\n");
     const parsed = markdownAdapter.parse(nested, "pages/test.mdx");
     const segments = markdownAdapter.extractSegments(parsed, nested, adapterOpts);
     expect(segments.map((s) => s.text)).toContain("Inside two layers.");
@@ -152,19 +143,11 @@ describe("markdownAdapter — MDX extraction", () => {
     const parsed = markdownAdapter.parse(SAMPLE_MDX, "pages/philosophy.mdx");
     const segments = markdownAdapter.extractSegments(parsed, SAMPLE_MDX, adapterOpts);
     const fmSegs = segments.filter((s) => s.id.startsWith("fm:"));
-    expect(fmSegs.map((s) => `${s.id}=${s.text}`).sort()).toEqual([
-      "fm:metaTitle=Philosophy",
-      "fm:title=Philosophy",
-    ]);
+    expect(fmSegs.map((s) => `${s.id}=${s.text}`).sort()).toEqual(["fm:metaTitle=Philosophy", "fm:title=Philosophy"]);
   });
 
   it("ignores expression bindings (`{value}`) at block level", () => {
-    const withExpr = [
-      "{someValue}",
-      "",
-      "Real prose here.",
-      "",
-    ].join("\n");
+    const withExpr = ["{someValue}", "", "Real prose here.", ""].join("\n");
     const parsed = markdownAdapter.parse(withExpr, "pages/test.mdx");
     const segments = markdownAdapter.extractSegments(parsed, withExpr, adapterOpts);
     const texts = segments.map((s) => s.text);

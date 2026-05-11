@@ -20,11 +20,7 @@ import { defineCollection as astroDefineCollection } from "astro:content";
 import { glob as astroGlob, file as astroFile } from "astro/loaders";
 import { defaultLocale as configuredDefaultLocale, locales as configuredLocales } from "polystella:runtime-config";
 
-import {
-  buildCollections,
-  type BuildCollectionsOptions,
-  type PolystellaCollectionsOutput,
-} from "./build.js";
+import { buildCollections, type BuildCollectionsOptions, type PolystellaCollectionsOutput } from "./build.js";
 
 export {
   buildCollections,

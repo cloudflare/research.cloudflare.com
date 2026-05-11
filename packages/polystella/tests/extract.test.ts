@@ -167,7 +167,7 @@ describe("extractSegments — frontmatter", () => {
     // provokes empty-response failures from small instruct models.
     // Mirrors the body extractor's `text.length > 0` guard and the
     // structured-data adapters' empty-string skip.
-    const src = ['---', 'description: ""', 'title: "Hello"', '---', "", "Body.", ""].join("\n");
+    const src = ["---", 'description: ""', 'title: "Hello"', "---", "", "Body.", ""].join("\n");
     const ast = parseMarkdown(src);
     const segments = extractSegments(
       ast,

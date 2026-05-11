@@ -76,9 +76,14 @@ export const collections = {
 import { polystellaLoader } from "polystella/content";
 
 export function blogLoader() {
-  const raw = { name: "blog-loader", load: async (ctx) => { /* fetch + store.set */ } };
+  const raw = {
+    name: "blog-loader",
+    load: async (ctx) => {
+      /* fetch + store.set */
+    },
+  };
   return polystellaLoader(raw, {
-    name: "blog",                          // matches the defineCollection key
+    name: "blog", // matches the defineCollection key
     translatableKeys: ["title", "excerpt"], // top-level data fields to translate
   });
 }
@@ -115,9 +120,9 @@ UI strings and locale-prefixed URLs sit alongside on `Astro.locals`:
 
 ```ts
 import {
-  getLocalizedEntry,        // (collection, id, locale?)
-  getLocalizedCollection,   // (collection, filter?, locale?)
-  localizedHref,            // (href, locale?)
+  getLocalizedEntry, // (collection, id, locale?)
+  getLocalizedCollection, // (collection, filter?, locale?)
+  localizedHref, // (href, locale?)
 } from "polystella/runtime";
 ```
 
@@ -183,14 +188,14 @@ A developer's local build cannot overwrite production. Preview branches stay iso
 
 ## Public exports
 
-| Path                                       | Surface                                                                        |
-| ------------------------------------------ | ------------------------------------------------------------------------------ |
-| `polystella`                               | The Astro integration default export.                                          |
+| Path                                       | Surface                                                                                   |
+| ------------------------------------------ | ----------------------------------------------------------------------------------------- |
+| `polystella`                               | The Astro integration default export.                                                     |
 | `polystella/content`                       | `polystellaCollections({ ... })`, `file()`, `polystellaLoader()` for `content.config.ts`. |
-| `polystella/runtime`                       | `getLocalizedEntry`, `getLocalizedCollection`, `localizedHref`, `polystellaMiddleware`. |
-| `polystella/i18n`                          | `i18nLoader`, `i18nSchema`, `getTranslations`, `getDictionary`, drift helpers. |
-| `polystella/react`                         | `useTranslations(dictionary)` for React islands.                               |
-| `polystella/components/LocalePicker.astro` | Unstyled, accessible locale switcher.                                          |
+| `polystella/runtime`                       | `getLocalizedEntry`, `getLocalizedCollection`, `localizedHref`, `polystellaMiddleware`.   |
+| `polystella/i18n`                          | `i18nLoader`, `i18nSchema`, `getTranslations`, `getDictionary`, drift helpers.            |
+| `polystella/react`                         | `useTranslations(dictionary)` for React islands.                                          |
+| `polystella/components/LocalePicker.astro` | Unstyled, accessible locale switcher.                                                     |
 
 ## Status
 

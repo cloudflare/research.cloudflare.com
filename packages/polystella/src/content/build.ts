@@ -67,10 +67,7 @@ export type PolystellaCollectionsOutput<TSource extends Record<string, unknown>,
  * reach this internal shape directly so they can pin literal locale
  * tuples without booting the integration.
  */
-export interface BuildCollectionsOptions<
-  TSource extends Record<string, unknown>,
-  TLocales extends readonly string[] = readonly string[],
-> {
+export interface BuildCollectionsOptions<TSource extends Record<string, unknown>, TLocales extends readonly string[] = readonly string[]> {
   /** User's source collections, keyed by name. */
   source: TSource;
   /**
@@ -270,16 +267,7 @@ export function deriveSiblingCollection(args: {
   deps: PolystellaCollectionsDeps;
   logger: { warn: (message: string) => void };
 }): unknown | null {
-  const {
-    collectionName,
-    sourceCollection,
-    locale,
-    stagingDir,
-    sourceDir = DEFAULT_SOURCE_DIR,
-    override,
-    deps,
-    logger,
-  } = args;
+  const { collectionName, sourceCollection, locale, stagingDir, sourceDir = DEFAULT_SOURCE_DIR, override, deps, logger } = args;
 
   const stagingBase = `${stagingDir}/${locale}/${collectionName}`;
   const sourceSchema = readSchema(sourceCollection);
@@ -287,8 +275,7 @@ export function deriveSiblingCollection(args: {
   // marker so consumer code can read `entry.data.aiTranslated` on
   // translated entries. The extender warns and preserves consumer
   // declarations on collisions (see `extend-schema.ts`).
-  const schema =
-    sourceSchema !== undefined ? extendSchemaWithAiMarker(sourceSchema, { collectionName, logger }) : undefined;
+  const schema = sourceSchema !== undefined ? extendSchemaWithAiMarker(sourceSchema, { collectionName, logger }) : undefined;
 
   // Auto-detect a polystella-wrapped custom loader BEFORE the file()
   // detect — these loaders need a special sibling (the runtime

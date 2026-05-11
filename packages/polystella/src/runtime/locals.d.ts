@@ -71,13 +71,8 @@ declare global {
        * sync`) get full schema-aware inference on `entry.data.*`.
        */
       getLocalizedEntry: {
-        <C extends string>(
-          ref: { collection: C; id: string },
-        ): Promise<LocalizedEntry<CollectionEntry<C>> | undefined>;
-        <C extends string>(
-          collection: C,
-          id: string,
-        ): Promise<LocalizedEntry<CollectionEntry<C>> | undefined>;
+        <C extends string>(ref: { collection: C; id: string }): Promise<LocalizedEntry<CollectionEntry<C>> | undefined>;
+        <C extends string>(collection: C, id: string): Promise<LocalizedEntry<CollectionEntry<C>> | undefined>;
       };
 
       /**

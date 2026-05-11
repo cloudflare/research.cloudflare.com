@@ -16,28 +16,20 @@ const localePrefix = (url: string) => (url.startsWith("/") ? `/pt-BR${url}` : `/
 
 describe("markdownAdapter — rewriteUrls (frontmatter)", () => {
   it("rewrites a single URL key in frontmatter", () => {
-    const source = ['---', 'title: "Hello"', "heroImage: /images/hero.png", "---", "", "Body content."].join("\n");
+    const source = ["---", 'title: "Hello"', "heroImage: /images/hero.png", "---", "", "Body content."].join("\n");
     const out = markdownAdapter.rewriteUrls!(source, {
       paths: ["heroImage"],
       rewriter: (url) => (url.startsWith("/") ? localePrefix(url) : null),
     });
     expect(out).toContain("heroImage: /pt-BR/images/hero.png");
     // Title is unaffected.
-    expect(out).toContain('title: Hello');
+    expect(out).toContain("title: Hello");
     // Body is unaffected.
     expect(out).toContain("Body content.");
   });
 
   it("rewrites multiple URL keys in one pass", () => {
-    const source = [
-      "---",
-      'title: "Hello"',
-      "heroImage: /a.png",
-      "pdfLink: /docs/paper.pdf",
-      "---",
-      "",
-      "Body.",
-    ].join("\n");
+    const source = ["---", 'title: "Hello"', "heroImage: /a.png", "pdfLink: /docs/paper.pdf", "---", "", "Body."].join("\n");
     const out = markdownAdapter.rewriteUrls!(source, {
       paths: ["heroImage", "pdfLink"],
       rewriter: (url) => (url.startsWith("/") ? localePrefix(url) : null),
@@ -94,7 +86,7 @@ describe("markdownAdapter — rewriteUrls (frontmatter)", () => {
   it("preserves body links untouched (not its responsibility)", () => {
     // Body link rewriting is rewriteInternalLinks's job, not the
     // adapter's. The adapter must not double up.
-    const source = ['---', 'heroImage: /a.png', "---", "", "See [docs](/docs/intro)."].join("\n");
+    const source = ["---", "heroImage: /a.png", "---", "", "See [docs](/docs/intro)."].join("\n");
     const out = markdownAdapter.rewriteUrls!(source, {
       paths: ["heroImage"],
       rewriter: (url) => (url.startsWith("/") ? localePrefix(url) : null),

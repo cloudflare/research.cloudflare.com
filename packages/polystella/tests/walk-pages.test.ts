@@ -54,12 +54,7 @@ describe("walkPages", () => {
   });
 
   it("ignores non-.astro files", async () => {
-    const root = await makeFixture([
-      "src/pages/index.astro",
-      "src/pages/about.md",
-      "src/pages/script.ts",
-      "src/styles/global.css",
-    ]);
+    const root = await makeFixture(["src/pages/index.astro", "src/pages/about.md", "src/pages/script.ts", "src/styles/global.css"]);
     const result = await walkPages(root);
     expect(result).toEqual(["src/pages/index.astro"]);
   });
@@ -84,10 +79,7 @@ describe("walkPages", () => {
   });
 
   it("handles deeply nested .astro files", async () => {
-    const root = await makeFixture([
-      "src/pages/a/b/c/deep.astro",
-      "src/pages/a/b/sibling.astro",
-    ]);
+    const root = await makeFixture(["src/pages/a/b/c/deep.astro", "src/pages/a/b/sibling.astro"]);
     const result = await walkPages(root);
     expect(result.sort()).toEqual(["src/pages/a/b/c/deep.astro", "src/pages/a/b/sibling.astro"]);
   });

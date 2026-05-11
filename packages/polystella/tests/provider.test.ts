@@ -464,12 +464,7 @@ describe("translateBatch — retries", () => {
   it("retries on parse failure and returns the second attempt's parsed map", async () => {
     // First attempt: model returned an empty body for fm:title (the
     // probabilistic-glitch case observed in the wild).
-    const emptyForFmTitle = [
-      "@@fm:title@@",
-      "",
-      "@@body:0@@",
-      "Pedimos **desculpas** por qualquer inconveniência.",
-    ].join("\n");
+    const emptyForFmTitle = ["@@fm:title@@", "", "@@body:0@@", "Pedimos **desculpas** por qualquer inconveniência."].join("\n");
     const translate = vi.fn().mockResolvedValueOnce(emptyForFmTitle).mockResolvedValueOnce(goodResponse);
     const onRetry = vi.fn();
 

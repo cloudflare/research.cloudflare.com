@@ -12,10 +12,7 @@ import {
   type CustomLoaderTranslateRecord,
   type PolystellaRuntimeBridge,
 } from "../src/runtime/custom-loader-runtime.js";
-import type {
-  CapturedEntry,
-  PolystellaCustomLoaderMarker,
-} from "../src/content/custom-loader.js";
+import type { CapturedEntry, PolystellaCustomLoaderMarker } from "../src/content/custom-loader.js";
 import { EMPTY_GLOSSARY } from "../src/glossary/glossary.js";
 import type { Translator } from "../src/translation/provider.js";
 import type { R2Client } from "../src/storage/r2.js";
@@ -324,9 +321,7 @@ describe("createCustomLoaderSibling — translation flow", () => {
 
     const sourceDate = new Date("2026-04-15T12:34:56.000Z");
     const marker = makeMarker({
-      captureEntries: async () => [
-        { id: "x", data: { title: "Hello", excerpt: "world", date: sourceDate, tags: ["a"] } },
-      ],
+      captureEntries: async () => [{ id: "x", data: { title: "Hello", excerpt: "world", date: sourceDate, tags: ["a"] } }],
     });
     const sibling = createCustomLoaderSibling({ marker, locale: "pt-BR" });
     const spy = makeStoreSpy();
@@ -375,9 +370,7 @@ describe("createCustomLoaderSibling — translation flow", () => {
 
     const sourceDate = new Date("2026-04-15T12:34:56.000Z");
     const marker = makeMarker({
-      captureEntries: async () => [
-        { id: "x", data: { title: "src", excerpt: "src", date: sourceDate, tags: ["source"] } },
-      ],
+      captureEntries: async () => [{ id: "x", data: { title: "src", excerpt: "src", date: sourceDate, tags: ["source"] } }],
     });
     const sibling = createCustomLoaderSibling({ marker, locale: "pt-BR" });
     const spy = makeStoreSpy();
@@ -403,9 +396,7 @@ describe("createCustomLoaderSibling — translation flow", () => {
     setRuntimeBridge(bridge);
 
     const marker = makeMarker({
-      captureEntries: async () => [
-        { id: "x", data: { title: 42 as unknown as string, excerpt: "real" } },
-      ],
+      captureEntries: async () => [{ id: "x", data: { title: 42 as unknown as string, excerpt: "real" } }],
     });
     const sibling = createCustomLoaderSibling({ marker, locale: "pt-BR" });
     const spy = makeStoreSpy();
@@ -636,9 +627,7 @@ describe("createCustomLoaderSibling — staging fast-path", () => {
     setRuntimeBridge(bridge);
 
     const marker = makeMarker({
-      captureEntries: async () => [
-        { id: "a", data: { title: "src", excerpt: "src" } },
-      ],
+      captureEntries: async () => [{ id: "a", data: { title: "src", excerpt: "src" } }],
     });
     const sibling = createCustomLoaderSibling({ marker, locale: "pt-BR" });
     const spy = makeStoreSpy();
@@ -663,9 +652,7 @@ describe("createCustomLoaderSibling — staging fast-path", () => {
     setRuntimeBridge(bridge);
 
     const marker = makeMarker({
-      captureEntries: async () => [
-        { id: "a", data: { title: "Hello", excerpt: "world" } },
-      ],
+      captureEntries: async () => [{ id: "a", data: { title: "Hello", excerpt: "world" } }],
     });
     const sibling = createCustomLoaderSibling({ marker, locale: "pt-BR" });
     const spy = makeStoreSpy();
@@ -707,87 +694,83 @@ describe("createCustomLoaderSibling — staging fast-path", () => {
 });
 
 describe("createCustomLoaderSibling — concurrency", () => {
-  it(
-    "translates entries in parallel up to bridge.concurrency",
-    async () => {
-      // Pin that workers run concurrently. Each translation pauses
-      // before resolving; we count how many are in-flight at peak.
-      // With concurrency=3 and 6 entries, peak in-flight should be 3.
-      let inFlight = 0;
-      let peakInFlight = 0;
-      const release: (() => void)[] = [];
+  it("translates entries in parallel up to bridge.concurrency", async () => {
+    // Pin that workers run concurrently. Each translation pauses
+    // before resolving; we count how many are in-flight at peak.
+    // With concurrency=3 and 6 entries, peak in-flight should be 3.
+    let inFlight = 0;
+    let peakInFlight = 0;
+    const release: (() => void)[] = [];
 
-      const slowTranslator: Translator = {
-        modelId: "slow",
-        translate: vi.fn(async (_sys: string, userPrompt: string) => {
-          inFlight++;
-          peakInFlight = Math.max(peakInFlight, inFlight);
-          // Wait for the test to release us. This pins all `concurrency`
-          // workers in flight simultaneously.
-          await new Promise<void>((resolve) => release.push(resolve));
-          inFlight--;
-          // Emit a minimal valid response to satisfy parseResponse.
-          const ids = [...userPrompt.matchAll(/^@@([^@\n]+?)@@/gm)].map((m) => m[1]);
-          return ids.map((id) => `@@${id}@@\nX`).join("\n");
-        }),
-      } as unknown as Translator;
+    const slowTranslator: Translator = {
+      modelId: "slow",
+      translate: vi.fn(async (_sys: string, userPrompt: string) => {
+        inFlight++;
+        peakInFlight = Math.max(peakInFlight, inFlight);
+        // Wait for the test to release us. This pins all `concurrency`
+        // workers in flight simultaneously.
+        await new Promise<void>((resolve) => release.push(resolve));
+        inFlight--;
+        // Emit a minimal valid response to satisfy parseResponse.
+        const ids = [...userPrompt.matchAll(/^@@([^@\n]+?)@@/gm)].map((m) => m[1]);
+        return ids.map((id) => `@@${id}@@\nX`).join("\n");
+      }),
+    } as unknown as Translator;
 
-      const bridge = makeBridge({
-        concurrency: 3,
-        translatorsByLocale: new Map([["pt-BR", slowTranslator]]),
-      });
-      setRuntimeBridge(bridge);
+    const bridge = makeBridge({
+      concurrency: 3,
+      translatorsByLocale: new Map([["pt-BR", slowTranslator]]),
+    });
+    setRuntimeBridge(bridge);
 
-      const marker = makeMarker({
-        captureEntries: async () => [
-          { id: "a", data: { title: "1" } },
-          { id: "b", data: { title: "2" } },
-          { id: "c", data: { title: "3" } },
-          { id: "d", data: { title: "4" } },
-          { id: "e", data: { title: "5" } },
-          { id: "f", data: { title: "6" } },
-        ],
-        translatableKeys: ["title"],
-      });
+    const marker = makeMarker({
+      captureEntries: async () => [
+        { id: "a", data: { title: "1" } },
+        { id: "b", data: { title: "2" } },
+        { id: "c", data: { title: "3" } },
+        { id: "d", data: { title: "4" } },
+        { id: "e", data: { title: "5" } },
+        { id: "f", data: { title: "6" } },
+      ],
+      translatableKeys: ["title"],
+    });
 
-      const sibling = createCustomLoaderSibling({ marker, locale: "pt-BR" });
-      const spy = makeStoreSpy();
-      const loadPromise = sibling.load(makeCtx(spy.store));
+    const sibling = createCustomLoaderSibling({ marker, locale: "pt-BR" });
+    const spy = makeStoreSpy();
+    const loadPromise = sibling.load(makeCtx(spy.store));
 
-      // Generous yield helper — each `await` flushes microtasks AND
-      // gives Node a setTimeout(0) macrotask, so disk-I/O completions
-      // (mkdir, writeFile) have time to land before the test reads
-      // `release.length` again. setImmediate alone wasn't enough now
-      // that successful translations write a staging file.
-      const yieldRound = async (): Promise<void> => {
-        for (let i = 0; i < 5; i++) {
-          await new Promise((r) => setTimeout(r, 0));
-        }
-      };
+    // Generous yield helper — each `await` flushes microtasks AND
+    // gives Node a setTimeout(0) macrotask, so disk-I/O completions
+    // (mkdir, writeFile) have time to land before the test reads
+    // `release.length` again. setImmediate alone wasn't enough now
+    // that successful translations write a staging file.
+    const yieldRound = async (): Promise<void> => {
+      for (let i = 0; i < 5; i++) {
+        await new Promise((r) => setTimeout(r, 0));
+      }
+    };
 
-      // Wait for the first batch to be in-flight (3 workers).
-      while (release.length < 3) {
+    // Wait for the first batch to be in-flight (3 workers).
+    while (release.length < 3) {
+      await yieldRound();
+    }
+    // Release 6 in sequence so the rest of the workers can pick up.
+    // Loop a fixed 6 iterations rather than `while (length > 0)` so
+    // we don't exit early if a worker hasn't pushed yet.
+    for (let i = 0; i < 6; i++) {
+      // Wait until at least one release is queued for us to flip.
+      while (release.length === 0) {
         await yieldRound();
       }
-      // Release 6 in sequence so the rest of the workers can pick up.
-      // Loop a fixed 6 iterations rather than `while (length > 0)` so
-      // we don't exit early if a worker hasn't pushed yet.
-      for (let i = 0; i < 6; i++) {
-        // Wait until at least one release is queued for us to flip.
-        while (release.length === 0) {
-          await yieldRound();
-        }
-        const r = release.shift()!;
-        r();
-        await yieldRound();
-      }
-      await loadPromise;
+      const r = release.shift()!;
+      r();
+      await yieldRound();
+    }
+    await loadPromise;
 
-      expect(peakInFlight).toBe(3);
-      expect(spy.sets).toHaveLength(6);
-    },
-    20_000,
-  );
+    expect(peakInFlight).toBe(3);
+    expect(spy.sets).toHaveLength(6);
+  }, 20_000);
 });
 
 describe("createCustomLoaderSibling — locale isolation", () => {

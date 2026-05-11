@@ -37,13 +37,8 @@ describe("expandRoutes — literal paths", () => {
   });
 
   it("preserves the imports array on literal entries", () => {
-    const result = expandRoutes(
-      [r("src/pages/index.astro", ["./src/styles/global.css", "./src/styles/home.css"])],
-      PAGES_FIXTURE,
-    );
-    expect(result).toEqual([
-      { source: "src/pages/index.astro", imports: ["./src/styles/global.css", "./src/styles/home.css"] },
-    ]);
+    const result = expandRoutes([r("src/pages/index.astro", ["./src/styles/global.css", "./src/styles/home.css"])], PAGES_FIXTURE);
+    expect(result).toEqual([{ source: "src/pages/index.astro", imports: ["./src/styles/global.css", "./src/styles/home.css"] }]);
   });
 
   it("does NOT auto-exclude `404.astro` when listed as a literal path", () => {
@@ -99,10 +94,7 @@ describe("expandRoutes — glob expansion", () => {
   });
 
   it("propagates imports from glob entries to every expanded match", () => {
-    const result = expandRoutes(
-      [r("src/pages/*.astro", ["./src/styles/global.css"])],
-      PAGES_FIXTURE,
-    );
+    const result = expandRoutes([r("src/pages/*.astro", ["./src/styles/global.css"])], PAGES_FIXTURE);
     for (const entry of result) {
       expect(entry.imports).toEqual(["./src/styles/global.css"]);
     }
@@ -143,15 +135,8 @@ describe("expandRoutes — mixed entries + dedup", () => {
   });
 
   it("a glob and a literal that don't overlap both contribute", () => {
-    const result = expandRoutes(
-      [r("src/pages/people/*.astro"), r("src/pages/index.astro")],
-      PAGES_FIXTURE,
-    );
-    expect(result.map((e) => e.source)).toEqual([
-      "src/pages/people/[slug].astro",
-      "src/pages/people/index.astro",
-      "src/pages/index.astro",
-    ]);
+    const result = expandRoutes([r("src/pages/people/*.astro"), r("src/pages/index.astro")], PAGES_FIXTURE);
+    expect(result.map((e) => e.source)).toEqual(["src/pages/people/[slug].astro", "src/pages/people/index.astro", "src/pages/index.astro"]);
   });
 });
 

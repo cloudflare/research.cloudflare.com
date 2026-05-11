@@ -126,11 +126,7 @@ describe("expandPath", () => {
         bar: { get: { summary: "bg" } },
       },
     };
-    expect(expandPath("paths.*.*.summary", data)).toEqual([
-      "paths.foo.get.summary",
-      "paths.foo.post.summary",
-      "paths.bar.get.summary",
-    ]);
+    expect(expandPath("paths.*.*.summary", data)).toEqual(["paths.foo.get.summary", "paths.foo.post.summary", "paths.bar.get.summary"]);
   });
 
   it("expands to nothing when wildcard target is absent / non-iterable", () => {

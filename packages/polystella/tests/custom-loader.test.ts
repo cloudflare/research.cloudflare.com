@@ -72,7 +72,13 @@ function makeRealStoreSpy(): {
     keys: vi.fn(() => []),
     values: vi.fn(() => []),
   } as unknown as LoaderContext["store"];
-  return { store, sets, get clears() { return clears; } };
+  return {
+    store,
+    sets,
+    get clears() {
+      return clears;
+    },
+  };
 }
 
 function makeRealContext(store: LoaderContext["store"]): LoaderContext {
@@ -120,23 +126,21 @@ describe("polystellaLoader — wrapping", () => {
   });
 
   it("rejects invalid first argument", () => {
-    expect(() =>
-      polystellaLoader(null as unknown as Loader, { name: "blog", translatableKeys: [] }),
-    ).toThrow(/first argument must be an Astro Loader/);
+    expect(() => polystellaLoader(null as unknown as Loader, { name: "blog", translatableKeys: [] })).toThrow(
+      /first argument must be an Astro Loader/,
+    );
   });
 
   it("rejects empty name", () => {
     const raw = makeRawLoader([]);
-    expect(() => polystellaLoader(raw, { name: "", translatableKeys: [] })).toThrow(
-      /options\.name must be a non-empty string/,
-    );
+    expect(() => polystellaLoader(raw, { name: "", translatableKeys: [] })).toThrow(/options\.name must be a non-empty string/);
   });
 
   it("rejects non-array translatableKeys", () => {
     const raw = makeRawLoader([]);
-    expect(() =>
-      polystellaLoader(raw, { name: "blog", translatableKeys: "title" as unknown as string[] }),
-    ).toThrow(/options\.translatableKeys must be an array/);
+    expect(() => polystellaLoader(raw, { name: "blog", translatableKeys: "title" as unknown as string[] })).toThrow(
+      /options\.translatableKeys must be an array/,
+    );
   });
 });
 
@@ -205,9 +209,7 @@ describe("polystellaLoader — captureEntries()", () => {
       { id: "a", data: {} },
       { id: "b", data: {} },
     ]);
-    const marker = readPolystellaCustomLoaderMarker(
-      polystellaLoader(raw, { name: "blog", translatableKeys: [] }),
-    );
+    const marker = readPolystellaCustomLoaderMarker(polystellaLoader(raw, { name: "blog", translatableKeys: [] }));
 
     const captured = await marker!.captureEntries();
     expect(captured.map((e) => e.id)).toEqual(["c", "a", "b"]);
@@ -221,9 +223,7 @@ describe("polystellaLoader — captureEntries()", () => {
         ctx.store.set({ id: "x", data: { title: "second" } });
       },
     };
-    const marker = readPolystellaCustomLoaderMarker(
-      polystellaLoader(raw, { name: "blog", translatableKeys: [] }),
-    );
+    const marker = readPolystellaCustomLoaderMarker(polystellaLoader(raw, { name: "blog", translatableKeys: [] }));
 
     const captured = await marker!.captureEntries();
     expect(captured).toEqual([{ id: "x", data: { title: "second" } }]);
@@ -238,9 +238,7 @@ describe("polystellaLoader — captureEntries()", () => {
         ctx.store.set({ id: "fresh", data: {} });
       },
     };
-    const marker = readPolystellaCustomLoaderMarker(
-      polystellaLoader(raw, { name: "blog", translatableKeys: [] }),
-    );
+    const marker = readPolystellaCustomLoaderMarker(polystellaLoader(raw, { name: "blog", translatableKeys: [] }));
 
     const captured = await marker!.captureEntries();
     expect(captured.map((e) => e.id)).toEqual(["fresh"]);
@@ -255,9 +253,7 @@ describe("polystellaLoader — captureEntries()", () => {
         ctx.store.delete("a");
       },
     };
-    const marker = readPolystellaCustomLoaderMarker(
-      polystellaLoader(raw, { name: "blog", translatableKeys: [] }),
-    );
+    const marker = readPolystellaCustomLoaderMarker(polystellaLoader(raw, { name: "blog", translatableKeys: [] }));
 
     const captured = await marker!.captureEntries();
     expect(captured.map((e) => e.id)).toEqual(["b"]);
@@ -270,18 +266,14 @@ describe("polystellaLoader — captureEntries()", () => {
         ctx.store.get("x"); // unsupported during capture
       },
     };
-    const marker = readPolystellaCustomLoaderMarker(
-      polystellaLoader(raw, { name: "blog", translatableKeys: [] }),
-    );
+    const marker = readPolystellaCustomLoaderMarker(polystellaLoader(raw, { name: "blog", translatableKeys: [] }));
 
     await expect(marker!.captureEntries()).rejects.toThrow(/mid-load/);
   });
 
   it("threads the configured name through to ctx.collection during capture", async () => {
     const raw = makeRawLoader([{ id: "x", data: {} }]) as Loader & { contexts: LoaderContext[] };
-    const marker = readPolystellaCustomLoaderMarker(
-      polystellaLoader(raw, { name: "blog-posts", translatableKeys: [] }),
-    );
+    const marker = readPolystellaCustomLoaderMarker(polystellaLoader(raw, { name: "blog-posts", translatableKeys: [] }));
 
     await marker!.captureEntries();
     expect(raw.contexts).toHaveLength(1);
@@ -298,9 +290,7 @@ describe("polystellaLoader — captureEntries()", () => {
         ctx.store.set({ id, data: {} });
       },
     };
-    const marker = readPolystellaCustomLoaderMarker(
-      polystellaLoader(raw, { name: "blog", translatableKeys: [] }),
-    );
+    const marker = readPolystellaCustomLoaderMarker(polystellaLoader(raw, { name: "blog", translatableKeys: [] }));
 
     const first = await marker!.captureEntries();
     const second = await marker!.captureEntries();
@@ -321,9 +311,7 @@ describe("polystellaLoader — captureEntries()", () => {
         ctx.store.set({ id: "x", data: parsed });
       },
     };
-    const marker = readPolystellaCustomLoaderMarker(
-      polystellaLoader(raw, { name: "blog", translatableKeys: [] }),
-    );
+    const marker = readPolystellaCustomLoaderMarker(polystellaLoader(raw, { name: "blog", translatableKeys: [] }));
 
     const captured = await marker!.captureEntries();
     expect(captured[0]?.data).toEqual({ foo: "bar" });
@@ -336,9 +324,7 @@ describe("polystellaLoader — captureEntries()", () => {
         throw new Error("fetch failed");
       },
     };
-    const marker = readPolystellaCustomLoaderMarker(
-      polystellaLoader(raw, { name: "blog", translatableKeys: [] }),
-    );
+    const marker = readPolystellaCustomLoaderMarker(polystellaLoader(raw, { name: "blog", translatableKeys: [] }));
 
     await expect(marker!.captureEntries()).rejects.toThrow(/fetch failed/);
   });
@@ -360,9 +346,7 @@ describe("polystellaLoader — captureEntries()", () => {
         ctx.store.set({ id: `run-${runCount}`, data: {} });
       },
     };
-    const marker = readPolystellaCustomLoaderMarker(
-      polystellaLoader(raw, { name: "blog", translatableKeys: [] }),
-    );
+    const marker = readPolystellaCustomLoaderMarker(polystellaLoader(raw, { name: "blog", translatableKeys: [] }));
 
     const first = await marker!.captureEntries();
     const second = await marker!.captureEntries();

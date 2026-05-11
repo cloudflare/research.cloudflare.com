@@ -566,12 +566,7 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
    * Both layers honour `noPrefixUrls` because they share
    * `rewriteUrlIfInternal` underneath. Idempotent.
    */
-  const maybeRewrite = (
-    bytes: string,
-    locale: string,
-    adapter: FileTypeAdapter,
-    urlPathsForSource: string[],
-  ): string => {
+  const maybeRewrite = (bytes: string, locale: string, adapter: FileTypeAdapter, urlPathsForSource: string[]): string => {
     if (!resolved.rewriteInternalLinks) return bytes;
     const rewriteOpts = buildRewriteOpts(locale);
     let next = bytes;
@@ -614,10 +609,7 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
     // URL key paths apply per-source via the configured globs.
     // Resolved once per source so the adapter's `applyTranslations`
     // closure can re-use the same list across the per-locale loop.
-    const urlPathsForSource = resolveUrlPathsForSource(
-      pickUrlKeysForAdapter(adapter, resolved),
-      source.relativePath,
-    );
+    const urlPathsForSource = resolveUrlPathsForSource(pickUrlKeysForAdapter(adapter, resolved), source.relativePath);
 
     // Computed once per source so all branches (noTranslate, override,
     // translate, error) push consistent report entries.
@@ -852,9 +844,7 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
             // underlying message includes a multi-line `Raw response
             // was:` dump.
             const headline = error.message.split("\n", 1)[0];
-            logger.warn(
-              `↻ ${source.relativePath} → ${locale}: attempt ${attempt}/${totalAttempts} failed (${headline}); retrying`,
-            );
+            logger.warn(`↻ ${source.relativePath} → ${locale}: attempt ${attempt}/${totalAttempts} failed (${headline}); retrying`);
           },
           events: {
             onWriteStart: () => {

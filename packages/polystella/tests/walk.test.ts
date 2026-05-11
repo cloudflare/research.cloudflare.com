@@ -34,8 +34,8 @@ beforeAll(async () => {
   //   abc123.json
   //   def456.json
   secondaryDir = await mkdtemp(path.join(tmpdir(), "polystella-walk-snap-"));
-  await writeFile(path.join(secondaryDir, "abc123.json"), '{}\n');
-  await writeFile(path.join(secondaryDir, "def456.json"), '{}\n');
+  await writeFile(path.join(secondaryDir, "abc123.json"), "{}\n");
+  await writeFile(path.join(secondaryDir, "def456.json"), "{}\n");
 });
 
 afterAll(async () => {
@@ -114,9 +114,7 @@ describe("walkSources — multi-root", () => {
     // captured file so the translation pipeline sees stable paths
     // like `blog/<id>.json`.
     const sources = await walkSources({
-      roots: [
-        { baseDir: secondaryDir, include: ["*.json"], exclude: [], pathPrefix: "blog" },
-      ],
+      roots: [{ baseDir: secondaryDir, include: ["*.json"], exclude: [], pathPrefix: "blog" }],
     });
 
     const rels = sources.map((s) => s.relativePath);
@@ -134,12 +132,7 @@ describe("walkSources — multi-root", () => {
     });
 
     const rels = sources.map((s) => s.relativePath);
-    expect(rels).toEqual([
-      "blog/abc123.json",
-      "blog/def456.json",
-      "people/alice.md",
-      "people/bob.mdx",
-    ]);
+    expect(rels).toEqual(["blog/abc123.json", "blog/def456.json", "people/alice.md", "people/bob.mdx"]);
   });
 
   it("first root wins on relative-path collision", async () => {

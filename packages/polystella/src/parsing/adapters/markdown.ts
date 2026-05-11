@@ -49,19 +49,10 @@ export const markdownAdapter: FileTypeAdapter<Root> = {
     // The existing extractor takes the user-facing `frontmatter` map;
     // the adapter interface generalises that to `translatableKeys`.
     // For markdown the two are interchangeable.
-    return extractSegments(
-      parsed,
-      { sourcePath: opts.sourcePath, frontmatter: opts.translatableKeys },
-      source,
-    );
+    return extractSegments(parsed, { sourcePath: opts.sourcePath, frontmatter: opts.translatableKeys }, source);
   },
 
-  applyTranslations(
-    parsed: Root,
-    source: string,
-    translations: Map<string, string>,
-    opts: AdapterApplyOptions,
-  ): string {
+  applyTranslations(parsed: Root, source: string, translations: Map<string, string>, opts: AdapterApplyOptions): string {
     return applyTranslations(parsed, translations, source, {
       ...(opts.topLevelAdditions ? { frontmatterAdditions: opts.topLevelAdditions } : {}),
     });

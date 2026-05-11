@@ -129,8 +129,7 @@ export async function getLocalizedCollection<C extends string>(
       // cast is lossless: `CollectionEntry<C>` always has
       // `{collection, id, data}` plus extras that survive the
       // `{...source}` spread inside the dispatcher.
-      getCollection: (c) =>
-        (getCollection as (c: string) => Promise<unknown[]>)(c) as Promise<SourceEntryShape[]>,
+      getCollection: (c) => (getCollection as (c: string) => Promise<unknown[]>)(c) as Promise<SourceEntryShape[]>,
     },
   });
   return result as LocalizedEntry<CollectionEntry<C>>[];

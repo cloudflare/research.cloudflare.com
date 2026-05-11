@@ -43,11 +43,7 @@ describe("tomlAdapter — extractSegments", () => {
       parsed,
       SITE_TOML,
       makeOpts({
-        "site.toml": [
-          "main.featuredResearch.title",
-          "main.featuredResearch.description",
-          "main.featuredResearch.buttonLabel",
-        ],
+        "site.toml": ["main.featuredResearch.title", "main.featuredResearch.description", "main.featuredResearch.buttonLabel"],
       }),
     );
 
@@ -95,11 +91,7 @@ year = 2026
       translatableKeys: { "publications.toml": ["publications[*].title"] },
     });
 
-    expect(segs.map((s) => s.id)).toEqual([
-      "publications[0].title",
-      "publications[1].title",
-      "publications[2].title",
-    ]);
+    expect(segs.map((s) => s.id)).toEqual(["publications[0].title", "publications[1].title", "publications[2].title"]);
     expect(segs.map((s) => s.text)).toEqual(["First Pub", "Second Pub", "Third Pub"]);
   });
 
@@ -115,11 +107,7 @@ isPublished = true
       parsed,
       src,
       makeOpts({
-        "site.toml": [
-          "main.featuredResearch.title",
-          "main.featuredResearch.year",
-          "main.featuredResearch.isPublished",
-        ],
+        "site.toml": ["main.featuredResearch.title", "main.featuredResearch.year", "main.featuredResearch.isPublished"],
       }),
     );
 
@@ -131,22 +119,14 @@ isPublished = true
   it("skips empty strings", () => {
     const src = `[meta]\ntitle = ""\nsubtitle = "Real"\n`;
     const parsed = tomlAdapter.parse(src);
-    const segs = tomlAdapter.extractSegments(
-      parsed,
-      src,
-      makeOpts({ "site.toml": ["meta.title", "meta.subtitle"] }),
-    );
+    const segs = tomlAdapter.extractSegments(parsed, src, makeOpts({ "site.toml": ["meta.title", "meta.subtitle"] }));
 
     expect(segs).toEqual([{ id: "meta.subtitle", text: "Real" }]);
   });
 
   it("returns an empty array when no rules match the source path", () => {
     const parsed = tomlAdapter.parse(SITE_TOML);
-    const segs = tomlAdapter.extractSegments(
-      parsed,
-      SITE_TOML,
-      makeOpts({ "publications/**": ["title"] }),
-    );
+    const segs = tomlAdapter.extractSegments(parsed, SITE_TOML, makeOpts({ "publications/**": ["title"] }));
 
     expect(segs).toEqual([]);
   });
@@ -184,18 +164,13 @@ describe("tomlAdapter — applyTranslations", () => {
     // entry's data — file-root injection would produce bogus extra
     // entries whose data is the marker scalar.
     const parsed = tomlAdapter.parse(SITE_TOML);
-    const out = tomlAdapter.applyTranslations(
-      parsed,
-      SITE_TOML,
-      new Map([["main.featuredResearch.title", "Olá"]]),
-      {
-        topLevelAdditions: {
-          aiTranslated: true,
-          aiTranslationModel: "@cf/meta/llama-3.1-8b-instruct",
-          aiTranslatedAt: "2026-05-06T10:00:00Z",
-        },
+    const out = tomlAdapter.applyTranslations(parsed, SITE_TOML, new Map([["main.featuredResearch.title", "Olá"]]), {
+      topLevelAdditions: {
+        aiTranslated: true,
+        aiTranslationModel: "@cf/meta/llama-3.1-8b-instruct",
+        aiTranslatedAt: "2026-05-06T10:00:00Z",
       },
-    );
+    });
 
     const reparsed = tomlAdapter.parse(out);
     // Marker fields live inside `main`, not at the file root.
@@ -260,38 +235,23 @@ title = "Hello"
     const parsed = tomlAdapter.parse(SITE_TOML);
     const before = JSON.stringify(parsed);
 
-    tomlAdapter.applyTranslations(
-      parsed,
-      SITE_TOML,
-      new Map([["main.featuredResearch.title", "MUTATED"]]),
-      {},
-    );
+    tomlAdapter.applyTranslations(parsed, SITE_TOML, new Map([["main.featuredResearch.title", "MUTATED"]]), {});
 
     expect(JSON.stringify(parsed)).toBe(before);
   });
 
   it("output is parseable by smol-toml (round-trip integrity)", () => {
     const parsed = tomlAdapter.parse(SITE_TOML);
-    const out = tomlAdapter.applyTranslations(
-      parsed,
-      SITE_TOML,
-      new Map([["main.featuredResearch.title", "Olá"]]),
-      { topLevelAdditions: { aiTranslated: true } },
-    );
+    const out = tomlAdapter.applyTranslations(parsed, SITE_TOML, new Map([["main.featuredResearch.title", "Olá"]]), {
+      topLevelAdditions: { aiTranslated: true },
+    });
 
     expect(() => tomlAdapter.parse(out)).not.toThrow();
   });
 
   it("throws on translations targeting a path that doesn't exist in source", () => {
     const parsed = tomlAdapter.parse(SITE_TOML);
-    expect(() =>
-      tomlAdapter.applyTranslations(
-        parsed,
-        SITE_TOML,
-        new Map([["main.totally.bogus.key", "uh oh"]]),
-        {},
-      ),
-    ).toThrow();
+    expect(() => tomlAdapter.applyTranslations(parsed, SITE_TOML, new Map([["main.totally.bogus.key", "uh oh"]]), {})).toThrow();
   });
 });
 
@@ -302,10 +262,7 @@ describe("tomlAdapter — selectedValuesForHash", () => {
       parsed,
       SITE_TOML,
       makeOpts({
-        "site.toml": [
-          "main.featuredResearch.title",
-          "main.featuredResearch.description",
-        ],
+        "site.toml": ["main.featuredResearch.title", "main.featuredResearch.description"],
       }),
     );
 
@@ -321,11 +278,7 @@ describe("tomlAdapter — selectedValuesForHash", () => {
     // rules, so a value change MUST invalidate the cache.
     const src = `[meta]\ntitle = "Hello"\nyear = 2025\nactive = true\n`;
     const parsed = tomlAdapter.parse(src);
-    const values = tomlAdapter.selectedValuesForHash(
-      parsed,
-      src,
-      makeOpts({ "site.toml": ["meta.title", "meta.year", "meta.active"] }),
-    );
+    const values = tomlAdapter.selectedValuesForHash(parsed, src, makeOpts({ "site.toml": ["meta.title", "meta.year", "meta.active"] }));
 
     expect(values).toEqual({
       "meta.title": "Hello",
@@ -337,11 +290,7 @@ describe("tomlAdapter — selectedValuesForHash", () => {
   it("omits absent keys silently (don't bust cache on optional fields not present)", () => {
     const src = `[meta]\ntitle = "Hello"\n`;
     const parsed = tomlAdapter.parse(src);
-    const values = tomlAdapter.selectedValuesForHash(
-      parsed,
-      src,
-      makeOpts({ "site.toml": ["meta.title", "meta.subtitle"] }),
-    );
+    const values = tomlAdapter.selectedValuesForHash(parsed, src, makeOpts({ "site.toml": ["meta.title", "meta.subtitle"] }));
 
     expect(values).toEqual({ "meta.title": "Hello" });
   });

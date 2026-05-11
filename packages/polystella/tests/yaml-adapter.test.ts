@@ -42,11 +42,7 @@ describe("yamlAdapter — extractSegments", () => {
       parsed,
       SITE_YAML,
       makeOpts({
-        "site.yaml": [
-          "main.featuredResearch.title",
-          "main.featuredResearch.description",
-          "main.featuredResearch.buttonLabel",
-        ],
+        "site.yaml": ["main.featuredResearch.title", "main.featuredResearch.description", "main.featuredResearch.buttonLabel"],
       }),
     );
 
@@ -62,11 +58,7 @@ describe("yamlAdapter — extractSegments", () => {
 
   it("ignores keys outside the configured rules", () => {
     const parsed = yamlAdapter.parse(SITE_YAML);
-    const segs = yamlAdapter.extractSegments(
-      parsed,
-      SITE_YAML,
-      makeOpts({ "site.yaml": ["main.featuredResearch.title"] }),
-    );
+    const segs = yamlAdapter.extractSegments(parsed, SITE_YAML, makeOpts({ "site.yaml": ["main.featuredResearch.title"] }));
 
     expect(segs).toHaveLength(1);
     expect(segs[0]?.id).toBe("main.featuredResearch.title");
@@ -160,18 +152,13 @@ describe("yamlAdapter — applyTranslations", () => {
 
   it("injects topLevelAdditions inside each top-level mapping (per-entry)", () => {
     const parsed = yamlAdapter.parse(SITE_YAML);
-    const out = yamlAdapter.applyTranslations(
-      parsed,
-      SITE_YAML,
-      new Map([["main.featuredResearch.title", "Olá"]]),
-      {
-        topLevelAdditions: {
-          aiTranslated: true,
-          aiTranslationModel: "@cf/meta/llama-3.1-8b-instruct",
-          aiTranslatedAt: "2026-05-07T10:00:00.000Z",
-        },
+    const out = yamlAdapter.applyTranslations(parsed, SITE_YAML, new Map([["main.featuredResearch.title", "Olá"]]), {
+      topLevelAdditions: {
+        aiTranslated: true,
+        aiTranslationModel: "@cf/meta/llama-3.1-8b-instruct",
+        aiTranslatedAt: "2026-05-07T10:00:00.000Z",
       },
-    );
+    });
 
     const reparsed = yamlAdapter.parse(out) as { main: Record<string, unknown> };
     expect(reparsed.main.aiTranslated).toBe(true);
@@ -233,12 +220,9 @@ main:
 
   it("output is parseable YAML (round-trip integrity)", () => {
     const parsed = yamlAdapter.parse(SITE_YAML);
-    const out = yamlAdapter.applyTranslations(
-      parsed,
-      SITE_YAML,
-      new Map([["main.featuredResearch.title", "Olá"]]),
-      { topLevelAdditions: { aiTranslated: true } },
-    );
+    const out = yamlAdapter.applyTranslations(parsed, SITE_YAML, new Map([["main.featuredResearch.title", "Olá"]]), {
+      topLevelAdditions: { aiTranslated: true },
+    });
     expect(() => yamlAdapter.parse(out)).not.toThrow();
     // Bonus: parses correctly under another YAML lib too (Astro's
     // file() loader uses js-yaml, not the `yaml` package). The
@@ -248,9 +232,7 @@ main:
 
   it("throws on translations targeting a path that doesn't exist in source", () => {
     const parsed = yamlAdapter.parse(SITE_YAML);
-    expect(() =>
-      yamlAdapter.applyTranslations(parsed, SITE_YAML, new Map([["main.totally.bogus.key", "uh oh"]]), {}),
-    ).toThrow();
+    expect(() => yamlAdapter.applyTranslations(parsed, SITE_YAML, new Map([["main.totally.bogus.key", "uh oh"]]), {})).toThrow();
   });
 });
 
@@ -314,11 +296,7 @@ describe("yamlAdapter — selectedValuesForHash", () => {
   it("omits absent keys silently", () => {
     const src = `meta:\n  title: Hello\n`;
     const parsed = yamlAdapter.parse(src);
-    const values = yamlAdapter.selectedValuesForHash(
-      parsed,
-      src,
-      makeOpts({ "site.yaml": ["meta.title", "meta.subtitle"] }),
-    );
+    const values = yamlAdapter.selectedValuesForHash(parsed, src, makeOpts({ "site.yaml": ["meta.title", "meta.subtitle"] }));
 
     expect(values).toEqual({ "meta.title": "Hello" });
   });

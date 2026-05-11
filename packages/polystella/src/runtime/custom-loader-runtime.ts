@@ -33,11 +33,7 @@ import { EMPTY_GLOSSARY, type Glossary } from "../glossary/glossary.js";
 import { parsePath, readAtPath, writeAtPath, type PathSegment } from "../parsing/key-paths.js";
 import type { Segment } from "../parsing/extract.js";
 import { runWithConcurrency } from "../source/pool.js";
-import {
-  buildCacheMetadata,
-  translateOrLoadFromCache,
-  type CacheEvents,
-} from "../storage/cache.js";
+import { buildCacheMetadata, translateOrLoadFromCache, type CacheEvents } from "../storage/cache.js";
 import { computeSourceHash } from "../storage/hash.js";
 import { buildR2Key, type R2Client } from "../storage/r2.js";
 import type { Translator } from "../translation/provider.js";
@@ -47,12 +43,7 @@ import type { Translator } from "../translation/provider.js";
  * file-based pipeline's build-report fields so consumers of the
  * eventual unified report can treat both code paths uniformly.
  */
-export type CustomLoaderTranslateOutcome =
-  | "cache-hit"
-  | "ai-translated"
-  | "skipped-no-translator"
-  | "staged"
-  | "error";
+export type CustomLoaderTranslateOutcome = "cache-hit" | "ai-translated" | "skipped-no-translator" | "staged" | "error";
 
 export interface CustomLoaderTranslateRecord {
   /** Loader name (matches the marker's `name`). */
@@ -247,10 +238,7 @@ async function tryReadStagedSnapshot(stagingPath: string): Promise<Record<string
  * access. Failures are surfaced via logger but don't abort the
  * loader — the in-memory translation is still served this run.
  */
-async function writeStagedSnapshot(args: {
-  stagingPath: string;
-  data: Record<string, unknown>;
-}): Promise<void> {
+async function writeStagedSnapshot(args: { stagingPath: string; data: Record<string, unknown> }): Promise<void> {
   await mkdir(path.dirname(args.stagingPath), { recursive: true });
   await writeFile(args.stagingPath, `${JSON.stringify(args.data, null, 2)}\n`, "utf8");
 }
@@ -343,9 +331,7 @@ async function translateEntry(input: TranslateEntryInput): Promise<TranslateEntr
     prefix: bridge.r2Prefix,
   });
 
-  const fallbackKeys = bridge.readFallbackPrefixes.map((prefix) =>
-    buildR2Key({ locale, sourcePath, hash, prefix }),
-  );
+  const fallbackKeys = bridge.readFallbackPrefixes.map((prefix) => buildR2Key({ locale, sourcePath, hash, prefix }));
 
   const metadata = buildCacheMetadata({
     polystellaVersion: bridge.polystellaVersion,
@@ -441,10 +427,7 @@ async function translateEntry(input: TranslateEntryInput): Promise<TranslateEntr
  * verbatim — keeps the consumer's `/pt-BR/...` routes rendering
  * (untranslated) instead of 404ing.
  */
-export function createCustomLoaderSibling(args: {
-  marker: PolystellaCustomLoaderMarker;
-  locale: string;
-}): Loader {
+export function createCustomLoaderSibling(args: { marker: PolystellaCustomLoaderMarker; locale: string }): Loader {
   const { marker, locale } = args;
   return {
     name: `polystella-translated-${marker.name}-${locale}`,
@@ -676,9 +659,7 @@ export function createCustomLoaderSibling(args: {
       // Final summary line per (loader, locale).
       if (heartbeatEnabled) {
         const elapsedSec = Math.round((Date.now() - startedAt) / 1000);
-        const all = bridge.reportSink.filter(
-          (r) => r.loaderName === marker.name && r.locale === locale,
-        );
+        const all = bridge.reportSink.filter((r) => r.loaderName === marker.name && r.locale === locale);
         const counts = all.reduce(
           (acc, rec) => {
             acc[rec.outcome] = (acc[rec.outcome] ?? 0) + 1;

@@ -1,11 +1,7 @@
 import { z } from "astro/zod";
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  AI_MARKER_KEYS,
-  extendSchemaWithAiMarker,
-  type ExtendSchemaOpts,
-} from "../src/content/extend-schema.js";
+import { AI_MARKER_KEYS, extendSchemaWithAiMarker, type ExtendSchemaOpts } from "../src/content/extend-schema.js";
 
 /**
  * Tests pin the contracts the helper exposes to `polystellaCollections`:
@@ -41,9 +37,7 @@ describe("extendSchemaWithAiMarker — plain ZodObject", () => {
     const schema = z.object({ title: z.string() });
     const extended = extendSchemaWithAiMarker(schema, OPTS_BASE) as z.ZodObject<z.ZodRawShape>;
 
-    expect(Object.keys(extended.shape).sort()).toEqual(
-      ["title", ...AI_MARKER_KEYS].sort(),
-    );
+    expect(Object.keys(extended.shape).sort()).toEqual(["title", ...AI_MARKER_KEYS].sort());
   });
 
   it("keeps marker fields optional (source entries with no values still validate)", () => {
@@ -94,9 +88,7 @@ describe("extendSchemaWithAiMarker — ZodObject variants", () => {
   });
 
   it("extends `.refine()` schemas (refinements still apply)", () => {
-    const schema = z
-      .object({ title: z.string() })
-      .refine((v) => v.title.length >= 3, { message: "title too short" });
+    const schema = z.object({ title: z.string() }).refine((v) => v.title.length >= 3, { message: "title too short" });
     const extended = extendSchemaWithAiMarker(schema, OPTS_BASE) as z.ZodObject<z.ZodRawShape>;
 
     expect(() => extended.parse({ title: "OK", aiTranslated: true })).toThrow(/title too short/);
@@ -115,9 +107,7 @@ describe("extendSchemaWithAiMarker — function-form schemas", () => {
     const extended = (wrapped as (d: Deps) => z.ZodObject<z.ZodRawShape>)({
       image: () => z.string(),
     });
-    expect(Object.keys(extended.shape).sort()).toEqual(
-      ["cover", "title", ...AI_MARKER_KEYS].sort(),
-    );
+    expect(Object.keys(extended.shape).sort()).toEqual(["cover", "title", ...AI_MARKER_KEYS].sort());
   });
 
   it("re-invokes the user factory each call (Astro's content pipeline expects fresh schemas)", () => {
@@ -159,9 +149,7 @@ describe("extendSchemaWithAiMarker — collisions", () => {
     // aiTranslated still typed as string (consumer's declaration).
     expect(() => extended.parse({ title: "Hello", aiTranslated: "yes" })).not.toThrow();
     // Other two added.
-    expect(Object.keys(extended.shape).sort()).toEqual(
-      ["aiTranslated", "aiTranslatedAt", "aiTranslationModel", "title"].sort(),
-    );
+    expect(Object.keys(extended.shape).sort()).toEqual(["aiTranslated", "aiTranslatedAt", "aiTranslationModel", "title"].sort());
   });
 
   it("returns the original schema unchanged when all three marker keys collide", () => {
@@ -217,10 +205,7 @@ describe("extendSchemaWithAiMarker — unsupported Zod shapes", () => {
   });
 
   it("warns and passes `z.intersection(...)` through unchanged", () => {
-    const schema = z.intersection(
-      z.object({ title: z.string() }),
-      z.object({ year: z.number() }),
-    );
+    const schema = z.intersection(z.object({ title: z.string() }), z.object({ year: z.number() }));
     const spy = makeWarnSpy();
 
     const result = extendSchemaWithAiMarker(schema, { ...OPTS_BASE, logger: spy });

@@ -23,14 +23,7 @@ import path from "node:path";
  * because anything sensible-named is included.
  */
 
-const IGNORED_DIRS = new Set([
-  "node_modules",
-  ".git",
-  ".astro",
-  ".cache",
-  "dist",
-  "coverage",
-]);
+const IGNORED_DIRS = new Set(["node_modules", ".git", ".astro", ".cache", "dist", "coverage"]);
 
 /**
  * Optional dependency injection for testing. Production callers omit
@@ -55,12 +48,7 @@ export async function walkPages(rootDir: string, deps: WalkPagesDeps = {}): Prom
   return results;
 }
 
-async function walkInto(
-  absRoot: string,
-  relPrefix: string,
-  reader: typeof readdir,
-  out: string[],
-): Promise<void> {
+async function walkInto(absRoot: string, relPrefix: string, reader: typeof readdir, out: string[]): Promise<void> {
   // Force the string-encoding overload — the default Buffer overload
   // makes `entry.name` a NonSharedBuffer in TS' typings, which
   // doesn't have `endsWith` and would force per-entry coercion.

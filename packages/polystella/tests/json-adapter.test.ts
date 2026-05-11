@@ -47,11 +47,7 @@ describe("jsonAdapter — extractSegments", () => {
       parsed,
       SITE_JSON,
       makeOpts({
-        "site.json": [
-          "main.featuredResearch.title",
-          "main.featuredResearch.description",
-          "main.featuredResearch.buttonLabel",
-        ],
+        "site.json": ["main.featuredResearch.title", "main.featuredResearch.description", "main.featuredResearch.buttonLabel"],
       }),
     );
 
@@ -67,11 +63,7 @@ describe("jsonAdapter — extractSegments", () => {
 
   it("ignores keys outside the configured rules", () => {
     const parsed = jsonAdapter.parse(SITE_JSON);
-    const segs = jsonAdapter.extractSegments(
-      parsed,
-      SITE_JSON,
-      makeOpts({ "site.json": ["main.featuredResearch.title"] }),
-    );
+    const segs = jsonAdapter.extractSegments(parsed, SITE_JSON, makeOpts({ "site.json": ["main.featuredResearch.title"] }));
 
     expect(segs).toHaveLength(1);
     expect(segs[0]?.id).toBe("main.featuredResearch.title");
@@ -131,11 +123,7 @@ describe("jsonAdapter — extractSegments", () => {
   it("skips empty strings", () => {
     const src = JSON.stringify({ meta: { title: "", subtitle: "Real" } });
     const parsed = jsonAdapter.parse(src);
-    const segs = jsonAdapter.extractSegments(
-      parsed,
-      src,
-      makeOpts({ "site.json": ["meta.title", "meta.subtitle"] }),
-    );
+    const segs = jsonAdapter.extractSegments(parsed, src, makeOpts({ "site.json": ["meta.title", "meta.subtitle"] }));
 
     expect(segs).toEqual([{ id: "meta.subtitle", text: "Real" }]);
   });
@@ -172,18 +160,13 @@ describe("jsonAdapter — applyTranslations", () => {
 
   it("injects topLevelAdditions inside each top-level object (per-entry)", () => {
     const parsed = jsonAdapter.parse(SITE_JSON);
-    const out = jsonAdapter.applyTranslations(
-      parsed,
-      SITE_JSON,
-      new Map([["main.featuredResearch.title", "Olá"]]),
-      {
-        topLevelAdditions: {
-          aiTranslated: true,
-          aiTranslationModel: "@cf/meta/llama-3.1-8b-instruct",
-          aiTranslatedAt: "2026-05-07T10:00:00Z",
-        },
+    const out = jsonAdapter.applyTranslations(parsed, SITE_JSON, new Map([["main.featuredResearch.title", "Olá"]]), {
+      topLevelAdditions: {
+        aiTranslated: true,
+        aiTranslationModel: "@cf/meta/llama-3.1-8b-instruct",
+        aiTranslatedAt: "2026-05-07T10:00:00Z",
       },
-    );
+    });
 
     const reparsed = jsonAdapter.parse(out) as { main: Record<string, unknown> };
     expect(reparsed.main.aiTranslated).toBe(true);
@@ -249,9 +232,7 @@ describe("jsonAdapter — applyTranslations", () => {
 
   it("throws on translations targeting a path that doesn't exist in source", () => {
     const parsed = jsonAdapter.parse(SITE_JSON);
-    expect(() =>
-      jsonAdapter.applyTranslations(parsed, SITE_JSON, new Map([["main.totally.bogus.key", "uh oh"]]), {}),
-    ).toThrow();
+    expect(() => jsonAdapter.applyTranslations(parsed, SITE_JSON, new Map([["main.totally.bogus.key", "uh oh"]]), {})).toThrow();
   });
 });
 
@@ -292,11 +273,7 @@ describe("jsonAdapter — selectedValuesForHash", () => {
   it("omits absent keys silently (don't bust cache on optional fields not present)", () => {
     const src = JSON.stringify({ meta: { title: "Hello" } });
     const parsed = jsonAdapter.parse(src);
-    const values = jsonAdapter.selectedValuesForHash(
-      parsed,
-      src,
-      makeOpts({ "site.json": ["meta.title", "meta.subtitle"] }),
-    );
+    const values = jsonAdapter.selectedValuesForHash(parsed, src, makeOpts({ "site.json": ["meta.title", "meta.subtitle"] }));
 
     expect(values).toEqual({ "meta.title": "Hello" });
   });

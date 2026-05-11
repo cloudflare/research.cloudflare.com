@@ -72,12 +72,7 @@ export interface FileTypeAdapter<TParsed = unknown> {
    * frontmatter; structured-data adapters write them as top-level
    * keys.
    */
-  applyTranslations(
-    parsed: TParsed,
-    source: string,
-    translations: Map<string, string>,
-    opts: AdapterApplyOptions,
-  ): string;
+  applyTranslations(parsed: TParsed, source: string, translations: Map<string, string>, opts: AdapterApplyOptions): string;
 
   /**
    * Translatable-value snapshot fed into the cache hash. Sensitive

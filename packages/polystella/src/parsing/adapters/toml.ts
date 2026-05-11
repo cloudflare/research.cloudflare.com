@@ -1,11 +1,6 @@
 import { parse as parseToml, stringify as stringifyToml } from "smol-toml";
 
-import type {
-  AdapterApplyOptions,
-  AdapterExtractOptions,
-  AdapterRewriteUrlsOptions,
-  FileTypeAdapter,
-} from "../adapter.js";
+import type { AdapterApplyOptions, AdapterExtractOptions, AdapterRewriteUrlsOptions, FileTypeAdapter } from "../adapter.js";
 import type { Segment } from "../extract.js";
 import { expandPath, parsePath, readAtPath, resolveConcretePaths, writeAtPath, type PathSegment } from "../key-paths.js";
 
@@ -78,12 +73,7 @@ export const tomlAdapter: FileTypeAdapter<TomlData> = {
     return segments;
   },
 
-  applyTranslations(
-    parsed: TomlData,
-    _source: string,
-    translations: Map<string, string>,
-    opts: AdapterApplyOptions,
-  ): string {
+  applyTranslations(parsed: TomlData, _source: string, translations: Map<string, string>, opts: AdapterApplyOptions): string {
     // Deep-clone before mutating so adapters can be re-invoked on the
     // same parsed object across cache misses without cross-contamination.
     // smol-toml's parse output is pure JSON-ish (strings, numbers,

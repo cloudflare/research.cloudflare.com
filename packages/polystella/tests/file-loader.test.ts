@@ -29,12 +29,7 @@ describe("polystella file() — recording", () => {
     // Trailing slashes, leading `./`, `..` segments — all left
     // untouched so the consumer's intent is preserved. Path
     // resolution happens later in polystellaCollections.
-    const cases = [
-      "./content/site.toml",
-      "content/site.toml",
-      "./content/configs/site.toml",
-      "/abs/content/site.toml",
-    ];
+    const cases = ["./content/site.toml", "content/site.toml", "./content/configs/site.toml", "/abs/content/site.toml"];
     for (const path of cases) {
       const loader = file(path);
       expect(readRecordedSourcePath(loader)).toBe(path);

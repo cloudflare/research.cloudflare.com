@@ -40,10 +40,7 @@ declare module "astro:content" {
    * shape resolves to the minimal `CollectionEntry`; inside a
    * consumer project, Astro's `astro sync` types take precedence.
    */
-  export function getCollection(
-    collection: string,
-    filter?: (entry: CollectionEntry) => boolean,
-  ): Promise<CollectionEntry[]>;
+  export function getCollection(collection: string, filter?: (entry: CollectionEntry) => boolean): Promise<CollectionEntry[]>;
 
   /**
    * Astro's `defineCollection`. Real shape is generic over the

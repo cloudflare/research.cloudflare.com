@@ -9,10 +9,7 @@
  * No runtime assertions — if this file type-checks, the contract
  * holds. Same shape as `content.types.test.ts`.
  */
-import {
-  resolveLocalizedCollection,
-  type ResolveLocalizedCollectionDeps,
-} from "../src/runtime/get-localized-collection.js";
+import { resolveLocalizedCollection, type ResolveLocalizedCollectionDeps } from "../src/runtime/get-localized-collection.js";
 import type { LocalizedEntry, SourceEntryShape } from "../src/runtime/get-localized-entry.js";
 
 interface PublicationEntry extends SourceEntryShape {

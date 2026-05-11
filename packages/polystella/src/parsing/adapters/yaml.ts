@@ -1,11 +1,6 @@
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 
-import type {
-  AdapterApplyOptions,
-  AdapterExtractOptions,
-  AdapterRewriteUrlsOptions,
-  FileTypeAdapter,
-} from "../adapter.js";
+import type { AdapterApplyOptions, AdapterExtractOptions, AdapterRewriteUrlsOptions, FileTypeAdapter } from "../adapter.js";
 import type { Segment } from "../extract.js";
 import { expandPath, parsePath, readAtPath, resolveConcretePaths, writeAtPath, type PathSegment } from "../key-paths.js";
 
@@ -87,12 +82,7 @@ export const yamlAdapter: FileTypeAdapter<YamlData> = {
     return segments;
   },
 
-  applyTranslations(
-    parsed: YamlData,
-    _source: string,
-    translations: Map<string, string>,
-    opts: AdapterApplyOptions,
-  ): string {
+  applyTranslations(parsed: YamlData, _source: string, translations: Map<string, string>, opts: AdapterApplyOptions): string {
     // Deep-clone before mutating so adapters can be re-invoked on
     // the same parsed object across cache misses without cross-
     // contamination. `yaml.parse` returns JS-native types (strings,

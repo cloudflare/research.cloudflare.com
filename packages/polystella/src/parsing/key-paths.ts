@@ -134,11 +134,7 @@ export function expandPath(path: string, data: unknown): string[] {
  * accumulating a concrete path; on `*` segments, branches once per
  * matching child of the current node.
  */
-function expandSegments(
-  segments: readonly (PathSegment | "*")[],
-  node: unknown,
-  acc: PathSegment[],
-): string[] {
+function expandSegments(segments: readonly (PathSegment | "*")[], node: unknown, acc: PathSegment[]): string[] {
   if (segments.length === 0) {
     return [formatPath(acc)];
   }
@@ -214,9 +210,7 @@ export function writeAtPath(node: unknown, segments: readonly PathSegment[], val
     }
     if (typeof seg === "number") {
       if (!Array.isArray(current)) {
-        throw new Error(
-          `[polystella] cannot write at ${formatPath(segments)}: expected array at segment ${i}, got ${typeof current}`,
-        );
+        throw new Error(`[polystella] cannot write at ${formatPath(segments)}: expected array at segment ${i}, got ${typeof current}`);
       }
       current = current[seg];
     } else {
@@ -269,11 +263,7 @@ import picomatch from "picomatch";
  * the user's listed order; across globs, in object-iteration order).
  * Dedup preserves first occurrence.
  */
-export function resolveConcretePaths(args: {
-  parsed: unknown;
-  sourcePath: string;
-  translatableKeys: Record<string, string[]>;
-}): string[] {
+export function resolveConcretePaths(args: { parsed: unknown; sourcePath: string; translatableKeys: Record<string, string[]> }): string[] {
   const { parsed, sourcePath, translatableKeys } = args;
   const matchedRulePaths: string[] = [];
   for (const [pattern, paths] of Object.entries(translatableKeys)) {

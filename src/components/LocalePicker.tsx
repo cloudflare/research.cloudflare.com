@@ -41,7 +41,7 @@ export function LocalePicker({ dict, locale, pathname }: LocalePickerProps) {
       <NavigationMenuList>
         <NavigationMenuItem>
           <NavigationMenuTrigger aria-label={t("nav.localePicker.label")} className="text-sm">
-            <GlobeIcon size={16} className="text-white" />
+            <GlobeIcon size={16} />
             <span lang={locale} className="ml-1.5">
               {localeName(locale)}
             </span>

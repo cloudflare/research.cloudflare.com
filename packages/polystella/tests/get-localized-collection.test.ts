@@ -1,9 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  resolveLocalizedCollection,
-  type ResolveLocalizedCollectionDeps,
-} from "../src/runtime/get-localized-collection.js";
+import { resolveLocalizedCollection, type ResolveLocalizedCollectionDeps } from "../src/runtime/get-localized-collection.js";
 import type { SourceEntryShape } from "../src/runtime/get-localized-entry.js";
 
 /**
@@ -29,17 +26,13 @@ const DEFAULT_LOCALE = "en-US";
  * collection names not in the map, matching Astro's behaviour for
  * an empty / unregistered sibling collection.
  */
-function makeGetCollection(
-  collections: Record<string, SourceEntryShape[]>,
-): ReturnType<typeof vi.fn> {
+function makeGetCollection(collections: Record<string, SourceEntryShape[]>): ReturnType<typeof vi.fn> {
   return vi.fn(async (collection: string) => {
     return collections[collection] ?? [];
   });
 }
 
-function makeDeps(
-  overrides: Partial<ResolveLocalizedCollectionDeps> = {},
-): ResolveLocalizedCollectionDeps {
+function makeDeps(overrides: Partial<ResolveLocalizedCollectionDeps> = {}): ResolveLocalizedCollectionDeps {
   return {
     defaultLocale: DEFAULT_LOCALE,
     getCollection: vi.fn(async () => []),
@@ -48,11 +41,7 @@ function makeDeps(
 }
 
 /** Convenience builder for a source-shape entry. */
-function entry(
-  collection: string,
-  id: string,
-  data: Record<string, unknown> = {},
-): SourceEntryShape {
+function entry(collection: string, id: string, data: Record<string, unknown> = {}): SourceEntryShape {
   return { collection, id, data: { title: id, ...data } };
 }
 
@@ -184,10 +173,7 @@ describe("resolveLocalizedCollection — cross-locale, all hit", () => {
   it("returns the sibling list tagged with isLocalized=true and the requested locale", async () => {
     const deps = makeDeps({
       getCollection: makeGetCollection({
-        publications: [
-          entry("publications", "a", { title: "A (en)" }),
-          entry("publications", "b", { title: "B (en)" }),
-        ],
+        publications: [entry("publications", "a", { title: "A (en)" }), entry("publications", "b", { title: "B (en)" })],
         "publications__pt-BR": [
           entry("publications__pt-BR", "a", { title: "A (pt-BR)" }),
           entry("publications__pt-BR", "b", { title: "B (pt-BR)" }),
@@ -266,10 +252,7 @@ describe("resolveLocalizedCollection — cross-locale, all miss", () => {
     const deps = makeDeps({
       // No fallback override → defaults to "default-locale".
       getCollection: makeGetCollection({
-        publications: [
-          entry("publications", "a", { title: "A (en)" }),
-          entry("publications", "b", { title: "B (en)" }),
-        ],
+        publications: [entry("publications", "a", { title: "A (en)" }), entry("publications", "b", { title: "B (en)" })],
         // sibling collection is empty (or doesn't exist)
       }),
     });
@@ -449,9 +432,7 @@ describe("resolveLocalizedCollection — noTranslate flag", () => {
             noTranslate: true,
           }),
         ],
-        "publications__pt-BR": [
-          entry("publications__pt-BR", "stale", { title: "Stale translation" }),
-        ],
+        "publications__pt-BR": [entry("publications__pt-BR", "stale", { title: "Stale translation" })],
       }),
     });
 
@@ -491,10 +472,7 @@ describe("resolveLocalizedCollection — fallback policy", () => {
     const deps = makeDeps({
       fallback: "skip",
       getCollection: makeGetCollection({
-        publications: [
-          entry("publications", "a", { title: "A (en)" }),
-          entry("publications", "b", { title: "B (en)" }),
-        ],
+        publications: [entry("publications", "a", { title: "A (en)" }), entry("publications", "b", { title: "B (en)" })],
         "publications__pt-BR": [
           // Only `b` has a translation.
           entry("publications__pt-BR", "b", { title: "B (pt-BR)" }),
@@ -589,10 +567,7 @@ describe("resolveLocalizedCollection — filter", () => {
       locale: undefined,
       // Optional-chain return → `boolean | undefined`. Should
       // type-check AND filter correctly at runtime.
-      filter: (e) =>
-        (e.data.authors as Array<{ id: string }> | undefined)?.some(
-          (author) => author.id === slug,
-        ),
+      filter: (e) => (e.data.authors as Array<{ id: string }> | undefined)?.some((author) => author.id === slug),
       deps,
     });
 
@@ -607,10 +582,7 @@ describe("resolveLocalizedCollection — filter", () => {
     // post-merge.
     const deps = makeDeps({
       getCollection: makeGetCollection({
-        publications: [
-          entry("publications", "a", { tag: "research" }),
-          entry("publications", "b", { tag: "research" }),
-        ],
+        publications: [entry("publications", "a", { tag: "research" }), entry("publications", "b", { tag: "research" })],
         "publications__pt-BR": [
           // Sibling has a different tag value (synthetic — wouldn't
           // happen in practice but tests the post-merge contract).

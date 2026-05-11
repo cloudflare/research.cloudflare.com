@@ -29,9 +29,7 @@ const EN_DICT = { "nav.home": "Home", greeting: "Hi, {{name}}" };
  * `.data`) and the `bindGetLocalizedEntry` consumer (which reads
  * the full shape) work against the same stub.
  */
-function makeGetEntry(
-  entries: Record<string, Record<string, unknown> | undefined>,
-): MiddlewareDeps["getEntry"] {
+function makeGetEntry(entries: Record<string, Record<string, unknown> | undefined>): MiddlewareDeps["getEntry"] {
   return vi.fn(async (collection: string, slug: string) => {
     const data = entries[`${collection}:${slug}`];
     if (data === undefined) return undefined;
@@ -44,9 +42,7 @@ function makeGetEntry(
  * registered under the collection name (verbatim — the test owns
  * their `id` / `collection` / `data` shape).
  */
-function makeGetCollection(
-  collections: Record<string, SourceEntryShape[]>,
-): MiddlewareDeps["getCollection"] {
+function makeGetCollection(collections: Record<string, SourceEntryShape[]>): MiddlewareDeps["getCollection"] {
   return vi.fn(async (collection: string) => collections[collection] ?? []);
 }
 
@@ -216,9 +212,7 @@ describe("bindGetLocalizedCollection — locale-bound collection fetcher", () =>
         { collection: "publications", id: "a", data: { title: "A (en)" } },
         { collection: "publications", id: "b", data: { title: "B (en)" } },
       ],
-      "publications__pt-BR": [
-        { collection: "publications__pt-BR", id: "b", data: { title: "B (pt-BR)" } },
-      ],
+      "publications__pt-BR": [{ collection: "publications__pt-BR", id: "b", data: { title: "B (pt-BR)" } }],
     });
     const get = bindGetLocalizedCollection("pt-BR", { defaultLocale: "en-US", getCollection });
 
@@ -235,9 +229,7 @@ describe("bindGetLocalizedCollection — locale-bound collection fetcher", () =>
         { collection: "publications", id: "a", data: {} },
         { collection: "publications", id: "b", data: {} },
       ],
-      "publications__pt-BR": [
-        { collection: "publications__pt-BR", id: "a", data: {} },
-      ],
+      "publications__pt-BR": [{ collection: "publications__pt-BR", id: "a", data: {} }],
     });
     const get = bindGetLocalizedCollection("pt-BR", { defaultLocale: "en-US", getCollection });
 
@@ -361,12 +353,8 @@ describe("createMiddleware — locals population", () => {
     // Each request gets its own bound closures — proves the
     // middleware doesn't carry state across invocations.
     const getCollection = makeGetCollection({
-      people: [
-        { collection: "people", id: "alice", data: { title: "Alice (en)" } },
-      ],
-      "people__pt-BR": [
-        { collection: "people__pt-BR", id: "alice", data: { title: "Alice (pt-BR)" } },
-      ],
+      people: [{ collection: "people", id: "alice", data: { title: "Alice (en)" } }],
+      "people__pt-BR": [{ collection: "people__pt-BR", id: "alice", data: { title: "Alice (pt-BR)" } }],
     });
     const middleware = createMiddleware(makeDeps({ getCollection }));
 

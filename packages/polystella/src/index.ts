@@ -6,11 +6,7 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 import { resolveOptions, type PolyStellaOptions, type PolyStellaResolvedOptions } from "./config/options.js";
 import { EMPTY_GLOSSARY_HASH, hashGlossary, loadGlossaries, type Glossary } from "./glossary/glossary.js";
 import { formatDriftIssues, loadAndCheckDrift } from "./i18n/drift.js";
-import {
-  setRuntimeBridge,
-  type CustomLoaderTranslateRecord,
-  type PolystellaRuntimeBridge,
-} from "./runtime/custom-loader-runtime.js";
+import { setRuntimeBridge, type CustomLoaderTranslateRecord, type PolystellaRuntimeBridge } from "./runtime/custom-loader-runtime.js";
 import { computeBuildReportTotals, emitBuildReport, type BuildReport } from "./storage/report.js";
 import { DEFAULT_STAGING_DIR } from "./storage/paths.js";
 import { createR2Client, type R2Client } from "./storage/r2.js";
@@ -113,12 +109,7 @@ export {
   type RunTranslationCounts,
 } from "./translation/run.js";
 export { loadAndCheckDrift, formatDriftIssues } from "./i18n/drift.js";
-export {
-  astroSitemapI18n,
-  type AstroSitemapI18nInput,
-  type AstroSitemapI18nOptions,
-  type AstroSitemapI18nOutput,
-} from "./i18n/sitemap.js";
+export { astroSitemapI18n, type AstroSitemapI18nInput, type AstroSitemapI18nOptions, type AstroSitemapI18nOutput } from "./i18n/sitemap.js";
 
 /**
  * PolyStella — AI-driven content localization for Astro.
@@ -267,9 +258,7 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
         } else if (expandedRoutes.length !== resolved.routes.length) {
           // Glob expansion happened — surface the resolved count so
           // the operator knows what they actually got.
-          logger.info(
-            `routes: ${resolved.routes.length} pattern(s) → ${expandedRoutes.length} resolved page(s)`,
-          );
+          logger.info(`routes: ${resolved.routes.length} pattern(s) → ${expandedRoutes.length} resolved page(s)`);
         }
 
         // For each resolved route, generate a shim under
@@ -476,7 +465,6 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
         } catch (err) {
           logger.warn(`i18n build report: failed to write: ${(err as Error).message}`);
         }
-
       },
     },
   };
@@ -565,5 +553,3 @@ async function publishRuntimeBridge(opts: {
 
   setRuntimeBridge(bridge);
 }
-
-
