@@ -9,7 +9,7 @@ const { t } = Astro.locals;
 // the locale's sibling collection (`site__pt-BR` / `site__ja-JP`)
 // and falls back to the source on the default locale or a miss.
 const siteEntry = await getLocalizedEntry("site", "main", Astro.currentLocale);
-console.log("siteEntry", siteEntry);
+
 const { title, description, link, buttonLabel } = siteEntry!.data.featuredResearch;
 ---
 
