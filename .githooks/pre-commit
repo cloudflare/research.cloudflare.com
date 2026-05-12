@@ -1,0 +1,28 @@
+#!/bin/sh
+# Format-check staged files with prettier before allowing the commit.
+#
+# Wired up via `core.hooksPath = .githooks`, set by the root
+# package.json `prepare` script on `pnpm install`. Bypass with
+# `git commit --no-verify` when needed.
+
+set -eu
+
+# Bail early when nothing is staged so empty commits / merges don't
+# spend ~1s spinning up prettier. `-z` keeps NUL separators so paths
+# with spaces or newlines survive the pipeline to `xargs -0`.
+#
+# We can't round-trip NUL-delimited output through a shell variable
+# (POSIX `$(...)` capture eats embedded NULs), so the emptiness check
+# runs in its own pipeline and we re-run `git diff` to feed xargs.
+if [ -z "$(git diff --cached --name-only --diff-filter=ACMR)" ]; then
+  exit 0
+fi
+
+# `--ignore-unknown` skips files prettier can't parse (binaries, the
+# hook script itself, etc) without erroring.
+# `--no-error-on-unmatched-pattern` keeps an all-ignored set passing.
+git diff --cached --name-only --diff-filter=ACMR -z \
+  | xargs -0 pnpm exec prettier \
+      --check \
+      --ignore-unknown \
+      --no-error-on-unmatched-pattern

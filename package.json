@@ -11,6 +11,7 @@
     "icons": "lemon-lime-svgs",
     "ui": "NODE_TLS_REJECT_UNAUTHORIZED=0 pnpm dlx shadcn@latest add",
     "format": "prettier --write .",
+    "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
     "translate": "tsx packages/polystella/src/cli.ts",
     "translate:dry": "tsx packages/polystella/src/cli.ts --dry-run",
     "translate:build": "POLYSTELLA_TRANSLATE=1 pnpm build"
