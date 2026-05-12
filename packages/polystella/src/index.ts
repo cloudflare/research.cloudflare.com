@@ -209,9 +209,7 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
             `routes config produced no matches against the project. Configured patterns: ${resolved.routes.map((r) => r.source).join(", ")}`,
           );
         } else if (expandedRoutes.length !== resolved.routes.length) {
-          logger.info(
-            `routes: ${resolved.routes.length} pattern(s) → ${expandedRoutes.length} resolved page(s)`,
-          );
+          logger.info(`routes: ${resolved.routes.length} pattern(s) → ${expandedRoutes.length} resolved page(s)`);
         }
 
         // For each resolved route, write a shim that imports the

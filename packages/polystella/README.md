@@ -4,8 +4,6 @@
 
 PolyStella is an [Astro](https://astro.build) integration that translates content into additional locales at build time using AI, caches translations in Cloudflare R2, and injects locale-prefixed routes for the translated pages.
 
-The full design lives in `polystella-design-collections-c011ec.md`; this README is a quick orientation.
-
 ## What it does
 
 - **Build-time translation.** Translates `.md` (and other formats — see below) into additional locales during `astro build`. Visitors get static bytes; no runtime AI calls.

@@ -1,7 +1,13 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Segment } from "../../src/parsing/extract.js";
 import { EMPTY_GLOSSARY } from "../../src/glossary/glossary.js";
-import { createTranslator, PermanentProviderError, resolveModelId, translateBatch, type Translator } from "../../src/translation/provider.js";
+import {
+  createTranslator,
+  PermanentProviderError,
+  resolveModelId,
+  translateBatch,
+  type Translator,
+} from "../../src/translation/provider.js";
 
 /**
  * Build a fetch stub that returns a single canned response. Each test
@@ -670,11 +676,9 @@ describe("PermanentProviderError detection", () => {
 
   it("Anthropic throws PermanentProviderError on 403", async () => {
     const fetchStub = makeFetchStub({}, { status: 403, statusText: "Forbidden" });
-    const translator = createTranslator(
-      { kind: "anthropic", apiKey: "bad", model: "claude-test", maxTokens: 8192 },
-      "pt-BR",
-      { fetchImpl: fetchStub as unknown as typeof fetch },
-    );
+    const translator = createTranslator({ kind: "anthropic", apiKey: "bad", model: "claude-test", maxTokens: 8192 }, "pt-BR", {
+      fetchImpl: fetchStub as unknown as typeof fetch,
+    });
     await expect(translator.translate("sys", "user")).rejects.toBeInstanceOf(PermanentProviderError);
   });
 });

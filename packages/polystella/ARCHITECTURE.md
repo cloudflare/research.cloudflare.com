@@ -1,7 +1,7 @@
 # PolyStella Architecture
 
 System-level design decisions and rationale. In-code comments stay tight
-("why" only); the longer-form context that explains *how the pieces fit*
+("why" only); the longer-form context that explains _how the pieces fit_
 lives here so contributors and agents can find it without scrolling through
 implementation files.
 
@@ -184,7 +184,7 @@ seconds.
 
 The heartbeat in `runTranslationPass` is either-or:
 
-- a 15s timer ensures *something* prints during genuinely slow stretches,
+- a 15s timer ensures _something_ prints during genuinely slow stretches,
 - a 5%-progress threshold short-circuits the timer so a fast burst
   surfaces immediately.
 

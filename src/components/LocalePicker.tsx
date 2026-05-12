@@ -40,8 +40,7 @@ export function LocalePicker({ dict, locale, pathname, placement = "down" }: Loc
   // `!` forces priority over the variant-prefixed `top-full` / `mt-1.5`
   // defaults baked into `NavigationMenuContent`; tw-merge doesn't always
   // resolve those conflicts reliably across variant boundaries.
-  const contentClassName =
-    placement === "up" ? "left-auto right-0 top-auto! bottom-full! mt-0! mb-1.5!" : "left-auto right-0";
+  const contentClassName = placement === "up" ? "left-auto right-0 top-auto! bottom-full! mt-0! mb-1.5!" : "left-auto right-0";
 
   return (
     <NavigationMenu viewport={false}>
