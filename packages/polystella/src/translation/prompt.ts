@@ -41,7 +41,7 @@ export interface BuildPromptInput {
   sourceLocale: string;
   targetLocale: string;
   /** Optional system-prompt line appended after the generic opener. */
-  context?: string;
+  context?: string | undefined;
 }
 
 export interface BuiltPrompt {

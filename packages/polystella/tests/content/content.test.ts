@@ -1,8 +1,8 @@
 import { z } from "astro/zod";
 import { describe, expect, it, vi } from "vitest";
 
-import { buildCollections, deriveSiblingCollection, type LoaderOverride, type PolystellaCollectionsDeps } from "../src/content/build.js";
-import { POLYSTELLA_SOURCE_PATH_KEY } from "../src/content/file-loader.js";
+import { buildCollections, deriveSiblingCollection, type LoaderOverride, type PolystellaCollectionsDeps } from "../../src/content/build.js";
+import { POLYSTELLA_SOURCE_PATH_KEY } from "../../src/content/file-loader.js";
 
 /**
  * Tests pin the contract `polystellaCollections` exposes to user

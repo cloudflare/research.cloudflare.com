@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rewriteInternalLinks, rewriteUrlIfInternal, type RewriteInternalLinksOptions } from "../src/parsing/rewrite-links.js";
+import { rewriteInternalLinks, rewriteUrlIfInternal, type RewriteInternalLinksOptions } from "../../src/parsing/rewrite-links.js";
 
 const opts: RewriteInternalLinksOptions = {
   targetLocale: "pt-BR",

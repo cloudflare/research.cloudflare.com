@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { parse as parseYaml } from "yaml";
 
-import type { AdapterExtractOptions } from "../src/parsing/adapter.js";
-import { yamlAdapter } from "../src/parsing/adapters/yaml.js";
+import type { AdapterExtractOptions } from "../../src/parsing/adapter.js";
+import { yamlAdapter } from "../../src/parsing/adapters/yaml.js";
 
 /**
  * YAML adapter — extract / apply / hash / noTranslate / URL-rewrite

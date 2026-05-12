@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it } from "vitest";
 
-import type { AdapterApplyOptions, AdapterExtractOptions, FileTypeAdapter } from "../src/parsing/adapter.js";
-import { jsonAdapter } from "../src/parsing/adapters/json.js";
-import { markdownAdapter } from "../src/parsing/adapters/markdown.js";
-import { tomlAdapter } from "../src/parsing/adapters/toml.js";
-import { yamlAdapter } from "../src/parsing/adapters/yaml.js";
-import { getAdapter, listRegisteredExtensions, registerAdapter, resetRegistry } from "../src/parsing/registry.js";
-import type { Segment } from "../src/parsing/extract.js";
+import type { AdapterApplyOptions, AdapterExtractOptions, FileTypeAdapter } from "../../src/parsing/adapter.js";
+import { jsonAdapter } from "../../src/parsing/adapters/json.js";
+import { markdownAdapter } from "../../src/parsing/adapters/markdown.js";
+import { tomlAdapter } from "../../src/parsing/adapters/toml.js";
+import { yamlAdapter } from "../../src/parsing/adapters/yaml.js";
+import { getAdapter, listRegisteredExtensions, registerAdapter, resetRegistry } from "../../src/parsing/registry.js";
+import type { Segment } from "../../src/parsing/extract.js";
 
 /**
  * Registry tests pin three contracts:

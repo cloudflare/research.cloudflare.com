@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { mkdtemp, readFile, rm } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
-import { computeBuildReportTotals, emitBuildReport, type BuildReport, type BuildReportEntry } from "../src/storage/report.js";
+import { computeBuildReportTotals, emitBuildReport, type BuildReport, type BuildReportEntry } from "../../src/storage/report.js";
 
 /**
  * Two layers:

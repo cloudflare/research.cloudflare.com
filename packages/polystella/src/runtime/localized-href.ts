@@ -16,6 +16,22 @@
 
 import picomatch from "picomatch";
 
+/**
+ * Per-array cache of compiled picomatch matchers. `noPrefixUrls`
+ * is typically shared by reference across thousands of calls per
+ * build (resolved-options is built once), so a WeakMap-keyed cache
+ * eliminates repeated regex compilation on the hot path.
+ */
+const matcherCache = new WeakMap<ReadonlyArray<string>, (path: string) => boolean>();
+
+function getNoPrefixMatcher(patterns: ReadonlyArray<string>): (path: string) => boolean {
+  const cached = matcherCache.get(patterns);
+  if (cached !== undefined) return cached;
+  const matcher = picomatch(patterns as string[]);
+  matcherCache.set(patterns, matcher);
+  return matcher;
+}
+
 export interface LocalizedHrefDeps {
   /** From `config.i18n.defaultLocale`. */
   defaultLocale: string;
@@ -68,12 +84,11 @@ export function resolveLocalizedHref(href: string, locale: string | undefined, d
   const pathPart = suffixMatch ? href.slice(0, suffixMatch.index) : href;
   const suffix = suffixMatch ? href.slice(suffixMatch.index) : "";
 
-  // Operator-declared internal exemptions. Match against the path
-  // portion (suffix already split off). `picomatch.isMatch` returns
-  // false for an empty pattern list, so the no-config case is a
-  // no-op.
+  // Operator-declared internal exemptions. Reuses a compiled
+  // matcher per `noPrefixUrls` array reference — see `matcherCache`.
   if (deps.noPrefixUrls && deps.noPrefixUrls.length > 0) {
-    if (picomatch.isMatch(pathPart, deps.noPrefixUrls as string[])) {
+    const isExempt = getNoPrefixMatcher(deps.noPrefixUrls);
+    if (isExempt(pathPart)) {
       return href;
     }
   }

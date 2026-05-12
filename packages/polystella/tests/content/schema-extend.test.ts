@@ -1,7 +1,7 @@
 import { z } from "astro/zod";
 import { describe, expect, it, vi } from "vitest";
 
-import { AI_MARKER_KEYS, extendSchemaWithAiMarker, type ExtendSchemaOpts } from "../src/content/extend-schema.js";
+import { AI_MARKER_KEYS, extendSchemaWithAiMarker, type ExtendSchemaOpts } from "../../src/content/extend-schema.js";
 
 /**
  * Tests pin the contracts the helper exposes to `polystellaCollections`:

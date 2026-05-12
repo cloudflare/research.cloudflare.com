@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseMarkdown } from "../src/parsing/parse.js";
+import { parseMarkdown } from "../../src/parsing/parse.js";
 
 describe("parseMarkdown", () => {
   it("produces an mdast Root with heading + paragraph for plain markdown", () => {
@@ -9,6 +9,7 @@ describe("parseMarkdown", () => {
     expect(ast.children).toHaveLength(2);
 
     const [heading, paragraph] = ast.children;
+    if (heading === undefined || paragraph === undefined) throw new Error("expected two children");
     expect(heading.type).toBe("heading");
     if (heading.type === "heading") {
       expect(heading.depth).toBe(1);

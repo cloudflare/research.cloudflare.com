@@ -1,12 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildCacheMetadata, translateOrLoadFromCache, type TranslateOrLoadOptions } from "../src/storage/cache.js";
-import { applyTranslations } from "../src/parsing/apply.js";
-import { extractSegments } from "../src/parsing/extract.js";
-import { EMPTY_GLOSSARY, hashGlossary, type Glossary } from "../src/glossary/glossary.js";
-import { computeSourceHash } from "../src/storage/hash.js";
-import { parseMarkdown } from "../src/parsing/parse.js";
-import { buildR2Key, type R2Client, type R2GetResult } from "../src/storage/r2.js";
-import type { Translator } from "../src/translation/provider.js";
+import { buildCacheMetadata, translateOrLoadFromCache, type TranslateOrLoadOptions } from "../../src/storage/cache.js";
+import { applyTranslations } from "../../src/parsing/apply.js";
+import { extractSegments } from "../../src/parsing/extract.js";
+import { EMPTY_GLOSSARY, hashGlossary, type Glossary } from "../../src/glossary/glossary.js";
+import { computeSourceHash } from "../../src/storage/hash.js";
+import { parseMarkdown } from "../../src/parsing/parse.js";
+import { buildR2Key, type R2Client, type R2GetResult } from "../../src/storage/r2.js";
+import type { Translator } from "../../src/translation/provider.js";
 
 /**
  * Cache-aware orchestrator tests.

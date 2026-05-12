@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
-import { resolveLocalizedCollection, type ResolveLocalizedCollectionDeps } from "../src/runtime/get-localized-collection.js";
-import type { SourceEntryShape } from "../src/runtime/get-localized-entry.js";
+import { resolveLocalizedCollection, type ResolveLocalizedCollectionDeps } from "../../src/runtime/get-localized-collection.js";
+import type { SourceEntryShape } from "../../src/runtime/get-localized-entry.js";
 
 /**
  * Tests for the pure runtime helper that powers

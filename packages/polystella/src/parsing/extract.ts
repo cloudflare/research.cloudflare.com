@@ -4,6 +4,20 @@ import { parse as parseYaml } from "yaml";
 import { inlineSpan, visitTranslatableBlocks } from "./traverse.js";
 
 /**
+ * Per-pattern compiled-matcher cache. Pattern strings are de facto
+ * bounded by config (operator declares a small set of globs), so an
+ * unbounded Map is safe and avoids re-compiling on every source.
+ */
+const patternMatcherCache = new Map<string, (path: string) => boolean>();
+function getMatcher(pattern: string): (path: string) => boolean {
+  const cached = patternMatcherCache.get(pattern);
+  if (cached !== undefined) return cached;
+  const matcher = picomatch(pattern);
+  patternMatcherCache.set(pattern, matcher);
+  return matcher;
+}
+
+/**
  * A translatable unit. IDs are stable across re-runs and shared with
  * `apply.ts` for byte-replacement at matching positions.
  *
@@ -78,7 +92,7 @@ export function extractSegments(ast: Root, opts: ExtractOptions, source: string)
 export function resolveFrontmatterKeys(sourcePath: string, rules: Record<string, string[]>): string[] {
   const matched = new Set<string>();
   for (const [pattern, keys] of Object.entries(rules)) {
-    if (picomatch.isMatch(sourcePath, pattern)) {
+    if (getMatcher(pattern)(sourcePath)) {
       for (const key of keys) {
         matched.add(key);
       }

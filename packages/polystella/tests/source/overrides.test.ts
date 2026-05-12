@@ -2,7 +2,7 @@ import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { mkdtemp, mkdir, writeFile, rm, chmod } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { readOverride, resolveOverridePath } from "../src/source/overrides.js";
+import { readOverride, resolveOverridePath } from "../../src/source/overrides.js";
 
 let rootDir: string;
 

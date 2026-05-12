@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { POLYSTELLA_SOURCE_PATH_KEY, file, readRecordedSourcePath } from "../src/content/file-loader.js";
+import { POLYSTELLA_SOURCE_PATH_KEY, file, readRecordedSourcePath } from "../../src/content/file-loader.js";
 
 /**
  * Polystella-flavoured `file()` loader. Forwards to Astro's `file()`

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type { AdapterExtractOptions } from "../src/parsing/adapter.js";
-import { jsonAdapter } from "../src/parsing/adapters/json.js";
+import type { AdapterExtractOptions } from "../../src/parsing/adapter.js";
+import { jsonAdapter } from "../../src/parsing/adapters/json.js";
 
 /**
  * JSON adapter — extract / apply / hash / noTranslate / URL-rewrite

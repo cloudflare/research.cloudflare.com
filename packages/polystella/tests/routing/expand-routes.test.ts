@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { expandRoutes, type RouteEntry } from "../src/routing/expand-routes.js";
+import { expandRoutes, type RouteEntry } from "../../src/routing/expand-routes.js";
 
 /**
  * Pure tests for the route glob expander. Production callers feed

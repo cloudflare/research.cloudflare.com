@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { deriveUrlPattern, generateShimSource } from "../src/routing/shim.js";
+import { deriveUrlPattern, generateShimSource } from "../../src/routing/shim.js";
 
 /**
  * Pure-helper tests for the route-shim layer.

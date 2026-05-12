@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildI18nLoader, DEFAULT_I18N_BASE, DEFAULT_I18N_PATTERN, i18nSchema } from "../src/i18n/loader.js";
+import { buildI18nLoader, DEFAULT_I18N_BASE, DEFAULT_I18N_PATTERN, i18nSchema } from "../../src/i18n/loader.js";
 
 /**
  * Tests for the dependency-injected loader factory and the i18n

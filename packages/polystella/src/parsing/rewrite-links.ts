@@ -2,6 +2,21 @@ import type { Link, Root } from "mdast";
 import picomatch from "picomatch";
 import { parseMarkdown } from "./parse.js";
 
+/**
+ * Per-array cache of compiled picomatch matchers. `noPrefixUrls`
+ * shares a reference across all link rewrites in a build, so the
+ * WeakMap eliminates per-link regex compilation.
+ */
+const matcherCache = new WeakMap<ReadonlyArray<string>, (path: string) => boolean>();
+
+function getNoPrefixMatcher(patterns: ReadonlyArray<string>): (path: string) => boolean {
+  const cached = matcherCache.get(patterns);
+  if (cached !== undefined) return cached;
+  const matcher = picomatch(patterns as string[]);
+  matcherCache.set(patterns, matcher);
+  return matcher;
+}
+
 export interface RewriteInternalLinksOptions {
   /** Locale to prefix toward; the locale of the file being staged. */
   targetLocale: string;
@@ -98,12 +113,11 @@ export function rewriteUrlIfInternal(url: string, options: RewriteInternalLinksO
   const path = suffixMatch ? url.slice(0, suffixMatch.index) : url;
   const suffix = suffixMatch ? url.slice(suffixMatch.index) : "";
 
-  // Operator-declared internal exemptions. Match against the path
-  // portion (suffix already split off). picomatch.isMatch returns
-  // false for an empty pattern list, so the no-config case is a
-  // no-op.
+  // Operator-declared internal exemptions. Reuses a compiled matcher
+  // per `noPrefixUrls` array reference — see `matcherCache`.
   if (options.noPrefixUrls && options.noPrefixUrls.length > 0) {
-    if (picomatch.isMatch(path, options.noPrefixUrls as string[])) {
+    const isExempt = getNoPrefixMatcher(options.noPrefixUrls);
+    if (isExempt(path)) {
       return null;
     }
   }

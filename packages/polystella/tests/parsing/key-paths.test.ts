@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { expandPath, formatPath, parsePath, readAtPath, writeAtPath } from "../src/parsing/key-paths.js";
+import { expandPath, formatPath, parsePath, readAtPath, writeAtPath } from "../../src/parsing/key-paths.js";
 
 /**
  * Key-path utilities — unit-level tests. The TOML / JSON / YAML

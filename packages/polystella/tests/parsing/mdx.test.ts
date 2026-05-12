@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { markdownAdapter } from "../src/parsing/adapters/markdown.js";
-import { parseMarkdown, parseMdx } from "../src/parsing/parse.js";
+import { markdownAdapter } from "../../src/parsing/adapters/markdown.js";
+import { parseMarkdown, parseMdx } from "../../src/parsing/parse.js";
 
 /**
  * MDX support tests.

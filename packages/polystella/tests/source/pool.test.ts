@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { runWithConcurrency } from "../src/source/pool.js";
+import { runWithConcurrency } from "../../src/source/pool.js";
 
 /**
  * Tests for the pool utility used by the build hook's per-source

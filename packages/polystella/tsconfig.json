@@ -3,6 +3,10 @@
   "include": ["src/**/*", "tests/**/*", "types-internal/**/*", "client.d.ts"],
   "compilerOptions": {
     "noEmit": true,
-    "moduleResolution": "bundler"
+    "moduleResolution": "bundler",
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true
   }
 }

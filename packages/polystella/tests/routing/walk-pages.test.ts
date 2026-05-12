@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { walkPages } from "../src/routing/walk-pages.js";
+import { walkPages } from "../../src/routing/walk-pages.js";
 
 /**
  * Filesystem walker tests. Use real temp directories rather than a

@@ -7,8 +7,8 @@ import {
   buildTranslator,
   createMiddleware,
   type MiddlewareDeps,
-} from "../src/runtime/middleware-core.js";
-import type { SourceEntryShape } from "../src/runtime/get-localized-entry.js";
+} from "../../src/runtime/middleware-core.js";
+import type { SourceEntryShape } from "../../src/runtime/get-localized-entry.js";
 
 /**
  * Tests for the polystella request middleware. Exercises the

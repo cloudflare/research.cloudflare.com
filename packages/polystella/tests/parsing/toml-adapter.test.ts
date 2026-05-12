@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import type { AdapterExtractOptions } from "../src/parsing/adapter.js";
-import { tomlAdapter } from "../src/parsing/adapters/toml.js";
+import type { AdapterExtractOptions } from "../../src/parsing/adapter.js";
+import { tomlAdapter } from "../../src/parsing/adapters/toml.js";
 
 /**
  * TOML adapter — extract / apply / hash / noTranslate behaviour.

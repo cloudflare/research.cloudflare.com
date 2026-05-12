@@ -6,7 +6,7 @@ import {
   polystellaLoader,
   readPolystellaCustomLoaderMarker,
   type CapturedEntry,
-} from "../src/content/custom-loader.js";
+} from "../../src/content/custom-loader.js";
 
 /**
  * Tests for the polystella custom-loader wrapper.

@@ -11,11 +11,11 @@ import {
   setRuntimeBridge,
   type CustomLoaderTranslateRecord,
   type PolystellaRuntimeBridge,
-} from "../src/runtime/custom-loader-runtime.js";
-import type { CapturedEntry, PolystellaCustomLoaderMarker } from "../src/content/custom-loader.js";
-import { EMPTY_GLOSSARY } from "../src/glossary/glossary.js";
-import type { Translator } from "../src/translation/provider.js";
-import type { R2Client } from "../src/storage/r2.js";
+} from "../../src/runtime/custom-loader-runtime.js";
+import type { CapturedEntry, PolystellaCustomLoaderMarker } from "../../src/content/custom-loader.js";
+import { EMPTY_GLOSSARY } from "../../src/glossary/glossary.js";
+import type { Translator } from "../../src/translation/provider.js";
+import type { R2Client } from "../../src/storage/r2.js";
 
 /**
  * Tests for the runtime bridge powering custom-loader sibling

@@ -1,8 +1,8 @@
 import type { Paragraph } from "mdast";
 import { describe, expect, it } from "vitest";
-import { applyTranslations } from "../src/parsing/apply.js";
-import { extractSegments } from "../src/parsing/extract.js";
-import { parseMarkdown } from "../src/parsing/parse.js";
+import { applyTranslations } from "../../src/parsing/apply.js";
+import { extractSegments } from "../../src/parsing/extract.js";
+import { parseMarkdown } from "../../src/parsing/parse.js";
 
 describe("applyTranslations", () => {
   it("with an empty map, returns the source byte-for-byte (no allocation)", () => {

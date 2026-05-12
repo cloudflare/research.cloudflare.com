@@ -5,7 +5,7 @@ import { pathToFileURL } from "node:url";
 import picomatch from "picomatch";
 
 import type { PolyStellaResolvedOptions } from "../config/options.js";
-import { EMPTY_GLOSSARY, EMPTY_GLOSSARY_HASH, hashGlossary, loadGlossaries } from "../glossary/glossary.js";
+import { EMPTY_GLOSSARY, EMPTY_GLOSSARY_HASH, hashGlossary, loadGlossaries, type Glossary } from "../glossary/glossary.js";
 import type { AdapterExtractOptions, FileTypeAdapter } from "../parsing/adapter.js";
 import { rewriteInternalLinks, rewriteUrlIfInternal, type RewriteInternalLinksOptions } from "../parsing/rewrite-links.js";
 import { getAdapter, listRegisteredExtensions } from "../parsing/registry.js";
@@ -22,7 +22,7 @@ import {
   type LocalCacheEntry,
 } from "../storage/local-cache.js";
 import { encodeTouchedPair, pruneCacheByPair } from "../storage/prune.js";
-import { buildR2Key, createR2Client, type R2Client } from "../storage/r2.js";
+import { buildR2Key, createR2Client, DEFAULT_R2_KEY_PREFIX, type R2Client } from "../storage/r2.js";
 import type { BuildReportEntry, BuildReportPruning } from "../storage/report.js";
 import { createTranslator, type Translator } from "./provider.js";
 
@@ -93,6 +93,18 @@ export interface RunTranslationResult {
   noTranslateSources: number;
   /** `false` when the run skipped translation (no provider, dryRun, no sources). */
   liveRan: boolean;
+  /**
+   * Parsed glossaries by locale. Exposed so callers (e.g. the
+   * integration's `publishRuntimeBridge`) can reuse them without
+   * re-reading the YAML files from disk.
+   */
+  glossariesByLocale: Map<string, Glossary>;
+  /**
+   * Per-locale glossary content hash. Same content as
+   * `glossariesForReport[locale].sha256` but in Map form, for use
+   * as a cache-key input.
+   */
+  glossaryHashByLocale: Map<string, string>;
 }
 
 /**
@@ -155,12 +167,22 @@ function pickUrlKeysForAdapter(adapter: FileTypeAdapter, resolved: PolyStellaRes
   return {};
 }
 
+/** Per-pattern compiled-matcher cache. Bounded by config size. */
+const urlPathPatternCache = new Map<string, (path: string) => boolean>();
+function getUrlPathMatcher(pattern: string): (path: string) => boolean {
+  const cached = urlPathPatternCache.get(pattern);
+  if (cached !== undefined) return cached;
+  const matcher = picomatch(pattern);
+  urlPathPatternCache.set(pattern, matcher);
+  return matcher;
+}
+
 /** Union every matching glob's URL paths, deduped, insertion-ordered. */
 function resolveUrlPathsForSource(rules: Record<string, string[]>, sourcePath: string): string[] {
   const matched: string[] = [];
   const seen = new Set<string>();
   for (const [pattern, paths] of Object.entries(rules)) {
-    if (picomatch.isMatch(sourcePath, pattern)) {
+    if (getUrlPathMatcher(pattern)(sourcePath)) {
       for (const p of paths) {
         if (!seen.has(p)) {
           seen.add(p);
@@ -303,60 +325,78 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
       counts,
       noTranslateSources,
       liveRan: false,
+      glossariesByLocale: glossaries,
+      glossaryHashByLocale,
     };
   }
 
-  // Dry-run logging: compute the same hashes the live pass would,
-  // so the logged keys match what'll actually be PUT/GET'd if
-  // `dryRun` flips off.
-  let pairCount = 0;
-  await Promise.all(
-    sources.map(async (source) => {
+  // Live mode requires a provider AND dryRun off. Skip live work
+  // (and the per-source parse it needs) when either is missing.
+  const liveMode = resolved.provider !== undefined && !resolved.dryRun;
+
+  // Dry-run pass runs ONLY when live work is skipped. Live runs do
+  // the same hash computation naturally inside the worker; running
+  // a separate dry-run walk would double the per-source parse cost.
+  if (!liveMode) {
+    // Cheap planning summary: pair count needs no parsing. Skipped-
+    // adapter warnings still fire here because the live walk won't
+    // get the chance to.
+    let pairCount = 0;
+    let skippedSources = 0;
+    for (const source of sources) {
       const ext = path.extname(source.relativePath).toLowerCase();
       const adapter = getAdapter(ext);
       if (!adapter) {
         logger.warn(
           `no adapter registered for "${ext}" (source: ${source.relativePath}); known: ${listRegisteredExtensions().join(", ") || "none"}. Skipping.`,
         );
-        return;
+        skippedSources++;
+        continue;
       }
-      const body = await readFile(source.absolutePath, "utf8");
-      const parsed = adapter.parse(body, source.relativePath);
-      const adapterOpts: AdapterExtractOptions = {
-        sourcePath: source.relativePath,
-        translatableKeys: pickTranslatableKeysForAdapter(adapter, resolved),
-      };
-      const selectedValues = adapter.selectedValuesForHash(parsed, body, adapterOpts);
-      for (const locale of resolved.locales) {
-        const hash = computeSourceHash({
-          body,
-          frontmatter: selectedValues,
-          glossaryHash: glossaryHashByLocale.get(locale) ?? EMPTY_GLOSSARY_HASH,
-          modelId: translatorByLocale.get(locale)?.modelId ?? "",
-        });
-        const key = buildR2Key({
-          locale,
-          sourcePath: source.relativePath,
-          hash,
-          prefix: resolved.r2?.prefix,
-        });
-        logger.debug(`would check cache for ${key}`);
-        pairCount++;
-      }
-    }),
-  );
+      pairCount += resolved.locales.length;
+    }
 
-  logger.info(
-    `dry-run: ${pairCount} R2 keys across ${sources.length} source file${
-      sources.length === 1 ? "" : "s"
-    } × ${resolved.locales.length} locale${resolved.locales.length === 1 ? "" : "s"}`,
-  );
+    // Per-key debug logging is gated on debug log-level — only
+    // operators who explicitly asked for the trace pay the parse
+    // cost to emit them.
+    if (process.env["LOG_LEVEL"] === "debug" && pairCount > 0) {
+      await Promise.all(
+        sources.map(async (source) => {
+          const ext = path.extname(source.relativePath).toLowerCase();
+          const adapter = getAdapter(ext);
+          if (!adapter) return;
+          const body = await readFile(source.absolutePath, "utf8");
+          const parsed = adapter.parse(body, source.relativePath);
+          const adapterOpts: AdapterExtractOptions = {
+            sourcePath: source.relativePath,
+            translatableKeys: pickTranslatableKeysForAdapter(adapter, resolved),
+          };
+          const selectedValues = adapter.selectedValuesForHash(parsed, body, adapterOpts);
+          for (const locale of resolved.locales) {
+            const hash = computeSourceHash({
+              body,
+              frontmatter: selectedValues,
+              glossaryHash: glossaryHashByLocale.get(locale) ?? EMPTY_GLOSSARY_HASH,
+              modelId: translatorByLocale.get(locale)?.modelId ?? "",
+            });
+            const key = buildR2Key({
+              locale,
+              sourcePath: source.relativePath,
+              hash,
+              prefix: resolved.r2?.prefix,
+            });
+            logger.debug(`would check cache for ${key}`);
+          }
+        }),
+      );
+    }
 
-  // Live mode requires a provider AND dryRun off. Otherwise return
-  // early with dry-run-only counts so callers can still log planned
-  // keys without writing.
-  const liveMode = resolved.provider !== undefined && !resolved.dryRun;
-  if (!liveMode) {
+    logger.info(
+      `dry-run: ${pairCount} R2 keys across ${sources.length - skippedSources} source file${
+        sources.length - skippedSources === 1 ? "" : "s"
+      } × ${resolved.locales.length} locale${resolved.locales.length === 1 ? "" : "s"}`,
+    );
+
     return {
       entries,
       pruning,
@@ -365,6 +405,8 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
       counts,
       noTranslateSources,
       liveRan: false,
+      glossariesByLocale: glossaries,
+      glossaryHashByLocale,
     };
   }
 
@@ -372,6 +414,45 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
   logger.info(
     `live: processing ${sources.length} × ${resolved.locales.length} (file, locale) pairs at concurrency ${resolved.concurrency}`,
   );
+
+  // Bulk pre-list: one paginated R2 `list()` per (prefix × locale)
+  // collapses up to `totalPairs` cache-check GETs into the populated
+  // Set. Per-pair lookup becomes O(1). Skipped when no R2 is
+  // configured or when `bulkListOnStart` is false.
+  let existsInCache: ((key: string) => boolean) | undefined;
+  if (r2 && resolved.r2?.bulkListOnStart !== false) {
+    const cachedKeys = new Set<string>();
+    const prefixesToList = new Set<string>();
+    // Match `buildR2Key`'s prefix fallback so the predicate's set
+    // contains keys under the SAME prefix the worker actually uses.
+    prefixesToList.add(resolved.r2?.prefix ?? DEFAULT_R2_KEY_PREFIX);
+    for (const fb of resolved.r2?.readFallbackPrefixes ?? []) prefixesToList.add(fb);
+    const listStartedAt = Date.now();
+    let listedCount = 0;
+    try {
+      await Promise.all(
+        [...prefixesToList].flatMap((prefix) =>
+          resolved.locales.map(async (locale) => {
+            signal?.throwIfAborted();
+            const entries = await r2.list(`${prefix}${locale}/`);
+            for (const entry of entries) cachedKeys.add(entry.key);
+            listedCount += entries.length;
+          }),
+        ),
+      );
+      existsInCache = (key) => cachedKeys.has(key);
+      const elapsedMs = Date.now() - listStartedAt;
+      logger.info(
+        `R2 cache: pre-listed ${listedCount} key${listedCount === 1 ? "" : "s"} across ${prefixesToList.size} prefix${
+          prefixesToList.size === 1 ? "" : "es"
+        } × ${resolved.locales.length} locale${resolved.locales.length === 1 ? "" : "s"} in ${elapsedMs}ms`,
+      );
+    } catch (err) {
+      // List failure is non-fatal: fall back to per-pair GETs.
+      logger.warn(`R2 cache: pre-list failed (${(err as Error).message}); falling back to per-pair GETs`);
+      existsInCache = undefined;
+    }
+  }
 
   // Heartbeat keeps the build feed alive on cold-cache runs.
   // See ARCHITECTURE.md §10 for the timing rationale.
@@ -473,10 +554,13 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
     const ext = path.extname(source.relativePath).toLowerCase();
     const adapter = getAdapter(ext);
     if (!adapter) {
-      // Already warned in the dry-run pass above; silently drop here
-      // so a single source file with an unsupported extension doesn't
-      // double-log on every run. Account for the would-be pairs in
-      // the heartbeat denominator so progress still ticks toward 100%.
+      // Warn ONCE per missing-adapter source. The dry-run pass
+      // doesn't run in live mode any more, so this is the only
+      // surface that fires the warning. Heartbeat denominator gets
+      // the would-be pairs so progress still ticks toward 100%.
+      logger.warn(
+        `no adapter registered for "${ext}" (source: ${source.relativePath}); known: ${listRegisteredExtensions().join(", ") || "none"}. Skipping.`,
+      );
       processedPairs += resolved.locales.length;
       maybeEmitProgress();
       return;
@@ -706,6 +790,7 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
           }),
           ...(resolved.r2?.readOnly ? { readOnly: true } : {}),
           ...(fallbackKeys.length > 0 ? { fallbackKeys } : {}),
+          ...(existsInCache !== undefined ? { existsInCache } : {}),
           maxRetries: resolved.maxRetries,
           // Production backoff: 100ms minimum, exponential, jittered.
           // Avoids thundering-herd against the AI provider on a
@@ -890,5 +975,7 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
     counts,
     noTranslateSources,
     liveRan: true,
+    glossariesByLocale: glossaries,
+    glossaryHashByLocale,
   };
 }

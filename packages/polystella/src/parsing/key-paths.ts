@@ -186,6 +186,7 @@ export function readAtPath(node: unknown, segments: readonly PathSegment[]): unk
     if (current === null || current === undefined) return undefined;
     if (typeof seg === "number") {
       if (!Array.isArray(current)) return undefined;
+      // nosemgrep: javascript.lang.security.audit.prototype-pollution.prototype-pollution-loop.prototype-pollution-loop -- numeric array index, cannot hit prototype chain.
       current = current[seg];
     } else {
       if (typeof current !== "object") return undefined;
@@ -196,6 +197,7 @@ export function readAtPath(node: unknown, segments: readonly PathSegment[]): unk
       // `PathSegment[]` directly (Semgrep
       // js/prototype-pollution-loop).
       if (!Object.hasOwn(current as object, seg)) return undefined;
+      // nosemgrep: javascript.lang.security.audit.prototype-pollution.prototype-pollution-loop.prototype-pollution-loop -- Object.hasOwn gate above blocks prototype-chain segments.
       current = (current as Record<string, unknown>)[seg];
     }
   }
@@ -226,6 +228,7 @@ export function writeAtPath(node: unknown, segments: readonly PathSegment[], val
       if (!Array.isArray(current)) {
         throw new Error(`[polystella] cannot write at ${formatPath(segments)}: expected array at segment ${i}, got ${typeof current}`);
       }
+      // nosemgrep: javascript.lang.security.audit.prototype-pollution.prototype-pollution-loop.prototype-pollution-loop -- numeric array index, cannot hit prototype chain.
       current = current[seg];
     } else {
       if (typeof current !== "object") {
@@ -282,6 +285,18 @@ export { default as picomatchMatcher } from "picomatch";
 import picomatch from "picomatch";
 
 /**
+ * Per-pattern compiled-matcher cache. Sized by config (bounded).
+ */
+const patternMatcherCache = new Map<string, (path: string) => boolean>();
+function getMatcher(pattern: string): (path: string) => boolean {
+  const cached = patternMatcherCache.get(pattern);
+  if (cached !== undefined) return cached;
+  const matcher = picomatch(pattern);
+  patternMatcherCache.set(pattern, matcher);
+  return matcher;
+}
+
+/**
  * Resolve concrete translatable paths for a source. Union matching
  * globs' paths, expand wildcards against `parsed`, dedupe by first
  * occurrence (order matters for ID stability).
@@ -290,7 +305,7 @@ export function resolveConcretePaths(args: { parsed: unknown; sourcePath: string
   const { parsed, sourcePath, translatableKeys } = args;
   const matchedRulePaths: string[] = [];
   for (const [pattern, paths] of Object.entries(translatableKeys)) {
-    if (picomatch.isMatch(sourcePath, pattern)) {
+    if (getMatcher(pattern)(sourcePath)) {
       for (const p of paths) {
         if (!matchedRulePaths.includes(p)) {
           matchedRulePaths.push(p);

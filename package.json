@@ -57,6 +57,11 @@
   "overrides": {
     "vite": "^8"
   },
+  "pnpm": {
+    "overrides": {
+      "picomatch@2": "2.3.2"
+    }
+  },
   "packageManager": "pnpm@10.33.0",
   "engines": {
     "node": "24.15.0",

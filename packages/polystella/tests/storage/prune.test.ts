@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
-import { pruneCacheByPair, encodeTouchedPair, decodeTouchedPair } from "../src/storage/prune.js";
-import type { R2Client, R2ListEntry } from "../src/storage/r2.js";
+import { pruneCacheByPair, encodeTouchedPair, decodeTouchedPair } from "../../src/storage/prune.js";
+import type { R2Client, R2ListEntry } from "../../src/storage/r2.js";
 
 /**
  * Build an in-memory R2 fixture pre-populated with a fixed list of

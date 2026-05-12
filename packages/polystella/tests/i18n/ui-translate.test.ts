@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { buildTranslateFn, interpolate, resolveTranslations, type GetI18nEntry } from "../src/i18n/translate.js";
+import { buildTranslateFn, interpolate, resolveTranslations, type GetI18nEntry } from "../../src/i18n/translate.js";
 
 /**
  * Tests for the runtime translator. Three layers:

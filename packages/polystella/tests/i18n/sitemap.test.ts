@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { astroSitemapI18n } from "../src/i18n/sitemap.js";
+import { astroSitemapI18n } from "../../src/i18n/sitemap.js";
 
 describe("astroSitemapI18n", () => {
   describe("i18n option", () => {

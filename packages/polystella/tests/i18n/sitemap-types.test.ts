@@ -4,7 +4,7 @@
 // arrays, enum vs string, missing optional fields).
 import { describe, it } from "vitest";
 import sitemap from "@astrojs/sitemap";
-import { astroSitemapI18n } from "../src/i18n/sitemap.js";
+import { astroSitemapI18n } from "../../src/i18n/sitemap.js";
 
 describe("astroSitemapI18n type compatibility with @astrojs/sitemap", () => {
   it("output is assignable to sitemap() argument (default xDefault)", () => {

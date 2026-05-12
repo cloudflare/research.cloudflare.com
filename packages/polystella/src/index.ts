@@ -291,17 +291,8 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
           );
         }
 
-        // Publish the runtime bridge so custom-loader siblings (which
-        // run later, at content-sync time) can translate captured
-        // entries inline. See ARCHITECTURE.md §4.
         const bridgeReportSink: CustomLoaderTranslateRecord[] = [];
         reportState.bridgeReportSink = bridgeReportSink;
-        await publishRuntimeBridge({
-          resolved,
-          rootDirPath,
-          stagingDir,
-          bridgeReportSink,
-        });
 
         // Translation runs HERE (config:setup), not in `build:start`.
         // See ARCHITECTURE.md §2 — this is the single most surprising
@@ -310,19 +301,29 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
         // Explicit `command` narrowing — Astro can pass `"sync"`,
         // `"preview"`, etc.; a bare cast would let those slip past
         // the `runOn` check.
-        if (command !== "build" && command !== "dev") {
-          return;
-        }
-        if (!resolved.runOn.includes(command)) {
-          return;
+        const willRun = (command === "build" || command === "dev") && resolved.runOn.includes(command);
+        if (willRun) {
+          reportState.runResult = await runTranslationPass({
+            resolved,
+            rootDir: rootDirPath,
+            stagingDir,
+            logger,
+            polystellaVersion: POLYSTELLA_VERSION,
+          });
         }
 
-        reportState.runResult = await runTranslationPass({
+        // Publish the runtime bridge so custom-loader siblings (which
+        // run later, at content-sync time) can translate captured
+        // entries inline. Reuses glossaries the translation pass
+        // already loaded (when it ran); falls back to a fresh load
+        // otherwise. See ARCHITECTURE.md §4.
+        await publishRuntimeBridge({
           resolved,
-          rootDir: rootDirPath,
+          rootDirPath,
           stagingDir,
-          logger,
-          polystellaVersion: POLYSTELLA_VERSION,
+          bridgeReportSink,
+          preloadedGlossaries: reportState.runResult?.glossariesByLocale,
+          preloadedGlossaryHashes: reportState.runResult?.glossaryHashByLocale,
         });
       },
       "astro:build:done": async ({ dir, logger }) => {
@@ -386,8 +387,10 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
  * Build + publish the per-build runtime bridge. Read at content-sync
  * time by per-locale sibling loaders derived from `polystellaLoader`-
  * wrapped sources. Deps duplicate `runTranslationPass`'s setup; the
- * cost is one glossary read per locale — kept separate to avoid
- * refactoring `runTranslationPass`'s signature. See ARCHITECTURE.md §4.
+ * Reuses glossaries from a prior `runTranslationPass` when supplied
+ * (saves one FS read per locale). Falls back to fresh loads when
+ * the translation pass didn't run (e.g. `runOn: ["build"]` + dev
+ * command). See ARCHITECTURE.md §4.
  *
  * Empty translator map ⇒ sibling loader degrades to passthrough so
  * routes still render with source content.
@@ -397,17 +400,23 @@ async function publishRuntimeBridge(opts: {
   rootDirPath: string;
   stagingDir: string;
   bridgeReportSink: CustomLoaderTranslateRecord[];
+  preloadedGlossaries?: Map<string, Glossary> | undefined;
+  preloadedGlossaryHashes?: Map<string, string> | undefined;
 }): Promise<void> {
-  const { resolved, rootDirPath, stagingDir, bridgeReportSink } = opts;
+  const { resolved, rootDirPath, stagingDir, bridgeReportSink, preloadedGlossaries, preloadedGlossaryHashes } = opts;
 
-  const glossaries: Map<string, Glossary> = await loadGlossaries({
-    config: resolved,
-    projectRoot: pathToFileURL(rootDirPath + path.sep),
-  });
-  const glossaryHashByLocale = new Map<string, string>();
-  for (const locale of resolved.locales) {
-    const glossary = glossaries.get(locale);
-    glossaryHashByLocale.set(locale, glossary ? hashGlossary(glossary) : EMPTY_GLOSSARY_HASH);
+  const glossaries: Map<string, Glossary> =
+    preloadedGlossaries ??
+    (await loadGlossaries({
+      config: resolved,
+      projectRoot: pathToFileURL(rootDirPath + path.sep),
+    }));
+  const glossaryHashByLocale = preloadedGlossaryHashes ?? new Map<string, string>();
+  if (preloadedGlossaryHashes === undefined) {
+    for (const locale of resolved.locales) {
+      const glossary = glossaries.get(locale);
+      glossaryHashByLocale.set(locale, glossary ? hashGlossary(glossary) : EMPTY_GLOSSARY_HASH);
+    }
   }
 
   const translatorsByLocale = new Map<string, Translator>();

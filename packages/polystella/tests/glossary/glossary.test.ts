@@ -3,8 +3,8 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { EMPTY_GLOSSARY, EMPTY_GLOSSARY_HASH, hashGlossary, loadGlossaries, type Glossary } from "../src/glossary/glossary.js";
-import type { PolyStellaResolvedOptions } from "../src/config/options.js";
+import { EMPTY_GLOSSARY, EMPTY_GLOSSARY_HASH, hashGlossary, loadGlossaries, type Glossary } from "../../src/glossary/glossary.js";
+import type { PolyStellaResolvedOptions } from "../../src/config/options.js";
 
 /**
  * Build a minimal `PolyStellaResolvedOptions` with sensible defaults so
@@ -382,13 +382,10 @@ describe("hashGlossary", () => {
     expect(EMPTY_GLOSSARY_HASH).toBe(hashGlossary(EMPTY_GLOSSARY));
   });
 
-  it("EMPTY_GLOSSARY_HASH is a stable, well-known value", () => {
-    // Pin the empty-glossary hash so a future refactor that changes
-    // the canonical-JSON shape becomes a visible regression rather
-    // than silently busting every cached translation.
-    expect(EMPTY_GLOSSARY_HASH).toBe(hashGlossary(EMPTY_GLOSSARY));
-    // Length sanity is already covered by the regex test above; here
-    // we just ensure the value is non-empty.
-    expect(EMPTY_GLOSSARY_HASH.length).toBe(64);
+  it("EMPTY_GLOSSARY_HASH is a pinned, well-known value", () => {
+    // Pin the literal hash so a refactor that changes the canonical
+    // JSON shape becomes a visible regression rather than silently
+    // busting every cached translation.
+    expect(EMPTY_GLOSSARY_HASH).toBe("de76800daecb6bf1673ca428b0356dd4c8184e78ec6789836fffa756476dfc81");
   });
 });

@@ -10,7 +10,7 @@ import {
   stagedFileExists,
   writeLocalCacheIndex,
   type LocalCacheEntry,
-} from "../src/storage/local-cache.js";
+} from "../../src/storage/local-cache.js";
 
 /**
  * Unit tests for the on-disk staging index.

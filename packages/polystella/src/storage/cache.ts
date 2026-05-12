@@ -61,6 +61,15 @@ export interface TranslateOrLoadOptions {
   retryRandomize?: boolean;
   /** Cancellation signal; forwarded to `translateBatch` + R2 ops. */
   signal?: AbortSignal;
+  /**
+   * Pre-built cache-key predicate. When provided, the cache layer
+   * calls it before `r2.get(...)` and skips the round-trip if it
+   * returns `false`. Lets the caller pre-list R2 (one paginated
+   * `list()` per locale) instead of one GET per (file, locale) pair.
+   * `true` means "key MIGHT exist, do the GET to confirm and pull
+   * bytes". Omitted ⇒ behave as before (always GET).
+   */
+  existsInCache?: (key: string) => boolean;
 }
 
 /**
@@ -113,6 +122,7 @@ export async function translateOrLoadFromCache(opts: TranslateOrLoadOptions): Pr
     retryFactor,
     retryRandomize,
     signal,
+    existsInCache,
   } = opts;
 
   // Honour cancellation at every cache decision point — cheap, and
@@ -121,14 +131,20 @@ export async function translateOrLoadFromCache(opts: TranslateOrLoadOptions): Pr
 
   // `null` r2 = operator opted out; skip lookup, always translate.
   if (r2) {
-    const hit = await r2.get(key);
-    if (hit) {
-      return {
-        outcome: "hit",
-        body: new TextDecoder("utf-8").decode(hit.body),
-        cachedMetadata: hit.metadata,
-        hitKey: key,
-      };
+    // When `existsInCache` is provided, the caller already paid for
+    // a bulk list. We only issue the GET (to pull bytes) if the
+    // predicate says the key is present.
+    const primaryMightExist = existsInCache ? existsInCache(key) : true;
+    if (primaryMightExist) {
+      const hit = await r2.get(key);
+      if (hit) {
+        return {
+          outcome: "hit",
+          body: new TextDecoder("utf-8").decode(hit.body),
+          cachedMetadata: hit.metadata,
+          hitKey: key,
+        };
+      }
     }
     // Primary miss → fallbacks in order. First hit wins; never
     // promoted to primary (avoids implicit cross-prefix writes).
@@ -136,6 +152,7 @@ export async function translateOrLoadFromCache(opts: TranslateOrLoadOptions): Pr
       for (const fbKey of fallbackKeys) {
         // Defensive: skip a fallback identical to the primary.
         if (fbKey === key) continue;
+        if (existsInCache && !existsInCache(fbKey)) continue;
         const fbHit = await r2.get(fbKey);
         if (fbHit) {
           return {

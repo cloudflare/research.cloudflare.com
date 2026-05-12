@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from "vitest";
 import { mkdtemp, mkdir, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
-import { walkSources } from "../src/source/walk.js";
+import { walkSources } from "../../src/source/walk.js";
 
 let fixtureDir: string;
 let secondaryDir: string;

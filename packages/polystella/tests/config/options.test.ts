@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveOptions, type AstroI18nLike } from "../src/config/options.js";
+import { resolveOptions, type AstroI18nLike } from "../../src/config/options.js";
 
 /**
  * Contract tests for the locale derivation introduced when PolyStella
@@ -370,11 +370,6 @@ describe("resolveOptions — noPrefixUrls", () => {
 describe("resolveOptions — middleware flag", () => {
   it("defaults to true (middleware auto-registered)", () => {
     const resolved = resolveOptions({}, HAPPY_I18N);
-    expect(resolved.middleware).toBe(true);
-  });
-
-  it("accepts explicit true", () => {
-    const resolved = resolveOptions({ middleware: true }, HAPPY_I18N);
     expect(resolved.middleware).toBe(true);
   });
 

@@ -109,20 +109,16 @@ formula's stability as part of the public contract.
 The mode is exposed through the `polystella:runtime-config` virtual module
 so the middleware can branch without re-reading the config.
 
-## 7. The dry-run + live two-pass design (and its planned consolidation)
+## 7. Dry-run vs live pass
 
-`runTranslationPass` currently walks sources twice: once to compute
-hashes and log planned R2 keys (the "dry-run" pass), once to actually
-translate (the "live" pass). The dry-run pass exists for two reasons:
+`runTranslationPass` runs ONE walk per source in live mode. The
+separate dry-run pass exists only when the run is non-live
+(`dryRun: true` or no provider configured); it counts pairs and
+optionally — under `LOG_LEVEL=debug` — emits the planned R2 keys.
 
-1. Operators can run `polystella-translate --dry-run` and see the exact
-   key set without writing anywhere.
-2. Logs print a planned-work summary before the (potentially long-running)
-   AI calls begin.
-
-The cost is one duplicate `adapter.parse` per source. A Phase 1
-build-perf change merges the two passes: compute hashes inline during the
-live walk, only print the "would translate" summary when `dryRun` is set.
+Live runs compute the cache key naturally inside the worker, so the
+dry-run "preview the work" pass would be pure duplication. The two
+passes are mutually exclusive.
 
 ## 8. Local staging index
 
@@ -140,6 +136,30 @@ Two maps are involved:
 The split keeps the skip decision deterministic — a worker can't
 accidentally observe another worker's just-written entry as a "skip me"
 signal.
+
+## 8.5. R2 bulk pre-list
+
+Before the live worker pool starts, `runTranslationPass` fans out
+one `r2.list(prefix + locale + "/")` per (prefix × locale) pair and
+populates an in-memory `Set<string>` of every cached key. The cache
+layer takes an optional `existsInCache: (key) => boolean` predicate
+and uses it to short-circuit the `r2.get(key)` round-trip when the
+key is known to be absent.
+
+Trade-offs:
+
+- **Cost when the cache is small or empty:** one list call returns
+  zero results, an obvious win.
+- **Cost when the cache is large:** the list call paginates. For
+  caches with 10k+ keys per locale, the upfront cost can exceed the
+  savings. Operators opt out via `r2.bulkListOnStart: false`.
+- **Correctness:** the in-memory set is populated before any write,
+  and each pair has a unique cache key (the hash includes the full
+  source body), so writes from one pair never affect lookups for
+  another. No staleness window.
+- **Failure mode:** if the list throws (transient R2 outage), we
+  log a warning and the worker falls back to per-pair GETs — the
+  build still completes correctly, just slower.
 
 ## 9. R2 cache layout and branch dispatch
 

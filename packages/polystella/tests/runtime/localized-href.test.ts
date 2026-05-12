@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { resolveLocalizedHref, type LocalizedHrefDeps } from "../src/runtime/localized-href.js";
+import { resolveLocalizedHref, type LocalizedHrefDeps } from "../../src/runtime/localized-href.js";
 
 /**
  * Tests for the pure `localizedHref` helper. Mirrors the URL

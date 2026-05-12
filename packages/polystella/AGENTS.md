@@ -10,7 +10,8 @@ or `README.md`.
 
 ## Commands
 
-- `pnpm test` — run vitest (969 tests, ~1s).
+- `pnpm test` — run vitest (981 tests, ~1.2s; includes a 9-test
+  end-to-end smoke suite at `tests/smoke.test.ts`).
 - `pnpm test:watch` — vitest in watch mode.
 - `pnpm build:cli` — bundle the standalone `polystella-translate` CLI
   to `dist/cli.js` via esbuild.
@@ -45,8 +46,12 @@ There is no lint step yet. Biome adoption is planned for Phase 2.
 - `src/i18n/` — UI strings loader, drift detection, translator
   resolution, sitemap helper.
 - `src/react/` — `useTranslations` + `useLocalizedHref` hooks for islands.
-- `tests/` — colocated tests for the above; vitest config in
-  `vitest.config.ts`.
+- `tests/` — tests grouped by source directory
+  (`tests/parsing/`, `tests/storage/`, etc.) so finding the test
+  for a given source file is `tests/<src-dir>/<basename>.test.ts`.
+  Top-level exceptions: `tests/cli.test.ts` (the only `src/cli.ts`
+  test), `tests/smoke.test.ts` (integration end-to-end). Vitest
+  config in `vitest.config.ts`.
 
 ## Conventions
 
@@ -66,6 +71,12 @@ There is no lint step yet. Biome adoption is planned for Phase 2.
   `ARCHITECTURE.md`. Avoid restating what the code says.
 - **Zod everywhere**: config parses through zod at the boundary;
   downstream code trusts the schema.
+- **Strict tsconfig**: codex RFC 009 flags are all on:
+  `noUncheckedIndexedAccess` (indexed access returns `T | undefined`),
+  `exactOptionalPropertyTypes` (`foo?: string` ≠ `foo: string | undefined`),
+  `noImplicitReturns`, `noFallthroughCasesInSwitch`. For optional
+  fields that semantically accept explicit `undefined` from the
+  caller, type them as `foo?: T | undefined` (not just `foo?: T`).
 
 ## Boundaries
 
@@ -100,14 +111,23 @@ build:cli` after a version bump.
   called from the user's `content.config.ts` at content-sync time. The
   runtime bridge in `src/runtime/custom-loader-runtime.ts` is the seam
   between the two halves — see ARCHITECTURE.md §4.
-- **Vitest `singleThread: true`** is currently required because some R2
-  mock fixtures share state. Don't flip it without auditing tests.
+- **Vitest `singleThread: true`** is faster than multi-worker at this
+  scale (~1.2s vs ~1.6s; per-worker startup dominates for ~970 tests).
+  Revisit when the suite outgrows the overhead. Test files don't share
+  module-scope state across workers (each worker gets its own module
+  graph), so the original "share state" rationale no longer applies.
 - **Local cache index** uses two separate maps (`localCacheIndex`
   immutable during the run; `nextLocalCacheIndex` accumulates writes).
   Workers must not read from `next…` mid-run — see ARCHITECTURE.md §8.
-- **`adapter.parse` is called twice** today (once in dry-run pass,
-  once in live pass). Collapsing into one walk is a planned Phase 1
-  perf change; until then, parsing must be idempotent.
+- **`adapter.parse` is called once per source per live run** (the
+  separate dry-run pass only runs when actually in dry-run mode).
+  Adapter `parse` should still be idempotent — calling it twice
+  during debugging or in tests must not produce different output.
+- **R2 bulk pre-list** happens once per (prefix × locale) at the
+  start of the live phase, populating an in-memory predicate that
+  short-circuits per-pair `r2.get` calls. Disable via
+  `r2.bulkListOnStart: false` for caches with >10k keys per locale
+  where the list cost dominates.
 - **Heartbeat `setInterval`** is `unref()`'d so a stalled pool doesn't
   block process exit. Don't remove the unref.
 - **Override files at `i18n/overrides/{locale}/<path>`** win over AI
@@ -133,7 +153,7 @@ build:cli` after a version bump.
 
 ## Verification
 
-- `pnpm test` must pass (969 tests).
+- `pnpm test` must pass (981 tests).
 - `pnpm exec tsc --noEmit` must pass (strict mode).
 - For changes to the translation pipeline, run end-to-end against the
   research-site fixtures: from the monorepo root, `pnpm translate

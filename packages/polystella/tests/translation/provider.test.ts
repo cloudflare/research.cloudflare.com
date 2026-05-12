@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
-import type { Segment } from "../src/parsing/extract.js";
-import { EMPTY_GLOSSARY } from "../src/glossary/glossary.js";
-import { createTranslator, PermanentProviderError, resolveModelId, translateBatch, type Translator } from "../src/translation/provider.js";
+import type { Segment } from "../../src/parsing/extract.js";
+import { EMPTY_GLOSSARY } from "../../src/glossary/glossary.js";
+import { createTranslator, PermanentProviderError, resolveModelId, translateBatch, type Translator } from "../../src/translation/provider.js";
 
 /**
  * Build a fetch stub that returns a single canned response. Each test

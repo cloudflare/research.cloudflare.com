@@ -37,6 +37,15 @@ const r2OptionsSchema = z.object({
    * `false` disables pruning.
    */
   keepLastN: z.union([z.number().int().positive(), z.literal(false)]).default(5),
+  /**
+   * Pre-list every cache key per locale at the start of the live
+   * phase. The per-pair "is it cached?" check then becomes an
+   * O(1) `Set.has` lookup instead of an R2 GET round-trip. Default
+   * `true` because the win is large for hit-heavy builds (typical
+   * production case). Set `false` for very large caches (10k+ keys
+   * per locale) where the upfront list cost dominates.
+   */
+  bulkListOnStart: z.boolean().default(true),
 });
 
 const workersAiProviderSchema = z.object({

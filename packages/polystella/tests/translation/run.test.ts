@@ -3,11 +3,11 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { resolveOptions } from "../src/config/options.js";
-import { runTranslationPass } from "../src/translation/run.js";
-import type { Logger } from "../src/translation/run.js";
-import type { Translator } from "../src/translation/provider.js";
-import type { R2Client, R2GetResult } from "../src/storage/r2.js";
+import { resolveOptions } from "../../src/config/options.js";
+import { runTranslationPass } from "../../src/translation/run.js";
+import type { Logger } from "../../src/translation/run.js";
+import type { Translator } from "../../src/translation/provider.js";
+import type { R2Client, R2GetResult } from "../../src/storage/r2.js";
 
 /**
  * `runTranslationPass` integration tests.
@@ -310,8 +310,10 @@ describe("runTranslationPass — branch-isolation knobs", () => {
     expect(staged).toContain("TR:");
     expect(r2.calls.put).toBe(0);
     expect(r2.store.size).toBe(0);
-    // No prune call either — readOnly forbids both side effects.
-    expect(r2.calls.list).toBe(0);
+    // No prune call — readOnly forbids the post-translation prune
+    // (which would otherwise list + del). The bulk pre-list at the
+    // start of the live phase IS allowed: it's a read-only optim
+    // that turns per-pair GETs into one list per locale.
     expect(r2.calls.del).toBe(0);
   });
 
@@ -902,5 +904,168 @@ describe("runTranslationPass — cancellation", () => {
     // cancellation. Exactly 1 is the strictest assertion we can make
     // (the first pair completes before the abort lands).
     expect(calls).toBeLessThan(3);
+  });
+});
+
+describe("runTranslationPass — bulk pre-list optimisation", () => {
+  it("issues one list() per locale and skips per-pair GETs when cache is empty", async () => {
+    const { rootDir, stagingDir } = await makeProjectFixture({
+      files: {
+        "content/publications/a.md": SAMPLE_MD,
+        "content/publications/b.md": SAMPLE_MD,
+        "content/publications/c.md": SAMPLE_MD,
+      },
+    });
+    const r2 = makeInMemoryR2();
+    const translator = makeStubTranslator("stub/bulk-1");
+    const resolved = resolveOptions(
+      { sourceDir: "./content", include: ["**/*.md"] },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR", "ja-JP"] },
+    );
+    resolved.provider = { kind: "workers-ai", accountId: "fake", apiToken: "fake", model: "stub/bulk-1", maxTokens: 8192 };
+
+    await runTranslationPass({
+      resolved,
+      rootDir,
+      stagingDir,
+      logger: NULL_LOGGER,
+      polystellaVersion: "0.2.0",
+      r2Override: r2.client,
+      translatorOverrides: new Map([
+        ["pt-BR", translator],
+        ["ja-JP", translator],
+      ]),
+    });
+
+    // 2 locales × 1 prefix = 2 list calls (one per locale).
+    expect(r2.calls.list).toBe(2);
+    // 3 sources × 2 locales = 6 pairs; all cache misses on first run,
+    // but the predicate said "no" for each, so ZERO GET round-trips.
+    expect(r2.calls.get).toBe(0);
+    // All 6 pairs translated and stored.
+    expect(translator.calls).toBe(6);
+    expect(r2.store.size).toBe(6);
+  });
+
+  it("uses the predicate to skip GETs for keys the list never returned", async () => {
+    const { rootDir, stagingDir } = await makeProjectFixture({
+      files: { "content/publications/sample.md": SAMPLE_MD },
+    });
+    const r2 = makeInMemoryR2();
+    const translator = makeStubTranslator("stub/bulk-2");
+    const resolved = resolveOptions(
+      { sourceDir: "./content", include: ["**/*.md"] },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
+    );
+    resolved.provider = { kind: "workers-ai", accountId: "fake", apiToken: "fake", model: "stub/bulk-2", maxTokens: 8192 };
+
+    // Run once to populate R2.
+    await runTranslationPass({
+      resolved,
+      rootDir,
+      stagingDir,
+      logger: NULL_LOGGER,
+      polystellaVersion: "0.2.0",
+      r2Override: r2.client,
+      translatorOverrides: new Map([["pt-BR", translator]]),
+    });
+    expect(translator.calls).toBe(1);
+
+    // Second run, fresh staging dir to bypass local index. The
+    // bulk-list predicate sees the cached key → exactly ONE GET to
+    // pull the bytes → translator not invoked.
+    const { rootDir: rootDir2, stagingDir: stagingDir2 } = await makeProjectFixture({
+      files: { "content/publications/sample.md": SAMPLE_MD },
+    });
+    translator.calls = 0;
+    r2.calls.get = 0;
+    r2.calls.list = 0;
+
+    await runTranslationPass({
+      resolved,
+      rootDir: rootDir2,
+      stagingDir: stagingDir2,
+      logger: NULL_LOGGER,
+      polystellaVersion: "0.2.0",
+      r2Override: r2.client,
+      translatorOverrides: new Map([["pt-BR", translator]]),
+    });
+
+    expect(r2.calls.list).toBe(1);
+    expect(r2.calls.get).toBe(1); // predicate said yes; GET pulls bytes
+    expect(translator.calls).toBe(0);
+  });
+
+  it("bulkListOnStart: false disables the pre-list", async () => {
+    const { rootDir, stagingDir } = await makeProjectFixture({
+      files: { "content/publications/sample.md": SAMPLE_MD },
+    });
+    const r2 = makeInMemoryR2();
+    const translator = makeStubTranslator("stub/bulk-3");
+    const resolved = resolveOptions(
+      {
+        sourceDir: "./content",
+        include: ["**/*.md"],
+        r2: {
+          accountId: "fake",
+          bucket: "fake",
+          accessKeyId: "fake",
+          secretAccessKey: "fake",
+          bulkListOnStart: false,
+        },
+      },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
+    );
+    resolved.provider = { kind: "workers-ai", accountId: "fake", apiToken: "fake", model: "stub/bulk-3", maxTokens: 8192 };
+
+    const listsBefore = r2.calls.list;
+    await runTranslationPass({
+      resolved,
+      rootDir,
+      stagingDir,
+      logger: NULL_LOGGER,
+      polystellaVersion: "0.2.0",
+      r2Override: r2.client,
+      translatorOverrides: new Map([["pt-BR", translator]]),
+    });
+
+    // No bulk pre-list happened. The post-translation prune DOES
+    // call list() per locale; that one is unrelated to bulkListOnStart.
+    // 1 source × 1 locale × prune = 1 list. With bulkListOnStart on
+    // we'd have 1 (pre) + 1 (prune) = 2.
+    expect(r2.calls.list - listsBefore).toBe(1);
+    expect(r2.calls.get).toBeGreaterThan(0);
+  });
+
+  it("falls back to per-pair GETs if the pre-list throws", async () => {
+    const { rootDir, stagingDir } = await makeProjectFixture({
+      files: { "content/publications/sample.md": SAMPLE_MD },
+    });
+    const r2 = makeInMemoryR2();
+    // Override list to throw; verify the run still completes via
+    // per-pair GETs.
+    r2.client.list = async () => {
+      throw new Error("simulated R2 list outage");
+    };
+    const translator = makeStubTranslator("stub/bulk-4");
+    const resolved = resolveOptions(
+      { sourceDir: "./content", include: ["**/*.md"] },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
+    );
+    resolved.provider = { kind: "workers-ai", accountId: "fake", apiToken: "fake", model: "stub/bulk-4", maxTokens: 8192 };
+
+    const result = await runTranslationPass({
+      resolved,
+      rootDir,
+      stagingDir,
+      logger: NULL_LOGGER,
+      polystellaVersion: "0.2.0",
+      r2Override: r2.client,
+      translatorOverrides: new Map([["pt-BR", translator]]),
+    });
+
+    // Translation still happened end-to-end via the per-pair GET path.
+    expect(result.counts.miss).toBe(1);
+    expect(translator.calls).toBe(1);
   });
 });

@@ -215,7 +215,7 @@ export interface TranslateBatchOptions {
   sourceLocale: string;
   targetLocale: string;
   /** Optional site-/domain-specific prompt extension; see `BuildPromptInput.context`. */
-  context?: string;
+  context?: string | undefined;
   /**
    * Retries on transient failure (network 5xx, parse errors, model
    * hallucinations). `0` (default) = single attempt. `N` allows up

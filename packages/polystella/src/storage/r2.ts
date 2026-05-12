@@ -94,7 +94,12 @@ export function buildR2Key({
   locale: string;
   sourcePath: string;
   hash: string;
-  prefix?: string;
+  /**
+   * Accepts explicit `undefined` (treated as default) so callers
+   * can pass `resolved.r2?.prefix` without an extra conditional
+   * spread. Keeps the optional-property semantics intuitive.
+   */
+  prefix?: string | undefined;
 }): string {
   const normalisedPath = stripLeadingSlashes(sourcePath.replaceAll("\\", "/"));
   if (prefix.length > 0 && !prefix.endsWith("/")) {

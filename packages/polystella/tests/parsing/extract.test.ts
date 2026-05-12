@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { extractSegments, peekNoTranslate, selectTranslatableFrontmatter } from "../src/parsing/extract.js";
-import { parseMarkdown } from "../src/parsing/parse.js";
-import { computeSourceHash } from "../src/storage/hash.js";
+import { extractSegments, peekNoTranslate, selectTranslatableFrontmatter } from "../../src/parsing/extract.js";
+import { parseMarkdown } from "../../src/parsing/parse.js";
+import { computeSourceHash } from "../../src/storage/hash.js";
 
 const noFrontmatterRules = { sourcePath: "test.md", frontmatter: {} };
 

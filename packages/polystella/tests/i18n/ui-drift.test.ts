@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { mkdir, mkdtemp, writeFile } from "node:fs/promises";
 import path from "node:path";
 import os from "node:os";
-import { checkI18nDrift, formatDriftIssues, loadAndCheckDrift } from "../src/i18n/drift.js";
+import { checkI18nDrift, formatDriftIssues, loadAndCheckDrift } from "../../src/i18n/drift.js";
 
 /**
  * Tests for the drift-detection helpers — both the pure

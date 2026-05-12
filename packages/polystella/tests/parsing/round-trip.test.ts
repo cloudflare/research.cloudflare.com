@@ -1,37 +1,37 @@
-import { readdirSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { applyTranslations } from "../src/parsing/apply.js";
-import { extractSegments } from "../src/parsing/extract.js";
-import { parseMarkdown } from "../src/parsing/parse.js";
+import { applyTranslations } from "../../src/parsing/apply.js";
+import { extractSegments } from "../../src/parsing/extract.js";
+import { parseMarkdown } from "../../src/parsing/parse.js";
 
 /**
- * Identity round-trip on the publications corpus.
+ * Identity round-trip on the host monorepo's publications corpus.
  *
- * For every `content/publications/*.md` file in the workspace, run:
- *   parseMarkdown → extractSegments (collect, don't replace)
- *                 → applyTranslations (with empty Map)
- *                 → assert output === source
+ *   parseMarkdown → extractSegments → applyTranslations(empty Map)
+ *   assert output === source
  *
- * Any divergence is a parser/serializer config bug, and we want to catch
- * it here rather than once translation-related changes are layered on
- * top, where it would be much harder to disentangle.
+ * Acts as a real-world stress test for the parser/serializer config:
+ * any byte-level drift on real markdown surfaces here before it
+ * affects translations.
  *
- * The file list is generated dynamically at module-load time so the test
- * automatically covers any future publications added to the corpus.
+ * Skipped when `content/publications` is missing — that's the
+ * common case once polystella is extracted into its own repo.
+ * The new repo can replace this with its own fixture-based variant.
  */
 
-const PUBLICATIONS_DIR = resolve(fileURLToPath(import.meta.url), "../../../../content/publications");
+const PUBLICATIONS_DIR = resolve(fileURLToPath(import.meta.url), "../../../../../content/publications");
+const hasCorpus = existsSync(PUBLICATIONS_DIR);
 
-const publicationFiles = readdirSync(PUBLICATIONS_DIR)
-  .filter((name) => name.endsWith(".md"))
-  .sort();
+const publicationFiles = hasCorpus
+  ? readdirSync(PUBLICATIONS_DIR)
+      .filter((name) => name.endsWith(".md"))
+      .sort()
+  : [];
 
-describe("publications corpus round-trip", () => {
+describe.skipIf(!hasCorpus)("publications corpus round-trip", () => {
   it("finds publication files to test", () => {
-    // Sanity: if this fails, the path-resolution above is wrong and every
-    // other assertion below is meaningless.
     expect(publicationFiles.length).toBeGreaterThan(0);
   });
 
@@ -41,8 +41,8 @@ describe("publications corpus round-trip", () => {
       const source = readFileSync(path, "utf8");
 
       const ast = parseMarkdown(source);
-      // Run extraction so a crash inside the extractor would surface here
-      // even on the no-replacement path.
+      // Run extraction so a crash inside the extractor would surface
+      // here even on the no-replacement path.
       extractSegments(
         ast,
         {

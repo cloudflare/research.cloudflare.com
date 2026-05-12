@@ -37,8 +37,10 @@ export interface ResolveLocalizedCollectionInput<TEntry extends SourceEntryShape
    * Filter applied to merged-and-tagged entries. Return type is
    * `unknown` to match Astro's `getCollection` convention — callers
    * can use optional-chain expressions without coercing to boolean.
+   * Accepts explicit `undefined` so callers can pass through an
+   * already-optional value without conditional spreads.
    */
-  filter?: (entry: LocalizedEntry<TEntry>) => unknown;
+  filter?: ((entry: LocalizedEntry<TEntry>) => unknown) | undefined;
   deps: ResolveLocalizedCollectionDeps<TEntry>;
 }
 

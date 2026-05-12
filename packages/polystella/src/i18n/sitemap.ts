@@ -28,9 +28,9 @@ export interface AstroSitemapI18nOptions {
    * (`pt-BR` URL → `pt-BR` hreflang). Override when URL prefix
    * differs from hreflang (e.g. `en` URL → `en-US` hreflang).
    */
-  hreflang?: Record<string, string>;
+  hreflang?: Record<string, string> | undefined;
   /** Emit `hreflang="x-default"`. Default: `true`. */
-  xDefault?: boolean;
+  xDefault?: boolean | undefined;
 }
 
 /**

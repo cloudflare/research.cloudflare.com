@@ -5,7 +5,7 @@ import {
   resolveLocalizedEntry,
   type ResolveLocalizedEntryDeps,
   type SourceEntryShape,
-} from "../src/runtime/get-localized-entry.js";
+} from "../../src/runtime/get-localized-entry.js";
 
 /**
  * Tests for the pure runtime helper that powers `getLocalizedEntry`.

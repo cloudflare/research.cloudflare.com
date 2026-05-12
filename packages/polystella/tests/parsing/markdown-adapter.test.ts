@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { markdownAdapter } from "../src/parsing/adapters/markdown.js";
+import { markdownAdapter } from "../../src/parsing/adapters/markdown.js";
 
 /**
  * Markdown adapter — `rewriteUrls` covers FRONTMATTER URL fields

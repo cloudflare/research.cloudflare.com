@@ -10,7 +10,7 @@
  * No assertions are required at runtime; if the file type-checks,
  * the contract holds.
  */
-import { buildCollections } from "../src/content/build.js";
+import { buildCollections } from "../../src/content/build.js";
 
 interface FakeZodObject<T> {
   __zod_object: T;
