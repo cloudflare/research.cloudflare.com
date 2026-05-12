@@ -216,12 +216,6 @@ A developer's local build cannot overwrite production. Preview branches stay iso
 | `hreflang` sitemap                   | Planned (v0.2)  |
 | Public npm release                   | Not yet (v0.3+) |
 
-## Documentation
-
-- **Design doc** — `polystella-design-collections-c011ec.md` (root of this workspace's plans directory). Architecture, mode boundary, public surface, roadmap.
-- **Engineering RFC** — `polystella-rfc-collections-c011ec.md`. Implementation-level detail.
-- **Reference config** — `polystella.config.mjs` at the repo root. Every option, with inline commentary.
-
 ## Tests
 
 ```bash
