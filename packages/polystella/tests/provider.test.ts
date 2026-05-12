@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import type { Segment } from "../src/parsing/extract.js";
 import { EMPTY_GLOSSARY } from "../src/glossary/glossary.js";
-import { createTranslator, resolveModelId, translateBatch, type Translator } from "../src/translation/provider.js";
+import { createTranslator, PermanentProviderError, resolveModelId, translateBatch, type Translator } from "../src/translation/provider.js";
 
 /**
  * Build a fetch stub that returns a single canned response. Each test
@@ -582,5 +582,99 @@ describe("translateBatch — retries", () => {
       }),
     ).rejects.toThrow(/boom/);
     expect(translate).toHaveBeenCalledTimes(1);
+  });
+
+  it("PermanentProviderError short-circuits retries", async () => {
+    const translate = vi.fn().mockRejectedValue(new PermanentProviderError("401 Unauthorized"));
+    const onRetry = vi.fn();
+
+    await expect(
+      translateBatch({
+        translator: { modelId: "test", translate },
+        segments,
+        glossary: EMPTY_GLOSSARY,
+        sourceLocale: "en-US",
+        targetLocale: "pt-BR",
+        maxRetries: 3,
+        onRetry,
+      }),
+    ).rejects.toThrow(/401 Unauthorized/);
+    // Only ONE call despite maxRetries: 3 — permanent error skips retries.
+    expect(translate).toHaveBeenCalledTimes(1);
+    expect(onRetry).not.toHaveBeenCalled();
+  });
+
+  it("AbortSignal cancels in-flight retries", async () => {
+    const controller = new AbortController();
+    const translate = vi.fn().mockImplementation(async () => {
+      // First call: succeed in throwing transient error, then abort.
+      controller.abort(new Error("user cancelled"));
+      throw new Error("transient failure");
+    });
+
+    await expect(
+      translateBatch({
+        translator: { modelId: "test", translate },
+        segments,
+        glossary: EMPTY_GLOSSARY,
+        sourceLocale: "en-US",
+        targetLocale: "pt-BR",
+        maxRetries: 3,
+        signal: controller.signal,
+      }),
+    ).rejects.toThrow();
+    // First attempt ran, signal aborted before retry → exactly 1 call.
+    expect(translate).toHaveBeenCalledTimes(1);
+  });
+
+  it("pre-aborted signal short-circuits before any translator call", async () => {
+    const controller = new AbortController();
+    controller.abort(new Error("pre-cancelled"));
+    const translate = vi.fn().mockResolvedValue(goodResponse);
+
+    await expect(
+      translateBatch({
+        translator: { modelId: "test", translate },
+        segments,
+        glossary: EMPTY_GLOSSARY,
+        sourceLocale: "en-US",
+        targetLocale: "pt-BR",
+        signal: controller.signal,
+      }),
+    ).rejects.toThrow();
+    expect(translate).not.toHaveBeenCalled();
+  });
+});
+
+describe("PermanentProviderError detection", () => {
+  it("Workers AI throws PermanentProviderError on 401", async () => {
+    const fetchStub = makeFetchStub({}, { status: 401, statusText: "Unauthorized", rawText: "invalid api token" });
+    const translator = createTranslator(
+      { kind: "workers-ai", accountId: "acct", apiToken: "bad", model: "test-model", maxTokens: 8192 },
+      "pt-BR",
+      { fetchImpl: fetchStub as unknown as typeof fetch },
+    );
+    await expect(translator.translate("sys", "user")).rejects.toBeInstanceOf(PermanentProviderError);
+  });
+
+  it("Workers AI throws plain Error on 503 (retriable)", async () => {
+    const fetchStub = makeFetchStub({}, { status: 503, statusText: "Service Unavailable" });
+    const translator = createTranslator(
+      { kind: "workers-ai", accountId: "acct", apiToken: "x", model: "test-model", maxTokens: 8192 },
+      "pt-BR",
+      { fetchImpl: fetchStub as unknown as typeof fetch },
+    );
+    await expect(translator.translate("sys", "user")).rejects.toThrowError(/503/);
+    await expect(translator.translate("sys", "user")).rejects.not.toBeInstanceOf(PermanentProviderError);
+  });
+
+  it("Anthropic throws PermanentProviderError on 403", async () => {
+    const fetchStub = makeFetchStub({}, { status: 403, statusText: "Forbidden" });
+    const translator = createTranslator(
+      { kind: "anthropic", apiKey: "bad", model: "claude-test", maxTokens: 8192 },
+      "pt-BR",
+      { fetchImpl: fetchStub as unknown as typeof fetch },
+    );
+    await expect(translator.translate("sys", "user")).rejects.toBeInstanceOf(PermanentProviderError);
   });
 });

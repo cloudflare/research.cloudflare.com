@@ -826,3 +826,81 @@ describe("runTranslationPass — URL rewriting", () => {
     expect(ptBody).not.toContain("heroImage: /pt-BR/images/hero.png");
   });
 });
+
+describe("runTranslationPass — cancellation", () => {
+  it("pre-aborted signal short-circuits before any work", async () => {
+    const { rootDir, stagingDir } = await makeProjectFixture({
+      files: { "content/publications/sample.md": SAMPLE_MD },
+    });
+    const resolved = resolveOptions(
+      { sourceDir: "./content", include: ["**/*.md"] },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
+    );
+    resolved.provider = { kind: "workers-ai", accountId: "fake", apiToken: "fake", model: "stub/m1", maxTokens: 8192 };
+
+    const controller = new AbortController();
+    controller.abort(new Error("pre-cancelled"));
+
+    await expect(
+      runTranslationPass({
+        resolved,
+        rootDir,
+        stagingDir,
+        logger: NULL_LOGGER,
+        polystellaVersion: "0.2.0",
+        signal: controller.signal,
+      }),
+    ).rejects.toThrow();
+  });
+
+  it("aborting mid-run propagates into the worker pool", async () => {
+    const { rootDir, stagingDir } = await makeProjectFixture({
+      files: {
+        "content/publications/a.md": SAMPLE_MD,
+        "content/publications/b.md": SAMPLE_MD,
+        "content/publications/c.md": SAMPLE_MD,
+      },
+    });
+    const resolved = resolveOptions(
+      { sourceDir: "./content", include: ["**/*.md"], concurrency: 1 },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
+    );
+    resolved.provider = { kind: "workers-ai", accountId: "fake", apiToken: "fake", model: "stub/m1", maxTokens: 8192 };
+
+    const controller = new AbortController();
+    let calls = 0;
+    const translator: Translator = {
+      modelId: "stub/m1",
+      async translate(_sys, userPrompt) {
+        calls++;
+        // Abort after the first translator call returns. Subsequent
+        // workers should see the signal and bail before calling
+        // `translate()` again.
+        controller.abort(new Error("user cancelled"));
+        const blocks: string[] = [];
+        const re = /^@@([^@\n]+?)@@\s*\n([\s\S]*?)(?=\n@@|$)/gm;
+        let m: RegExpExecArray | null;
+        while ((m = re.exec(userPrompt)) !== null) {
+          blocks.push(`@@${m[1]!.trim()}@@\nTR:${(m[2] ?? "").trim()}`);
+        }
+        return blocks.join("\n\n");
+      },
+    };
+
+    await expect(
+      runTranslationPass({
+        resolved,
+        rootDir,
+        stagingDir,
+        logger: NULL_LOGGER,
+        polystellaVersion: "0.2.0",
+        translatorOverrides: new Map([["pt-BR", translator]]),
+        signal: controller.signal,
+      }),
+    ).rejects.toThrow();
+    // Strictly fewer than the 3 pairs we'd have processed without
+    // cancellation. Exactly 1 is the strictest assertion we can make
+    // (the first pair completes before the abort lands).
+    expect(calls).toBeLessThan(3);
+  });
+});

@@ -31,10 +31,14 @@ interface LocalePickerProps {
   dict: Record<string, string>;
   locale: string;
   pathname: string;
+  /** Dropdown open direction. "up" anchors content above the trigger (use in the footer). */
+  placement?: "up" | "down";
 }
 
-export function LocalePicker({ dict, locale, pathname }: LocalePickerProps) {
+export function LocalePicker({ dict, locale, pathname, placement = "down" }: LocalePickerProps) {
   const t = useTranslations(dict);
+  const contentClassName =
+    placement === "up" ? "left-auto right-0 top-auto bottom-full mb-2" : "left-auto right-0";
 
   return (
     <NavigationMenu viewport={false}>
@@ -46,7 +50,7 @@ export function LocalePicker({ dict, locale, pathname }: LocalePickerProps) {
               {localeName(locale)}
             </span>
           </NavigationMenuTrigger>
-          <NavigationMenuContent className="left-auto right-0">
+          <NavigationMenuContent className={contentClassName}>
             <ul className="grid gap-1 w-[180px] z-(--z-nav) relative p-2">
               {locales.map((targetLocale) => {
                 const isCurrent = targetLocale === locale;

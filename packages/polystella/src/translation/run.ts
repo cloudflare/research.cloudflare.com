@@ -61,6 +61,13 @@ export interface RunTranslationOptions {
   r2Override?: R2Client | null;
   /** Per-locale Translator overrides. Used by tests + debug-mode callers. */
   translatorOverrides?: Map<string, Translator>;
+  /**
+   * Cancellation signal. Threaded into per-pair workers, the cache
+   * layer, the translator's HTTP fetch, and the retry loop. On
+   * abort, in-flight work cleans up and `runTranslationPass` rejects
+   * with an `AbortError`. Already-staged files survive.
+   */
+  signal?: AbortSignal;
 }
 
 export interface RunTranslationCounts {
@@ -185,7 +192,10 @@ function buildFallbackKeys(args: { resolved: PolyStellaResolvedOptions; locale: 
  * the data needed to emit a build report; caller serialises.
  */
 export async function runTranslationPass(opts: RunTranslationOptions): Promise<RunTranslationResult> {
-  const { resolved, rootDir, stagingDir, logger, polystellaVersion, r2Override, translatorOverrides } = opts;
+  const { resolved, rootDir, stagingDir, logger, polystellaVersion, r2Override, translatorOverrides, signal } = opts;
+  // Fail fast if the caller pre-aborted; cheaper than spinning up
+  // the whole pipeline only to throw at the first await.
+  signal?.throwIfAborted();
   const sourceDirAbs = path.resolve(rootDir, resolved.sourceDir);
 
   const entries: BuildReportEntry[] = [];
@@ -456,6 +466,10 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
   // pool resolves once every source has been processed and the
   // closing-summary log lines run after.
   await runWithConcurrency(sources, resolved.concurrency, async (source) => {
+    // Check cancellation at every worker entry — a long pipeline
+    // shouldn't start a new pair after Ctrl-C just because a
+    // worker happened to grab one before the signal propagated.
+    signal?.throwIfAborted();
     const ext = path.extname(source.relativePath).toLowerCase();
     const adapter = getAdapter(ext);
     if (!adapter) {
@@ -561,6 +575,7 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
     const selectedValues = adapter.selectedValuesForHash(parsed, body, adapterOpts);
 
     for (const locale of resolved.locales) {
+      signal?.throwIfAborted();
       const pairStart = Date.now();
       try {
         // Overrides win over cache + translator; deliberately NOT
@@ -692,6 +707,13 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
           ...(resolved.r2?.readOnly ? { readOnly: true } : {}),
           ...(fallbackKeys.length > 0 ? { fallbackKeys } : {}),
           maxRetries: resolved.maxRetries,
+          // Production backoff: 100ms minimum, exponential, jittered.
+          // Avoids thundering-herd against the AI provider on a
+          // cold-cache build that misses across many concurrent pairs.
+          retryMinTimeoutMs: 100,
+          retryFactor: 2,
+          retryRandomize: true,
+          ...(signal !== undefined ? { signal } : {}),
           onRetry: ({ attempt, totalAttempts, error }) => {
             // First line only — provider errors may include multi-line
             // `Raw response was:` dumps that clutter the log.

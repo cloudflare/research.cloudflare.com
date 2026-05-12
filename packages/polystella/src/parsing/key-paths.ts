@@ -108,7 +108,8 @@ export function parsePath(path: string): { segments: (PathSegment | "*")[]; hasW
 export function formatPath(segments: readonly PathSegment[]): string {
   let out = "";
   for (let i = 0; i < segments.length; i++) {
-    const seg = segments[i]!;
+    const seg = segments[i];
+    if (seg === undefined) continue;
     if (typeof seg === "number") {
       out += `[${seg}]`;
     } else {
@@ -214,7 +215,10 @@ export function writeAtPath(node: unknown, segments: readonly PathSegment[], val
   }
   let current: unknown = node;
   for (let i = 0; i < segments.length - 1; i++) {
-    const seg = segments[i]!;
+    const seg = segments[i];
+    // The loop bound guarantees this, but `noUncheckedIndexedAccess`
+    // surfaces it as `T | undefined`.
+    if (seg === undefined) continue;
     if (current === null || current === undefined) {
       throw new Error(`[polystella] cannot write at ${formatPath(segments)}: parent is null/undefined at segment ${i}`);
     }
@@ -237,7 +241,13 @@ export function writeAtPath(node: unknown, segments: readonly PathSegment[], val
       current = Object.hasOwn(current as object, seg) ? (current as Record<string, unknown>)[seg] : undefined;
     }
   }
-  const last = segments[segments.length - 1]!;
+  const last = segments[segments.length - 1];
+  if (last === undefined) {
+    // segments.length > 0 was asserted at function entry, so the
+    // terminal element exists. Re-throwing here gives the type
+    // narrower what it needs without leaking a `!`.
+    throw new Error(`[polystella] cannot write at empty path`);
+  }
   if (current === null || current === undefined) {
     throw new Error(`[polystella] cannot write at ${formatPath(segments)}: terminal parent is null/undefined`);
   }

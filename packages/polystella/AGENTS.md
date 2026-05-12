@@ -10,7 +10,7 @@ or `README.md`.
 
 ## Commands
 
-- `pnpm test` — run vitest (961 tests, ~1s).
+- `pnpm test` — run vitest (969 tests, ~1s).
 - `pnpm test:watch` — vitest in watch mode.
 - `pnpm build:cli` — bundle the standalone `polystella-translate` CLI
   to `dist/cli.js` via esbuild.
@@ -75,16 +75,14 @@ There is no lint step yet. Biome adoption is planned for Phase 2.
 - Bump the package version in `package.json` only — `POLYSTELLA_VERSION`
   (in `src/version.ts`) reads it at module-load time. The CLI bundle
   (`dist/cli.js`) inlines it via esbuild at build time, so `pnpm
-  build:cli` after a version bump.
+build:cli` after a version bump.
 - Mirror file-system path semantics across OS: forward slashes for
   R2 keys, `path.sep` for local I/O.
 
 **Ask first:**
 
-- Changing the cache-key formula (any input).
-- Changing the public `exports` map in `package.json`.
+- Adding new dependencies.
 - Adding a new adapter (introduces a new file extension).
-- Changing the sibling-collection naming convention (`<name>__<locale>`).
 
 **Never:**
 
@@ -120,14 +118,26 @@ There is no lint step yet. Biome adoption is planned for Phase 2.
   apply MDX rules to `.md`.
 - **Workers AI default `maxTokens` is too low.** Default in our
   config is 8192. Lowering it truncates multi-segment translations.
+- **`PermanentProviderError`** (in `translation/provider.ts`) is the
+  only way to short-circuit `translateBatch`'s retry loop. Provider
+  4xx responses (401, 403, 400, 404, 422) wrap into it; everything
+  else (5xx, network, parse failures) retries with exponential backoff
+  via `p-retry`. Don't widen the permanent-set without thinking about
+  what flaky responses might wrongly skip retry.
+- **`AbortSignal` threads from CLI / integration → `runTranslationPass`
+  → worker → cache → `translateBatch` → provider HTTP fetch.** The
+  CLI installs SIGINT/SIGTERM handlers; second Ctrl-C exits hard.
+  Always forward `signal` when adding a new async function on the
+  hot path; check `signal?.throwIfAborted()` at await boundaries that
+  could otherwise run indefinitely.
 
 ## Verification
 
-- `pnpm test` must pass (961 tests).
+- `pnpm test` must pass (969 tests).
 - `pnpm exec tsc --noEmit` must pass (strict mode).
 - For changes to the translation pipeline, run end-to-end against the
   research-site fixtures: from the monorepo root, `pnpm translate
-  --dry-run` walks the full pipeline without hitting AI/R2.
+--dry-run` walks the full pipeline without hitting AI/R2.
 
 ## Resources
 

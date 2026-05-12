@@ -197,7 +197,8 @@ function dedupeAndSort(items: string[]): string[] {
 function sortedRecord(rec: Record<string, string>): Record<string, string> {
   const out: Record<string, string> = {};
   for (const key of Object.keys(rec).sort()) {
-    out[key] = rec[key]!;
+    const value = rec[key];
+    if (value !== undefined) out[key] = value;
   }
   return out;
 }

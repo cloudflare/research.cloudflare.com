@@ -55,10 +55,13 @@ export interface BlockVisit {
 export function visitTranslatableBlocks(ast: Root, visitor: (visit: BlockVisit) => void): void {
   let index = 0;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function walk(node: any): void {
+  // mdast's node union is open (MDX adds nodes; remark plugins can
+  // emit anything). We need the structural fields only — a narrow
+  // `unknown` walker with type guards keeps us honest at the joints.
+  function walk(node: unknown): void {
+    if (!isMdastLikeNode(node)) return;
     if (TRANSLATABLE_BLOCK_TYPES.has(node.type)) {
-      visitor({ block: node as TranslatableBlock, id: `body:${index}` });
+      visitor({ block: node as unknown as TranslatableBlock, id: `body:${index}` });
       index++;
       return;
     }
@@ -81,11 +84,23 @@ export function visitTranslatableBlocks(ast: Root, visitor: (visit: BlockVisit) 
  * content be replaced cleanly. The extract / apply symmetry on this
  * span is what gives us the byte-perfect round-trip.
  */
+/**
+ * Structural type guard for mdast/MDX-style nodes. Recognises the
+ * `type: string` discriminant + optional `children` array. Doesn't
+ * assert the type IS a valid mdast node — that's what the
+ * `TRANSLATABLE_BLOCK_TYPES` / `RECURSE_INTO_TYPES` allow-lists
+ * downstream are for.
+ */
+function isMdastLikeNode(node: unknown): node is { type: string; children?: unknown[] } {
+  return typeof node === "object" && node !== null && typeof (node as { type?: unknown }).type === "string";
+}
+
 export function inlineSpan(block: TranslatableBlock): { start: number; end: number } | undefined {
   const children = block.children;
   if (!Array.isArray(children) || children.length === 0) return undefined;
-  const first = children[0]!;
-  const last = children[children.length - 1]!;
+  const first = children[0];
+  const last = children[children.length - 1];
+  if (first === undefined || last === undefined) return undefined;
   const start = first.position?.start?.offset;
   const end = last.position?.end?.offset;
   if (typeof start !== "number" || typeof end !== "number") return undefined;

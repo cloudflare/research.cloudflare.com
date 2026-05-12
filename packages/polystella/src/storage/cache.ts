@@ -55,6 +55,12 @@ export interface TranslateOrLoadOptions {
   maxRetries?: number;
   /** Fires per failed-and-retried translator attempt. */
   onRetry?: (event: TranslateBatchRetryEvent) => void;
+  /** Backoff between retries; forwarded to `translateBatch`. */
+  retryMinTimeoutMs?: number;
+  retryFactor?: number;
+  retryRandomize?: boolean;
+  /** Cancellation signal; forwarded to `translateBatch` + R2 ops. */
+  signal?: AbortSignal;
 }
 
 /**
@@ -103,7 +109,15 @@ export async function translateOrLoadFromCache(opts: TranslateOrLoadOptions): Pr
     fallbackKeys,
     maxRetries,
     onRetry,
+    retryMinTimeoutMs,
+    retryFactor,
+    retryRandomize,
+    signal,
   } = opts;
+
+  // Honour cancellation at every cache decision point — cheap, and
+  // avoids issuing R2 GETs for work that's about to be discarded.
+  signal?.throwIfAborted();
 
   // `null` r2 = operator opted out; skip lookup, always translate.
   if (r2) {
@@ -137,6 +151,7 @@ export async function translateOrLoadFromCache(opts: TranslateOrLoadOptions): Pr
 
   // Cache miss. `apply` bakes any markers in BEFORE the PUT so
   // later hits return them verbatim.
+  signal?.throwIfAborted();
   const translations = await translateBatch({
     translator,
     segments,
@@ -146,6 +161,10 @@ export async function translateOrLoadFromCache(opts: TranslateOrLoadOptions): Pr
     context,
     ...(maxRetries !== undefined ? { maxRetries } : {}),
     ...(onRetry !== undefined ? { onRetry } : {}),
+    ...(retryMinTimeoutMs !== undefined ? { retryMinTimeoutMs } : {}),
+    ...(retryFactor !== undefined ? { retryFactor } : {}),
+    ...(retryRandomize !== undefined ? { retryRandomize } : {}),
+    ...(signal !== undefined ? { signal } : {}),
   });
   const translated = apply(translations);
 

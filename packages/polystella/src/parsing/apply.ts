@@ -110,10 +110,11 @@ export function applyTranslations(
 }
 
 /** Pull `start`/`end` offsets off an mdast node's position. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function nodeSpan(node: any): { start: number; end: number } | undefined {
-  const start = node.position?.start?.offset;
-  const end = node.position?.end?.offset;
+function nodeSpan(node: unknown): { start: number; end: number } | undefined {
+  if (typeof node !== "object" || node === null) return undefined;
+  const pos = (node as { position?: { start?: { offset?: unknown }; end?: { offset?: unknown } } }).position;
+  const start = pos?.start?.offset;
+  const end = pos?.end?.offset;
   if (typeof start !== "number" || typeof end !== "number") return undefined;
   return { start, end };
 }
@@ -139,8 +140,9 @@ function collectFrontmatterTranslations(translations: Map<string, string>): Map<
 function applyFrontmatterTranslation(data: Record<string, unknown>, path: string, translation: string): void {
   const arrayMatch = /^([^[]+)\[(\d+)\]$/.exec(path);
   if (arrayMatch) {
-    const key = arrayMatch[1]!;
-    const index = Number(arrayMatch[2]!);
+    const [, key, indexStr] = arrayMatch;
+    if (key === undefined || indexStr === undefined) return;
+    const index = Number(indexStr);
     const arr = data[key];
     if (Array.isArray(arr) && index < arr.length) {
       arr[index] = translation;

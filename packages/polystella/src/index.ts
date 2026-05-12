@@ -45,10 +45,12 @@ export { parseMarkdown, createMarkdownProcessor } from "./parsing/parse.js";
 export { buildPrompt, parseResponse, type BuildPromptInput, type BuiltPrompt } from "./translation/prompt.js";
 export {
   createTranslator,
+  PermanentProviderError,
   resolveModelId,
   translateBatch,
   type CreateTranslatorOptions,
   type TranslateBatchOptions,
+  type TranslateBatchRetryEvent,
   type Translator,
 } from "./translation/provider.js";
 export {
@@ -223,7 +225,8 @@ export default function polystella(options: PolyStellaOptions): AstroIntegration
           const globalImportsAbs = resolved.routesImports.map((p) => path.resolve(rootDirPath, p));
 
           for (let i = 0; i < expandedRoutes.length; i++) {
-            const route = expandedRoutes[i]!;
+            const route = expandedRoutes[i];
+            if (route === undefined) continue;
             const sourceRel = route.source;
             const sourceAbs = path.resolve(rootDirPath, sourceRel);
             const { pattern, isDynamic } = deriveUrlPattern(sourceRel);

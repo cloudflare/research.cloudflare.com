@@ -52,6 +52,7 @@
     "prepublishOnly": "pnpm build:cli"
   },
   "dependencies": {
+    "p-retry": "^8.0.0",
     "picomatch": "^4.0.4",
     "remark-frontmatter": "^5.0.0",
     "remark-gfm": "^4.0.1",

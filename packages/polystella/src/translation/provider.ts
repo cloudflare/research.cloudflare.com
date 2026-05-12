@@ -1,7 +1,36 @@
+import pRetry, { AbortError } from "p-retry";
+
 import type { Segment } from "../parsing/extract.js";
 import type { Glossary } from "../glossary/glossary.js";
 import type { PolyStellaResolvedOptions } from "../config/options.js";
 import { buildPrompt, parseResponse } from "./prompt.js";
+
+/**
+ * Permanent translator failure — `translateBatch` does NOT retry
+ * these. Throw for: auth errors (401/403), bad-request (400),
+ * not-found (404), unsupported-model. Anything network-flaky or
+ * model-glitchy must be a plain Error so the retry loop catches it.
+ */
+export class PermanentProviderError extends Error {
+  readonly _tag = "PermanentProviderError" as const;
+  constructor(message: string) {
+    super(message);
+    this.name = "PermanentProviderError";
+  }
+}
+
+/**
+ * HTTP status codes the provider treats as permanent.
+ *   400 — bad request (malformed prompt / unsupported parameter)
+ *   401 — unauthenticated (wrong / missing API key)
+ *   403 — forbidden (permission / quota / account state)
+ *   404 — not found (wrong model id / endpoint)
+ *   422 — semantic-invalid request body
+ * Everything else (incl. 408, 425, 429, 500-599) is treated as
+ * retriable; the model is the operator's problem to fix when 4xx
+ * (other than retry-after) reaches us, not ours to paper over.
+ */
+const PERMANENT_HTTP_STATUSES = new Set([400, 401, 403, 404, 422]);
 
 /**
  * One `Translator` per (provider, locale). Two concrete providers
@@ -11,8 +40,11 @@ import { buildPrompt, parseResponse } from "./prompt.js";
 export interface Translator {
   /** Resolved model id (per-locale). Folded into the cache key. */
   readonly modelId: string;
-  /** Returns the model's raw text; caller validates via `parseResponse`. */
-  translate(systemPrompt: string, userPrompt: string): Promise<string>;
+  /**
+   * Returns the model's raw text; caller validates via `parseResponse`.
+   * `signal` cancels in-flight HTTP and propagates `AbortError`.
+   */
+  translate(systemPrompt: string, userPrompt: string, signal?: AbortSignal): Promise<string>;
 }
 
 type ProviderConfig = NonNullable<PolyStellaResolvedOptions["provider"]>;
@@ -59,7 +91,7 @@ function createWorkersAITranslator(provider: WorkersAIConfig, locale: string, fe
 
   return {
     modelId,
-    async translate(systemPrompt, userPrompt) {
+    async translate(systemPrompt, userPrompt, signal) {
       const res = await fetchImpl(endpoint, {
         method: "POST",
         headers: {
@@ -75,10 +107,15 @@ function createWorkersAITranslator(provider: WorkersAIConfig, locale: string, fe
           // translations and breaks JSON. Schema default 8192.
           max_tokens: provider.maxTokens,
         }),
+        ...(signal !== undefined ? { signal } : {}),
       });
       if (!res.ok) {
         const text = await res.text().catch(() => "");
-        throw new Error(`[polystella] Workers AI request failed: ${res.status} ${res.statusText}${text ? `\n${text}` : ""}`);
+        const message = `[polystella] Workers AI request failed: ${res.status} ${res.statusText}${text ? `\n${text}` : ""}`;
+        if (PERMANENT_HTTP_STATUSES.has(res.status)) {
+          throw new PermanentProviderError(message);
+        }
+        throw new Error(message);
       }
       // Three response shapes observed in the wild:
       //   - `result.response` — legacy text-generation envelope.
@@ -134,7 +171,7 @@ function createAnthropicTranslator(provider: AnthropicConfig, locale: string, fe
 
   return {
     modelId,
-    async translate(systemPrompt, userPrompt) {
+    async translate(systemPrompt, userPrompt, signal) {
       const res = await fetchImpl(endpoint, {
         method: "POST",
         headers: {
@@ -148,10 +185,15 @@ function createAnthropicTranslator(provider: AnthropicConfig, locale: string, fe
           system: systemPrompt,
           messages: [{ role: "user", content: userPrompt }],
         }),
+        ...(signal !== undefined ? { signal } : {}),
       });
       if (!res.ok) {
         const text = await res.text().catch(() => "");
-        throw new Error(`[polystella] Anthropic request failed: ${res.status} ${res.statusText}${text ? `\n${text}` : ""}`);
+        const message = `[polystella] Anthropic request failed: ${res.status} ${res.statusText}${text ? `\n${text}` : ""}`;
+        if (PERMANENT_HTTP_STATUSES.has(res.status)) {
+          throw new PermanentProviderError(message);
+        }
+        throw new Error(message);
       }
       const data = (await res.json()) as {
         content?: Array<{ type?: string; text?: string }>;
@@ -175,46 +217,64 @@ export interface TranslateBatchOptions {
   /** Optional site-/domain-specific prompt extension; see `BuildPromptInput.context`. */
   context?: string;
   /**
-   * Number of retries on translator/parse failure. `0` (default)
-   * preserves legacy behaviour — a single failed attempt throws.
-   * `N` retries the same prompt up to `N` more times before
-   * giving up. The model's natural sampling variance means a
-   * malformed first response (empty translation, omitted segment,
-   * hallucinated id) usually clears on the next attempt without
-   * any prompt-engineering changes.
+   * Retries on transient failure (network 5xx, parse errors, model
+   * hallucinations). `0` (default) = single attempt. `N` allows up
+   * to `N+1` total attempts. `PermanentProviderError` (4xx auth /
+   * bad request) short-circuits regardless of `maxRetries`.
    */
   maxRetries?: number;
   /**
-   * Fires once per failed attempt that's followed by a retry —
-   * does NOT fire on the FINAL attempt (which throws). Useful for
-   * surfacing retries in the build log so an operator notices a
-   * model that's misbehaving more than usual.
+   * Fires after each failed attempt that's followed by another
+   * retry; does NOT fire on the final (failing) attempt.
    */
   onRetry?: (event: TranslateBatchRetryEvent) => void;
+  /**
+   * Backoff between retries. Defaults are zero-wait so tests and
+   * unit callers stay fast; production callers (`runTranslationPass`)
+   * pass real backoff for thundering-herd avoidance.
+   */
+  retryMinTimeoutMs?: number;
+  retryFactor?: number;
+  retryRandomize?: boolean;
+  /** Abort in-flight translations cleanly when the build is cancelled. */
+  signal?: AbortSignal;
 }
 
 export interface TranslateBatchRetryEvent {
   /** 1-indexed attempt number that just failed. */
   attempt: number;
-  /** Total number of attempts that will be made (1 + maxRetries). */
+  /** Total attempts that will be made (= 1 + maxRetries). */
   totalAttempts: number;
   /** Error from the failed attempt. */
   error: Error;
 }
 
 /**
- * Build the prompt, call the provider, parse the response. Returns
- * `Map<segmentId, translatedText>` for `applyTranslations`. Empty
- * segments → empty map, no network call.
+ * Build prompt → translate → parse → return `Map<segmentId, text>`.
+ * Empty segments short-circuit with no network call.
  *
- * On parse / translator failure, retries up to `maxRetries` times
- * with the SAME prompt (sampling variance handles transient model
- * glitches; deterministic failures still propagate after exhausting
- * retries). The error thrown on final failure is the LAST attempt's
- * error — not the first — so logs reflect the actual death mode.
+ * Retries with exponential backoff + jitter on transient failures.
+ * `PermanentProviderError` (4xx auth/bad-request) skips retries.
+ * `signal` cancels in-flight work; the AbortError propagates.
+ *
+ * The final-failure throw carries the last attempt's error so logs
+ * reflect the actual death mode, not the first attempt's.
  */
 export async function translateBatch(opts: TranslateBatchOptions): Promise<Map<string, string>> {
-  const { translator, segments, glossary, sourceLocale, targetLocale, context, maxRetries = 0, onRetry } = opts;
+  const {
+    translator,
+    segments,
+    glossary,
+    sourceLocale,
+    targetLocale,
+    context,
+    maxRetries = 0,
+    onRetry,
+    retryMinTimeoutMs = 0,
+    retryFactor = 2,
+    retryRandomize = false,
+    signal,
+  } = opts;
   if (segments.length === 0) return new Map();
 
   const { systemPrompt, userPrompt } = buildPrompt({
@@ -227,24 +287,32 @@ export async function translateBatch(opts: TranslateBatchOptions): Promise<Map<s
 
   const expectedIds = segments.map((s) => s.id);
   const totalAttempts = Math.max(1, maxRetries + 1);
-  let lastError: Error | undefined;
 
-  for (let attempt = 1; attempt <= totalAttempts; attempt++) {
-    try {
-      const rawText = await translator.translate(systemPrompt, userPrompt);
+  return pRetry(
+    async () => {
+      // p-retry doesn't auto-check the signal between attempts in
+      // older versions; cheap inline guard keeps the contract sharp.
+      signal?.throwIfAborted();
+      const rawText = await translator.translate(systemPrompt, userPrompt, signal);
       return parseResponse(rawText, expectedIds);
-    } catch (err) {
-      lastError = err instanceof Error ? err : new Error(String(err));
-      if (attempt < totalAttempts) {
-        onRetry?.({ attempt, totalAttempts, error: lastError });
-        continue;
-      }
-      throw lastError;
-    }
-  }
-
-  // Unreachable: the loop above either returns or throws, but TS's
-  // control-flow analysis can't see it. Throwing the last error
-  // keeps the type narrow.
-  throw lastError ?? new Error("[polystella] translateBatch exhausted retries with no recorded error");
+    },
+    {
+      retries: maxRetries,
+      minTimeout: retryMinTimeoutMs,
+      factor: retryFactor,
+      randomize: retryRandomize,
+      ...(signal !== undefined ? { signal } : {}),
+      // Wrap permanent provider errors in AbortError so p-retry
+      // skips the remaining attempts. Plain Errors retry normally.
+      shouldRetry: ({ error }) => !(error instanceof PermanentProviderError),
+      onFailedAttempt: ({ error, attemptNumber, retriesLeft }) => {
+        // Mirror the legacy contract: fire `onRetry` ONLY when
+        // another attempt is coming. p-retry calls
+        // `onFailedAttempt` on every failure (incl. the last).
+        if (retriesLeft > 0 && !(error instanceof PermanentProviderError)) {
+          onRetry?.({ attempt: attemptNumber, totalAttempts, error });
+        }
+      },
+    },
+  );
 }

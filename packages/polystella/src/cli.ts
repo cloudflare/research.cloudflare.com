@@ -75,7 +75,8 @@ Exit codes:
 export function parseCliArgs(argv: ReadonlyArray<string>): CliArgs {
   const out: CliArgs = { dryRun: false, help: false };
   for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i]!;
+    const arg = argv[i];
+    if (arg === undefined) continue;
     switch (arg) {
       // POSIX "end of options" — pnpm/npm forward it through
       // `pnpm translate -- --branch x` style invocations.
@@ -330,13 +331,46 @@ async function main(): Promise<number> {
     `polystella-translate v${POLYSTELLA_VERSION}: locales=${[resolved.defaultLocale, ...resolved.locales].join(", ")}, dryRun=${resolved.dryRun}, prefix=${resolved.r2?.prefix ?? "<no r2>"}`,
   );
 
-  const result = await runTranslationPass({
-    resolved,
-    rootDir: cwd,
-    stagingDir,
-    logger: cliLogger,
-    polystellaVersion: POLYSTELLA_VERSION,
-  });
+  // SIGINT / SIGTERM → propagate cancellation through the pipeline.
+  // A second signal exits immediately (no graceful drain). Listeners
+  // are removed in the finally block so a successful run leaves the
+  // process clean for any embedding caller.
+  const controller = new AbortController();
+  let interruptCount = 0;
+  const onSignal = (signal: NodeJS.Signals) => {
+    interruptCount++;
+    if (interruptCount === 1) {
+      cliLogger.warn(`received ${signal} — cancelling in-flight translations…`);
+      controller.abort(new Error(`cancelled by ${signal}`));
+    } else {
+      cliLogger.error(`received ${signal} again — exiting now`);
+      process.exit(130);
+    }
+  };
+  process.on("SIGINT", onSignal);
+  process.on("SIGTERM", onSignal);
+
+  let result;
+  try {
+    result = await runTranslationPass({
+      resolved,
+      rootDir: cwd,
+      stagingDir,
+      logger: cliLogger,
+      polystellaVersion: POLYSTELLA_VERSION,
+      signal: controller.signal,
+    });
+  } catch (err) {
+    process.off("SIGINT", onSignal);
+    process.off("SIGTERM", onSignal);
+    if (controller.signal.aborted) {
+      cliLogger.warn(`translation pass aborted: ${(err as Error).message}`);
+      return 130;
+    }
+    throw err;
+  }
+  process.off("SIGINT", onSignal);
+  process.off("SIGTERM", onSignal);
 
   // Build report for live runs (matches integration's `build:done`).
   // Default: project root (no `dist/` from a CLI run); `--report` overrides.

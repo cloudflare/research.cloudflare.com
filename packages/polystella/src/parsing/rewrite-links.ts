@@ -117,23 +117,25 @@ export function rewriteUrlIfInternal(url: string, options: RewriteInternalLinksO
  * syntactic shapes; not in scope for v0.1's content).
  */
 function visitLinks(ast: Root, visitor: (link: Link) => void): void {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  function walk(node: any): void {
-    if (node.type === "link") {
+  function walk(node: unknown): void {
+    if (typeof node !== "object" || node === null) return;
+    const n = node as { type?: unknown; children?: unknown };
+    if (n.type === "link") {
       visitor(node as Link);
     }
-    if (Array.isArray(node.children)) {
-      for (const child of node.children) walk(child);
+    if (Array.isArray(n.children)) {
+      for (const child of n.children) walk(child);
     }
   }
   walk(ast);
 }
 
 /** Pull `start`/`end` offsets off an mdast node's position. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function nodeSpan(node: any): { start: number; end: number } | undefined {
-  const start = node.position?.start?.offset;
-  const end = node.position?.end?.offset;
+function nodeSpan(node: unknown): { start: number; end: number } | undefined {
+  if (typeof node !== "object" || node === null) return undefined;
+  const pos = (node as { position?: { start?: { offset?: unknown }; end?: { offset?: unknown } } }).position;
+  const start = pos?.start?.offset;
+  const end = pos?.end?.offset;
   if (typeof start !== "number" || typeof end !== "number") return undefined;
   return { start, end };
 }

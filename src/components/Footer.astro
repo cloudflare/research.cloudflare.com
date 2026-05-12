@@ -1,7 +1,9 @@
 ---
 import { CONSTANTS } from "../lib/constants";
 import Icon from "./Icon.astro";
-import { defaultLocale, locales, localeName, swapLocale, type TranslationStatus } from "@/lib/i18n-utils";
+import { LocalePicker } from "./LocalePicker";
+import { getDictionary } from "polystella/i18n";
+import { defaultLocale, swapLocale, type TranslationStatus } from "@/lib/i18n-utils";
 
 interface Props {
   aiTranslationStatus?: TranslationStatus;
@@ -10,15 +12,9 @@ interface Props {
 const { aiTranslationStatus = "source" } = Astro.props;
 const { t, lhref } = Astro.locals;
 
+const dict = await getDictionary(Astro.currentLocale);
 const currentLocale = Astro.currentLocale ?? defaultLocale;
 const pathname = Astro.url.pathname;
-
-const localeOptions = locales.map((locale) => ({
-  locale,
-  href: swapLocale(pathname, locale),
-  name: localeName(locale),
-  isCurrent: locale === currentLocale,
-}));
 
 const showAiBadge = aiTranslationStatus === "ai";
 const originalHref = swapLocale(pathname, defaultLocale);
@@ -121,53 +117,33 @@ const originalHref = swapLocale(pathname, defaultLocale);
     </nav>
   </div>
 
-  <!-- Locale picker + AI-translation badge -->
-  <div class="flex flex-col gap-4 sm:flex-row sm:justify-end sm:items-center px-8 py-4 border-t border-page-border">
-    {
-      showAiBadge && (
-        <div class="flex items-center gap-2 text-sm text-page-text-muted">
-          <span class="inline-flex items-center px-2 py-0.5 rounded border border-page-border-subtle font-mono text-xs uppercase tracking-wide">
-            {t("notice.aiTranslated.badge")}
-          </span>
-          <a href={originalHref} hreflang={defaultLocale} lang={defaultLocale} class="hover:text-page-text hover:underline">
-            {t("notice.aiTranslated.viewOriginal")}
-          </a>
-        </div>
-      )
-    }
-    <div class="flex items-center gap-2">
-      <label for="footer-locale-picker" class="text-sm text-page-text-muted">
-        {t("nav.localePicker.label")}:
-      </label>
-      <select
-        id="footer-locale-picker"
-        aria-label={t("nav.localePicker.label")}
-        class="text-sm bg-page-bg text-page-text border border-page-border rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-baby-blue-eyes"
-        onchange="if(this.value)window.location.href=this.value"
-      >
-        {
-          localeOptions.map(({ locale, href, name, isCurrent }) => (
-            <option value={href} lang={locale} selected={isCurrent}>
-              {name}
-            </option>
-          ))
-        }
-      </select>
-    </div>
-  </div>
-
-  <!-- Legal -->
+  <!-- Legal (left) + AI badge + locale picker (right) -->
   <div
-    class="flex flex-col sm:flex-row sm:justify-between sm:items-center sm:gap-4 text-page-text-muted border-t border-page-border pt-4 pb-5 px-8
-    [&_a]:text-page-text-muted [&_a]:text-sm] [&_a:hover]:text-page-text [&_a:hover]:underline"
+    class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 text-page-text-muted border-t border-page-border pt-4 pb-5 px-8
+    [&_a]:text-page-text-muted [&_a]:text-sm [&_a:hover]:text-page-text [&_a:hover]:underline"
   >
-    <div class="text-left">
-      {t("footer.legal.copyright", { year: new Date().getFullYear() })}
+    <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3 text-sm">
+      <span>{t("footer.legal.copyright", { year: new Date().getFullYear() })}</span>
+      <span>
+        <a href={CONSTANTS.PRIVACY_POLICY}>{t("footer.legal.privacyPolicy")}</a> . <a href={CONSTANTS.TERMS_OF_SERVICE}
+          >{t("footer.legal.terms")}</a
+        > . <a href={CONSTANTS.GDPR}>{t("footer.legal.gdpr")}</a>
+      </span>
     </div>
-    <div class="text-left sm:text-right">
-      <a href={CONSTANTS.PRIVACY_POLICY}>{t("footer.legal.privacyPolicy")}</a> . <a href={CONSTANTS.TERMS_OF_SERVICE}
-        >{t("footer.legal.terms")}</a
-      > . <a href={CONSTANTS.GDPR}>{t("footer.legal.gdpr")}</a>
+    <div class="flex items-center gap-3 sm:gap-4">
+      {
+        showAiBadge && (
+          <div class="flex items-center gap-2 text-sm">
+            <span class="inline-flex items-center px-2 py-0.5 rounded border border-page-border-subtle font-mono text-xs uppercase tracking-wide">
+              {t("notice.aiTranslated.badge")}
+            </span>
+            <a href={originalHref} hreflang={defaultLocale} lang={defaultLocale} class="hover:text-page-text hover:underline">
+              {t("notice.aiTranslated.viewOriginal")}
+            </a>
+          </div>
+        )
+      }
+      <LocalePicker client:load dict={dict} locale={currentLocale} pathname={pathname} placement="up" />
     </div>
   </div>
 </footer>

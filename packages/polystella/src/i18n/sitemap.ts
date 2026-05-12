@@ -120,10 +120,14 @@ export function astroSitemapI18n(input: AstroSitemapI18nInput, options: AstroSit
     return { i18n };
   }
 
-  // Capture the default-locale's hreflang (BCP 47 form, after any
-  // override) so the serialize callback can identify which existing
-  // link to clone as `x-default` without re-running validation.
-  const defaultHreflang = locales[input.defaultLocale]!;
+  // Capture the default-locale's hreflang (BCP 47, after any
+  // override) so the serialize callback identifies which existing
+  // link to clone as `x-default` without re-validating.
+  // The earlier `defaultLocale ∈ locales` validation guarantees this.
+  const defaultHreflang = locales[input.defaultLocale];
+  if (defaultHreflang === undefined) {
+    throw new Error(`[polystella] internal invariant: hreflang map missing default locale "${input.defaultLocale}"`);
+  }
 
   return {
     i18n,
