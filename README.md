@@ -70,6 +70,103 @@ Content is managed through Astro's Content Collections located in the `/content`
 - **Presentations**: Conference talks and keynotes
 - **Tags**: Topic categorization for filtering content
 
+### Featured Research
+
+Within the [`/content/site.toml`](./content/site.toml) file, you can configure the featured research section on the homepage. It must follow this structure:
+
+```toml
+[main.featuredResearch]
+publication = "publication-slug"
+title = "Publication Title"
+description = "Publication description"
+link = "/publication-slug"
+buttonLabel = "Read the Full Article"
+```
+
+### People
+
+All people are located within the [`/content/people`](./content/people) directory.
+
+They must follow this structure:
+
+```markdown
+---
+title: "Person's Name"
+position: "Position"
+author_name: "Person's Name"
+status: "current" | "inactive"
+twitter: "twitter-handle"
+bluesky: "bluesky-handle"
+blog_author: "blog-author"
+avatar: "/images/people/person-name.jpg"
+slug: "person-name"
+type: "active" | "alumni" | "external" | "intern" | "inactive"
+---
+```
+
+Only `active` and `alumni` types are displayed on the team page.
+
+Avatars are stored in the [`/public/images/people`](./public/images/people) directory and should be named after the person's slug.
+
+### Publications
+
+All publications are located within the [`/content/publications`](./content/publications) directory.
+
+They must follow this structure:
+
+```markdown
+---
+title: "Publication Name"
+year: year
+location: "Location"
+authors:
+  - author-slug
+url: https://example.com
+doi: doi
+related_interests:
+  - related-interest-slug
+pillar: "fast" | "private" | "safe" | "reliable" | "measurable"
+tags:
+  - tag-slug
+---
+
+Publication content
+```
+
+### Presentations
+
+All presentations are located within the [`/content/presentations`](./content/presentations) directory.
+
+They must follow this structure:
+
+```markdown
+---
+title: "Presentation Name"
+youtube: "youtube-url"
+thumbnail: "thumbnail-url"
+year: year
+---
+
+Presentation content
+```
+
+### Tags
+
+Tags are maintained in the [`/content/tags`](./content/tags) directory. They are used to categorize publications and presentations.
+
+Tags must follow this structure:
+
+```toml
+---
+name: "Tag Name"
+slug: "tag-slug"
+description: "Tag description"
+color: "pink"
+---
+```
+
+When you want to link a tag to a publication or presentation, you can do so by adding the tag slug to the `tags` array in the frontmatter of the content file (see [Publications](#publications) for an example).
+
 ## 🎨 Design System
 
 The site uses a custom design system with:
