@@ -1,0 +1,39 @@
+# PolyStella
+
+> AI-driven content localization for Astro: build-time translation of Markdown/MDX/TOML/JSON/YAML into additional locales, cached in Cloudflare R2, with locale-prefixed routing.
+
+PolyStella is an Astro integration. Translations happen at build time, are content-addressed (source bytes + glossary + model), cached in R2, and rendered as static bytes — no runtime AI calls. Two surfaces ship together: the integration (auto-runs in `astro build`) and a `polystella` CLI with verb-style subcommands (`translate`, `check-ui`, `sync-ui`, `translate-ui`).
+
+The package is dual-audience:
+
+- **Consumers** — Astro projects that depend on PolyStella for their localization pipeline. Most agent traffic against this package will be here.
+- **Contributors** — developers (and agents) working on PolyStella itself.
+
+## Agent-facing docs
+
+- [AGENTS.md](AGENTS.md): orientation, invariants, boundaries, and a task → entry-point map for contributors editing the package source.
+- [ARCHITECTURE.md](ARCHITECTURE.md): system design, hard invariants, domain glossary, per-subsystem reference. Stable slug anchors; safe to cross-reference.
+- [skills/polystella-consumer/SKILL.md](skills/polystella-consumer/SKILL.md): for agents integrating PolyStella into a downstream Astro project — install, four-file setup, common pitfalls, debug flow.
+- [skills/polystella-contributor/SKILL.md](skills/polystella-contributor/SKILL.md): step-by-step recipes for contributor tasks — add an adapter, add a CLI subcommand, add a translation provider, change the cache contract, debug a regression.
+
+## User-facing docs
+
+- [README.md](README.md): introduction, install, quick start, public API surface, status table.
+
+## Source layout (top-level)
+
+- `src/index.ts`: Astro integration entry. Registers hooks, runs the translation pass, publishes the runtime bridge.
+- `src/cli.ts`: standalone `polystella` CLI dispatcher.
+- `src/cli/`: per-subcommand handlers.
+- `src/config/options.ts`: zod schema + `resolveOptions`. Locales derive from Astro's `i18n` config.
+- `src/parsing/`: adapter contract, per-format adapters, key-path utilities, link rewriter.
+- `src/translation/`: orchestrator, provider implementations (Workers AI, Anthropic), prompt protocol, batching.
+- `src/storage/`: R2 client, cache orchestrator, hash, prune, local staging index, build report.
+- `src/runtime/`: middleware, `Astro.locals` bindings, localized-href, custom-loader runtime bridge.
+- `src/content/`: `polystellaCollections`, custom-loader wrapper, file-loader wrapper, schema extension.
+- `src/i18n/`: UI strings loader, drift detection, sync, AI translation orchestrator, sitemap helper.
+- `src/react/`: React hooks for islands.
+
+## Optional
+
+- [llms-full.txt](llms-full.txt): full concatenation of AGENTS.md, ARCHITECTURE.md, and both skill files for retrieval-time loading by external agents.

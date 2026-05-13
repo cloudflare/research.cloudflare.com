@@ -24,6 +24,7 @@ import {
 import { encodeTouchedPair, pruneCacheByPair } from "../storage/prune.js";
 import { buildR2Key, createR2Client, DEFAULT_R2_KEY_PREFIX, type R2Client } from "../storage/r2.js";
 import type { BuildReportEntry, BuildReportPruning } from "../storage/report.js";
+import { type Logger } from "./logger.js";
 import { createTranslator, type Translator } from "./provider.js";
 
 /**
@@ -35,13 +36,10 @@ import { createTranslator, type Translator } from "./provider.js";
  * write the build report — those are caller responsibilities.
  */
 
-/** Astro-compatible logger surface; trivially stub-able from console. */
-export interface Logger {
-  info(message: string): void;
-  warn(message: string): void;
-  error(message: string): void;
-  debug(message: string): void;
-}
+// Re-exported so callers can keep importing `Logger` from `run.ts`
+// (the historical location). The canonical definition lives in
+// `./logger.ts` so leaf primitives don't import the orchestrator.
+export type { Logger };
 
 export interface RunTranslationOptions {
   /** Pre-validated via `resolveOptions`; schema invariants are trusted. */
@@ -162,6 +160,28 @@ function pickUrlKeysForAdapter(adapter: FileTypeAdapter, resolved: PolyStellaRes
       case ".yaml":
       case ".yml":
         return resolved.yaml.urls;
+    }
+  }
+  return {};
+}
+
+/**
+ * Per-glob → document-context key-path map for an adapter. Only
+ * markdown exposes context keys today; other adapters return `{}`
+ * (no doc-context block — same as omitting `documentContext` on
+ * the adapter). See ARCHITECTURE.md §17.
+ */
+function pickContextKeysForAdapter(adapter: FileTypeAdapter, resolved: PolyStellaResolvedOptions): Record<string, string[]> {
+  for (const ext of adapter.extensions) {
+    switch (ext) {
+      case ".md":
+      case ".mdx":
+        return resolved.markdown.contextKeys;
+      case ".toml":
+      case ".json":
+      case ".yaml":
+      case ".yml":
+        return {};
     }
   }
   return {};
@@ -658,6 +678,17 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
     const segments = adapter.extractSegments(parsed, body, adapterOpts);
     const selectedValues = adapter.selectedValuesForHash(parsed, body, adapterOpts);
 
+    // Grouping + document-context resolved once per source; both
+    // are locale-independent (the doc-context block is source-
+    // language). Adapters that don't implement these methods get
+    // the single-group fallback / no doc-context behaviour the
+    // cache layer treats as today's pre-batching path.
+    const groups = adapter.groupSegments?.(parsed, segments);
+    const documentContext = adapter.documentContext?.(parsed, {
+      sourcePath: source.relativePath,
+      contextKeys: pickContextKeysForAdapter(adapter, resolved),
+    });
+
     for (const locale of resolved.locales) {
       signal?.throwIfAborted();
       const pairStart = Date.now();
@@ -768,6 +799,11 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
         };
         const result = await translateOrLoadFromCache({
           segments,
+          ...(groups !== undefined ? { groups } : {}),
+          ...(documentContext !== undefined ? { documentContext } : {}),
+          ...(resolved.provider?.batchInputTokenBudget !== undefined ? { inputTokenBudget: resolved.provider.batchInputTokenBudget } : {}),
+          logger,
+          sourcePath: source.relativePath,
           apply: (translations) =>
             adapter.applyTranslations(parsed, body, translations, {
               topLevelAdditions,
@@ -863,7 +899,13 @@ export async function runTranslationPass(opts: RunTranslationOptions): Promise<R
             marker = "✓";
           }
           const fallbackSuffix = result.outcome === "hit" && result.hitKey && result.hitKey !== key ? " via fallback" : "";
-          logger.info(`${marker} ${source.relativePath} → ${locale} [${result.outcome}${fallbackSuffix}] (${segments.length} segs)`);
+          // Append batch count only on the miss path when batching
+          // engaged (>1 batch). Hits never batched; single-batch
+          // misses look the same as today.
+          const batchSuffix = result.batchCount !== undefined && result.batchCount > 1 ? `, ${result.batchCount} batches` : "";
+          logger.info(
+            `${marker} ${source.relativePath} → ${locale} [${result.outcome}${fallbackSuffix}] (${segments.length} segs${batchSuffix})`,
+          );
         }
 
         // Optional inspection copy. No-op when previewDir unset.

@@ -378,3 +378,128 @@ describe("resolveOptions — middleware flag", () => {
     expect(resolved.middleware).toBe(false);
   });
 });
+
+describe("resolveOptions — markdown.contextKeys", () => {
+  // Plain map of glob → frontmatter keys whose source-language values
+  // feed the per-batch DOCUMENT CONTEXT block. Distinct from `keys`
+  // (translated) and `urls` (rewritten). Default `{}` so existing
+  // configs see no change in behaviour. NOT in the cache-key hash.
+
+  it("defaults to an empty map (opt-in feature, no behaviour change)", () => {
+    const resolved = resolveOptions({}, HAPPY_I18N);
+    expect(resolved.markdown.contextKeys).toEqual({});
+  });
+
+  it("accepts a well-formed glob → keys map and round-trips it", () => {
+    const resolved = resolveOptions(
+      {
+        markdown: {
+          keys: { "publications/**": ["title", "metaDescription"] },
+          contextKeys: { "publications/**": ["title", "excerpt"] },
+        },
+      },
+      HAPPY_I18N,
+    );
+    expect(resolved.markdown.contextKeys["publications/**"]).toEqual(["title", "excerpt"]);
+  });
+
+  it("allows a key to appear in both `keys` and `contextKeys` (translate + frame)", () => {
+    // Common case: title gets translated AND used as document
+    // context. The cross-check only forbids overlap between `keys`
+    // and `urls`, not between `keys` and `contextKeys`.
+    expect(() =>
+      resolveOptions(
+        {
+          markdown: {
+            keys: { "publications/**": ["title"] },
+            contextKeys: { "publications/**": ["title"] },
+          },
+        },
+        HAPPY_I18N,
+      ),
+    ).not.toThrow();
+  });
+
+  it("rejects malformed shapes (array instead of map)", () => {
+    expect(() =>
+      resolveOptions(
+        {
+          markdown: {
+            keys: {},
+            contextKeys: ["title"] as unknown as Record<string, string[]>,
+          },
+        },
+        HAPPY_I18N,
+      ),
+    ).toThrowError();
+  });
+});
+
+describe("resolveOptions — provider.batchInputTokenBudget", () => {
+  // Soft cap on per-batch input tokens. Sized to leave room for the
+  // model's response within `maxTokens`. Provider-agnostic — lives on
+  // both branches of the discriminated union.
+
+  it("defaults to 4000 on the workers-ai branch", () => {
+    const resolved = resolveOptions(
+      {
+        provider: {
+          kind: "workers-ai",
+          accountId: "acct",
+          apiToken: "tok",
+          model: "@cf/meta/llama-3.1-8b-instruct",
+        },
+      },
+      HAPPY_I18N,
+    );
+    if (resolved.provider?.kind === "workers-ai") {
+      expect(resolved.provider.batchInputTokenBudget).toBe(4000);
+    }
+  });
+
+  it("defaults to 4000 on the anthropic branch", () => {
+    const resolved = resolveOptions(
+      {
+        provider: {
+          kind: "anthropic",
+          apiKey: "sk-ant-test",
+          model: "claude-3-5-haiku-latest",
+        },
+      },
+      HAPPY_I18N,
+    );
+    if (resolved.provider?.kind === "anthropic") {
+      expect(resolved.provider.batchInputTokenBudget).toBe(4000);
+    }
+  });
+
+  it("accepts an explicit positive integer", () => {
+    const resolved = resolveOptions(
+      {
+        provider: {
+          kind: "workers-ai",
+          accountId: "acct",
+          apiToken: "tok",
+          model: "@cf/meta/llama-3.1-8b-instruct",
+          batchInputTokenBudget: 2500,
+        },
+      },
+      HAPPY_I18N,
+    );
+    if (resolved.provider?.kind === "workers-ai") {
+      expect(resolved.provider.batchInputTokenBudget).toBe(2500);
+    }
+  });
+
+  it("rejects 0, negative integers, and non-integers", () => {
+    const baseProvider = {
+      kind: "workers-ai" as const,
+      accountId: "acct",
+      apiToken: "tok",
+      model: "@cf/meta/llama-3.1-8b-instruct",
+    };
+    expect(() => resolveOptions({ provider: { ...baseProvider, batchInputTokenBudget: 0 } }, HAPPY_I18N)).toThrowError();
+    expect(() => resolveOptions({ provider: { ...baseProvider, batchInputTokenBudget: -1 } }, HAPPY_I18N)).toThrowError();
+    expect(() => resolveOptions({ provider: { ...baseProvider, batchInputTokenBudget: 1.5 } }, HAPPY_I18N)).toThrowError();
+  });
+});

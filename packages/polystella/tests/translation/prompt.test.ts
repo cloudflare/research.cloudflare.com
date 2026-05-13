@@ -278,6 +278,110 @@ describe("buildPrompt", () => {
     });
     expect(padded.systemPrompt.split("\n")[1]).toBe("Use formal register.");
   });
+
+  it("absent documentContext produces a byte-identical prompt to omitting the field", () => {
+    // Critical invariant: existing pipelines that never set
+    // `documentContext` must see no prompt change. Bytes match
+    // exactly, including any blank lines between sections.
+    const baseline = buildPrompt({
+      segments: sampleSegments,
+      glossary: sampleGlossary,
+      sourceLocale: "en-US",
+      targetLocale: "pt-BR",
+    });
+    const explicitUndefined = buildPrompt({
+      segments: sampleSegments,
+      glossary: sampleGlossary,
+      sourceLocale: "en-US",
+      targetLocale: "pt-BR",
+      documentContext: undefined,
+    });
+    const empty = buildPrompt({
+      segments: sampleSegments,
+      glossary: sampleGlossary,
+      sourceLocale: "en-US",
+      targetLocale: "pt-BR",
+      documentContext: "",
+    });
+    const blank = buildPrompt({
+      segments: sampleSegments,
+      glossary: sampleGlossary,
+      sourceLocale: "en-US",
+      targetLocale: "pt-BR",
+      documentContext: "   \n\t   ",
+    });
+    expect(explicitUndefined.systemPrompt).toBe(baseline.systemPrompt);
+    expect(empty.systemPrompt).toBe(baseline.systemPrompt);
+    expect(blank.systemPrompt).toBe(baseline.systemPrompt);
+  });
+
+  it("emits the DOCUMENT CONTEXT block between the markdown-format clause and the do-not-translate list", () => {
+    const { systemPrompt } = buildPrompt({
+      segments: sampleSegments,
+      glossary: sampleGlossary,
+      sourceLocale: "en-US",
+      targetLocale: "pt-BR",
+      documentContext: "Title: Echo State Networks\nExcerpt: A practical guide.",
+    });
+    const idxFormat = systemPrompt.indexOf("Preserve markdown formatting markers");
+    const idxDocCtx = systemPrompt.indexOf("DOCUMENT CONTEXT");
+    const idxDoNot = systemPrompt.indexOf("MUST NOT BE TRANSLATED");
+    expect(idxFormat).toBeGreaterThan(-1);
+    expect(idxDocCtx).toBeGreaterThan(idxFormat);
+    expect(idxDoNot).toBeGreaterThan(idxDocCtx);
+  });
+
+  it("renders documentContext lines verbatim under the preamble", () => {
+    const { systemPrompt } = buildPrompt({
+      segments: sampleSegments,
+      glossary: EMPTY_GLOSSARY,
+      sourceLocale: "en-US",
+      targetLocale: "pt-BR",
+      documentContext: "Title: Echo State Networks\nExcerpt: A practical guide.",
+    });
+    expect(systemPrompt).toMatch(/DOCUMENT CONTEXT \(for terminology only; do not translate this block\):/);
+    expect(systemPrompt).toContain("Title: Echo State Networks");
+    expect(systemPrompt).toContain("Excerpt: A practical guide.");
+  });
+
+  it("preserves glossary block ordering when documentContext is present", () => {
+    // Adding DOCUMENT CONTEXT must NOT shift the ordering of
+    // PREFERRED TRANSLATIONS / STYLE RULES / ADDITIONAL NOTES /
+    // OUTPUT FORMAT relative to each other.
+    const { systemPrompt } = buildPrompt({
+      segments: sampleSegments,
+      glossary: sampleGlossary,
+      sourceLocale: "en-US",
+      targetLocale: "pt-BR",
+      documentContext: "Title: T",
+    });
+    const idxPref = systemPrompt.indexOf("PREFERRED TRANSLATIONS");
+    const idxStyle = systemPrompt.indexOf("STYLE RULES");
+    const idxNotes = systemPrompt.indexOf("ADDITIONAL NOTES");
+    const idxOut = systemPrompt.indexOf("OUTPUT FORMAT");
+    expect(idxPref).toBeLessThan(idxStyle);
+    expect(idxStyle).toBeLessThan(idxNotes);
+    expect(idxNotes).toBeLessThan(idxOut);
+  });
+
+  it("works alongside a caller-supplied `context` (site framing)", () => {
+    const { systemPrompt } = buildPrompt({
+      segments: sampleSegments,
+      glossary: EMPTY_GLOSSARY,
+      sourceLocale: "en-US",
+      targetLocale: "pt-BR",
+      context: "Specialise in technical research content.",
+      documentContext: "Title: Echo State Networks",
+    });
+    // `context` sits right after the role declaration; documentContext
+    // sits between the format clause and the (absent here) glossary.
+    const lines = systemPrompt.split("\n");
+    expect(lines[0]).toBe("You are a professional translator.");
+    expect(lines[1]).toBe("Specialise in technical research content.");
+    const idxFormat = systemPrompt.indexOf("Preserve markdown formatting markers");
+    const idxDocCtx = systemPrompt.indexOf("DOCUMENT CONTEXT");
+    expect(idxDocCtx).toBeGreaterThan(idxFormat);
+  });
 });
 
 describe("parseResponse", () => {

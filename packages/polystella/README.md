@@ -7,6 +7,7 @@ PolyStella is an [Astro](https://astro.build) integration that translates conten
 ## What it does
 
 - **Build-time translation.** Translates `.md` (and other formats — see below) into additional locales during `astro build`. Visitors get static bytes; no runtime AI calls.
+- **Batched prose translation with section-aware grouping.** Long markdown files split into multiple prompt batches anchored at headings, so terminology stays consistent across sections without exceeding the model's output-token cap. Each batch carries a configurable document-context block (title, excerpt, ...) so the model has stable framing even when the body is split.
 - **R2-cached.** Translations are content-addressed by source bytes + glossary + model. Unchanged pages cost zero on rebuild. Translations are never committed to the repo.
 - **Pluggable file formats.** Currently Markdown, MDX, and TOML. YAML, JSON, and an OpenAPI preset are planned.
 - **Per-locale model selection.** Latin-script and CJK locales can use different models.
@@ -14,12 +15,18 @@ PolyStella is an [Astro](https://astro.build) integration that translates conten
 - **Hand-translation overrides.** Drop a markdown file at `i18n/overrides/{locale}/<mirrored-path>` and it wins over AI output verbatim.
 - **Internal-link rewriting.** Both inline markdown links and configured URL fields (frontmatter, structured-data) are locale-prefixed at staging. External URLs and operator-declared exemptions (`noPrefixUrls`) pass through unchanged.
 - **UI-string maintenance.** Short chrome text (nav, CTAs) lives in per-locale JSON files with build-time drift detection. The CLI offers offline key reconciliation (`sync-ui`) and AI-fill of empty placeholders (`translate-ui`) so adding or removing a key in the default locale propagates to the others. Includes a React hook for client-side islands.
-- **Standalone or Starlight.** Ships its own route shim today (standalone). Starlight integration is the next milestone.
+- **Standalone routing.** Ships its own route shim that locale-prefixes pages via injected dynamic routes. Starlight-aware mode is planned but not yet shipped.
 - **CLI.** `polystella translate` runs the pipeline outside `astro build` for one-off re-translations or CI dispatch, with branch-aware R2 prefixes. Sibling subcommands (`check-ui`, `sync-ui`, `translate-ui`) handle UI-string maintenance.
 
 ## Install
 
-TODO: Update to refer to install via github
+PolyStella isn't on npm yet. While the package lives inside `cloudflare/research.cloudflare.com` it's consumed as a workspace member (`"polystella": "workspace:*"` in the host's `package.json`). Once the package is extracted into its own repo (planned), install will be via:
+
+```bash
+pnpm add github:cloudflare/polystella#vX.Y.Z
+```
+
+An npm publish will follow once the API has been validated by external consumers. See the project roadmap for the latest status.
 
 ## Quick start
 
@@ -251,7 +258,7 @@ A developer's local build cannot overwrite production. Preview branches stay iso
 pnpm --filter polystella test
 ```
 
-The package has ~940 unit tests across parsing, extraction, translation prompt round-trips, R2 cache logic, routing, runtime dispatch (locale-aware entry / collection fetching), middleware bindings, custom-loader wrapping + sibling translation, and UI-strings drift detection. CI runs them on every PR.
+The package has 981 tests across 48 files: parsing, extraction, translation prompt round-trips, R2 cache logic (including bulk pre-list), routing, runtime dispatch (locale-aware entry / collection fetching), middleware bindings, custom-loader wrapping + sibling translation, UI-strings drift detection + sync + AI-fill, and a 9-test end-to-end smoke suite that drives the full integration against a temp project. CI runs them on every PR.
 
 ## License
 

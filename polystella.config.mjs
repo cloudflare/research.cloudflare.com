@@ -121,6 +121,19 @@ const config = {
     // urls: {
     //   "publications/**": ["heroImage", "pdfLink"],
     // },
+
+    // Per-batch DOCUMENT CONTEXT — keys whose source-language values
+    // get injected into every prompt batch's system prompt as a
+    // short framing block (untranslated; do-not-translate clause
+    // baked in). Keeps terminology consistent across multi-batch
+    // translations of long files. NOT in the cache-key hash —
+    // editing this list does not invalidate cached translations.
+    // See packages/polystella/ARCHITECTURE.md §17.
+    //
+    contextKeys: {
+      "publications/**": ["title", "metaDescription"],
+      "presentations/**": ["title"],
+    },
   },
 
   // `site.toml`'s structure: a single top-level entry (`main`) holds
@@ -265,6 +278,16 @@ const config = {
       //   - @cf/mistralai/mistral-small-3.1-24b-instruct
     },
     // endpoint: "https://...",            // override the default WAI endpoint
+
+    // Soft cap on per-batch input tokens. Long files split into
+    // multiple sequential batches under this budget (heading-
+    // anchored grouping; see packages/polystella/ARCHITECTURE.md §17).
+    // Default 4000 leaves ~4000 output tokens within `maxTokens`
+    // (8192). Lower this if you observe truncation on very long
+    // sections; raise it for short corpora where per-batch overhead
+    // dominates.
+    //
+    // batchInputTokenBudget: 4000,
   },
   //
   // Anthropic:

@@ -109,6 +109,43 @@ export interface FileTypeAdapter<TParsed = unknown> {
    * inputs and pass non-string / missing values through unchanged.
    */
   rewriteUrls?(bytes: string, opts: AdapterRewriteUrlsOptions): string;
+
+  /**
+   * Partition the flat `Segment[]` (from `extractSegments`) into an
+   * ordered list of groups for token-aware batching. Adapters that
+   * have meaningful section structure (e.g. markdown headings) keep
+   * related segments adjacent so a batch boundary doesn't fall in
+   * the middle of a section. Adapters that omit this method get a
+   * single-group fallback in the translation layer (`[segments]`),
+   * which the batcher then packs by token budget alone.
+   *
+   * Invariants:
+   *   - `flat(result) === segments` (no segment dropped, none
+   *     duplicated, original order preserved).
+   *   - The translation layer treats absent return values as
+   *     "no grouping hints"; behaviour is identical to today.
+   *
+   * See ARCHITECTURE.md §17 for the grouping algorithm.
+   */
+  groupSegments?(parsed: TParsed, segments: Segment[]): Segment[][];
+
+  /**
+   * Build a per-batch "document context" framing string — a short,
+   * source-language block (title, excerpt, ...) injected into every
+   * batch's system prompt. Purpose: keep terminology consistent
+   * across batches when a single document is split into multiple
+   * prompt round-trips.
+   *
+   * Returns `undefined` when no configured `contextKeys` resolve to
+   * non-empty values for the source. The translation layer treats
+   * absent / empty returns as "no document context block" — the
+   * prompt is byte-identical to today.
+   *
+   * Markdown reads `frontmatter[key]` for each `contextKeys` entry
+   * matching the source's glob. Structured-data adapters MAY omit
+   * this method; they have no canonical doc-level structure today.
+   */
+  documentContext?(parsed: TParsed, opts: AdapterDocumentContextOptions): string | undefined;
 }
 
 /**
@@ -163,4 +200,27 @@ export interface AdapterApplyOptions {
 export interface AdapterRewriteUrlsOptions {
   paths: string[];
   rewriter: (url: string) => string | null;
+}
+
+/**
+ * Per-pair options threaded through `documentContext`. The runtime
+ * resolves the operator-configured `markdown.contextKeys` map (or
+ * its per-adapter equivalent in future formats) and passes the full
+ * glob → key-paths shape so adapters can union matching entries
+ * themselves (mirrors how `translatableKeys` flows in `AdapterExtractOptions`).
+ *
+ * `contextKeys` is intentionally distinct from `translatableKeys`
+ * and from `rewriteUrls.paths`: a single key MAY appear in both
+ * `keys` (translated) and `contextKeys` (shown as framing in the
+ * doc-context block) — typical for `title` / `excerpt`.
+ */
+export interface AdapterDocumentContextOptions {
+  /** Forward-slash path relative to `sourceDir`. */
+  sourcePath: string;
+  /**
+   * Per-glob → context-bearing key paths. Adapters MAY ignore the
+   * shape if it doesn't apply (e.g. structured-data adapters that
+   * don't implement `documentContext`).
+   */
+  contextKeys: Record<string, string[]>;
 }

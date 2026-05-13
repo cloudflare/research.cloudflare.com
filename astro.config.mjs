@@ -11,10 +11,6 @@ import sitemap from "@astrojs/sitemap";
 import polystella, { astroSitemapI18n } from "polystella";
 import polystellaConfig from "./polystella.config.mjs";
 
-// TEMPORARY — remove after Workers Builds cache scoping is settled.
-// See cache-probe.mjs for the rationale and how to read the build log.
-import cacheProbe from "./cache-probe.mjs";
-
 const i18n = {
   defaultLocale: "en-US",
   locales: ["en-US", "es-ES", "pt-BR", "ja-JP"],
@@ -99,8 +95,6 @@ export default defineConfig({
     // as alternate-language pages, hurting SEO.
     sitemap(astroSitemapI18n(i18n)),
     polystella(polystellaConfig),
-    // TEMPORARY — remove after Workers Builds cache scoping is settled.
-    cacheProbe(),
   ],
   redirects: {
     "/about/approach/": "/people",

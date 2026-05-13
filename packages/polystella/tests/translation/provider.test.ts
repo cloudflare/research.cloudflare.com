@@ -64,6 +64,7 @@ describe("createTranslator", () => {
         apiToken: "tok",
         model: "@cf/meta/llama-3.1-8b-instruct",
         maxTokens: 8192,
+        batchInputTokenBudget: 4000,
       },
       "pt-BR",
       { fetchImpl: makeFetchStub({}) },
@@ -78,6 +79,7 @@ describe("createTranslator", () => {
         apiKey: "sk-ant-test",
         model: "claude-3-5-haiku-latest",
         maxTokens: 8192,
+        batchInputTokenBudget: 4000,
       },
       "pt-BR",
       { fetchImpl: makeFetchStub({}) },
@@ -99,6 +101,7 @@ describe("Workers AI translator", () => {
     apiToken: "TOKEN",
     model: "@cf/meta/llama-3.1-8b-instruct",
     maxTokens: 8192,
+    batchInputTokenBudget: 4000,
   };
 
   it("POSTs to the run endpoint with bearer auth and a chat-style body", async () => {
@@ -314,6 +317,7 @@ describe("Anthropic translator", () => {
     apiKey: "sk-ant-test",
     model: "claude-3-5-haiku-latest",
     maxTokens: 8192,
+    batchInputTokenBudget: 4000,
   };
 
   it("POSTs to /v1/messages with the documented headers and body", async () => {
@@ -656,7 +660,7 @@ describe("PermanentProviderError detection", () => {
   it("Workers AI throws PermanentProviderError on 401", async () => {
     const fetchStub = makeFetchStub({}, { status: 401, statusText: "Unauthorized", rawText: "invalid api token" });
     const translator = createTranslator(
-      { kind: "workers-ai", accountId: "acct", apiToken: "bad", model: "test-model", maxTokens: 8192 },
+      { kind: "workers-ai", accountId: "acct", apiToken: "bad", model: "test-model", maxTokens: 8192, batchInputTokenBudget: 4000 },
       "pt-BR",
       { fetchImpl: fetchStub as unknown as typeof fetch },
     );
@@ -666,7 +670,7 @@ describe("PermanentProviderError detection", () => {
   it("Workers AI throws plain Error on 503 (retriable)", async () => {
     const fetchStub = makeFetchStub({}, { status: 503, statusText: "Service Unavailable" });
     const translator = createTranslator(
-      { kind: "workers-ai", accountId: "acct", apiToken: "x", model: "test-model", maxTokens: 8192 },
+      { kind: "workers-ai", accountId: "acct", apiToken: "x", model: "test-model", maxTokens: 8192, batchInputTokenBudget: 4000 },
       "pt-BR",
       { fetchImpl: fetchStub as unknown as typeof fetch },
     );
@@ -676,9 +680,11 @@ describe("PermanentProviderError detection", () => {
 
   it("Anthropic throws PermanentProviderError on 403", async () => {
     const fetchStub = makeFetchStub({}, { status: 403, statusText: "Forbidden" });
-    const translator = createTranslator({ kind: "anthropic", apiKey: "bad", model: "claude-test", maxTokens: 8192 }, "pt-BR", {
-      fetchImpl: fetchStub as unknown as typeof fetch,
-    });
+    const translator = createTranslator(
+      { kind: "anthropic", apiKey: "bad", model: "claude-test", maxTokens: 8192, batchInputTokenBudget: 4000 },
+      "pt-BR",
+      { fetchImpl: fetchStub as unknown as typeof fetch },
+    );
     await expect(translator.translate("sys", "user")).rejects.toBeInstanceOf(PermanentProviderError);
   });
 });

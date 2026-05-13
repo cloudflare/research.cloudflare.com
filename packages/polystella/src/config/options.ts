@@ -64,6 +64,15 @@ const workersAiProviderSchema = z.object({
    * multi-segment translations. 8192 fits under llama-3.1-8b's cap.
    */
   maxTokens: z.number().int().positive().default(8192),
+  /**
+   * Soft cap on per-batch input tokens. The translation pipeline
+   * packs adapter-grouped segments (see `markdownAdapter.groupSegments`)
+   * into batches that fit under this budget; sequential batches
+   * within a single file each get their own retry budget and their
+   * own document-context block. Provider-agnostic — sits here for
+   * proximity to `maxTokens`. See ARCHITECTURE.md §17.
+   */
+  batchInputTokenBudget: z.number().int().positive().default(4000),
 });
 
 const anthropicProviderSchema = z.object({
@@ -72,6 +81,12 @@ const anthropicProviderSchema = z.object({
   model: z.union([z.string().min(1), z.object({ default: z.string().min(1) }).catchall(z.string().min(1))]),
   /** Max output tokens per call. */
   maxTokens: z.number().int().positive().default(8192),
+  /**
+   * Soft cap on per-batch input tokens. See `workersAiProviderSchema`
+   * for the rationale; the field is provider-agnostic and lives on
+   * both branches of the discriminated union.
+   */
+  batchInputTokenBudget: z.number().int().positive().default(4000),
 });
 
 const providerSchema = z.discriminatedUnion("kind", [workersAiProviderSchema, anthropicProviderSchema]);
@@ -129,9 +144,25 @@ export const polystellaOptionsSchema = z
       .object({
         keys: z.record(z.string(), z.array(z.string())).default({}),
         urls: z.record(z.string(), z.array(z.string())).default({}),
+        /**
+         * Per-glob → frontmatter keys whose source-language VALUES
+         * feed the per-batch DOCUMENT CONTEXT block (title, excerpt,
+         * ...). Untranslated themselves — sits in the system prompt
+         * as topical framing so terminology stays consistent across
+         * batches when a long document is split. May overlap with
+         * `keys` (typical for `title`/`excerpt` — translate AND
+         * frame). Default `{}` = no doc-context block (opt-in).
+         *
+         * NOT included in the cache-key hash: changing `contextKeys`
+         * does not bust the cache. Existing cached translations
+         * reuse their original context (or no context) until natural
+         * body-edit turnover re-translates them. See ARCHITECTURE.md
+         * §17 for the rationale.
+         */
+        contextKeys: z.record(z.string(), z.array(z.string())).default({}),
       })
       .strict()
-      .default({ keys: {}, urls: {} }),
+      .default({ keys: {}, urls: {}, contextKeys: {} }),
 
     toml: z
       .object({

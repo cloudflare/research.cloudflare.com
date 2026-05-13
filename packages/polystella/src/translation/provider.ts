@@ -217,6 +217,13 @@ export interface TranslateBatchOptions {
   /** Optional site-/domain-specific prompt extension; see `BuildPromptInput.context`. */
   context?: string | undefined;
   /**
+   * Optional per-batch document-context framing (title, excerpt, ...);
+   * see `BuildPromptInput.documentContext`. Threaded through unchanged
+   * to `buildPrompt`. When absent, the prompt is byte-identical to
+   * the pre-batching path.
+   */
+  documentContext?: string | undefined;
+  /**
    * Retries on transient failure (network 5xx, parse errors, model
    * hallucinations). `0` (default) = single attempt. `N` allows up
    * to `N+1` total attempts. `PermanentProviderError` (4xx auth /
@@ -268,6 +275,7 @@ export async function translateBatch(opts: TranslateBatchOptions): Promise<Map<s
     sourceLocale,
     targetLocale,
     context,
+    documentContext,
     maxRetries = 0,
     onRetry,
     retryMinTimeoutMs = 0,
@@ -283,6 +291,7 @@ export async function translateBatch(opts: TranslateBatchOptions): Promise<Map<s
     sourceLocale,
     targetLocale,
     context,
+    documentContext,
   });
 
   const expectedIds = segments.map((s) => s.id);

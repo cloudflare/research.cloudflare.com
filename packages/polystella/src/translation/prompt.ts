@@ -42,6 +42,20 @@ export interface BuildPromptInput {
   targetLocale: string;
   /** Optional system-prompt line appended after the generic opener. */
   context?: string | undefined;
+  /**
+   * Optional source-language framing block (title, excerpt, ...)
+   * injected into the system prompt between the markdown-format
+   * preservation clause and the do-not-translate list. Sits inside
+   * a fenced `DOCUMENT CONTEXT (for terminology only; do not
+   * translate this block)` preamble so the model anchors
+   * terminology without echoing the framing back as translations.
+   *
+   * Absent or empty → no DOCUMENT CONTEXT block is emitted; the
+   * prompt is byte-identical to today.
+   *
+   * See ARCHITECTURE.md §17.
+   */
+  documentContext?: string | undefined;
 }
 
 export interface BuiltPrompt {
@@ -50,7 +64,7 @@ export interface BuiltPrompt {
 }
 
 export function buildPrompt(input: BuildPromptInput): BuiltPrompt {
-  const { segments, glossary, sourceLocale, targetLocale, context } = input;
+  const { segments, glossary, sourceLocale, targetLocale, context, documentContext } = input;
   const sourceName = localeName(sourceLocale);
   const targetName = localeName(targetLocale);
 
@@ -64,6 +78,19 @@ export function buildPrompt(input: BuildPromptInput): BuiltPrompt {
     ``,
     `Preserve markdown formatting markers exactly: **bold**, *italic*, _italic_, \`code\`, [link text](url). Translate the visible text but never the URL or any code identifier.`,
   );
+
+  // Document-context block sits between the formatting preservation
+  // clause and the do-not-translate list, so terminology rules
+  // immediately follow the framing the model just read. The
+  // "do not translate this block" clause is load-bearing: without
+  // it, small instruct models occasionally emit a marker for the
+  // context block and break `parseResponse`. See ARCHITECTURE.md §17.
+  const trimmedDocContext = documentContext?.trim();
+  if (trimmedDocContext) {
+    systemLines.push("");
+    systemLines.push("DOCUMENT CONTEXT (for terminology only; do not translate this block):");
+    systemLines.push(trimmedDocContext);
+  }
 
   if (glossary.doNotTranslate.length > 0) {
     systemLines.push("");

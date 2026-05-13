@@ -1,6 +1,8 @@
 import type { Segment } from "../parsing/extract.js";
 import type { Glossary } from "../glossary/glossary.js";
-import { translateBatch, type TranslateBatchRetryEvent, type Translator } from "../translation/provider.js";
+import type { Logger } from "../translation/logger.js";
+import { type TranslateBatchRetryEvent, type Translator } from "../translation/provider.js";
+import { translateSegments } from "../translation/translate-segments.js";
 import type { R2Client } from "./r2.js";
 
 /**
@@ -17,6 +19,25 @@ export type CacheOutcome = "hit" | "miss";
 
 export interface TranslateOrLoadOptions {
   segments: Segment[];
+  /**
+   * Adapter-grouped chunks (see `FileTypeAdapter.groupSegments`).
+   * Forwarded to `translateSegments` on the miss branch; when
+   * omitted, the wrapper packs `[segments]` as a single group —
+   * indistinguishable from today's single-batch behaviour.
+   */
+  groups?: Segment[][];
+  /**
+   * Per-batch document-context block (see `FileTypeAdapter.documentContext`).
+   * Threaded to every batch's system prompt. NOT included in the
+   * cache hash — see ARCHITECTURE.md §17.
+   */
+  documentContext?: string | undefined;
+  /** Soft cap on per-batch input tokens. Defaults applied in `batch.ts`. */
+  inputTokenBudget?: number;
+  /** Surfaces oversize-section warnings from the batcher. */
+  logger?: Logger;
+  /** Forward-slash path; threads through to the oversize warning. */
+  sourcePath?: string;
   /**
    * Called once per miss after the translator returns. Caller's
    * closure parses, mutates with translations, and injects any
@@ -95,6 +116,13 @@ export interface TranslateOrLoadResult {
    * Useful for build-report provenance.
    */
   hitKey?: string;
+  /**
+   * Number of batches translated on the miss path. `1` for the common
+   * case (single batch); `>1` when grouping + token budget produced
+   * multiple batches. Undefined on cache hits (no batching took place).
+   * Used by the orchestrator's progress log.
+   */
+  batchCount?: number;
 }
 
 /**
@@ -104,6 +132,11 @@ export interface TranslateOrLoadResult {
 export async function translateOrLoadFromCache(opts: TranslateOrLoadOptions): Promise<TranslateOrLoadResult> {
   const {
     segments,
+    groups,
+    documentContext,
+    inputTokenBudget,
+    logger,
+    sourcePath,
     apply,
     locale,
     key,
@@ -167,11 +200,19 @@ export async function translateOrLoadFromCache(opts: TranslateOrLoadOptions): Pr
   }
 
   // Cache miss. `apply` bakes any markers in BEFORE the PUT so
-  // later hits return them verbatim.
+  // later hits return them verbatim. `translateSegments` wraps
+  // `translateBatch` with token-aware batching; absent
+  // `groups`/`documentContext` it sends one batch indistinguishable
+  // from the pre-batching path.
   signal?.throwIfAborted();
-  const translations = await translateBatch({
+  const { translations, batchCount } = await translateSegments({
     translator,
     segments,
+    ...(groups !== undefined ? { groups } : {}),
+    ...(documentContext !== undefined ? { documentContext } : {}),
+    ...(inputTokenBudget !== undefined ? { inputTokenBudget } : {}),
+    ...(logger !== undefined ? { logger } : {}),
+    ...(sourcePath !== undefined ? { sourcePath } : {}),
     glossary,
     sourceLocale,
     targetLocale: locale,
@@ -213,7 +254,7 @@ export async function translateOrLoadFromCache(opts: TranslateOrLoadOptions): Pr
     }
   }
 
-  return { outcome: "miss", body: translated };
+  return { outcome: "miss", body: translated, batchCount };
 }
 
 export interface BuildCacheMetadataInput {

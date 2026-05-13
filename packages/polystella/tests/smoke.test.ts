@@ -277,6 +277,7 @@ describe("smoke: polystella(options) integration end-to-end", () => {
           apiToken: "fake",
           model: "smoke/echo-1",
           maxTokens: 8192,
+          batchInputTokenBudget: 4000,
         },
       },
       translator,
@@ -328,6 +329,7 @@ describe("smoke: polystella(options) integration end-to-end", () => {
           apiToken: "fake",
           model: "smoke/echo-2",
           maxTokens: 8192,
+          batchInputTokenBudget: 4000,
         },
       },
       translator,
@@ -378,6 +380,7 @@ describe("smoke: polystella(options) integration end-to-end", () => {
           apiToken: "fake",
           model: "smoke/no-dev",
           maxTokens: 8192,
+          batchInputTokenBudget: 4000,
         },
         // runOn defaults to ["build"], so command="dev" should skip.
       },
@@ -445,5 +448,166 @@ describe("smoke: polystella(options) integration end-to-end", () => {
         updateConfig: () => {},
       }),
     ).rejects.toThrow(/i18n\.locales/);
+  });
+});
+
+describe("smoke: batching + document context", () => {
+  // End-to-end exercises the full ladder: groupSegments + documentContext
+  // resolved by the adapter, threaded through run.ts → cache.ts →
+  // translateSegments → translateBatch. The stub fetch records the
+  // prompts each call sees so we can assert on per-batch shape.
+
+  const fixtureFile = (rel: string) => readFile(path.join(fileURLToPath(new URL("./fixtures/", import.meta.url)), rel), "utf8");
+
+  function makeRecordingFetch() {
+    const systemPrompts: string[] = [];
+    const userPrompts: string[] = [];
+    const fetchImpl = (async (_url: string, init: RequestInit) => {
+      const body = JSON.parse((init.body ?? "{}") as string);
+      const sys = body.messages?.find((m: { role: string }) => m.role === "system");
+      const user = body.messages?.find((m: { role: string }) => m.role === "user");
+      const systemContent = (sys?.content ?? "") as string;
+      const userContent = (user?.content ?? "") as string;
+      systemPrompts.push(systemContent);
+      userPrompts.push(userContent);
+      const re = /^@@([^@\n]+?)@@\s*\n([\s\S]*?)(?=\n@@|$)/gm;
+      const blocks: string[] = [];
+      let m: RegExpExecArray | null;
+      while ((m = re.exec(userContent)) !== null) {
+        blocks.push(`@@${m[1]!.trim()}@@\nTR:${(m[2] ?? "").trim()}`);
+      }
+      return new Response(JSON.stringify({ result: { response: blocks.join("\n\n") }, success: true }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }) as typeof fetch;
+    return { fetchImpl, systemPrompts, userPrompts };
+  }
+
+  it("multi-section markdown with contextKeys → every batch sees the same DOCUMENT CONTEXT block", async () => {
+    const source = await fixtureFile("multi-section.md");
+    const harness = await makeSmokeFixture({
+      files: { "content/publications/multi.md": source },
+      options: {
+        sourceDir: "./content",
+        // Narrow to only the fixture — the default smoke project
+        // also writes a `hello.md` we want to exclude here.
+        include: ["**/multi.md"],
+        markdown: {
+          keys: { "publications/**": ["title", "excerpt"] },
+          contextKeys: { "publications/**": ["title", "excerpt"] },
+        },
+        provider: {
+          kind: "workers-ai",
+          accountId: "fake",
+          apiToken: "fake",
+          model: "smoke/multi-1",
+          maxTokens: 8192,
+          // Tight budget so the file splits into multiple batches.
+          batchInputTokenBudget: 200,
+        },
+      },
+    });
+
+    const { fetchImpl, systemPrompts } = makeRecordingFetch();
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = fetchImpl;
+    try {
+      await harness.configSetup("build");
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+
+    // Multiple batches per locale: the tight budget forces splitting.
+    expect(systemPrompts.length).toBeGreaterThan(1);
+    // Every batch's system prompt includes the document-context block
+    // with the configured frontmatter values.
+    for (const sp of systemPrompts) {
+      expect(sp).toContain("DOCUMENT CONTEXT");
+      expect(sp).toContain("Title: Echo State Networks for Time Series Forecasting");
+    }
+    // Staged output exists for the target locale.
+    const stagedPath = path.join(harness.stagingDir, "pt-BR", "publications/multi.md");
+    expect(existsSync(stagedPath)).toBe(true);
+  });
+
+  it("oversize-section fixture → logger.warn fires for the splitting fallback; translation still completes", async () => {
+    const source = await fixtureFile("oversize-section.md");
+    // Capture warnings via a custom logger threaded through the
+    // run-pass. The smoke harness uses a stub logger by default;
+    // we override it to spy on warnings without changing the harness API.
+    const warnCalls: string[] = [];
+
+    // Build a manual run via runTranslationPass so we can inject a
+    // capturing logger. The smoke fixture's `configSetup` uses a
+    // silent logger and doesn't expose this seam, so we re-create
+    // the minimal flow here.
+    const { runTranslationPass } = await import("../src/translation/run.js");
+    const { resolveOptions } = await import("../src/config/options.js");
+    const rootDir = await mkdtemp(path.join(tmpdir(), "polystella-oversize-"));
+    tempRoots.push(rootDir);
+    const stagingDir = path.join(rootDir, ".astro", "i18n-staging");
+    const contentPath = path.join(rootDir, "content", "publications", "huge.md");
+    await mkdir(path.dirname(contentPath), { recursive: true });
+    await writeFile(contentPath, source, "utf8");
+
+    const resolved = resolveOptions(
+      {
+        sourceDir: "./content",
+        include: ["**/*.md"],
+        markdown: {
+          keys: { "publications/**": ["title", "excerpt"] },
+        },
+      },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
+    );
+    resolved.provider = {
+      kind: "workers-ai",
+      accountId: "fake",
+      apiToken: "fake",
+      model: "smoke/oversize-1",
+      maxTokens: 8192,
+      // Aggressively tight budget: the single H2 section exceeds it.
+      batchInputTokenBudget: 30,
+    };
+
+    const captureLogger = {
+      info: () => {},
+      warn: (msg: string) => warnCalls.push(msg),
+      error: () => {},
+      debug: () => {},
+    };
+    const translator: Translator = {
+      modelId: "smoke/oversize-1",
+      async translate(_sys, userPrompt) {
+        const re = /^@@([^@\n]+?)@@\s*\n([\s\S]*?)(?=\n@@|$)/gm;
+        const blocks: string[] = [];
+        let m: RegExpExecArray | null;
+        while ((m = re.exec(userPrompt)) !== null) {
+          blocks.push(`@@${m[1]!.trim()}@@\nTR:${(m[2] ?? "").trim()}`);
+        }
+        return blocks.join("\n\n");
+      },
+    };
+
+    await runTranslationPass({
+      resolved,
+      rootDir,
+      stagingDir,
+      logger: captureLogger,
+      polystellaVersion: "0.2.0",
+      r2Override: null,
+      translatorOverrides: new Map([["pt-BR", translator]]),
+    });
+
+    // At least one warn for the oversize section.
+    const oversizeWarns = warnCalls.filter((w) => /exceeds batch input-token budget/.test(w));
+    expect(oversizeWarns.length).toBeGreaterThan(0);
+    // The path should appear in the warning so operators can find it.
+    expect(oversizeWarns[0]).toMatch(/publications/);
+
+    // Staged output still produced (translation completes despite the warning).
+    const stagedPath = path.join(stagingDir, "pt-BR", "publications", "huge.md");
+    expect(existsSync(stagedPath)).toBe(true);
   });
 });

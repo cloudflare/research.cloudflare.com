@@ -169,6 +169,7 @@ describe("runTranslationPass — staging output", () => {
       apiToken: "fake",
       model: "stub/default",
       maxTokens: 8192,
+      batchInputTokenBudget: 4000,
     };
 
     const result = await runTranslationPass({
@@ -216,6 +217,7 @@ describe("runTranslationPass — staging output", () => {
       apiToken: "fake",
       model: "stub/m1",
       maxTokens: 8192,
+      batchInputTokenBudget: 4000,
     };
 
     const overrides = new Map<string, Translator>([["pt-BR", translator]]);
@@ -290,6 +292,7 @@ describe("runTranslationPass — branch-isolation knobs", () => {
       apiToken: "fake",
       model: "stub/m1",
       maxTokens: 8192,
+      batchInputTokenBudget: 4000,
     };
 
     const result = await runTranslationPass({
@@ -356,6 +359,7 @@ describe("runTranslationPass — branch-isolation knobs", () => {
       apiToken: "fake",
       model: "stub/m1",
       maxTokens: 8192,
+      batchInputTokenBudget: 4000,
     };
 
     // Seed: production-mode run populates `i18n/...` prefix.
@@ -438,6 +442,7 @@ describe("runTranslationPass — local staging index", () => {
       apiToken: "fake",
       model: "stub/m1",
       maxTokens: 8192,
+      batchInputTokenBudget: 4000,
     };
     const overrides = new Map<string, Translator>([["pt-BR", translator]]);
 
@@ -496,6 +501,7 @@ describe("runTranslationPass — local staging index", () => {
       apiToken: "fake",
       model: "stub/m1",
       maxTokens: 8192,
+      batchInputTokenBudget: 4000,
     };
     const overrides = new Map<string, Translator>([["pt-BR", translator]]);
 
@@ -550,6 +556,7 @@ describe("runTranslationPass — local staging index", () => {
       apiToken: "fake",
       model: "stub/m1",
       maxTokens: 8192,
+      batchInputTokenBudget: 4000,
     };
     const overrides = new Map<string, Translator>([["pt-BR", translator]]);
 
@@ -587,6 +594,7 @@ describe("runTranslationPass — early returns", () => {
       apiToken: "fake",
       model: "stub/m1",
       maxTokens: 8192,
+      batchInputTokenBudget: 4000,
     };
 
     const result = await runTranslationPass({
@@ -614,6 +622,7 @@ describe("runTranslationPass — early returns", () => {
       apiToken: "fake",
       model: "stub/m1",
       maxTokens: 8192,
+      batchInputTokenBudget: 4000,
     };
 
     const result = await runTranslationPass({
@@ -672,6 +681,7 @@ describe("runTranslationPass — URL rewriting", () => {
       apiToken: "fake",
       model: "stub/url-1",
       maxTokens: 8192,
+      batchInputTokenBudget: 4000,
     };
 
     await runTranslationPass({
@@ -718,6 +728,7 @@ describe("runTranslationPass — URL rewriting", () => {
       apiToken: "fake",
       model: "stub/url-2",
       maxTokens: 8192,
+      batchInputTokenBudget: 4000,
     };
 
     await runTranslationPass({
@@ -770,6 +781,7 @@ describe("runTranslationPass — URL rewriting", () => {
       apiToken: "fake",
       model: "stub/url-3",
       maxTokens: 8192,
+      batchInputTokenBudget: 4000,
     };
 
     // First run, no exemptions: heroImage prefixed.
@@ -838,7 +850,14 @@ describe("runTranslationPass — cancellation", () => {
       { sourceDir: "./content", include: ["**/*.md"] },
       { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
     );
-    resolved.provider = { kind: "workers-ai", accountId: "fake", apiToken: "fake", model: "stub/m1", maxTokens: 8192 };
+    resolved.provider = {
+      kind: "workers-ai",
+      accountId: "fake",
+      apiToken: "fake",
+      model: "stub/m1",
+      maxTokens: 8192,
+      batchInputTokenBudget: 4000,
+    };
 
     const controller = new AbortController();
     controller.abort(new Error("pre-cancelled"));
@@ -867,7 +886,14 @@ describe("runTranslationPass — cancellation", () => {
       { sourceDir: "./content", include: ["**/*.md"], concurrency: 1 },
       { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
     );
-    resolved.provider = { kind: "workers-ai", accountId: "fake", apiToken: "fake", model: "stub/m1", maxTokens: 8192 };
+    resolved.provider = {
+      kind: "workers-ai",
+      accountId: "fake",
+      apiToken: "fake",
+      model: "stub/m1",
+      maxTokens: 8192,
+      batchInputTokenBudget: 4000,
+    };
 
     const controller = new AbortController();
     let calls = 0;
@@ -922,7 +948,14 @@ describe("runTranslationPass — bulk pre-list optimisation", () => {
       { sourceDir: "./content", include: ["**/*.md"] },
       { defaultLocale: "en-US", locales: ["en-US", "pt-BR", "ja-JP"] },
     );
-    resolved.provider = { kind: "workers-ai", accountId: "fake", apiToken: "fake", model: "stub/bulk-1", maxTokens: 8192 };
+    resolved.provider = {
+      kind: "workers-ai",
+      accountId: "fake",
+      apiToken: "fake",
+      model: "stub/bulk-1",
+      maxTokens: 8192,
+      batchInputTokenBudget: 4000,
+    };
 
     await runTranslationPass({
       resolved,
@@ -957,7 +990,14 @@ describe("runTranslationPass — bulk pre-list optimisation", () => {
       { sourceDir: "./content", include: ["**/*.md"] },
       { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
     );
-    resolved.provider = { kind: "workers-ai", accountId: "fake", apiToken: "fake", model: "stub/bulk-2", maxTokens: 8192 };
+    resolved.provider = {
+      kind: "workers-ai",
+      accountId: "fake",
+      apiToken: "fake",
+      model: "stub/bulk-2",
+      maxTokens: 8192,
+      batchInputTokenBudget: 4000,
+    };
 
     // Run once to populate R2.
     await runTranslationPass({
@@ -1016,7 +1056,14 @@ describe("runTranslationPass — bulk pre-list optimisation", () => {
       },
       { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
     );
-    resolved.provider = { kind: "workers-ai", accountId: "fake", apiToken: "fake", model: "stub/bulk-3", maxTokens: 8192 };
+    resolved.provider = {
+      kind: "workers-ai",
+      accountId: "fake",
+      apiToken: "fake",
+      model: "stub/bulk-3",
+      maxTokens: 8192,
+      batchInputTokenBudget: 4000,
+    };
 
     const listsBefore = r2.calls.list;
     await runTranslationPass({
@@ -1052,7 +1099,14 @@ describe("runTranslationPass — bulk pre-list optimisation", () => {
       { sourceDir: "./content", include: ["**/*.md"] },
       { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
     );
-    resolved.provider = { kind: "workers-ai", accountId: "fake", apiToken: "fake", model: "stub/bulk-4", maxTokens: 8192 };
+    resolved.provider = {
+      kind: "workers-ai",
+      accountId: "fake",
+      apiToken: "fake",
+      model: "stub/bulk-4",
+      maxTokens: 8192,
+      batchInputTokenBudget: 4000,
+    };
 
     const result = await runTranslationPass({
       resolved,
@@ -1067,5 +1121,174 @@ describe("runTranslationPass — bulk pre-list optimisation", () => {
     // Translation still happened end-to-end via the per-pair GET path.
     expect(result.counts.miss).toBe(1);
     expect(translator.calls).toBe(1);
+  });
+});
+
+describe("runTranslationPass — batching wire-through", () => {
+  // End-to-end check that `runTranslationPass` resolves
+  // `groupSegments` + `documentContext` from the markdown adapter
+  // and forwards them through `translateOrLoadFromCache` →
+  // `translateSegments`. Asserts on translator call shape rather
+  // than internals — if any rung of the ladder is missed, the stub
+  // translator's recorded prompts surface the gap.
+
+  const MULTI_SECTION_MD = [
+    "---",
+    "title: Echo State Networks",
+    "excerpt: A practical guide to reservoir computing.",
+    "---",
+    "",
+    "# Introduction",
+    "",
+    "Reservoir computing is a paradigm.",
+    "",
+    "## Background",
+    "",
+    "The history of reservoir computing.",
+    "",
+    "## Method",
+    "",
+    "We describe the method here.",
+    "",
+    "## Results",
+    "",
+    "Results section content.",
+  ].join("\n");
+
+  function makeRecordingTranslator(modelId = "stub/recording") {
+    const calls: { systemPrompt: string; userPrompt: string }[] = [];
+    const t = {
+      modelId,
+      async translate(systemPrompt: string, userPrompt: string) {
+        calls.push({ systemPrompt, userPrompt });
+        const blocks: string[] = [];
+        const re = /^@@([^@\n]+?)@@\s*\n([\s\S]*?)(?=\n@@|$)/gm;
+        let m: RegExpExecArray | null;
+        while ((m = re.exec(userPrompt)) !== null) {
+          const id = m[1]!.trim();
+          const text = (m[2] ?? "").trim();
+          blocks.push(`@@${id}@@\nTR:${text}`);
+        }
+        return blocks.join("\n\n");
+      },
+    };
+    return { translator: t as Translator, calls };
+  }
+
+  it("emits a single batch for a small file (no behaviour change vs. today)", async () => {
+    const { rootDir, stagingDir } = await makeProjectFixture({
+      files: { "content/publications/sample.md": SAMPLE_MD },
+    });
+    const r2 = makeInMemoryR2();
+    const { translator, calls } = makeRecordingTranslator();
+    const resolved = resolveOptions(
+      {
+        sourceDir: "./content",
+        include: ["**/*.md"],
+      },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
+    );
+    resolved.provider = {
+      kind: "workers-ai",
+      accountId: "fake",
+      apiToken: "fake",
+      model: "stub/m1",
+      maxTokens: 8192,
+      batchInputTokenBudget: 4000,
+    };
+    await runTranslationPass({
+      resolved,
+      rootDir,
+      stagingDir,
+      logger: NULL_LOGGER,
+      polystellaVersion: "0.2.0",
+      r2Override: r2.client,
+      translatorOverrides: new Map([["pt-BR", translator]]),
+    });
+    // Small file fits in one batch — one network call.
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.systemPrompt).not.toMatch(/DOCUMENT CONTEXT/);
+  });
+
+  it("injects DOCUMENT CONTEXT into every batch's system prompt when markdown.contextKeys is configured", async () => {
+    const { rootDir, stagingDir } = await makeProjectFixture({
+      files: { "content/publications/multi.md": MULTI_SECTION_MD },
+    });
+    const r2 = makeInMemoryR2();
+    const { translator, calls } = makeRecordingTranslator();
+    const resolved = resolveOptions(
+      {
+        sourceDir: "./content",
+        include: ["**/*.md"],
+        markdown: {
+          keys: { "publications/**": ["title", "excerpt"] },
+          contextKeys: { "publications/**": ["title", "excerpt"] },
+        },
+      },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
+    );
+    resolved.provider = {
+      kind: "workers-ai",
+      accountId: "fake",
+      apiToken: "fake",
+      model: "stub/m1",
+      maxTokens: 8192,
+      batchInputTokenBudget: 4000,
+    };
+    await runTranslationPass({
+      resolved,
+      rootDir,
+      stagingDir,
+      logger: NULL_LOGGER,
+      polystellaVersion: "0.2.0",
+      r2Override: r2.client,
+      translatorOverrides: new Map([["pt-BR", translator]]),
+    });
+    // Document context appears in every call's system prompt.
+    expect(calls.length).toBeGreaterThan(0);
+    for (const call of calls) {
+      expect(call.systemPrompt).toContain("DOCUMENT CONTEXT");
+      expect(call.systemPrompt).toContain("Title: Echo State Networks");
+      expect(call.systemPrompt).toContain("Excerpt: A practical guide to reservoir computing.");
+    }
+  });
+
+  it("groups by heading: each H2-anchored section translates as its own batch under a tight budget", async () => {
+    const { rootDir, stagingDir } = await makeProjectFixture({
+      files: { "content/publications/multi.md": MULTI_SECTION_MD },
+    });
+    const r2 = makeInMemoryR2();
+    const { translator, calls } = makeRecordingTranslator();
+    const resolved = resolveOptions(
+      {
+        sourceDir: "./content",
+        include: ["**/*.md"],
+        markdown: {
+          keys: { "publications/**": ["title", "excerpt"] },
+        },
+      },
+      { defaultLocale: "en-US", locales: ["en-US", "pt-BR"] },
+    );
+    resolved.provider = {
+      kind: "workers-ai",
+      accountId: "fake",
+      apiToken: "fake",
+      model: "stub/m1",
+      maxTokens: 8192,
+      // Tight budget so each heading-anchored group becomes its own batch.
+      batchInputTokenBudget: 15,
+    };
+    await runTranslationPass({
+      resolved,
+      rootDir,
+      stagingDir,
+      logger: NULL_LOGGER,
+      polystellaVersion: "0.2.0",
+      r2Override: r2.client,
+      translatorOverrides: new Map([["pt-BR", translator]]),
+    });
+    // 1 H1 + 3 H2 sections + frontmatter = 5 groups; under a tight
+    // budget each becomes its own batch (or fewer if neighbours fit).
+    expect(calls.length).toBeGreaterThan(1);
   });
 });

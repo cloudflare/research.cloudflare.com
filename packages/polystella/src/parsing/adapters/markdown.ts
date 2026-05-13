@@ -1,11 +1,18 @@
 import type { Root, Yaml } from "mdast";
 import { parse as parseYaml, stringify as stringifyYaml } from "yaml";
 
-import type { AdapterApplyOptions, AdapterExtractOptions, AdapterRewriteUrlsOptions, FileTypeAdapter } from "../adapter.js";
+import type {
+  AdapterApplyOptions,
+  AdapterDocumentContextOptions,
+  AdapterExtractOptions,
+  AdapterRewriteUrlsOptions,
+  FileTypeAdapter,
+} from "../adapter.js";
 import { applyTranslations } from "../apply.js";
-import { extractSegments, peekNoTranslate, selectTranslatableFrontmatter } from "../extract.js";
+import { extractSegments, peekNoTranslate, resolveFrontmatterKeys, selectTranslatableFrontmatter } from "../extract.js";
 import type { Segment } from "../extract.js";
 import { parseMarkdown, parseMdx } from "../parse.js";
+import { visitTranslatableBlocks } from "../traverse.js";
 
 /**
  * Markdown / MDX adapter. Wraps the existing `parse.ts` / `extract.ts`
@@ -105,4 +112,140 @@ export const markdownAdapter: FileTypeAdapter<Root> = {
     const end = fm.position.end.offset;
     return `${bytes.slice(0, start)}---\n${newInner}\n---${bytes.slice(end)}`;
   },
+
+  /**
+   * Heading-anchored grouping (ARCHITECTURE.md §17).
+   *
+   * Walks the AST in DFS order via the shared `visitTranslatableBlocks`
+   * (the same iteration `extractSegments` uses, so IDs align) and
+   * partitions emitted segments into groups. Every heading node
+   * starts a new group; non-heading blocks (paragraphs, table cells)
+   * append to the current group. Frontmatter segments are appended
+   * as a single trailing group regardless of body shape.
+   *
+   * Invariant: `flat(result) === segments` by reference, in order.
+   * The runtime assertion at the end catches grouping bugs early —
+   * if it ever fires in production it means the AST shape changed
+   * out from under us (e.g. an MDX node type whose ID numbering
+   * doesn't match `extractSegments`).
+   */
+  groupSegments(parsed: Root, segments: Segment[]): Segment[][] {
+    if (segments.length === 0) return [];
+
+    // Index segments by ID for O(1) lookup during the walk. The
+    // visitor numbers `body:N` for every translatable block; only
+    // blocks whose inline span yielded text are in `segments`.
+    const segmentById = new Map<string, Segment>();
+    for (const seg of segments) segmentById.set(seg.id, seg);
+
+    const bodyGroups: Segment[][] = [];
+    let currentGroup: Segment[] = [];
+
+    visitTranslatableBlocks(parsed, ({ block, id }) => {
+      const seg = segmentById.get(id);
+      if (seg === undefined) return; // block didn't emit a segment (empty span)
+      if (block.type === "heading") {
+        if (currentGroup.length > 0) {
+          bodyGroups.push(currentGroup);
+          currentGroup = [];
+        }
+        currentGroup.push(seg);
+      } else {
+        currentGroup.push(seg);
+      }
+    });
+    if (currentGroup.length > 0) {
+      bodyGroups.push(currentGroup);
+    }
+
+    // Frontmatter segments use the `fm:` prefix and are appended
+    // after body segments by `extractSegments`. A prefix scan
+    // avoids a second AST walk and preserves their original order.
+    const fmGroup: Segment[] = [];
+    for (const seg of segments) {
+      if (seg.id.startsWith("fm:")) fmGroup.push(seg);
+    }
+
+    const groups: Segment[][] = [...bodyGroups];
+    if (fmGroup.length > 0) groups.push(fmGroup);
+
+    // Always-on invariant check: flat(groups) must equal segments
+    // by reference + order. Cost is O(n) on already-small arrays;
+    // cheap relative to the AST walk we just did.
+    const flat = groups.flat();
+    if (flat.length !== segments.length) {
+      throw new Error(
+        `[polystella] markdownAdapter.groupSegments invariant violated: produced ${flat.length} segments but received ${segments.length}`,
+      );
+    }
+    for (let i = 0; i < flat.length; i++) {
+      if (flat[i] !== segments[i]) {
+        throw new Error(
+          `[polystella] markdownAdapter.groupSegments invariant violated: segment at position ${i} differs (expected "${segments[i]?.id}", got "${flat[i]?.id}")`,
+        );
+      }
+    }
+
+    return groups;
+  },
+
+  /**
+   * Document-context framing block (ARCHITECTURE.md §17).
+   *
+   * Reads configured `contextKeys` for the source's glob, pulls
+   * matching frontmatter values (string-typed only), and formats
+   * each as `<Title-Cased Key>: <single-line value>`. Multi-line
+   * values collapse to one line so the model treats each entry as
+   * a single context item.
+   *
+   * Returns `undefined` when no values resolve — the caller then
+   * omits the DOCUMENT CONTEXT block from the prompt, preserving
+   * byte-identical output to today.
+   */
+  documentContext(parsed: Root, opts: AdapterDocumentContextOptions): string | undefined {
+    const fm = parsed.children.find((child): child is Yaml => child.type === "yaml");
+    if (!fm) return undefined;
+
+    const keys = resolveFrontmatterKeys(opts.sourcePath, opts.contextKeys);
+    if (keys.length === 0) return undefined;
+
+    let data: unknown;
+    try {
+      data = parseYaml(fm.value);
+    } catch {
+      // Malformed frontmatter is the operator's problem; don't
+      // crash the build over a missing context block.
+      return undefined;
+    }
+    if (data === null || typeof data !== "object") return undefined;
+    const map = data as Record<string, unknown>;
+
+    const lines: string[] = [];
+    for (const key of keys) {
+      const value = map[key];
+      if (typeof value !== "string") continue;
+      // Collapse runs of whitespace-around-newline to a single space.
+      // Handles `\n`, `\r\n`, and double-newlines uniformly.
+      const flat = value.replace(/\s*\n\s*/g, " ").trim();
+      if (flat.length === 0) continue;
+      lines.push(`${titleCaseKey(key)}: ${flat}`);
+    }
+
+    return lines.length > 0 ? lines.join("\n") : undefined;
+  },
 };
+
+/**
+ * Convert a snake/kebab key into a title-cased label for the
+ * document-context block. `og_description` → `Og Description`,
+ * `title` → `Title`, `seo-meta_image` → `Seo Meta Image`. Multiple
+ * adjacent separators collapse to a single space; leading/trailing
+ * separators don't produce empty words.
+ */
+function titleCaseKey(key: string): string {
+  return key
+    .split(/[_-]+/)
+    .filter((w) => w.length > 0)
+    .map((word) => word[0]!.toUpperCase() + word.slice(1))
+    .join(" ");
+}

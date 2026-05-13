@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 import { buildCacheMetadata, translateOrLoadFromCache, type TranslateOrLoadOptions } from "../../src/storage/cache.js";
 import { applyTranslations } from "../../src/parsing/apply.js";
-import { extractSegments } from "../../src/parsing/extract.js";
+import { extractSegments, type Segment } from "../../src/parsing/extract.js";
 import { EMPTY_GLOSSARY, hashGlossary, type Glossary } from "../../src/glossary/glossary.js";
 import { computeSourceHash } from "../../src/storage/hash.js";
 import { parseMarkdown } from "../../src/parsing/parse.js";
@@ -800,6 +800,119 @@ describe("translateOrLoadFromCache — fallback keys (branch isolation)", () => 
     expect(second.hitKey).toBe("i18n/pt-BR/publications/sample.md#abc123.md");
     expect(translator.calls).toBe(0);
     expect(r2.calls.put).toBe(0);
+  });
+});
+
+describe("translateOrLoadFromCache — batching wire-through", () => {
+  // The cache orchestrator forwards `groups`, `documentContext`, and
+  // `inputTokenBudget` to `translateSegments` on the miss branch and
+  // surfaces the resulting `batchCount` on the result. Cache hits
+  // never batch (cached bytes pre-date batching), so `batchCount`
+  // stays undefined on hits.
+
+  function makeBatchingOptions(opts: {
+    groups: Segment[][];
+    inputTokenBudget?: number;
+    documentContext?: string;
+    translator?: Translator;
+  }): TranslateOrLoadOptions {
+    const ast = parseMarkdown(SAMPLE_SOURCE);
+    const segments = extractSegments(ast, { sourcePath: "publications/sample.md", frontmatter: {} }, SAMPLE_SOURCE);
+    const translator = opts.translator ?? makeStubTranslator();
+    return {
+      segments,
+      groups: opts.groups,
+      ...(opts.inputTokenBudget !== undefined ? { inputTokenBudget: opts.inputTokenBudget } : {}),
+      ...(opts.documentContext !== undefined ? { documentContext: opts.documentContext } : {}),
+      apply: (translations) => applyTranslations(ast, translations, SAMPLE_SOURCE, {}),
+      locale: "pt-BR",
+      key: "i18n/pt-BR/publications/sample.md#abc123.md",
+      r2: null,
+      translator,
+      glossary: EMPTY_GLOSSARY,
+      sourceLocale: "en-US",
+      metadata: buildCacheMetadata({
+        sourcePath: "publications/sample.md",
+        locale: "pt-BR",
+        sourceHash: "abc123",
+        glossaryHash: "",
+        modelId: translator.modelId,
+        translatedAt: "2026-04-29T12:00:00.000Z",
+        polystellaVersion: "0.1.0",
+      }),
+    };
+  }
+
+  it("returns batchCount: 1 on a single-batch miss (small file, default budget)", async () => {
+    const translator = makeStubTranslator();
+    const ast = parseMarkdown(SAMPLE_SOURCE);
+    const segments = extractSegments(ast, { sourcePath: "publications/sample.md", frontmatter: {} }, SAMPLE_SOURCE);
+    const result = await translateOrLoadFromCache(makeBatchingOptions({ groups: [segments], translator }));
+    expect(result.outcome).toBe("miss");
+    expect(result.batchCount).toBe(1);
+    expect(translator.calls).toBe(1);
+  });
+
+  it("returns batchCount > 1 when groups exceed the budget (multi-batch miss)", async () => {
+    const translator = makeStubTranslator();
+    const ast = parseMarkdown(SAMPLE_SOURCE);
+    const segments = extractSegments(ast, { sourcePath: "publications/sample.md", frontmatter: {} }, SAMPLE_SOURCE);
+    // Force splitting: each segment in its own group + a tight budget.
+    const groups = segments.map((s) => [s]);
+    const result = await translateOrLoadFromCache(makeBatchingOptions({ groups, inputTokenBudget: 5, translator }));
+    expect(result.outcome).toBe("miss");
+    expect(result.batchCount).toBeGreaterThan(1);
+    expect(translator.calls).toBe(result.batchCount);
+  });
+
+  it("produces byte-identical output regardless of batch count for the same translations", async () => {
+    const ast = parseMarkdown(SAMPLE_SOURCE);
+    const segments = extractSegments(ast, { sourcePath: "publications/sample.md", frontmatter: {} }, SAMPLE_SOURCE);
+    // Single-batch run: one group with every segment, generous budget.
+    const single = await translateOrLoadFromCache(makeBatchingOptions({ groups: [segments], translator: makeStubTranslator() }));
+    // Multi-batch run: each segment in its own group, tight budget.
+    const multi = await translateOrLoadFromCache(
+      makeBatchingOptions({ groups: segments.map((s) => [s]), inputTokenBudget: 5, translator: makeStubTranslator() }),
+    );
+    // The merged Map → applyTranslations path produces the same bytes:
+    // batching reshuffles network calls, not output content.
+    expect(single.batchCount).toBe(1);
+    expect(multi.batchCount).toBeGreaterThan(1);
+    expect(multi.body).toBe(single.body);
+  });
+
+  it("threads documentContext into every batch's system prompt on the miss path", async () => {
+    const systemPrompts: string[] = [];
+    const translator: Translator = {
+      modelId: "stub/docctx",
+      async translate(systemPrompt, userPrompt) {
+        systemPrompts.push(systemPrompt);
+        // Echo each marker block back.
+        const re = /^@@([^@\n]+?)@@\s*\n([\s\S]*?)(?=\n@@|$)/gm;
+        const blocks: string[] = [];
+        let m: RegExpExecArray | null;
+        while ((m = re.exec(userPrompt)) !== null) {
+          blocks.push(`@@${m[1]!.trim()}@@\nTR:${(m[2] ?? "").trim()}`);
+        }
+        return blocks.join("\n\n");
+      },
+    };
+    const ast = parseMarkdown(SAMPLE_SOURCE);
+    const segments = extractSegments(ast, { sourcePath: "publications/sample.md", frontmatter: {} }, SAMPLE_SOURCE);
+    const groups = segments.map((s) => [s]);
+    await translateOrLoadFromCache(
+      makeBatchingOptions({
+        groups,
+        inputTokenBudget: 5,
+        documentContext: "Title: Hello\nExcerpt: A short doc.",
+        translator,
+      }),
+    );
+    expect(systemPrompts.length).toBeGreaterThan(1);
+    for (const sp of systemPrompts) {
+      expect(sp).toContain("DOCUMENT CONTEXT");
+      expect(sp).toContain("Title: Hello");
+    }
   });
 });
 
