@@ -28,8 +28,14 @@ is `src/index.ts`, which registers two Astro hooks:
   custom-loader summary.
 
 The orchestration loop is intentionally split out of `index.ts`: the same
-`runTranslationPass` powers the standalone `polystella-translate` CLI
-without Astro on the import path.
+`runTranslationPass` powers the `polystella translate` subcommand of the
+standalone `polystella` CLI without Astro on the import path. The CLI
+dispatcher in `src/cli.ts` routes the verb-style argv (`polystella
+<subcommand>`) to per-subcommand handlers in `src/cli/`; the
+`translate` handler is the longest-running one, while `check-ui`,
+`sync-ui`, and `translate-ui` are scoped to the UI-string JSON files
+under `src/content/i18n/` and don't touch the markdown pipeline or
+R2 cache.
 
 ## 2. Why translation runs in `config:setup`, not `build:start`
 
@@ -253,7 +259,71 @@ Stale shims are nuked unconditionally at the start of each build. Global
 `routesImports` are deduped against per-route extras by absolute path so
 the same file listed in both places only emits one import line.
 
-## 15. Module-scope POLYSTELLA_VERSION
+## 15. UI-strings sync / AI-fill pipeline
+
+UI strings live in `src/content/i18n/<locale>.json` as flat
+`Record<string, string>` dicts. The default-locale file is the single
+source of truth; non-default locales must match its key set. Three
+CLI subcommands maintain this invariant:
+
+- **`check-ui`** (`src/cli/check-ui.ts`) — pure drift detection via
+  `loadAndCheckDrift`. Zero writes, zero network. The pre-commit hook
+  invokes this on staged i18n changes. Detects three failure modes:
+  missing keys, extra keys, and **empty-placeholder values** (a key
+  shared with the default-locale dict but with `""` in the locale,
+  where the source value is non-empty). The third case catches the
+  "synced but not translated" state — `sync-ui` alone leaves a tree
+  that fails this check until `translate-ui` (or a hand-edit) fills
+  the placeholders. The build's own drift check at
+  `astro:config:setup` uses the same predicate, so the bar is the
+  same on the hook and on the build.
+- **`sync-ui`** (`src/cli/sync-ui.ts` + `src/i18n/sync.ts`) — mechanical
+  key reconciliation. Adds missing keys to non-default locales as
+  empty strings, drops extras, preserves existing values (empty or
+  not), and re-emits files in source-file key order with blank-line
+  section breaks preserved.
+- **`translate-ui`** (`src/cli/translate-ui.ts` +
+  `src/i18n/ui-translate.ts`) — runs sync, then for each locale calls
+  `translateBatch` once with every empty-valued key as a segment. The
+  marker-delimited prompt protocol (`translation/prompt.ts`) is
+  purpose-built for batching — N strings in one round trip with
+  segment-id markers.
+
+The sync writer (`formatLocaleFile` in `src/i18n/sync.ts`) is layout-
+aware: it parses the source file's text (not just its JSON) to
+recover top-level key order AND which keys start a new "section"
+(have a blank line immediately before them). The output then mirrors
+that layout for every locale. Without this, every sync run would
+churn diffs by reordering keys alphabetically.
+
+`{{token}}` preservation (e.g. `Copyright ©{{year}}.`) is validated
+post-translation by extracting `{{\w+}}` tokens from both source and
+translation and comparing the sets. The validator lives outside
+`translateBatch` because that function doesn't expose a post-parse
+hook; the orchestrator runs its own retry wrapper (with
+`translateBatch`'s internal retries disabled) so token-validation
+failures trigger fresh sampling. A token-invalid translation after
+all retries leaves the key empty and reports it — a broken `{{year}}`
+placeholder breaks the page at runtime, so "obviously untranslated"
+is the safer failure mode than "subtly broken".
+
+R2 caching is intentionally NOT wired into `translate-ui`. The
+content-collection cache keys files by SHA-256 of full file body, so
+adding a single UI key would invalidate every translation in the
+file. A per-string cache (keyed by `sha256(source + glossary + model)`
+under a dedicated `i18n-ui/` prefix) is a worthwhile future addition
+if translation volume grows materially; ~118 strings × 3 locales is
+small enough today that uncached batched calls are cheap.
+
+The host project's pre-commit hook (`.githooks/pre-commit`) runs
+`check-ui` only when staged files touch `src/content/i18n/`. Pure
+offline drift detection is fast enough to block commits on; AI
+translation is not, and lives behind the explicit `pnpm i18n:translate`
+opt-in. This matches the "fast, offline hooks; explicit AI" principle
+the markdown pipeline already follows (`pnpm translate` is opt-in;
+`POLYSTELLA_TRANSLATE=1 pnpm build` is the build-time opt-in).
+
+## 16. Module-scope POLYSTELLA_VERSION
 
 Lives in `src/version.ts` as a JSON import from `package.json`
 (`import pkg from "../package.json" with { type: "json" }`).

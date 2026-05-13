@@ -7,7 +7,7 @@
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "bin": {
-    "polystella-translate": "./dist/cli.js"
+    "polystella": "./dist/cli.js"
   },
   "exports": {
     ".": {

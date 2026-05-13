@@ -47,16 +47,19 @@ The website for Cloudflare Research, showcasing our work in building a better In
 
 All commands are run from the root of the project:
 
-| Command              | Action                                                                                        |
-| :------------------- | :-------------------------------------------------------------------------------------------- |
-| `pnpm install`       | Installs dependencies                                                                         |
-| `pnpm dev`           | Starts local dev server at `localhost:4321`                                                   |
-| `pnpm build`         | Build your production site to `./dist/`                                                       |
-| `pnpm preview`       | Preview your build locally, before deploying                                                  |
-| `pnpm icons`         | Generate SVG sprite from icons in `/other/svg-icons`                                          |
-| `pnpm ui`            | Add shadcn/ui components                                                                      |
-| `pnpm translate`     | Run the PolyStella translation pipeline standalone (no Astro build). See _Translation_ below. |
-| `pnpm translate:dry` | Same as `translate` but skips the provider + R2 writes; only prints planned R2 keys.          |
+| Command               | Action                                                                                                 |
+| :-------------------- | :----------------------------------------------------------------------------------------------------- |
+| `pnpm install`        | Installs dependencies                                                                                  |
+| `pnpm dev`            | Starts local dev server at `localhost:4321`                                                            |
+| `pnpm build`          | Build your production site to `./dist/`                                                                |
+| `pnpm preview`        | Preview your build locally, before deploying                                                           |
+| `pnpm icons`          | Generate SVG sprite from icons in `/other/svg-icons`                                                   |
+| `pnpm ui`             | Add shadcn/ui components                                                                               |
+| `pnpm translate`      | Run the PolyStella markdown translation pipeline standalone (no Astro build). See _Translation_ below. |
+| `pnpm translate:dry`  | Same as `translate` but skips the provider + R2 writes; only prints planned R2 keys.                   |
+| `pnpm i18n:check`     | Detect drift in UI-string JSONs (`src/content/i18n/`). Runs offline; pre-commit hook target.           |
+| `pnpm i18n:sync`      | Reconcile non-default UI-string locales against `en-US.json` (add missing keys as empty, drop extras). |
+| `pnpm i18n:translate` | `i18n:sync`, then AI-fill empty placeholders via the configured provider.                              |
 
 ## 📝 Content Management
 
@@ -118,6 +121,30 @@ pnpm translate --report ./tmp/report.json       # emit the build report to a cus
 Branch resolution is `--branch` flag → `WORKERS_CI_BRANCH` env → `git rev-parse HEAD`. If git is unavailable or HEAD is detached, the CLI errors with a hint to pass `--branch` explicitly. Run `pnpm translate --help` for the full flag list.
 
 Both `pnpm translate ...` and the explicit `pnpm translate -- ...` (POSIX `--` separator) forms work; pnpm forwards the trailing args either way.
+
+### UI-string maintenance
+
+The chrome text (nav labels, footer copy, accessibility strings) lives in `src/content/i18n/<locale>.json` as flat key→string dictionaries. The default-locale file (`en-US.json`) is the source of truth; non-default locales must have the same key set or the build fails. Three commands keep the locales aligned:
+
+```sh
+pnpm i18n:check               # drift detection only; Runs offline (pre-commit hook target)
+pnpm i18n:sync                # add missing keys (value: ""), drop extras, preserve existing values
+pnpm i18n:sync -- --check     # report pending changes without writing; non-zero exit if any
+pnpm i18n:translate           # i18n:sync + AI-fill empty placeholders (one batched call per locale)
+pnpm i18n:translate -- --locale pt-BR     # one locale only
+pnpm i18n:translate -- --sync-only        # same as `i18n:sync` (no AI step)
+```
+
+The intended workflow when adding or editing UI strings:
+
+1. Edit `src/content/i18n/en-US.json` — add, remove, or change keys.
+2. Run `pnpm i18n:translate` to propagate the changes through the other locales.
+3. Spot-check the translations; hand-edit any keys where you want exact wording (the AI step only fills _empty_ values, so a hand-written value stays untouched on subsequent runs).
+4. Commit. The pre-commit hook runs `pnpm i18n:check` automatically when `src/content/i18n/` is staged, so an out-of-sync or untranslated tree won't ship by accident.
+
+`pnpm i18n:check` fails on three things: missing keys, extra keys, **and empty-placeholder values** in any non-default locale (a `""` where the source has a non-empty string). The latter catches the "I ran `sync` but forgot `translate`" mistake — running `sync` alone leaves the tree in a state that won't pass the check or the build. If you genuinely want a blank label in every locale, set it to `""` in `en-US.json` too and the check skips it.
+
+`{{token}}` placeholders (e.g. `Copyright ©{{year}}.`) are validated post-translation; if the AI drops or renames a token after all retries the key is left empty for manual fix-up rather than shipped broken. Hand-edit those in the locale JSON and re-run.
 
 ### Shim CSS imports
 

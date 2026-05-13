@@ -143,6 +143,91 @@ describe("checkI18nDrift — pure", () => {
     });
     expect(result.issues[0]?.missing).toEqual(["a", "m", "z"]);
   });
+
+  it("flags empty-placeholder keys (synced but untranslated)", () => {
+    // The canonical "sync ran but translate didn't" state — every
+    // key exists in every locale, but some non-default values are
+    // empty strings. Shipping this means visitors see blank labels.
+    const result = checkI18nDrift({
+      defaultLocale: "en-US",
+      locales: ["en-US", "pt-BR"],
+      dictionaries: {
+        "en-US": { "nav.home": "Home", "nav.about": "About" },
+        "pt-BR": { "nav.home": "Início", "nav.about": "" }, // untranslated
+      },
+    });
+    expect(result.ok).toBe(false);
+    expect(result.issues[0]).toMatchObject({
+      locale: "pt-BR",
+      missing: [],
+      extra: [],
+      emptyPlaceholders: ["nav.about"],
+      missingFile: false,
+    });
+  });
+
+  it("does NOT flag empty values when source is ALSO empty (intentional blank)", () => {
+    // If the operator wrote `""` as the source value, they meant it
+    // — propagating that blank to every locale is correct.
+    const result = checkI18nDrift({
+      defaultLocale: "en-US",
+      locales: ["en-US", "pt-BR"],
+      dictionaries: {
+        "en-US": { "deliberately.blank": "", "nav.home": "Home" },
+        "pt-BR": { "deliberately.blank": "", "nav.home": "Início" },
+      },
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it("composes empty-placeholder detection with missing/extra in the same locale", () => {
+    const result = checkI18nDrift({
+      defaultLocale: "en-US",
+      locales: ["en-US", "pt-BR"],
+      dictionaries: {
+        "en-US": { a: "A", b: "B", c: "C" },
+        "pt-BR": { a: "", b: "BLocale", stale: "x" }, // empty a, missing c, extra stale
+      },
+    });
+    expect(result.ok).toBe(false);
+    expect(result.issues[0]).toMatchObject({
+      locale: "pt-BR",
+      missing: ["c"],
+      extra: ["stale"],
+      emptyPlaceholders: ["a"],
+    });
+  });
+
+  it("sorts emptyPlaceholders alphabetically for stable error messages", () => {
+    const result = checkI18nDrift({
+      defaultLocale: "en-US",
+      locales: ["en-US", "pt-BR"],
+      dictionaries: {
+        "en-US": { z: "Z", a: "A", m: "M" },
+        "pt-BR": { z: "", a: "", m: "" },
+      },
+    });
+    expect(result.issues[0]?.emptyPlaceholders).toEqual(["a", "m", "z"]);
+  });
+
+  it("treats a key missing entirely from a locale as `missing`, NOT as `emptyPlaceholder`", () => {
+    // Disambiguation: a missing key is fixed by sync (which adds an
+    // empty placeholder); an empty placeholder is fixed by
+    // translate. Conflating them would either double-count or hide
+    // the right remediation.
+    const result = checkI18nDrift({
+      defaultLocale: "en-US",
+      locales: ["en-US", "pt-BR"],
+      dictionaries: {
+        "en-US": { "nav.about": "About" },
+        "pt-BR": {}, // key entirely absent
+      },
+    });
+    expect(result.issues[0]).toMatchObject({
+      missing: ["nav.about"],
+      emptyPlaceholders: [], // not double-counted
+    });
+  });
 });
 
 describe("formatDriftIssues", () => {
@@ -151,14 +236,23 @@ describe("formatDriftIssues", () => {
   });
 
   it("formats missing-keys lines per locale", () => {
-    const out = formatDriftIssues([{ locale: "pt-BR", missing: ["a", "b"], extra: [], missingFile: false }]);
+    const out = formatDriftIssues([{ locale: "pt-BR", missing: ["a", "b"], extra: [], emptyPlaceholders: [], missingFile: false }]);
     expect(out).toContain("Missing keys in pt-BR.json: a, b");
   });
 
   it("formats extra-keys lines per locale", () => {
-    const out = formatDriftIssues([{ locale: "pt-BR", missing: [], extra: ["stale"], missingFile: false }]);
+    const out = formatDriftIssues([{ locale: "pt-BR", missing: [], extra: ["stale"], emptyPlaceholders: [], missingFile: false }]);
     expect(out).toContain("Extra keys in pt-BR.json");
     expect(out).toContain("stale");
+  });
+
+  it("formats empty-placeholder lines per locale", () => {
+    const out = formatDriftIssues([
+      { locale: "pt-BR", missing: [], extra: [], emptyPlaceholders: ["nav.home", "footer.copyright"], missingFile: false },
+    ]);
+    expect(out).toContain("Empty placeholders in pt-BR.json");
+    expect(out).toContain("nav.home");
+    expect(out).toContain("footer.copyright");
   });
 
   it("emits a starter block for missingFile locales", () => {
@@ -167,6 +261,7 @@ describe("formatDriftIssues", () => {
         locale: "ja-JP",
         missing: ["nav.home"],
         extra: [],
+        emptyPlaceholders: [],
         missingFile: true,
       },
     ]);
@@ -178,8 +273,8 @@ describe("formatDriftIssues", () => {
 
   it("aggregates issues across multiple locales", () => {
     const out = formatDriftIssues([
-      { locale: "pt-BR", missing: ["a"], extra: [], missingFile: false },
-      { locale: "ja-JP", missing: ["b"], extra: [], missingFile: false },
+      { locale: "pt-BR", missing: ["a"], extra: [], emptyPlaceholders: [], missingFile: false },
+      { locale: "ja-JP", missing: ["b"], extra: [], emptyPlaceholders: [], missingFile: false },
     ]);
     expect(out).toContain("pt-BR.json");
     expect(out).toContain("ja-JP.json");

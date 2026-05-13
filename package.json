@@ -12,9 +12,12 @@
     "ui": "NODE_TLS_REJECT_UNAUTHORIZED=0 pnpm dlx shadcn@latest add",
     "format": "prettier --write .",
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
-    "translate": "tsx packages/polystella/src/cli.ts",
-    "translate:dry": "tsx packages/polystella/src/cli.ts --dry-run",
-    "translate:build": "POLYSTELLA_TRANSLATE=1 pnpm build"
+    "translate": "tsx packages/polystella/src/cli.ts translate",
+    "translate:dry": "tsx packages/polystella/src/cli.ts translate --dry-run",
+    "translate:build": "POLYSTELLA_TRANSLATE=1 pnpm build",
+    "i18n:check": "tsx packages/polystella/src/cli.ts check-ui",
+    "i18n:sync": "tsx packages/polystella/src/cli.ts sync-ui",
+    "i18n:translate": "tsx packages/polystella/src/cli.ts translate-ui"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.1.10",

@@ -13,9 +13,9 @@ PolyStella is an [Astro](https://astro.build) integration that translates conten
 - **Glossary control.** A YAML file per locale pins do-not-translate terms, preferred translations, and free-form translator notes. Edits to the glossary re-translate only the pages that need it.
 - **Hand-translation overrides.** Drop a markdown file at `i18n/overrides/{locale}/<mirrored-path>` and it wins over AI output verbatim.
 - **Internal-link rewriting.** Both inline markdown links and configured URL fields (frontmatter, structured-data) are locale-prefixed at staging. External URLs and operator-declared exemptions (`noPrefixUrls`) pass through unchanged.
-- **Manual UI strings.** Short chrome text (nav, CTAs) stays hand-authored with build-time drift detection across locales. Includes a React hook for client-side islands.
+- **UI-string maintenance.** Short chrome text (nav, CTAs) lives in per-locale JSON files with build-time drift detection. The CLI offers offline key reconciliation (`sync-ui`) and AI-fill of empty placeholders (`translate-ui`) so adding or removing a key in the default locale propagates to the others. Includes a React hook for client-side islands.
 - **Standalone or Starlight.** Ships its own route shim today (standalone). Starlight integration is the next milestone.
-- **CLI.** `pnpm translate` runs the pipeline outside `astro build` for one-off re-translations or CI dispatch, with branch-aware R2 prefixes.
+- **CLI.** `polystella translate` runs the pipeline outside `astro build` for one-off re-translations or CI dispatch, with branch-aware R2 prefixes. Sibling subcommands (`check-ui`, `sync-ui`, `translate-ui`) handle UI-string maintenance.
 
 ## Install
 
@@ -159,7 +159,13 @@ export function NavMenu({ locale, dict }: { locale: string | undefined; dict: Re
 
 ## CLI
 
-`polystella-translate` runs the same pipeline as `astro build` without booting Astro:
+The package exposes a single `polystella` binary with verb-style subcommands. Run `polystella --help` for the top-level menu or `polystella <subcommand> --help` for per-subcommand flags.
+
+> **Breaking change (pre-1.0):** the legacy `polystella-translate` binary has been renamed to `polystella translate`. Host projects need to update any direct invocations; the suggested `pnpm translate` wrapper in the host package.json transparently redirects.
+
+### `polystella translate` — markdown pipeline
+
+Runs the same translation pipeline as `astro build` without booting Astro:
 
 ```bash
 pnpm translate                          # run for the current git branch
@@ -170,6 +176,29 @@ pnpm translate --branch main            # target main's R2 prefix explicitly
 ```
 
 Exit codes: `0` success, `1` config error, `2` ≥1 (file, locale) pair failed.
+
+### UI-strings subcommands
+
+UI strings (`src/content/i18n/<locale>.json`) are maintained via three offline-or-online subcommands:
+
+```bash
+pnpm i18n:check                         # drift detection only, no writes (pre-commit hook target)
+pnpm i18n:sync                          # mechanical: add missing keys as "", drop extras
+pnpm i18n:sync -- --check               # report pending changes; non-zero exit; no writes
+pnpm i18n:translate                     # sync + AI-fill empty placeholders (one batched call per locale)
+pnpm i18n:translate -- --locale pt-BR   # one locale only
+pnpm i18n:translate -- --sync-only      # same as `i18n:sync` (skips the AI step)
+```
+
+How it works:
+
+- `check-ui` runs `loadAndCheckDrift` against the locale set declared in `astro.config.mjs`. Runs offline — safe to wire into a pre-commit hook (see `.githooks/pre-commit`). Catches three failure modes: missing keys, extra keys, **and empty-placeholder values** (a non-default locale has `""` where the source has a non-empty string — synced but not translated). The build's own drift check uses the same logic, so the integration also fails on these cases. Intentional blanks are supported: if the source value is `""`, the locale value being `""` is accepted as deliberate.
+- `sync-ui` reconciles non-default locale key sets against the default-locale file: missing keys get an empty placeholder, extras are removed. Existing values (empty or not) are preserved, source-file key order is mirrored, and blank-line section breaks are preserved across runs so diffs stay readable.
+- `translate-ui` first runs sync, then fills empty placeholders via the configured provider. One batched `translateBatch` call per locale (the marker prompt protocol is purpose-built for batching). Locales themselves run in parallel up to the `concurrency` cap in `polystella.config.mjs` (default 4) — independent file writes, independent provider calls, no shared state. A `{{token}}` preservation validator runs after each batch; failures retry with sampling variance, and if a key still can't be translated cleanly it's left empty for manual fix-up.
+
+> **`dryRun` does NOT gate `translate-ui`.** The flag in `polystella.config.mjs` governs the markdown pipeline (R2 writes, paid provider calls, branch dispatch) where a preview-only run is genuinely useful. UI-string translation is local-file-only and small-scale; the right "skip AI" mode is `--sync-only`.
+
+Exit codes for the UI-string subcommands: `0` clean, `1` config error, `2` for `sync-ui --check` when changes are pending or for `translate-ui` when token validation never converged. Hand-translation always wins: if you don't want AI output for a key, write the value directly in the locale JSON and `translate-ui` will skip it (only empty placeholders are filled).
 
 ## R2 cache layout
 

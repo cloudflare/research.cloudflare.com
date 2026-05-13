@@ -1,10 +1,20 @@
 #!/usr/bin/env node
 /* eslint-disable no-console */
 /**
- * `polystella-translate` — standalone CLI for the translation
- * pipeline. Loads the project's `astro.config.mjs` (i18n block) and
- * `polystella.config.mjs`, invokes `runTranslationPass`. Never
- * mutates config files on disk.
+ * `polystella` — single CLI entry point with verb-style subcommands:
+ *
+ *   polystella translate      Run the markdown translation pipeline.
+ *   polystella check-ui       Detect drift in UI-string JSONs.
+ *   polystella sync-ui        Reconcile UI-string JSON key sets.
+ *   polystella translate-ui   Sync + AI-fill empty placeholders.
+ *
+ * The pre-rename binary `polystella-translate` is gone — this is a
+ * breaking change documented in the package README and AGENTS.md.
+ * The legacy `pnpm translate` shell script in the host project now
+ * invokes `polystella translate` to preserve operator muscle memory.
+ *
+ * Dispatch is a thin layer: each subcommand owns its argv parsing and
+ * `runX(args, deps)` handler. This file only routes.
  */
 
 import { execFileSync } from "node:child_process";
@@ -13,13 +23,87 @@ import path from "node:path";
 import process from "node:process";
 import { pathToFileURL } from "node:url";
 
-import { resolveOptions, type AstroI18nLike, type PolyStellaResolvedOptions } from "./config/options.js";
+import { resolveOptions, type PolyStellaResolvedOptions } from "./config/options.js";
 import { computeBuildReportTotals, emitBuildReport, type BuildReport } from "./storage/report.js";
 import { DEFAULT_STAGING_DIR } from "./storage/paths.js";
 import { runTranslationPass, type Logger } from "./translation/run.js";
 import { POLYSTELLA_VERSION } from "./version.js";
 
-interface CliArgs {
+import { loadAstroI18n, loadPolystellaConfig } from "./cli/i18n-config.js";
+import { parseCheckUiArgs, runCheckUi, CHECK_UI_USAGE } from "./cli/check-ui.js";
+import { parseSyncUiArgs, runSyncUi, SYNC_UI_USAGE } from "./cli/sync-ui.js";
+import { parseTranslateUiArgs, runTranslateUi, TRANSLATE_UI_USAGE } from "./cli/translate-ui.js";
+
+// ---------------------------------------------------------------
+// Top-level dispatch
+// ---------------------------------------------------------------
+
+export type Subcommand = "translate" | "check-ui" | "sync-ui" | "translate-ui";
+
+export const TOP_LEVEL_USAGE = `polystella v${POLYSTELLA_VERSION}
+
+Astro integration for AI-driven content + UI-string localization.
+
+Usage:
+  polystella <subcommand> [flags]
+
+Subcommands:
+  translate       Run the markdown translation pipeline (R2 cache, AI provider).
+  check-ui        Detect drift in UI-string JSONs. Runs offline.
+  sync-ui         Reconcile UI-string key sets (add missing as empty,
+                  remove extras). Runs offline.
+  translate-ui    sync-ui, then AI-fill empty placeholders via the
+                  configured provider.
+
+Run \`polystella <subcommand> --help\` for subcommand-specific flags.
+
+Top-level flags:
+  --help, -h      Print this message.
+  --version, -v   Print the CLI version.
+`;
+
+export interface SubcommandDispatch {
+  /** Parsed subcommand name. `"help"` for top-level help; `"unknown"` for an unrecognised first arg. */
+  name: Subcommand | "help" | "version" | "unknown";
+  /** First-arg literal when `name === "unknown"`, for error reporting. */
+  raw?: string;
+  /** Remaining argv to forward to the subcommand's own parser. */
+  rest: string[];
+}
+
+/**
+ * Peel the subcommand off argv. Top-level `--help` / `-h` /
+ * `--version` / `-v` short-circuit. Subcommand names are
+ * case-sensitive and exact.
+ */
+export function parseSubcommand(argv: ReadonlyArray<string>): SubcommandDispatch {
+  if (argv.length === 0) {
+    return { name: "help", rest: [] };
+  }
+  const first = argv[0];
+  if (first === undefined) return { name: "help", rest: [] };
+  if (first === "--help" || first === "-h") {
+    return { name: "help", rest: argv.slice(1) };
+  }
+  if (first === "--version" || first === "-v") {
+    return { name: "version", rest: argv.slice(1) };
+  }
+  if (first === "translate" || first === "check-ui" || first === "sync-ui" || first === "translate-ui") {
+    return { name: first, rest: argv.slice(1) };
+  }
+  return { name: "unknown", raw: first, rest: argv.slice(1) };
+}
+
+// ---------------------------------------------------------------
+// `translate` subcommand
+//
+// This is the original markdown-translation orchestrator. The argv
+// parser, branch resolver, and option overrides used to be the
+// only CLI surface and are still exported under their original
+// names because external callers (and tests) consume them directly.
+// ---------------------------------------------------------------
+
+export interface TranslateCliArgs {
   branch?: string;
   prefix?: string;
   dryRun: boolean;
@@ -29,7 +113,7 @@ interface CliArgs {
   help: boolean;
 }
 
-const USAGE = `polystella-translate
+export const TRANSLATE_USAGE = `polystella translate
 
 Run the translation pipeline outside an Astro build. Reads
 \`astro.config.mjs\` and \`polystella.config.mjs\` from the current
@@ -38,7 +122,7 @@ results under \`<root>/.astro/i18n-staging\` — exactly as \`astro
 build\` would.
 
 Usage:
-  polystella-translate [flags]
+  polystella translate [flags]
 
 Flags:
   --branch <name>     Set process.env.WORKERS_CI_BRANCH before loading
@@ -69,17 +153,18 @@ Exit codes:
 `;
 
 /**
- * Parse argv → CliArgs. Throws on unknown flag or missing value
- * (accept-then-reject would silently swallow typos).
+ * Parse argv → TranslateCliArgs. Throws on unknown flag or missing
+ * value (accept-then-reject would silently swallow typos).
+ *
+ * Argv must NOT include the leading "translate" subcommand token —
+ * the dispatcher peels that off before calling.
  */
-export function parseCliArgs(argv: ReadonlyArray<string>): CliArgs {
-  const out: CliArgs = { dryRun: false, help: false };
+export function parseTranslateArgs(argv: ReadonlyArray<string>): TranslateCliArgs {
+  const out: TranslateCliArgs = { dryRun: false, help: false };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     if (arg === undefined) continue;
     switch (arg) {
-      // POSIX "end of options" — pnpm/npm forward it through
-      // `pnpm translate -- --branch x` style invocations.
       case "--":
         continue;
       case "--help":
@@ -145,43 +230,8 @@ const cliLogger: Logger = {
   debug: process.env["LOG_LEVEL"] === "debug" ? (msg) => console.log(msg) : () => {},
 };
 
-/** Load `astro.config.mjs` and pluck `i18n`. */
-async function loadAstroI18n(cwd: string): Promise<AstroI18nLike | undefined> {
-  const candidatePath = path.resolve(cwd, "astro.config.mjs");
-  let module: { default?: unknown };
-  try {
-    module = await import(pathToFileURL(candidatePath).href);
-  } catch (err) {
-    throw new Error(`failed to load ${candidatePath}: ${(err as Error).message}`);
-  }
-  // `defineConfig` is identity; support both default export and a
-  // top-level `i18n` defensively.
-  const exported = module.default ?? module;
-  if (typeof exported !== "object" || exported === null) {
-    return undefined;
-  }
-  const i18n = (exported as { i18n?: unknown }).i18n;
-  if (typeof i18n !== "object" || i18n === null) {
-    return undefined;
-  }
-  return i18n as AstroI18nLike;
-}
-
-/** Load `polystella.config.mjs` from `cwd` (default-export only). */
-async function loadPolystellaConfig(cwd: string): Promise<unknown> {
-  const candidatePath = path.resolve(cwd, "polystella.config.mjs");
-  try {
-    const module = (await import(pathToFileURL(candidatePath).href)) as {
-      default: unknown;
-    };
-    return module.default;
-  } catch (err) {
-    throw new Error(`failed to load ${candidatePath}: ${(err as Error).message}`);
-  }
-}
-
-/** Apply CLI flag overrides to a resolved options object. */
-export function applyCliOverrides(resolved: PolyStellaResolvedOptions, args: CliArgs): PolyStellaResolvedOptions {
+/** Apply translate-subcommand flag overrides to a resolved options object. */
+export function applyCliOverrides(resolved: PolyStellaResolvedOptions, args: TranslateCliArgs): PolyStellaResolvedOptions {
   let next = resolved;
 
   if (args.dryRun) {
@@ -218,9 +268,9 @@ export function applyCliOverrides(resolved: PolyStellaResolvedOptions, args: Cli
 }
 
 /**
- * Current git branch via `git rev-parse --abbrev-ref HEAD`.
- * Returns `null` on: git not on PATH, no `.git/`, detached HEAD,
- * empty output. Used to default `--branch` so `pnpm translate` from
+ * Current git branch via `git rev-parse --abbrev-ref HEAD`. Returns
+ * `null` on: git not on PATH, no `.git/`, detached HEAD, empty
+ * output. Used to default `--branch` so `polystella translate` from
  * a feature branch writes to the matching preview prefix.
  */
 export function detectGitBranch(): string | null {
@@ -228,7 +278,6 @@ export function detectGitBranch(): string | null {
   try {
     raw = execFileSync("git", ["rev-parse", "--abbrev-ref", "HEAD"], {
       encoding: "utf8",
-      // Suppress git's stderr — we surface our own error upstream.
       stdio: ["ignore", "pipe", "ignore"],
     });
   } catch {
@@ -241,8 +290,8 @@ export function detectGitBranch(): string | null {
 
 /**
  * Branch precedence: `--branch` flag → `WORKERS_CI_BRANCH` env →
- * `gitBranchProvider()`. Returns `{ ok, reason }` instead of
- * throwing so `main()` formats remediation hints uniformly.
+ * `gitBranchProvider()`. Returns `{ ok, reason }` instead of throwing
+ * so the caller formats remediation hints uniformly.
  */
 export function resolveCliBranch(args: {
   flag: string | undefined;
@@ -266,42 +315,37 @@ export function resolveCliBranch(args: {
   };
 }
 
-async function main(): Promise<number> {
-  let args: CliArgs;
+async function runTranslateSubcommand(rest: ReadonlyArray<string>): Promise<number> {
+  let args: TranslateCliArgs;
   try {
-    args = parseCliArgs(process.argv.slice(2));
+    args = parseTranslateArgs(rest);
   } catch (err) {
-    console.error(`[polystella-translate] ${(err as Error).message}\n`);
-    console.error(USAGE);
+    console.error(`[polystella] ${(err as Error).message}\n`);
+    console.error(TRANSLATE_USAGE);
     return 1;
   }
 
   if (args.help) {
-    console.log(USAGE);
+    console.log(TRANSLATE_USAGE);
     return 0;
   }
 
-  // Mark CLI dispatch BEFORE the config imports — config reads
-  // this to allow R2 writes from outside CI.
+  // Mark CLI dispatch BEFORE the config imports — config reads this
+  // to allow R2 writes from outside CI.
   process.env["POLYSTELLA_CLI"] = "1";
 
-  // Branch precedence: --branch flag, WORKERS_CI_BRANCH env, git HEAD.
-  // Setting WORKERS_CI_BRANCH before importing the config means the
-  // same dispatch logic runs here as in CI.
   const branchResolution = resolveCliBranch({
     flag: args.branch,
     envBranch: process.env["WORKERS_CI_BRANCH"],
     gitBranchProvider: detectGitBranch,
   });
   if (!branchResolution.ok) {
-    console.error(`[polystella-translate] ${branchResolution.reason}`);
+    console.error(`[polystella] ${branchResolution.reason}`);
     return 1;
   }
   process.env["WORKERS_CI_BRANCH"] = branchResolution.branch;
   if (branchResolution.source === "git") {
-    // Loud one-liner so an unexpected-branch run is visible
-    // before any provider/R2 calls fire.
-    console.log(`[polystella-translate] no --branch / WORKERS_CI_BRANCH; using current git branch: ${branchResolution.branch}`);
+    console.log(`[polystella] no --branch / WORKERS_CI_BRANCH; using current git branch: ${branchResolution.branch}`);
   }
 
   const cwd = process.cwd();
@@ -311,30 +355,24 @@ async function main(): Promise<number> {
     const [i18n, polyConfig] = await Promise.all([loadAstroI18n(cwd), loadPolystellaConfig(cwd)]);
     resolved = resolveOptions(polyConfig, i18n);
   } catch (err) {
-    console.error(`[polystella-translate] ${(err as Error).message}`);
+    console.error(`[polystella] ${(err as Error).message}`);
     return 1;
   }
 
   try {
     resolved = applyCliOverrides(resolved, args);
   } catch (err) {
-    console.error(`[polystella-translate] ${(err as Error).message}`);
+    console.error(`[polystella] ${(err as Error).message}`);
     return 1;
   }
 
-  // Mirror integration staging-dir layout so sibling collections
-  // pick up CLI-staged files without reconfiguration.
   const stagingDir = path.resolve(cwd, DEFAULT_STAGING_DIR);
   await mkdir(stagingDir, { recursive: true });
 
   cliLogger.info(
-    `polystella-translate v${POLYSTELLA_VERSION}: locales=${[resolved.defaultLocale, ...resolved.locales].join(", ")}, dryRun=${resolved.dryRun}, prefix=${resolved.r2?.prefix ?? "<no r2>"}`,
+    `polystella translate v${POLYSTELLA_VERSION}: locales=${[resolved.defaultLocale, ...resolved.locales].join(", ")}, dryRun=${resolved.dryRun}, prefix=${resolved.r2?.prefix ?? "<no r2>"}`,
   );
 
-  // SIGINT / SIGTERM → propagate cancellation through the pipeline.
-  // A second signal exits immediately (no graceful drain). Listeners
-  // are removed in the finally block so a successful run leaves the
-  // process clean for any embedding caller.
   const controller = new AbortController();
   let interruptCount = 0;
   const onSignal = (signal: NodeJS.Signals) => {
@@ -372,13 +410,11 @@ async function main(): Promise<number> {
   process.off("SIGINT", onSignal);
   process.off("SIGTERM", onSignal);
 
-  // Build report for live runs (matches integration's `build:done`).
-  // Default: project root (no `dist/` from a CLI run); `--report` overrides.
   if (result.liveRan && result.entries.length > 0) {
     const report: BuildReport = {
       build: {
         startedAt: new Date().toISOString(),
-        durationMs: 0, // CLI run-time isn't tracked here; use the report's entry-level durationMs.
+        durationMs: 0,
         mode: resolved.mode === "starlight" ? "starlight" : "standalone",
         polystellaVersion: POLYSTELLA_VERSION,
       },
@@ -404,8 +440,82 @@ async function main(): Promise<number> {
     }
   }
 
-  // Non-zero exit on any pair-level failure so CI catches it.
   return result.counts.failed > 0 ? 2 : 0;
+}
+
+// ---------------------------------------------------------------
+// Entry point
+// ---------------------------------------------------------------
+
+async function main(): Promise<number> {
+  const argv = process.argv.slice(2);
+  const dispatch = parseSubcommand(argv);
+
+  if (dispatch.name === "version") {
+    console.log(POLYSTELLA_VERSION);
+    return 0;
+  }
+  if (dispatch.name === "help") {
+    console.log(TOP_LEVEL_USAGE);
+    return 0;
+  }
+  if (dispatch.name === "unknown") {
+    console.error(`[polystella] unknown subcommand: ${dispatch.raw ?? "<empty>"}\n`);
+    console.error(TOP_LEVEL_USAGE);
+    return 1;
+  }
+
+  const cwd = process.cwd();
+  switch (dispatch.name) {
+    case "translate":
+      return runTranslateSubcommand(dispatch.rest);
+    case "check-ui": {
+      let args;
+      try {
+        args = parseCheckUiArgs(dispatch.rest);
+      } catch (err) {
+        console.error(`[polystella] ${(err as Error).message}\n`);
+        console.error(CHECK_UI_USAGE);
+        return 1;
+      }
+      return runCheckUi(args, {
+        cwd,
+        log: (msg) => console.log(msg),
+        err: (msg) => console.error(msg),
+      });
+    }
+    case "sync-ui": {
+      let args;
+      try {
+        args = parseSyncUiArgs(dispatch.rest);
+      } catch (err) {
+        console.error(`[polystella] ${(err as Error).message}\n`);
+        console.error(SYNC_UI_USAGE);
+        return 1;
+      }
+      return runSyncUi(args, {
+        cwd,
+        log: (msg) => console.log(msg),
+        err: (msg) => console.error(msg),
+      });
+    }
+    case "translate-ui": {
+      let args;
+      try {
+        args = parseTranslateUiArgs(dispatch.rest);
+      } catch (err) {
+        console.error(`[polystella] ${(err as Error).message}\n`);
+        console.error(TRANSLATE_UI_USAGE);
+        return 1;
+      }
+      return runTranslateUi(args, {
+        cwd,
+        log: (msg) => console.log(msg),
+        warn: (msg) => console.warn(msg),
+        err: (msg) => console.error(msg),
+      });
+    }
+  }
 }
 
 // Run if invoked directly. `import.meta.url` check keeps the module
@@ -415,7 +525,7 @@ if (invokedDirectly) {
   main().then(
     (code) => process.exit(code),
     (err) => {
-      console.error("[polystella-translate] unexpected error:", err);
+      console.error("[polystella] unexpected error:", err);
       process.exit(2);
     },
   );

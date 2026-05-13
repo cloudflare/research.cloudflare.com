@@ -10,11 +10,13 @@ or `README.md`.
 
 ## Commands
 
-- `pnpm test` — run vitest (981 tests, ~1.2s; includes a 9-test
+- `pnpm test` — run vitest (1078 tests, ~1.2s; includes a 9-test
   end-to-end smoke suite at `tests/smoke.test.ts`).
 - `pnpm test:watch` — vitest in watch mode.
-- `pnpm build:cli` — bundle the standalone `polystella-translate` CLI
-  to `dist/cli.js` via esbuild.
+- `pnpm build:cli` — bundle the standalone `polystella` CLI to
+  `dist/cli.js` via esbuild. The package exposes a single `polystella`
+  binary with verb-style subcommands (`translate`, `check-ui`,
+  `sync-ui`, `translate-ui`).
 - Typecheck: from the package root, `pnpm exec tsc --noEmit` (the
   tsconfig has `noEmit: true`).
 
@@ -24,8 +26,12 @@ There is no lint step yet. Biome adoption is planned for Phase 2.
 
 - `src/index.ts` — Astro integration entry. Registers hooks, runs the
   translation pass, publishes the runtime bridge.
-- `src/cli.ts` — `polystella-translate` standalone runner. Shares the
-  same `runTranslationPass` as the integration.
+- `src/cli.ts` — `polystella` standalone CLI dispatcher. Routes to
+  subcommand handlers in `src/cli/` (`translate`, `check-ui`,
+  `sync-ui`, `translate-ui`). `translate` shares the same
+  `runTranslationPass` as the integration.
+- `src/cli/` — per-subcommand argv parsers + `run<Subcommand>`
+  handlers. New UI-string subcommands live here.
 - `src/config/options.ts` — zod schema + `resolveOptions`. Locales are
   derived from Astro's `i18n` config, not duplicated here.
 - `src/translation/` — `run.ts` (orchestrator), `provider.ts` (Workers
@@ -43,15 +49,19 @@ There is no lint step yet. Biome adoption is planned for Phase 2.
   `localized-href`, custom-loader runtime bridge.
 - `src/content/` — `polystellaCollections`, custom-loader wrapper,
   file-loader wrapper, schema extension.
-- `src/i18n/` — UI strings loader, drift detection, translator
-  resolution, sitemap helper.
+- `src/i18n/` — UI strings loader, drift detection, sync (key
+  reconciliation + layout-preserving JSON writer), AI translation
+  orchestrator (`ui-translate.ts` — batched, with `{{token}}`
+  preservation validator), translator resolution, sitemap helper.
 - `src/react/` — `useTranslations` + `useLocalizedHref` hooks for islands.
 - `tests/` — tests grouped by source directory
   (`tests/parsing/`, `tests/storage/`, etc.) so finding the test
   for a given source file is `tests/<src-dir>/<basename>.test.ts`.
-  Top-level exceptions: `tests/cli.test.ts` (the only `src/cli.ts`
-  test), `tests/smoke.test.ts` (integration end-to-end). Vitest
-  config in `vitest.config.ts`.
+  Top-level exceptions: `tests/cli.test.ts` (top-level dispatch +
+  translate-subcommand parsing), `tests/cli/` (per-subcommand
+  handlers: `check-ui`, `sync-ui`, `translate-ui`),
+  `tests/smoke.test.ts` (integration end-to-end). Vitest config in
+  `vitest.config.ts`.
 
 ## Conventions
 
@@ -136,6 +146,21 @@ build:cli` after a version bump.
 - **MDX vs MD**: `remark-mdx` disables indented code, autolinks, and
   raw-HTML blocks. Route through the right parser by extension; never
   apply MDX rules to `.md`.
+- **UI-string sync writer is layout-aware.** `formatLocaleFile` in
+  `src/i18n/sync.ts` re-emits non-default locale JSONs in source-file
+  key order with blank-line section breaks preserved. Running
+  `prettier --write` on a synced file collapses those blank lines —
+  the pre-commit hook only runs `prettier --check`, so it doesn't
+  trip. `JSON.stringify` also normalises non-ASCII escapes (`\u00a9`
+  → `©`); first-run diffs may include this one-time cleanup.
+- **Drift check fails on empty placeholders.** `checkI18nDrift`
+  flags any non-default-locale key whose value is `""` while the
+  source value is non-empty — the canonical "synced but not
+  translated" state. The build's own drift check at
+  `astro:config:setup` uses the same predicate, so `pnpm i18n:sync`
+  alone leaves the tree non-shippable until `pnpm i18n:translate`
+  (or a hand-edit) fills the placeholders. Intentionally-blank
+  labels are supported via matching `""` in the source dict.
 - **Workers AI default `maxTokens` is too low.** Default in our
   config is 8192. Lowering it truncates multi-segment translations.
 - **`PermanentProviderError`** (in `translation/provider.ts`) is the
@@ -144,6 +169,21 @@ build:cli` after a version bump.
   else (5xx, network, parse failures) retries with exponential backoff
   via `p-retry`. Don't widen the permanent-set without thinking about
   what flaky responses might wrongly skip retry.
+- **UI-string `{{token}}` validation** runs _outside_ `translateBatch`
+  (in `i18n/ui-translate.ts`). Reason: `translateBatch` doesn't expose
+  a post-parse hook, and validating per-key requires the source-to-
+  translation map. The orchestrator implements its own retry wrapper
+  with `maxRetries: 0` passed to `translateBatch`, so the retry loop
+  is single-layer. Failures that exhaust retries leave the key empty
+  (not fatal); a single stubborn key shouldn't block the rest of the
+  batch.
+- **`translate-ui` runs locales in parallel via `runWithConcurrency`.**
+  The pool primitive short-circuits on the first worker rejection
+  (matches `Promise.all`), which would let one locale's failure kill
+  the rest of the run. The worker MUST catch every error internally
+  and record it on the per-locale outcome — never re-throw. Per-locale
+  logs are buffered and flushed in `targets` order so the final
+  output is deterministic despite non-deterministic completion order.
 - **`AbortSignal` threads from CLI / integration → `runTranslationPass`
   → worker → cache → `translateBatch` → provider HTTP fetch.** The
   CLI installs SIGINT/SIGTERM handlers; second Ctrl-C exits hard.
@@ -153,11 +193,14 @@ build:cli` after a version bump.
 
 ## Verification
 
-- `pnpm test` must pass (981 tests).
+- `pnpm test` must pass (1078 tests).
 - `pnpm exec tsc --noEmit` must pass (strict mode).
 - For changes to the translation pipeline, run end-to-end against the
   research-site fixtures: from the monorepo root, `pnpm translate
 --dry-run` walks the full pipeline without hitting AI/R2.
+- For changes to UI-string sync / translate: `pnpm i18n:check`
+  (read-only), `pnpm i18n:sync -- --check` (read-only),
+  `pnpm i18n:translate -- --sync-only` (offline, mutates JSONs).
 
 ## Resources
 

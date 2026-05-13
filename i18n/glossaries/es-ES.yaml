@@ -37,6 +37,7 @@ doNotTranslate:
   - Privacy Pass
   - Turnstile
   - Radar
+  - Google
 
   # ─── Network protocols and standards ───────────────────────────────
   - HTTP

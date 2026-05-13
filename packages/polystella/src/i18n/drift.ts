@@ -27,6 +27,13 @@ export interface DriftIssue {
   /** Keys in this locale absent from the default. */
   extra: string[];
   /**
+   * Keys shared with the default that have a non-empty source value
+   * but an empty value in this locale — i.e. synced but untranslated
+   * placeholders. Intentional blanks (source ALSO empty) don't count;
+   * the empty value is then a deliberate choice that should match.
+   */
+  emptyPlaceholders: string[];
+  /**
    * `true` when the locale's JSON file is absent entirely. `missing`
    * lists every default-locale key for copy-paste seeding.
    */
@@ -68,6 +75,7 @@ export function checkI18nDrift(input: DriftCheckInput): DriftCheckResult {
         locale,
         missing: [...defaultKeys].sort(),
         extra: [],
+        emptyPlaceholders: [],
         missingFile: true,
       });
       continue;
@@ -75,11 +83,27 @@ export function checkI18nDrift(input: DriftCheckInput): DriftCheckResult {
     const localeKeys = new Set(Object.keys(localeDict));
     const missing = [...defaultKeys].filter((k) => !localeKeys.has(k)).sort();
     const extra = [...localeKeys].filter((k) => !defaultKeys.has(k)).sort();
-    if (missing.length > 0 || extra.length > 0) {
+    // Empty-placeholder check only runs over keys present in both:
+    // missing keys are reported separately, and a missing key isn't
+    // also "untranslated" — it doesn't exist yet.
+    const emptyPlaceholders: string[] = [];
+    for (const key of defaultKeys) {
+      if (!localeKeys.has(key)) continue;
+      const sourceValue = defaultDict[key];
+      const localeValue = localeDict[key];
+      // Intentionally-blank source values propagate as blanks
+      // without complaint; the operator chose `""` deliberately.
+      if (sourceValue !== undefined && sourceValue.length > 0 && (localeValue === undefined || localeValue.length === 0)) {
+        emptyPlaceholders.push(key);
+      }
+    }
+    emptyPlaceholders.sort();
+    if (missing.length > 0 || extra.length > 0 || emptyPlaceholders.length > 0) {
       issues.push({
         locale,
         missing,
         extra,
+        emptyPlaceholders,
         missingFile: false,
       });
     }
@@ -110,6 +134,9 @@ export function formatDriftIssues(issues: ReadonlyArray<DriftIssue>): string {
     }
     if (issue.extra.length > 0) {
       lines.push(`  • Extra keys in ${issue.locale}.json (not in default-locale file): ${issue.extra.join(", ")}`);
+    }
+    if (issue.emptyPlaceholders.length > 0) {
+      lines.push(`  • Empty placeholders in ${issue.locale}.json (synced but untranslated): ${issue.emptyPlaceholders.join(", ")}`);
     }
   }
   return lines.join("\n");

@@ -1,22 +1,72 @@
 import { describe, expect, it } from "vitest";
 
-import { applyCliOverrides, parseCliArgs, resolveCliBranch } from "../src/cli.js";
+import { applyCliOverrides, parseSubcommand, parseTranslateArgs, resolveCliBranch } from "../src/cli.js";
 import { resolveOptions } from "../src/config/options.js";
 
 /**
  * CLI surface tests.
  *
- * The CLI's contract has two failure modes worth pinning:
- *   1. Flag parsing — typos and missing values must throw, not be
- *      silently dropped.
- *   2. Override application — `--branch`, `--prefix`, `--locale`, and
- *      `--file` each have a single, documented effect on the
+ * The CLI's contract has three failure modes worth pinning:
+ *   1. Top-level subcommand dispatch — unknown verbs surface a clear
+ *      error; `--help` / `--version` short-circuit before any
+ *      subcommand parser runs.
+ *   2. Translate-subcommand flag parsing — typos and missing values
+ *      must throw, not be silently dropped.
+ *   3. Override application — `--branch`, `--prefix`, `--locale`,
+ *      and `--file` each have a single, documented effect on the
  *      resolved options. Any drift from that contract changes the
  *      operator-facing behaviour.
  *
- * The actual orchestration (running translations) is covered by
- * `run.test.ts`; this file focuses on argv → resolved-options.
+ * Subcommand-specific arg parsers (check-ui / sync-ui / translate-ui)
+ * are tested alongside their handlers in `tests/cli/`.
  */
+
+const parseCliArgs = parseTranslateArgs; // alias for the existing-test argv set
+
+describe("parseSubcommand — top-level dispatch", () => {
+  it("returns help when argv is empty", () => {
+    expect(parseSubcommand([])).toEqual({ name: "help", rest: [] });
+  });
+
+  it("returns help on --help / -h as the first arg", () => {
+    expect(parseSubcommand(["--help"])).toEqual({ name: "help", rest: [] });
+    expect(parseSubcommand(["-h"])).toEqual({ name: "help", rest: [] });
+  });
+
+  it("returns version on --version / -v as the first arg", () => {
+    expect(parseSubcommand(["--version"])).toEqual({ name: "version", rest: [] });
+    expect(parseSubcommand(["-v"])).toEqual({ name: "version", rest: [] });
+  });
+
+  it("routes to translate subcommand with remaining argv", () => {
+    expect(parseSubcommand(["translate", "--dry-run", "--branch", "main"])).toEqual({
+      name: "translate",
+      rest: ["--dry-run", "--branch", "main"],
+    });
+  });
+
+  it("routes to each UI-string subcommand", () => {
+    expect(parseSubcommand(["check-ui"])).toEqual({ name: "check-ui", rest: [] });
+    expect(parseSubcommand(["sync-ui", "--check"])).toEqual({ name: "sync-ui", rest: ["--check"] });
+    expect(parseSubcommand(["translate-ui", "--locale", "pt-BR"])).toEqual({
+      name: "translate-ui",
+      rest: ["--locale", "pt-BR"],
+    });
+  });
+
+  it("reports an unknown first arg without forwarding it", () => {
+    const result = parseSubcommand(["bogus", "--flag"]);
+    expect(result.name).toBe("unknown");
+    expect(result.raw).toBe("bogus");
+    expect(result.rest).toEqual(["--flag"]);
+  });
+
+  it("treats a flag as the first arg as help (not as unknown subcommand)", () => {
+    // `polystella --help` is the canonical help invocation; we mustn't
+    // route it to `--help` as a subcommand.
+    expect(parseSubcommand(["--help", "translate"]).name).toBe("help");
+  });
+});
 
 function makeResolved(
   overrides: {
