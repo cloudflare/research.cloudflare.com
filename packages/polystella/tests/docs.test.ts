@@ -102,7 +102,11 @@ describe("doc-claim invariants", () => {
       const agents = readDoc("AGENTS.md");
       const architecture = readDoc("ARCHITECTURE.md");
 
-      const anchorRefs = [...agents.matchAll(/ARCHITECTURE\.md#([\w-]+)/g)].map((m) => m[1]);
+      const anchorRefs: string[] = [];
+      for (const match of agents.matchAll(/ARCHITECTURE\.md#([\w-]+)/g)) {
+        const slug = match[1];
+        if (slug !== undefined) anchorRefs.push(slug);
+      }
 
       const uniqueRefs = [...new Set(anchorRefs)];
       expect(uniqueRefs.length).toBeGreaterThan(0);
@@ -217,13 +221,14 @@ describe("doc-claim invariants", () => {
     it("llms-full.txt bundles the canonical agent docs in order", () => {
       expect(fileExists("llms-full.txt")).toBe(true);
       const text = readDoc("llms-full.txt");
-      // Section headers from each source doc should appear in order
-      // (AGENTS.md first because it's the navigational entry point,
-      // ARCHITECTURE.md next, then the skills).
-      const agentsIdx = text.indexOf("# AGENTS.md");
-      const archIdx = text.indexOf("# PolyStella Architecture");
-      const consumerIdx = text.toLowerCase().indexOf("polystella-consumer");
-      const contributorIdx = text.toLowerCase().indexOf("polystella-contributor");
+      // The build script emits `<!-- BEGIN <path> -->` markers around
+      // each source doc. Use those (rather than freeform body text)
+      // so the ordering check is robust to the header's file-listing
+      // table mentioning the same names earlier in the file.
+      const agentsIdx = text.indexOf("<!-- BEGIN AGENTS.md -->");
+      const archIdx = text.indexOf("<!-- BEGIN ARCHITECTURE.md -->");
+      const consumerIdx = text.indexOf("<!-- BEGIN skills/polystella-consumer/SKILL.md -->");
+      const contributorIdx = text.indexOf("<!-- BEGIN skills/polystella-contributor/SKILL.md -->");
       expect(agentsIdx).toBeGreaterThanOrEqual(0);
       expect(archIdx).toBeGreaterThan(agentsIdx);
       expect(consumerIdx).toBeGreaterThan(archIdx);

@@ -38,12 +38,12 @@ section numbers. Inserting new sections never breaks links.
 
 ## Commands
 
-| Command                    | What it does                                                  |
-| :------------------------- | :------------------------------------------------------------ |
-| `pnpm test`                | Run vitest (1152 tests / 55 files / ~1.5s at time of writing). |
-| `pnpm test:watch`          | Vitest in watch mode.                                         |
-| `pnpm build:cli`           | Bundle the standalone `polystella` CLI to `dist/cli.js` via esbuild. The package exposes a single `polystella` binary with verb-style subcommands (`translate`, `check-ui`, `sync-ui`, `translate-ui`). |
-| `pnpm exec tsc --noEmit`   | Typecheck. The tsconfig has `noEmit: true`.                   |
+| Command                  | What it does                                                                                                                                                                                            |
+| :----------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `pnpm test`              | Run vitest (1152 tests / 55 files / ~1.5s at time of writing).                                                                                                                                          |
+| `pnpm test:watch`        | Vitest in watch mode.                                                                                                                                                                                   |
+| `pnpm build:cli`         | Bundle the standalone `polystella` CLI to `dist/cli.js` via esbuild. The package exposes a single `polystella` binary with verb-style subcommands (`translate`, `check-ui`, `sync-ui`, `translate-ui`). |
+| `pnpm exec tsc --noEmit` | Typecheck. The tsconfig has `noEmit: true`.                                                                                                                                                             |
 
 No lint step yet. Biome adoption planned for the post-split phase.
 
@@ -56,20 +56,20 @@ No lint step yet. Biome adoption planned for the post-split phase.
 
 Task → entry-point file(s) → key contract → deep-dive link.
 
-| Task                                  | Entry point                                                                            | Contract                                  | See                                            |
-| :------------------------------------ | :------------------------------------------------------------------------------------- | :---------------------------------------- | :--------------------------------------------- |
-| Add a file-format adapter             | `src/parsing/adapters/<name>.ts`; register in `src/parsing/registry.ts`                | `FileTypeAdapter` in `src/parsing/adapter.ts` | [#adapter-contract](./ARCHITECTURE.md#adapter-contract); recipe in [contributor SKILL](./skills/polystella-contributor/SKILL.md#add-adapter) |
-| Add a CLI subcommand                  | Handler in `src/cli/<name>.ts`; register in `src/cli.ts` (`parseSubcommand` + switch)  | Argv parser + `run<Name>(args, deps)`     | Recipe in [contributor SKILL](./skills/polystella-contributor/SKILL.md#add-cli-subcommand) |
-| Add a translation provider            | New branch in `createTranslator` (`src/translation/provider.ts`)                        | `Translator` interface; permanent vs retriable error classification | [#translator-contract](./ARCHITECTURE.md#translator-contract); recipe in [contributor SKILL](./skills/polystella-contributor/SKILL.md#add-provider) |
-| Change cache key formula              | `src/storage/hash.ts`                                                                  | **Invariant 1** — cache-wide invalidation | [#cache-key](./ARCHITECTURE.md#cache-key)      |
-| Edit translation batching             | `src/translation/batch.ts`, `src/translation/translate-segments.ts`                    | **Invariant 2** — `flat(groups) === segments` | [#translation-batching](./ARCHITECTURE.md#translation-batching) |
-| Modify cache/storage behaviour        | `src/storage/{cache,r2,prune,local-cache,report}.ts`                                   | Apply-before-PUT (**Invariant 3**); index isolation (**Invariant 4**) | [#cache-write-order](./ARCHITECTURE.md#cache-write-order), [#local-staging-index](./ARCHITECTURE.md#local-staging-index) |
-| Modify runtime APIs (entry/collection/href/middleware) | `src/runtime/*`                                                       | Bridge timing (**Invariant 5**); per-locale closures | [#runtime-bridge](./ARCHITECTURE.md#runtime-bridge) |
-| Modify routing shims                  | `src/routing/{shim,expand-routes,walk-pages}.ts`                                       | Stale shims nuked per build; CSS via `routesImports` | [#routing-shims](./ARCHITECTURE.md#routing-shims) |
-| Edit UI-string handling               | `src/i18n/*`, `src/cli/{check,sync,translate}-ui.ts`                                   | Three drift modes; layout-aware writer; `{{token}}` preservation | [#ui-strings](./ARCHITECTURE.md#ui-strings) |
-| Edit content-collection wiring        | `src/content/*`                                                                        | Sibling collections; custom-loader wrapper; bridge timing | [#runtime-bridge](./ARCHITECTURE.md#runtime-bridge) |
-| Debug a translation that's wrong      | Start: `pnpm translate --dry-run` to inspect planned R2 keys; `LOG_LEVEL=debug` for batch detail | —                                  | Recipe in [contributor SKILL](./skills/polystella-contributor/SKILL.md#debug-translation) |
-| Tune cold-cache build performance     | `r2.bulkListOnStart`, `concurrency`, `batchInputTokenBudget` knobs                     | —                                         | [#bulk-prelist](./ARCHITECTURE.md#bulk-prelist), [#translation-batching](./ARCHITECTURE.md#translation-batching) |
+| Task                                                   | Entry point                                                                                      | Contract                                                              | See                                                                                                                                                 |
+| :----------------------------------------------------- | :----------------------------------------------------------------------------------------------- | :-------------------------------------------------------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Add a file-format adapter                              | `src/parsing/adapters/<name>.ts`; register in `src/parsing/registry.ts`                          | `FileTypeAdapter` in `src/parsing/adapter.ts`                         | [#adapter-contract](./ARCHITECTURE.md#adapter-contract); recipe in [contributor SKILL](./skills/polystella-contributor/SKILL.md#add-adapter)        |
+| Add a CLI subcommand                                   | Handler in `src/cli/<name>.ts`; register in `src/cli.ts` (`parseSubcommand` + switch)            | Argv parser + `run<Name>(args, deps)`                                 | Recipe in [contributor SKILL](./skills/polystella-contributor/SKILL.md#add-cli-subcommand)                                                          |
+| Add a translation provider                             | New branch in `createTranslator` (`src/translation/provider.ts`)                                 | `Translator` interface; permanent vs retriable error classification   | [#translator-contract](./ARCHITECTURE.md#translator-contract); recipe in [contributor SKILL](./skills/polystella-contributor/SKILL.md#add-provider) |
+| Change cache key formula                               | `src/storage/hash.ts`                                                                            | **Invariant 1** — cache-wide invalidation                             | [#cache-key](./ARCHITECTURE.md#cache-key)                                                                                                           |
+| Edit translation batching                              | `src/translation/batch.ts`, `src/translation/translate-segments.ts`                              | **Invariant 2** — `flat(groups) === segments`                         | [#translation-batching](./ARCHITECTURE.md#translation-batching)                                                                                     |
+| Modify cache/storage behaviour                         | `src/storage/{cache,r2,prune,local-cache,report}.ts`                                             | Apply-before-PUT (**Invariant 3**); index isolation (**Invariant 4**) | [#cache-write-order](./ARCHITECTURE.md#cache-write-order), [#local-staging-index](./ARCHITECTURE.md#local-staging-index)                            |
+| Modify runtime APIs (entry/collection/href/middleware) | `src/runtime/*`                                                                                  | Bridge timing (**Invariant 5**); per-locale closures                  | [#runtime-bridge](./ARCHITECTURE.md#runtime-bridge)                                                                                                 |
+| Modify routing shims                                   | `src/routing/{shim,expand-routes,walk-pages}.ts`                                                 | Stale shims nuked per build; CSS via `routesImports`                  | [#routing-shims](./ARCHITECTURE.md#routing-shims)                                                                                                   |
+| Edit UI-string handling                                | `src/i18n/*`, `src/cli/{check,sync,translate}-ui.ts`                                             | Three drift modes; layout-aware writer; `{{token}}` preservation      | [#ui-strings](./ARCHITECTURE.md#ui-strings)                                                                                                         |
+| Edit content-collection wiring                         | `src/content/*`                                                                                  | Sibling collections; custom-loader wrapper; bridge timing             | [#runtime-bridge](./ARCHITECTURE.md#runtime-bridge)                                                                                                 |
+| Debug a translation that's wrong                       | Start: `pnpm translate --dry-run` to inspect planned R2 keys; `LOG_LEVEL=debug` for batch detail | —                                                                     | Recipe in [contributor SKILL](./skills/polystella-contributor/SKILL.md#debug-translation)                                                           |
+| Tune cold-cache build performance                      | `r2.bulkListOnStart`, `concurrency`, `batchInputTokenBudget` knobs                               | —                                                                     | [#bulk-prelist](./ARCHITECTURE.md#bulk-prelist), [#translation-batching](./ARCHITECTURE.md#translation-batching)                                    |
 
 If your task isn't on this list, the answer is in `src/<area>/`
 matching one of the subsystem sections in
@@ -301,22 +301,22 @@ Two entry points share `runTranslationPass` in `src/translation/run.ts`:
 
 <a id="glossary"></a>
 
-| Term | Meaning |
-| :--- | :--- |
-| **Adapter** | A `FileTypeAdapter` implementation owning one file format (markdown, TOML, JSON, YAML). Parses, extracts segments, applies translations. See [adapter contract](#adapter-contract). |
-| **Segment** | The atomic translatable unit emitted by `adapter.extractSegments`. Has a stable per-file ID (`body:N`, `fm:key`, `fm:key[i]`, or a dotted key path). |
-| **Group** | An ordered list of segments inside one section (e.g. all paragraphs under one heading). Produced by `adapter.groupSegments`; the batcher packs groups into batches under a token budget. |
-| **Batch** | One prompt round-trip's worth of segments. Produced by `packGroupsIntoBatches`. Each batch carries its own document-context block. |
-| **Marker** | The AI-translation flag (e.g. `aiTranslated: true`) injected into output bytes by `adapter.applyTranslations` before the R2 PUT. Cache hits return the marker verbatim. |
-| **Stage** | The act of writing translated bytes to `<root>/.astro/i18n-staging/<locale>/<sourcePath>`. Astro's content layer reads from here. |
-| **Shim** | A generated `.astro` file under `<cacheDir>/polystella-shims/` that imports a source page and re-renders it under a locale-prefixed pattern. |
-| **Override** | A hand-translated file at `i18n/overrides/<locale>/<mirrored-path>` that wins over AI output verbatim. Goes through URL rewriting but never written to R2. |
-| **Drift** | A non-default-locale UI-string JSON disagreeing with the default-locale source: missing keys, extra keys, or `""` placeholders where the source is non-empty. |
-| **Miss path** | The code branch in the cache layer when an R2 GET returns nothing. Triggers translator + apply + PUT. |
-| **Live phase / live run** | A run that actually translates (provider configured, `dryRun: false`). The pipeline only walks sources once in this mode. |
-| **Bridge** | `src/runtime/custom-loader-runtime.ts` — the module-scoped singleton holding live JS objects (R2 client, translators, glossaries) shared between `astro:config:setup` and the sibling content collections registered at content-sync time. |
-| **Sibling collection** | A per-locale content collection (`publications__pt-BR`, etc.) auto-registered by `polystellaCollections` alongside the user's source collection. |
-| **Branch dispatch** | The three-mode R2 prefix selection (local / CI main / CI preview) driven by `WORKERS_CI_BRANCH` and `POLYSTELLA_CLI`. See [R2 dispatch](#r2-dispatch). |
+| Term                      | Meaning                                                                                                                                                                                                                                    |
+| :------------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Adapter**               | A `FileTypeAdapter` implementation owning one file format (markdown, TOML, JSON, YAML). Parses, extracts segments, applies translations. See [adapter contract](#adapter-contract).                                                        |
+| **Segment**               | The atomic translatable unit emitted by `adapter.extractSegments`. Has a stable per-file ID (`body:N`, `fm:key`, `fm:key[i]`, or a dotted key path).                                                                                       |
+| **Group**                 | An ordered list of segments inside one section (e.g. all paragraphs under one heading). Produced by `adapter.groupSegments`; the batcher packs groups into batches under a token budget.                                                   |
+| **Batch**                 | One prompt round-trip's worth of segments. Produced by `packGroupsIntoBatches`. Each batch carries its own document-context block.                                                                                                         |
+| **Marker**                | The AI-translation flag (e.g. `aiTranslated: true`) injected into output bytes by `adapter.applyTranslations` before the R2 PUT. Cache hits return the marker verbatim.                                                                    |
+| **Stage**                 | The act of writing translated bytes to `<root>/.astro/i18n-staging/<locale>/<sourcePath>`. Astro's content layer reads from here.                                                                                                          |
+| **Shim**                  | A generated `.astro` file under `<cacheDir>/polystella-shims/` that imports a source page and re-renders it under a locale-prefixed pattern.                                                                                               |
+| **Override**              | A hand-translated file at `i18n/overrides/<locale>/<mirrored-path>` that wins over AI output verbatim. Goes through URL rewriting but never written to R2.                                                                                 |
+| **Drift**                 | A non-default-locale UI-string JSON disagreeing with the default-locale source: missing keys, extra keys, or `""` placeholders where the source is non-empty.                                                                              |
+| **Miss path**             | The code branch in the cache layer when an R2 GET returns nothing. Triggers translator + apply + PUT.                                                                                                                                      |
+| **Live phase / live run** | A run that actually translates (provider configured, `dryRun: false`). The pipeline only walks sources once in this mode.                                                                                                                  |
+| **Bridge**                | `src/runtime/custom-loader-runtime.ts` — the module-scoped singleton holding live JS objects (R2 client, translators, glossaries) shared between `astro:config:setup` and the sibling content collections registered at content-sync time. |
+| **Sibling collection**    | A per-locale content collection (`publications__pt-BR`, etc.) auto-registered by `polystellaCollections` alongside the user's source collection.                                                                                           |
+| **Branch dispatch**       | The three-mode R2 prefix selection (local / CI main / CI preview) driven by `WORKERS_CI_BRANCH` and `POLYSTELLA_CLI`. See [R2 dispatch](#r2-dispatch).                                                                                     |
 
 ---
 
@@ -474,12 +474,12 @@ invalidation. Treat its stability as part of the public contract.
 
 Three logical writers, distinguished by env-var signals:
 
-| Mode             | Detection                                | `r2.prefix`                          | `r2.readFallbackPrefixes` | `r2.readOnly` | Behaviour                                                                                                                                     |
-| :--------------- | :--------------------------------------- | :----------------------------------- | :------------------------ | :------------ | :-------------------------------------------------------------------------------------------------------------------------------------------- |
-| Local build      | neither env var set                      | `i18n/`                              | _(none)_                  | `true`        | Reads main's cache; on miss, translates locally and stages without writing to R2. A developer's machine can never overwrite production data. |
-| CI build (main)  | `WORKERS_CI_BRANCH=main`                 | `i18n/`                              | _(none)_                  | `false`       | Production cache; the sole writer of `i18n/`.                                                                                                 |
-| CI build (other) | `WORKERS_CI_BRANCH=<other>`              | `previews/<sanitized-branch>/i18n/`  | `["i18n/"]`               | `false`       | Preview cache; reads main's translations on miss, only writes its own variants under `previews/`.                                             |
-| Explicit CLI     | `POLYSTELLA_CLI=1` + branch-from-anywhere | as above (per resolved branch)      | as above                  | `false`       | `pnpm translate` writes to R2 per the branch's prefix. Branch resolution: `--branch` flag → `WORKERS_CI_BRANCH` env → `git rev-parse HEAD`.   |
+| Mode             | Detection                                 | `r2.prefix`                         | `r2.readFallbackPrefixes` | `r2.readOnly` | Behaviour                                                                                                                                    |
+| :--------------- | :---------------------------------------- | :---------------------------------- | :------------------------ | :------------ | :------------------------------------------------------------------------------------------------------------------------------------------- |
+| Local build      | neither env var set                       | `i18n/`                             | _(none)_                  | `true`        | Reads main's cache; on miss, translates locally and stages without writing to R2. A developer's machine can never overwrite production data. |
+| CI build (main)  | `WORKERS_CI_BRANCH=main`                  | `i18n/`                             | _(none)_                  | `false`       | Production cache; the sole writer of `i18n/`.                                                                                                |
+| CI build (other) | `WORKERS_CI_BRANCH=<other>`               | `previews/<sanitized-branch>/i18n/` | `["i18n/"]`               | `false`       | Preview cache; reads main's translations on miss, only writes its own variants under `previews/`.                                            |
+| Explicit CLI     | `POLYSTELLA_CLI=1` + branch-from-anywhere | as above (per resolved branch)      | as above                  | `false`       | `pnpm translate` writes to R2 per the branch's prefix. Branch resolution: `--branch` flag → `WORKERS_CI_BRANCH` env → `git rev-parse HEAD`.  |
 
 `readFallbackPrefixes` is the read-only consult list for cache misses
 against the primary `prefix`. First hit wins; bytes are returned
@@ -611,20 +611,20 @@ Abbreviated shape:
 
 ```ts
 interface FileTypeAdapter<TParsed = unknown> {
-  readonly extensions: readonly string[];                               // [".md", ".mdx"]
-  parse(source: string, sourcePath?: string): TParsed;                  // pure; throws on syntactic errors
-  extractSegments(parsed, source, opts): Segment[];                     // emit translatable units
-  applyTranslations(parsed, source, translations, opts): string;        // → output bytes (Invariant 3)
+  readonly extensions: readonly string[]; // [".md", ".mdx"]
+  parse(source: string, sourcePath?: string): TParsed; // pure; throws on syntactic errors
+  extractSegments(parsed, source, opts): Segment[]; // emit translatable units
+  applyTranslations(parsed, source, translations, opts): string; // → output bytes (Invariant 3)
   selectedValuesForHash(parsed, source, opts): Record<string, unknown>; // feeds the cache hash
-  peekNoTranslate(parsed): boolean;                                     // `noTranslate: true` opt-out
-  rewriteUrls?(bytes, opts): string;                                    // post-cache, idempotent
-  groupSegments?(parsed, segments): Segment[][];                        // for batching (Invariant 2)
-  documentContext?(parsed, opts): string | undefined;                   // per-batch system-prompt framing
+  peekNoTranslate(parsed): boolean; // `noTranslate: true` opt-out
+  rewriteUrls?(bytes, opts): string; // post-cache, idempotent
+  groupSegments?(parsed, segments): Segment[][]; // for batching (Invariant 2)
+  documentContext?(parsed, opts): string | undefined; // per-batch system-prompt framing
 }
 
 interface Segment {
-  id: string;     // body:N | fm:key | fm:key[i] | dotted.path
-  text: string;   // never empty
+  id: string; // body:N | fm:key | fm:key[i] | dotted.path
+  text: string; // never empty
 }
 ```
 
@@ -656,9 +656,8 @@ contract enforced by `src/translation/prompt.ts`.
 
 ```ts
 interface Translator {
-  readonly modelId: string;                                             // resolved per-locale; in cache key
-  translate(systemPrompt: string, userPrompt: string,
-            signal?: AbortSignal): Promise<string>;                     // raw text; caller parses
+  readonly modelId: string; // resolved per-locale; in cache key
+  translate(systemPrompt: string, userPrompt: string, signal?: AbortSignal): Promise<string>; // raw text; caller parses
 }
 ```
 
@@ -980,10 +979,7 @@ const i18n = {
 
 export default defineConfig({
   i18n,
-  integrations: [
-    sitemap(astroSitemapI18n(i18n, { hreflang: { en: "en-US" } })),
-    polystella(polystellaConfig),
-  ],
+  integrations: [sitemap(astroSitemapI18n(i18n, { hreflang: { en: "en-US" } })), polystella(polystellaConfig)],
 });
 ```
 
@@ -1016,8 +1012,8 @@ export default {
   // Per-locale model override (optional):
   // model: { default: "@cf/meta/...", "ja-JP": "@cf/qwen/..." },
 
-  glossaryDir: "i18n/glossary",        // YAML files: <locale>.yaml
-  overridesDir: "i18n/overrides",      // <locale>/<mirrored-path>
+  glossaryDir: "i18n/glossary", // YAML files: <locale>.yaml
+  overridesDir: "i18n/overrides", // <locale>/<mirrored-path>
 
   // Translatable frontmatter keys per source glob:
   frontmatter: {
@@ -1115,11 +1111,7 @@ const activePeople = await getLocalizedCollection(
 Outside `.astro` (utility scripts, getStaticPaths, React islands):
 
 ```ts
-import {
-  getLocalizedEntry,
-  getLocalizedCollection,
-  localizedHref,
-} from "polystella/runtime";
+import { getLocalizedEntry, getLocalizedCollection, localizedHref } from "polystella/runtime";
 
 import { useTranslations, useLocalizedHref } from "polystella/react";
 import { getDictionary } from "polystella/i18n";
@@ -1129,12 +1121,12 @@ import { getDictionary } from "polystella/i18n";
 
 Three modes, dispatched automatically by `polystella.config.mjs`:
 
-| Mode               | Env signals                              | r2.prefix                            | Writes? |
-| :----------------- | :--------------------------------------- | :----------------------------------- | :------ |
-| Local build        | neither var set                          | `i18n/` (read-only against main)     | NO      |
-| CI build (main)    | `WORKERS_CI_BRANCH=main`                 | `i18n/`                              | YES     |
-| CI build (preview) | `WORKERS_CI_BRANCH=<other>`              | `previews/<branch>/i18n/` + fallback | YES (preview prefix only) |
-| Explicit CLI       | `POLYSTELLA_CLI=1` (set by `cli.ts`)     | per resolved branch                  | YES     |
+| Mode               | Env signals                          | r2.prefix                            | Writes?                   |
+| :----------------- | :----------------------------------- | :----------------------------------- | :------------------------ |
+| Local build        | neither var set                      | `i18n/` (read-only against main)     | NO                        |
+| CI build (main)    | `WORKERS_CI_BRANCH=main`             | `i18n/`                              | YES                       |
+| CI build (preview) | `WORKERS_CI_BRANCH=<other>`          | `previews/<branch>/i18n/` + fallback | YES (preview prefix only) |
+| Explicit CLI       | `POLYSTELLA_CLI=1` (set by `cli.ts`) | per resolved branch                  | YES                       |
 
 **Key mental model:** a developer's local `pnpm build` can NEVER overwrite production. To populate R2 from outside CI, use the explicit `polystella translate` CLI.
 
@@ -1152,7 +1144,7 @@ YAML file per locale at `<glossaryDir>/<locale>.yaml`:
 
 ```yaml
 - term: "Cloudflare"
-  translation: "Cloudflare"   # do-not-translate
+  translation: "Cloudflare" # do-not-translate
 - term: "edge computing"
   translation: "edge computing"
   notes: "Keep English; widely understood as a technical term in <locale>."
@@ -1235,14 +1227,14 @@ When a translation is wrong:
 
 ## Where to look
 
-| You want to             | Look at                                                                          |
-| :---------------------- | :------------------------------------------------------------------------------- |
-| Understand the system   | `node_modules/polystella/ARCHITECTURE.md`                                        |
-| See config schema       | `node_modules/polystella/src/config/options.ts`                                  |
-| See available exports   | `node_modules/polystella/package.json` (`exports` field)                         |
-| See CLI flags           | `polystella --help`, `polystella <subcommand> --help`                            |
-| Debug a translation     | `dist/i18n-r2-report.json`, `<root>/.astro/i18n-staging/<locale>/...`           |
-| File an issue           | The package's GitHub repo (post-split: `cloudflare/polystella`)                  |
+| You want to           | Look at                                                               |
+| :-------------------- | :-------------------------------------------------------------------- |
+| Understand the system | `node_modules/polystella/ARCHITECTURE.md`                             |
+| See config schema     | `node_modules/polystella/src/config/options.ts`                       |
+| See available exports | `node_modules/polystella/package.json` (`exports` field)              |
+| See CLI flags         | `polystella --help`, `polystella <subcommand> --help`                 |
+| Debug a translation   | `dist/i18n-r2-report.json`, `<root>/.astro/i18n-staging/<locale>/...` |
+| File an issue         | The package's GitHub repo (post-split: `cloudflare/polystella`)       |
 
 <!-- END skills/polystella-consumer/SKILL.md -->
 
@@ -1264,6 +1256,7 @@ If you are integrating PolyStella into a downstream Astro project,
 STOP and load `polystella-consumer` instead.
 
 Read first:
+
 - [`AGENTS.md`](../../AGENTS.md) — orientation, invariants, boundaries.
 - [`ARCHITECTURE.md`](../../ARCHITECTURE.md) — subsystem reference.
 
@@ -1394,16 +1387,16 @@ Then come back here for step-by-step task recipes.
    }
 
    export const MY_SUBCOMMAND_USAGE = `polystella my-subcommand
-
+   
    <description>
-
+   
    Usage:
      polystella my-subcommand [flags]
-
+   
    Flags:
      --some-flag <value>   ...
      --help                Print this message.
-
+   
    Exit codes:
      0   ok
      1   config error
@@ -1422,16 +1415,12 @@ Then come back here for step-by-step task recipes.
      // Add fakeable I/O / clock / etc. for tests.
    }
 
-   export async function runMySubcommand(
-     args: MySubcommandArgs,
-     deps: MySubcommandDeps,
-   ): Promise<number> {
+   export async function runMySubcommand(args: MySubcommandArgs, deps: MySubcommandDeps): Promise<number> {
      // Return process exit code.
    }
    ```
 
 2. Wire dispatch in `src/cli.ts`:
-
    - Add to the `Subcommand` union type.
    - Add the literal to `parseSubcommand`'s `if (first === "translate" || ...)` check.
    - Add a case to `main()`'s switch statement.
@@ -1470,17 +1459,13 @@ Then come back here for step-by-step task recipes.
    const newProviderSchema = z.object({
      kind: z.literal("new-provider"),
      apiKey: z.string(),
-     model: modelSpecSchema,   // string | per-locale map
+     model: modelSpecSchema, // string | per-locale map
      maxTokens: z.number().int().positive().default(8192),
      endpoint: z.string().url().optional(),
    });
 
    // Add to the discriminated union:
-   const providerSchema = z.discriminatedUnion("kind", [
-     workersAISchema,
-     anthropicSchema,
-     newProviderSchema,
-   ]);
+   const providerSchema = z.discriminatedUnion("kind", [workersAISchema, anthropicSchema, newProviderSchema]);
    ```
 
 2. Implement the translator factory in `src/translation/provider.ts`:
@@ -1562,7 +1547,6 @@ Then come back here for step-by-step task recipes.
 2. **Stop.** Coordinate with the owner before merging. This is **Invariant 1** in `AGENTS.md`. The change needs to be in a major version bump and called out in CHANGELOG.
 
 3. If you're confident this is the right change:
-
    - Edit `src/storage/hash.ts` (the `computeSourceHash` function).
    - Update the formula description in `ARCHITECTURE.md#cache-key`.
    - Update `AGENTS.md` Invariant #1.
@@ -1715,7 +1699,7 @@ Indexed access returns `T | undefined`. Patterns:
 ```ts
 // ❌ Old:
 const first = arr[0];
-first.foo;  // type error: first might be undefined
+first.foo; // type error: first might be undefined
 
 // ✅ Guard:
 const first = arr[0];
@@ -1732,13 +1716,17 @@ const [first = defaultValue] = arr;
 
 ```ts
 // ❌ Old:
-interface Opts { signal?: AbortSignal }
+interface Opts {
+  signal?: AbortSignal;
+}
 function foo(opts: { signal?: AbortSignal }) {
-  inner({ signal: opts.signal });  // type error: opts.signal might be `undefined` literal
+  inner({ signal: opts.signal }); // type error: opts.signal might be `undefined` literal
 }
 
 // ✅ When the callee accepts explicit `undefined`:
-interface Opts { signal?: AbortSignal | undefined }
+interface Opts {
+  signal?: AbortSignal | undefined;
+}
 ```
 
 ### `noImplicitReturns`
@@ -1747,7 +1735,10 @@ Every code path returns. Add explicit `return` to early-exit branches:
 
 ```ts
 function foo(): number {
-  if (cond) { sideEffect(); return 0; }  // explicit return
+  if (cond) {
+    sideEffect();
+    return 0;
+  } // explicit return
   return 1;
 }
 ```

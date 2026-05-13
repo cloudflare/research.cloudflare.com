@@ -43,14 +43,20 @@
     "src",
     "components",
     "dist",
-    "client.d.ts"
+    "client.d.ts",
+    "AGENTS.md",
+    "ARCHITECTURE.md",
+    "README.md",
+    "llms.txt",
+    "llms-full.txt",
+    "skills"
   ],
   "scripts": {
     "test": "vitest run",
     "test:watch": "vitest",
     "build:cli": "esbuild src/cli.ts --bundle --platform=node --format=esm --outfile=dist/cli.js --packages=external --sourcemap=linked",
     "build:llms": "node scripts/build-llms-full.mjs",
-    "prepublishOnly": "pnpm build:cli"
+    "prepublishOnly": "pnpm build:cli && pnpm build:llms"
   },
   "dependencies": {
     "p-retry": "^8.0.0",
