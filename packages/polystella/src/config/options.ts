@@ -9,11 +9,14 @@ import { z } from "astro/zod";
  */
 
 const r2OptionsSchema = z.object({
-  accountId: z.string().min(1, "r2.accountId is required"),
-  bucket: z.string().min(1, "r2.bucket is required"),
-  prefix: z.string().default("i18n/"),
-  accessKeyId: z.string().min(1, "r2.accessKeyId is required"),
-  secretAccessKey: z.string().min(1, "r2.secretAccessKey is required"),
+  accountId: z.string().min(1, "r2.accountId is required").describe("Cloudflare account ID owning the R2 bucket."),
+  bucket: z.string().min(1, "r2.bucket is required").describe("R2 bucket name where cached translations are stored."),
+  prefix: z
+    .string()
+    .default("i18n/")
+    .describe("Key prefix inside the bucket. Must end with `/`. Used to isolate branches via `previews/<branch>/i18n/`."),
+  accessKeyId: z.string().min(1, "r2.accessKeyId is required").describe("R2 access key id (S3-compatible credential)."),
+  secretAccessKey: z.string().min(1, "r2.secretAccessKey is required").describe("R2 secret access key (S3-compatible credential)."),
   endpoint: z
     .string()
     .url()
@@ -24,19 +27,32 @@ const r2OptionsSchema = z.object({
    * and `readFallbackPrefixes` still happen. Canonical use: preview-
    * branch builds that read main's translations but don't write back.
    */
-  readOnly: z.boolean().default(false),
+  readOnly: z
+    .boolean()
+    .default(false)
+    .describe(
+      "Skip PUTs and the post-translation prune; GETs still happen. Canonical use: preview builds that consume main's cache without writing back.",
+    ),
   /**
    * Additional prefixes consulted on cache miss. First hit wins.
    * Bytes are returned verbatim — NOT promoted into the primary
    * prefix. Each entry MUST end with `/`. Used for branch isolation
    * (e.g. `previews/<branch>/i18n/` + `readFallbackPrefixes: ["i18n/"]`).
    */
-  readFallbackPrefixes: z.array(z.string()).default([]),
+  readFallbackPrefixes: z
+    .array(z.string())
+    .default([])
+    .describe(
+      "Additional prefixes consulted on cache miss. First hit wins; bytes are NOT promoted into the primary prefix. Each entry must end with `/`.",
+    ),
   /**
    * Per (locale, sourcePath), keep only N most-recent hash variants.
    * `false` disables pruning.
    */
-  keepLastN: z.union([z.number().int().positive(), z.literal(false)]).default(5),
+  keepLastN: z
+    .union([z.number().int().positive(), z.literal(false)])
+    .default(5)
+    .describe("Per (locale, sourcePath), keep only N most-recent hash variants. `false` disables pruning."),
   /**
    * Pre-list every cache key per locale at the start of the live
    * phase. The per-pair "is it cached?" check then becomes an
@@ -45,25 +61,41 @@ const r2OptionsSchema = z.object({
    * production case). Set `false` for very large caches (10k+ keys
    * per locale) where the upfront list cost dominates.
    */
-  bulkListOnStart: z.boolean().default(true),
+  bulkListOnStart: z
+    .boolean()
+    .default(true)
+    .describe(
+      "Pre-list every cache key per locale at the start of the live phase, turning per-pair cache checks into in-memory lookups. Disable for caches with 10k+ keys per locale where the list cost dominates.",
+    ),
 });
 
 const workersAiProviderSchema = z.object({
-  kind: z.literal("workers-ai"),
-  accountId: z.string().min(1, "provider.accountId is required"),
-  apiToken: z.string().min(1, "provider.apiToken is required"),
-  endpoint: z.string().url().optional(),
+  kind: z.literal("workers-ai").describe("Discriminator selecting the Workers AI provider."),
+  accountId: z.string().min(1, "provider.accountId is required").describe("Cloudflare account ID that owns the Workers AI usage."),
+  apiToken: z.string().min(1, "provider.apiToken is required").describe("Workers AI API token with model-run scope."),
+  endpoint: z.string().url().optional().describe("Override the default Workers AI endpoint. Useful for AI Gateway proxies or testing."),
   /**
    * Single model id or per-locale map with a `default` key. Model id
    * is part of the cache key — changing it invalidates that locale's
    * cached translations.
    */
-  model: z.union([z.string().min(1), z.object({ default: z.string().min(1) }).catchall(z.string().min(1))]),
+  model: z
+    .union([z.string().min(1), z.object({ default: z.string().min(1) }).catchall(z.string().min(1))])
+    .describe(
+      "Single model id (e.g. `@cf/meta/llama-3.1-8b-instruct`) or per-locale map with a `default` key. Model id is part of the cache key.",
+    ),
   /**
    * Max output tokens. Workers AI's default ceiling (~256) truncates
    * multi-segment translations. 8192 fits under llama-3.1-8b's cap.
    */
-  maxTokens: z.number().int().positive().default(8192),
+  maxTokens: z
+    .number()
+    .int()
+    .positive()
+    .default(8192)
+    .describe(
+      "Max output tokens per call. The Workers AI default (~256) truncates multi-segment translations; 8192 fits under llama-3.1-8b's cap.",
+    ),
   /**
    * Soft cap on per-batch input tokens. The translation pipeline
    * packs adapter-grouped segments (see `markdownAdapter.groupSegments`)
@@ -72,21 +104,35 @@ const workersAiProviderSchema = z.object({
    * own document-context block. Provider-agnostic — sits here for
    * proximity to `maxTokens`. See ARCHITECTURE.md §17.
    */
-  batchInputTokenBudget: z.number().int().positive().default(4000),
+  batchInputTokenBudget: z
+    .number()
+    .int()
+    .positive()
+    .default(4000)
+    .describe("Soft cap on per-batch input tokens. The pipeline packs adapter-grouped segments into batches that fit under this budget."),
 });
 
 const anthropicProviderSchema = z.object({
-  kind: z.literal("anthropic"),
-  apiKey: z.string().min(1, "provider.apiKey is required"),
-  model: z.union([z.string().min(1), z.object({ default: z.string().min(1) }).catchall(z.string().min(1))]),
+  kind: z.literal("anthropic").describe("Discriminator selecting the Anthropic provider."),
+  apiKey: z.string().min(1, "provider.apiKey is required").describe("Anthropic API key."),
+  model: z
+    .union([z.string().min(1), z.object({ default: z.string().min(1) }).catchall(z.string().min(1))])
+    .describe(
+      "Single model id (e.g. `claude-3-5-sonnet-latest`) or per-locale map with a `default` key. Model id is part of the cache key.",
+    ),
   /** Max output tokens per call. */
-  maxTokens: z.number().int().positive().default(8192),
+  maxTokens: z.number().int().positive().default(8192).describe("Max output tokens per call."),
   /**
    * Soft cap on per-batch input tokens. See `workersAiProviderSchema`
    * for the rationale; the field is provider-agnostic and lives on
    * both branches of the discriminated union.
    */
-  batchInputTokenBudget: z.number().int().positive().default(4000),
+  batchInputTokenBudget: z
+    .number()
+    .int()
+    .positive()
+    .default(4000)
+    .describe("Soft cap on per-batch input tokens. See the Workers AI provider's identical field for the rationale."),
 });
 
 const providerSchema = z.discriminatedUnion("kind", [workersAiProviderSchema, anthropicProviderSchema]);
@@ -116,9 +162,12 @@ export const polystellaOptionsSchema = z
   .object({
     // Locales: NOT here, derived from Astro's `config.i18n`.
 
-    sourceDir: z.string().default("./content"),
-    include: z.array(z.string()).default(["**/*.md", "**/*.mdx"]),
-    exclude: z.array(z.string()).default([]),
+    sourceDir: z.string().default("./content").describe("Project-relative path to the content root the walker scans."),
+    include: z
+      .array(z.string())
+      .default(["**/*.md", "**/*.mdx"])
+      .describe("Glob patterns (relative to `sourceDir`) for files the pipeline picks up."),
+    exclude: z.array(z.string()).default([]).describe("Glob patterns to skip even when they match `include`."),
 
     /**
      * Per-format config. Each format has the same shape:
@@ -142,8 +191,14 @@ export const polystellaOptionsSchema = z
      */
     markdown: z
       .object({
-        keys: z.record(z.string(), z.array(z.string())).default({}),
-        urls: z.record(z.string(), z.array(z.string())).default({}),
+        keys: z
+          .record(z.string(), z.array(z.string()))
+          .default({})
+          .describe("Per-glob → frontmatter keys to translate. Body inline text is automatic."),
+        urls: z
+          .record(z.string(), z.array(z.string()))
+          .default({})
+          .describe("Per-glob → frontmatter URL keys that should be locale-prefixed at staging."),
         /**
          * Per-glob → frontmatter keys whose source-language VALUES
          * feed the per-batch DOCUMENT CONTEXT block (title, excerpt,
@@ -159,34 +214,52 @@ export const polystellaOptionsSchema = z
          * body-edit turnover re-translates them. See ARCHITECTURE.md
          * §17 for the rationale.
          */
-        contextKeys: z.record(z.string(), z.array(z.string())).default({}),
+        contextKeys: z
+          .record(z.string(), z.array(z.string()))
+          .default({})
+          .describe(
+            "Per-glob → frontmatter keys whose source-language values feed the per-batch document-context block. Untranslated. NOT in the cache-key hash.",
+          ),
       })
       .strict()
-      .default({ keys: {}, urls: {}, contextKeys: {} }),
+      .default({ keys: {}, urls: {}, contextKeys: {} })
+      .describe("Markdown / MDX adapter configuration."),
 
     toml: z
       .object({
-        keys: z.record(z.string(), z.array(z.string())).default({}),
-        urls: z.record(z.string(), z.array(z.string())).default({}),
+        keys: z.record(z.string(), z.array(z.string())).default({}).describe("Per-glob → dotted key-paths to translate."),
+        urls: z
+          .record(z.string(), z.array(z.string()))
+          .default({})
+          .describe("Per-glob → dotted key-paths of URL fields that should be locale-prefixed."),
       })
       .strict()
-      .default({ keys: {}, urls: {} }),
+      .default({ keys: {}, urls: {} })
+      .describe("TOML adapter configuration."),
 
     json: z
       .object({
-        keys: z.record(z.string(), z.array(z.string())).default({}),
-        urls: z.record(z.string(), z.array(z.string())).default({}),
+        keys: z.record(z.string(), z.array(z.string())).default({}).describe("Per-glob → dotted key-paths to translate."),
+        urls: z
+          .record(z.string(), z.array(z.string()))
+          .default({})
+          .describe("Per-glob → dotted key-paths of URL fields that should be locale-prefixed."),
       })
       .strict()
-      .default({ keys: {}, urls: {} }),
+      .default({ keys: {}, urls: {} })
+      .describe("JSON adapter configuration."),
 
     yaml: z
       .object({
-        keys: z.record(z.string(), z.array(z.string())).default({}),
-        urls: z.record(z.string(), z.array(z.string())).default({}),
+        keys: z.record(z.string(), z.array(z.string())).default({}).describe("Per-glob → dotted key-paths to translate."),
+        urls: z
+          .record(z.string(), z.array(z.string()))
+          .default({})
+          .describe("Per-glob → dotted key-paths of URL fields that should be locale-prefixed."),
       })
       .strict()
-      .default({ keys: {}, urls: {} }),
+      .default({ keys: {}, urls: {} })
+      .describe("YAML adapter configuration."),
 
     /**
      * Internal URL paths the link rewriter leaves unprefixed. Globs
@@ -195,7 +268,10 @@ export const polystellaOptionsSchema = z
      *
      * Example: `noPrefixUrls: ["/api-docs", "/api-docs/**", "/legal/*"]`
      */
-    noPrefixUrls: z.array(z.string()).default([]),
+    noPrefixUrls: z
+      .array(z.string())
+      .default([])
+      .describe("Internal URL paths the link rewriter leaves unprefixed. Picomatch globs match against the path portion."),
 
     /**
      * Source pages to inject locale-prefixed shims for. Each entry
@@ -227,6 +303,9 @@ export const polystellaOptionsSchema = z
         arr.map((entry) =>
           typeof entry === "string" ? { source: entry, imports: [] as string[] } : { source: entry.source, imports: entry.imports ?? [] },
         ),
+      )
+      .describe(
+        "Source pages to inject locale-prefixed shims for. Each entry is a `string` or `{ source, imports }`; `imports` are extra modules (typically CSS) threaded into the shim's frontmatter.",
       ),
     /**
      * Imports threaded into EVERY shim's frontmatter, in addition to
@@ -234,14 +313,32 @@ export const polystellaOptionsSchema = z
      * that's needed across the entire shim-routed surface — typically
      * a single global stylesheet.
      */
-    routesImports: z.array(z.string()).default([]),
-    noTranslateBehavior: z.enum(["fallback", "404"]).default("fallback"),
-    rewriteInternalLinks: z.boolean().default(true),
+    routesImports: z
+      .array(z.string())
+      .default([])
+      .describe(
+        "Imports threaded into every shim's frontmatter, in addition to per-route `imports`. Typically a single global stylesheet.",
+      ),
+    noTranslateBehavior: z
+      .enum(["fallback", "404"])
+      .default("fallback")
+      .describe("Per-entry `noTranslate: true` policy. `fallback` returns source content tagged as default-locale; `404` drops the entry."),
+    rewriteInternalLinks: z
+      .boolean()
+      .default(true)
+      .describe("Whether to locale-prefix internal links during staging. Disable to leave links untouched (rare)."),
 
-    r2: r2OptionsSchema.optional(),
-    provider: providerSchema.optional(),
-    glossary: glossarySchema.optional(),
-    overridesDir: z.string().default("./i18n/overrides"),
+    r2: r2OptionsSchema.optional().describe("Cloudflare R2 cache configuration. Omit to run without caching."),
+    provider: providerSchema.optional().describe("AI translator provider. Omit for dry-run / parse-only workflows."),
+    glossary: glossarySchema
+      .optional()
+      .describe("Per-locale glossary. Either `{ file: 'path/{locale}.yaml' }` or `{ inline: { locale: { ... } } }`."),
+    overridesDir: z
+      .string()
+      .default("./i18n/overrides")
+      .describe(
+        "Project-relative directory where hand-translated overrides live. Drop files at `<overridesDir>/<locale>/<mirrored-source-path>`.",
+      ),
 
     /**
      * Optional site-/domain-specific guidance appended to the generic
@@ -255,7 +352,8 @@ export const polystellaOptionsSchema = z
           .optional()
           .describe("Site-/domain-specific guidance appended to the default 'You are a professional translator.' opener."),
       })
-      .default({}),
+      .default({})
+      .describe("Prompt-tuning hooks for the translator."),
 
     /**
      * `debug.previewDir`, when set, writes a copy of each translated
@@ -264,12 +362,21 @@ export const polystellaOptionsSchema = z
      */
     debug: z
       .object({
-        previewDir: z.string().optional(),
+        previewDir: z
+          .string()
+          .optional()
+          .describe(
+            "When set, writes a copy of each translated file under `<previewDir>/<locale>/<source>` for human inspection. Ephemeral.",
+          ),
       })
-      .default({}),
+      .default({})
+      .describe("Debug-only knobs. None of these affect production builds."),
 
-    fallback: z.enum(["default-locale", "skip"]).default("default-locale"),
-    concurrency: z.number().int().positive().default(4),
+    fallback: z
+      .enum(["default-locale", "skip"])
+      .default("default-locale")
+      .describe("Cross-locale miss policy for entries without `noTranslate`. `default-locale` returns source as fallback; `skip` 404s."),
+    concurrency: z.number().int().positive().default(4).describe("Max parallel (file, locale) pair workers."),
     /**
      * Retry attempts on transient translator failures (malformed
      * model responses, provider throws). Each retry re-issues the
@@ -278,9 +385,20 @@ export const polystellaOptionsSchema = z
      * Network-layer retries (5xx, ECONNRESET) live below the HTTP
      * client and are out of scope here.
      */
-    maxRetries: z.number().int().min(0).default(2),
-    dryRun: z.boolean().default(false),
-    runOn: z.array(z.enum(["build", "dev"])).default(["build"]),
+    maxRetries: z
+      .number()
+      .int()
+      .min(0)
+      .default(2)
+      .describe("Retry attempts on transient translator failures. `0` disables retries; default 2 allows up to 3 attempts."),
+    dryRun: z
+      .boolean()
+      .default(false)
+      .describe("Skip provider calls and R2 writes; just log planned work. Same effect as the CLI `--dry-run` flag."),
+    runOn: z
+      .array(z.enum(["build", "dev"]))
+      .default(["build"])
+      .describe("Astro commands the translation pipeline runs under. Default `['build']` skips `astro dev`."),
     // `auto` and `"standalone"` are equivalent today. `"starlight"`
     // is rejected at parse time — planned for a later milestone.
     mode: z
@@ -293,16 +411,24 @@ export const polystellaOptionsSchema = z
             message: 'mode: "starlight" is not yet supported. Use "standalone" or omit `mode` for the default "auto".',
           });
         }
-      }),
-    /** Log one line per (file, locale) pair. Off by default. */
-    verbose: z.boolean().default(false),
+      })
+      .describe("Integration mode. `auto` and `standalone` are equivalent today; `starlight` is planned but not yet supported."),
+    verbose: z
+      .boolean()
+      .default(false)
+      .describe("Log one line per (file, locale) pair. Off by default; the closing summary and failures still log."),
 
     /**
      * Auto-register the polystella request middleware. `false`
      * disables auto-registration so you can compose manually via
      * `sequence(...)`. Factory exported as `polystellaMiddleware`.
      */
-    middleware: z.boolean().default(true),
+    middleware: z
+      .boolean()
+      .default(true)
+      .describe(
+        "Auto-register the polystella request middleware. `false` disables auto-registration so you can compose manually via `sequence(...)`.",
+      ),
   })
   .strict();
 

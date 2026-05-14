@@ -30,7 +30,7 @@ i18n/.preview/
 # jetbrains setting folder
 .idea/
 
-docs/
-plans/
+/docs/
+/plans/
 
 i18n-r2-report.json

@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 40" width="240" height="40" role="img" aria-label="PolyStella">
+  <title>PolyStella</title>
+  <text
+    x="0"
+    y="28"
+    font-family="ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif"
+    font-size="24"
+    font-weight="700"
+    letter-spacing="-0.01em"
+    fill="currentColor"
+  >
+    <tspan>Poly</tspan><tspan fill="#f6821f">Stella</tspan>
+  </text>
+</svg>

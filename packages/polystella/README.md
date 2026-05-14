@@ -222,14 +222,16 @@ A developer's local build cannot overwrite production. Preview branches stay iso
 
 ## Public exports
 
-| Path                                       | Surface                                                                                   |
-| ------------------------------------------ | ----------------------------------------------------------------------------------------- |
-| `polystella`                               | The Astro integration default export.                                                     |
-| `polystella/content`                       | `polystellaCollections({ ... })`, `file()`, `polystellaLoader()` for `content.config.ts`. |
-| `polystella/runtime`                       | `getLocalizedEntry`, `getLocalizedCollection`, `localizedHref`, `polystellaMiddleware`.   |
-| `polystella/i18n`                          | `i18nLoader`, `i18nSchema`, `getTranslations`, `getDictionary`, drift helpers.            |
-| `polystella/react`                         | `useTranslations(dictionary)` for React islands.                                          |
-| `polystella/components/LocalePicker.astro` | Unstyled, accessible locale switcher.                                                     |
+| Path                                       | Surface                                                                                                    |
+| ------------------------------------------ | ---------------------------------------------------------------------------------------------------------- |
+| `polystella`                               | The Astro integration default export.                                                                      |
+| `polystella/content`                       | `polystellaCollections({ ... })`, `file()`, `polystellaLoader()` for `content.config.ts`.                  |
+| `polystella/runtime`                       | `getLocalizedEntry`, `getLocalizedCollection`, `localizedHref`, `polystellaMiddleware`.                    |
+| `polystella/runtime/middleware`            | Direct middleware entrypoint used by the integration's `addMiddleware` call. Rarely imported by consumers. |
+| `polystella/i18n`                          | `i18nLoader`, `i18nSchema`, `getTranslations`, `getDictionary`, drift helpers.                             |
+| `polystella/react`                         | `useTranslations(dictionary)`, `useLocalizedHref(locale)` for React islands.                               |
+| `polystella/client`                        | Types only. Reference from `src/env.d.ts` for virtual-module types. No runtime import.                     |
+| `polystella/components/LocalePicker.astro` | Unstyled, accessible locale switcher.                                                                      |
 
 ## Status
 

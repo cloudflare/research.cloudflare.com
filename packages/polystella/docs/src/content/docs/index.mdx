@@ -1,0 +1,44 @@
+---
+title: PolyStella
+description: AI-driven content localization for Astro — build-time markdown translation, R2-cached.
+template: splash
+hero:
+  tagline: AI-driven content localization for Astro. Build-time translation, R2-cached, no runtime AI calls.
+  actions:
+    - text: Get started
+      link: /getting-started/install/
+      icon: right-arrow
+      variant: primary
+    - text: View on GitHub
+      link: https://github.com/cloudflare/polystella
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from "@astrojs/starlight/components";
+
+<CardGrid stagger>
+  <Card title="Build-time translation" icon="rocket">
+    Translates `.md`, `.mdx`, and `.toml` content into additional locales during `astro build`. Visitors get static bytes; no runtime AI
+    calls.
+  </Card>
+  <Card title="R2-cached" icon="cloud-download">
+    Translations are content-addressed by source bytes + glossary + model. Unchanged pages cost zero on rebuild. Translations are never
+    committed to the repo.
+  </Card>
+  <Card title="Glossary control" icon="document">
+    A YAML file per locale pins do-not-translate terms, preferred translations, and free-form translator notes. Edits re-translate only the
+    pages that need it.
+  </Card>
+  <Card title="Hand-translation overrides" icon="pencil">
+    Drop a markdown file under `i18n/overrides/{locale}/...` and it wins over AI output verbatim. The pipeline still locale-prefixes its
+    internal links.
+  </Card>
+  <Card title="Locale-prefixed routing" icon="random">
+    Per-locale sibling content collections. Astro routes `/[lang]/...` through generated shims. `Astro.locals.t` and `Astro.locals.lhref`
+    work in templates.
+  </Card>
+  <Card title="UI-string maintenance" icon="setting">
+    Per-locale JSON files for chrome text. The CLI offers offline drift detection, key reconciliation, and AI-fill of empty placeholders.
+  </Card>
+</CardGrid>

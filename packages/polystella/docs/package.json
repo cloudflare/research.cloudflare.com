@@ -1,0 +1,29 @@
+{
+  "name": "polystella-docs",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Starlight-based documentation site for PolyStella.",
+  "scripts": {
+    "dev": "pnpm prebuild && astro dev",
+    "start": "pnpm prebuild && astro dev",
+    "build": "pnpm prebuild && astro check && astro build",
+    "preview": "astro preview",
+    "astro": "astro",
+    "check": "astro check",
+    "prebuild": "tsx scripts/generate-config-ref.ts",
+    "check-exports": "tsx scripts/check-exports.ts",
+    "check-examples": "tsx scripts/check-examples.ts"
+  },
+  "dependencies": {
+    "@astrojs/starlight": "^0.39.0",
+    "astro": "^6.0.0",
+    "sharp": "^0.34.0"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.9",
+    "@types/node": "^22.0.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  }
+}
