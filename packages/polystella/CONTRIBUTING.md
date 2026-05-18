@@ -33,15 +33,15 @@ Required:
 
 ## Commands
 
-| Command                                  | Purpose                                                            |
-| ---------------------------------------- | ------------------------------------------------------------------ |
-| `pnpm test`                              | Run the package's unit + smoke tests (vitest).                     |
-| `pnpm exec tsc --noEmit`                 | Typecheck the package.                                             |
-| `pnpm build:cli`                         | Build the standalone CLI bundle (`dist/cli.js`).                   |
-| `pnpm build:llms`                        | Regenerate `llms-full.txt` from canonical agent docs.              |
-| `pnpm --filter polystella-docs dev`      | Run the Starlight docs site locally.                               |
-| `pnpm --filter polystella-docs build`    | Build the docs site (includes auto-generated config reference).    |
-| `pnpm --filter polystella-docs check`    | Astro check over docs content.                                     |
+| Command                               | Purpose                                                         |
+| ------------------------------------- | --------------------------------------------------------------- |
+| `pnpm test`                           | Run the package's unit + smoke tests (vitest).                  |
+| `pnpm exec tsc --noEmit`              | Typecheck the package.                                          |
+| `pnpm build:cli`                      | Build the standalone CLI bundle (`dist/cli.js`).                |
+| `pnpm build:llms`                     | Regenerate `llms-full.txt` from canonical agent docs.           |
+| `pnpm --filter polystella-docs dev`   | Run the Starlight docs site locally.                            |
+| `pnpm --filter polystella-docs build` | Build the docs site (includes auto-generated config reference). |
+| `pnpm --filter polystella-docs check` | Astro check over docs content.                                  |
 
 ## Pull request workflow
 
@@ -87,7 +87,7 @@ Before adding to the public surface:
   unless your addition needs its own namespace, it should fit in
   one of them.
 - **Does it have a documentation page?** `pnpm
-  --filter polystella-docs check-exports` asserts every
+--filter polystella-docs check-exports` asserts every
   `exports` path is mentioned on `docs/src/content/docs/reference/exports.md`.
   CI fails if not.
 - **Does the schema reference need updating?** The
