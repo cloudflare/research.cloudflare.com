@@ -1,0 +1,14 @@
+# Post-split workspace layout: the polystella package at root + the
+# Starlight docs site under docs/.
+#
+# In the host monorepo (before the split), pnpm-workspace.yaml at
+# the monorepo root supersedes this file. This file becomes active
+# once `git filter-repo` lifts packages/polystella to the new repo's
+# root.
+packages:
+  - "."
+  - "docs"
+
+onlyBuiltDependencies:
+  - esbuild
+  - sharp

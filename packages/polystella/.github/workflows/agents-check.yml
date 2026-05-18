@@ -1,0 +1,31 @@
+name: AGENTS.md check
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  agents-md:
+    name: AGENTS.md exists at root
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Assert AGENTS.md presence
+        run: |
+          if [ ! -f AGENTS.md ]; then
+            echo "::error::AGENTS.md is required at the repo root (codex RFC 004)."
+            exit 1
+          fi
+          # Sanity check — empty AGENTS.md is just as useless as a missing one.
+          if [ ! -s AGENTS.md ]; then
+            echo "::error::AGENTS.md exists but is empty."
+            exit 1
+          fi
+          echo "AGENTS.md present ($(wc -l < AGENTS.md) lines)."

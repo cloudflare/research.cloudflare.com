@@ -1,0 +1,46 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+
+concurrency: ${{ github.workflow }}-${{ github.ref }}
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  release:
+    name: Release (Changesets)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          # Changesets needs full history to compute the next version.
+          fetch-depth: 0
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24.x
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test
+
+      - name: Create Release PR or publish tag
+        uses: changesets/action@v1
+        with:
+          # `version` runs `changeset version` to bump versions and
+          # update CHANGELOG.md, opening a "Version Packages" PR.
+          # When that PR merges, this step runs again with no pending
+          # changesets and `publish` fires.
+          version: pnpm exec changeset version
+          # Tags but does NOT npm publish — pre-1.0, GitHub-install
+          # only. Flip to `pnpm exec changeset publish` to add npm
+          # publish when ready (also needs an NPM_TOKEN secret).
+          publish: pnpm exec changeset tag
+          commit: "chore: version packages"
+          title: "chore: version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
