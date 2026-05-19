@@ -1,8 +1,5 @@
-packages:
-  - "packages/*"
-  - "packages/polystella/docs"
-
 onlyBuiltDependencies:
   - esbuild
+  - polystella
   - sharp
   - workerd

@@ -12,12 +12,12 @@
     "ui": "NODE_TLS_REJECT_UNAUTHORIZED=0 pnpm dlx shadcn@latest add",
     "format": "prettier --write .",
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
-    "translate": "tsx packages/polystella/src/cli.ts translate",
-    "translate:dry": "tsx packages/polystella/src/cli.ts translate --dry-run",
+    "translate": "polystella translate",
+    "translate:dry": "polystella translate --dry-run",
     "translate:build": "POLYSTELLA_TRANSLATE=1 pnpm build",
-    "i18n:check": "tsx packages/polystella/src/cli.ts check-ui",
-    "i18n:sync": "tsx packages/polystella/src/cli.ts sync-ui",
-    "i18n:translate": "tsx packages/polystella/src/cli.ts translate-ui"
+    "i18n:check": "polystella check-ui",
+    "i18n:sync": "polystella sync-ui",
+    "i18n:translate": "polystella translate-ui"
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.1.10",
@@ -35,7 +35,7 @@
     "lemon-lime-svgs": "^2.0.1",
     "lucide-react": "^0.562.0",
     "motion": "^12.37.0",
-    "polystella": "workspace:*",
+    "polystella": "github:cloudflare/polystella#8c50309b503693b02e92edd18c8ac9babf442c95",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "sharp": "^0.34.5",
