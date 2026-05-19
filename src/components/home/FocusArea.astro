@@ -1,7 +1,9 @@
 ---
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 import Icon from "../Icon.astro";
 import SeeMore from "../SeeMore.astro";
+
+const { t } = Astro.locals;
 
 const { className, icon, title, seeMore, description } = Astro.props;
 ---
@@ -10,7 +12,11 @@ const { className, icon, title, seeMore, description } = Astro.props;
   <div class="flex-1">
     <div class="mb-6 text-page-text-muted"><Icon id={icon} size={48} /></div>
     <h2 class="text-lg lg:text-xl font-medium text-bizarre mb-4">{title}</h2>
-    <div class="text-base lg:text-lg font-stack leading-relaxed mb-7 text-stack"><slot /></div>
+    <div class="text-base lg:text-lg font-stack leading-relaxed mb-7 text-stack">
+      <slot />
+    </div>
   </div>
-  <div><SeeMore href={seeMore} description={description}>See More</SeeMore></div>
+  <div>
+    <SeeMore href={seeMore} description={description}>{t("globals.seeMore")}</SeeMore>
+  </div>
 </div>

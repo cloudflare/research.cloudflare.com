@@ -1,14 +1,24 @@
 // 1. Import utilities from `astro:content`
 import { defineCollection, reference } from "astro:content";
 
-// 2. Import loader(s)
-import { glob, file } from "astro/loaders";
+// 2. Import loader(s).
+//    `file` comes from polystella/content (instead of astro/loaders) so
+//    polystellaCollections can auto-derive the locale sibling for
+//    single-file collections — no `loaderOverrides.<name>` needed.
+//    The wrapper forwards to Astro's `file()` and just records the
+//    source path on the returned loader.
+import { glob } from "astro/loaders";
+import { file } from "polystella/content";
 import { blogLoader } from "./loaders/blog";
 
 // 3. Import Zod
 import { z } from "astro/zod";
 
-// 4. Define your collection(s)
+// 4. Import the PolyStella helpers for dynamic collections and i18n
+import { polystellaCollections } from "polystella/content";
+import { i18nLoader, i18nSchema } from "polystella/i18n";
+
+// 5. Define your collection(s)
 const site = defineCollection({
   loader: file("./content/site.toml"),
   schema: z.object({
@@ -55,16 +65,7 @@ const tags = defineCollection({
     name: z.string(),
     slug: z.string(),
     description: z.string().optional(),
-    color: z.enum([
-      "blue",
-      "purple",
-      "green",
-      "orange",
-      "white",
-      "red",
-      "yellow",
-      "pink",
-    ]),
+    color: z.enum(["blue", "purple", "green", "orange", "white", "red", "yellow", "pink"]),
   }),
 });
 
@@ -79,9 +80,7 @@ const publications = defineCollection({
     url: z.string().optional(),
     doi: z.string().optional(),
     related_interests: z.array(z.string()).optional(),
-    pillar: z
-      .enum(["private", "safe", "fast", "reliable", "measurable"])
-      .optional(),
+    pillar: z.enum(["private", "safe", "fast", "reliable", "measurable"]).optional(),
     tags: z.array(reference("tags")).optional(),
   }),
 });
@@ -95,19 +94,38 @@ const blog = defineCollection({
     excerpt: z.string(),
     image: z.string().optional(),
     author: reference("people").optional(),
-    pillar: z
-      .enum(["private", "safe", "fast", "reliable", "measurable"])
-      .optional(),
+    pillar: z.enum(["private", "safe", "fast", "reliable", "measurable"]).optional(),
     tags: z.array(reference("tags")).optional(),
   }),
 });
 
-// 5. Export a single `collections` object to register your collection(s)
+const pages = defineCollection({
+  loader: glob({ pattern: "**/*.mdx", base: "./content/pages" }),
+  schema: z.object({
+    title: z.string(),
+    metaDescription: z.string().optional(),
+  }),
+});
+
+const i18n = defineCollection({
+  loader: i18nLoader(),
+  schema: i18nSchema(),
+});
+
+// 6. Export a single `collections` object to register your collection(s).
+//    `polystellaCollections` returns the source collections verbatim
+//    plus, for each `(collection, locale)` pair where the collection
+//    is not skipped, a sibling collection named
+//    `<collection>__<locale>` whose loader points at
+//    `.astro/i18n-staging/<locale>/<collection>/<rest>`. The build
+//    hook stages translated content there during `astro build`.
+//
+//    Locales and defaultLocale are auto-derived from
+//    `astro.config.mjs`'s `i18n` block (via `polystella:runtime-config`),
+//    so they're declared exactly once across the whole project.
 export const collections = {
-  site,
-  people,
-  publications,
-  tags,
-  presentations,
-  blog,
+  i18n,
+  ...polystellaCollections({
+    source: { site, people, publications, tags, presentations, blog, pages },
+  }),
 };

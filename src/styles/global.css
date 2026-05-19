@@ -157,10 +157,9 @@
 }
 
 @theme {
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system,
-    BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: var(--font-roboto-mono), ui-monospace, Menlo, Monaco,
-    "Cascadia Mono", "Courier New", monospace;
+  --font-sans:
+    var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: var(--font-roboto-mono), ui-monospace, Menlo, Monaco, "Cascadia Mono", "Courier New", monospace;
 
   /* Semantic colors using CSS variables for light/dark mode */
   --color-page-bg: var(--page-bg);
@@ -307,16 +306,23 @@
 }
 
 @utility dashed-borders {
-  background: url("/images/pattern--dashed-border--light.svg") left top repeat-y,
+  background:
+    url("/images/pattern--dashed-border--light.svg") left top repeat-y,
     url("/images/pattern--dashed-border--light.svg") right top repeat-y;
 
   @media (prefers-color-scheme: dark) {
-    background: url("/images/pattern--dashed-border.svg") left top repeat-y,
+    background:
+      url("/images/pattern--dashed-border.svg") left top repeat-y,
       url("/images/pattern--dashed-border.svg") right top repeat-y;
   }
 }
 
 @layer base, page, components;
+
+/* Translation-notice anti-flash; paired with TranslationNotice.astro */
+[data-translation-notice="dismissed"] .translation-banner {
+  display: none;
+}
 
 @layer base {
   html,
@@ -354,12 +360,10 @@
       &:after {
         content: "";
         @apply block w-[2px] h-full absolute top-[100px] z-[-1];
-        background: url("/images/pattern--dashed-border--light.svg") left top
-          repeat-y;
+        background: url("/images/pattern--dashed-border--light.svg") left top repeat-y;
 
         @media (prefers-color-scheme: dark) {
-          background: url("/images/pattern--dashed-border.svg") left top
-            repeat-y;
+          background: url("/images/pattern--dashed-border.svg") left top repeat-y;
         }
       }
 
@@ -401,24 +405,13 @@
   }
 
   /* Override navigation menu items in home header to always be white */
-  #home-header
-    nav
-    [data-slot="navigation-menu-list"]
-    > [data-slot="navigation-menu-item"]
-    > [data-slot="navigation-menu-trigger"],
-  #home-header
-    nav
-    [data-slot="navigation-menu-list"]
-    > [data-slot="navigation-menu-item"]
-    > [data-slot="navigation-menu-link"] {
+  #home-header nav [data-slot="navigation-menu-list"] > [data-slot="navigation-menu-item"] > [data-slot="navigation-menu-trigger"],
+  #home-header nav [data-slot="navigation-menu-list"] > [data-slot="navigation-menu-item"] > [data-slot="navigation-menu-link"] {
     color: white;
   }
 
   /* Ensure nested links in dropdown content are not affected */
-  #home-header
-    nav
-    [data-slot="navigation-menu-content"]
-    [data-slot="navigation-menu-link"] {
+  #home-header nav [data-slot="navigation-menu-content"] [data-slot="navigation-menu-link"] {
     color: inherit;
   }
 
@@ -453,7 +446,8 @@
   }
 
   .four-o-four {
-    background: url("/images/pattern--small-grid.png") center top repeat,
+    background:
+      url("/images/pattern--small-grid.png") center top repeat,
       linear-gradient(180deg, var(--page-bg) 0%, var(--page-bg) 100%);
     background-opacity: 25% 100%;
     @apply border-x-page-border border-x;

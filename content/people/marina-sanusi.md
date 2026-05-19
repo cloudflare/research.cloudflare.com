@@ -1,5 +1,5 @@
 ---
-title: marina-sanusi
+title: Marina Sanusi
 position: External Collaborator
 avatar: placeholder.png
 slug: marina-sanusi

@@ -8,10 +8,20 @@ import mdx from "@astrojs/mdx";
 
 import sitemap from "@astrojs/sitemap";
 
+import polystella, { astroSitemapI18n } from "polystella";
+import polystellaConfig from "./polystella.config.mjs";
+
+const i18n = {
+  defaultLocale: "en-US",
+  locales: ["en-US", "es-ES", "pt-BR", "ja-JP"],
+  routing: { prefixDefaultLocale: false },
+};
+
 // https://astro.build/config
 export default defineConfig({
   site: "https://research.cloudflare.com",
   output: "static",
+  i18n,
   fonts: [
     {
       provider: fontProviders.local(),
@@ -20,16 +30,12 @@ export default defineConfig({
       options: {
         variants: [
           {
-            src: [
-              "./src/assets/fonts/Inter/Inter-VariableFont_opsz,wght.woff2",
-            ],
+            src: ["./src/assets/fonts/Inter/Inter-VariableFont_opsz,wght.woff2"],
             weight: "100 900",
             style: "normal",
           },
           {
-            src: [
-              "./src/assets/fonts/Inter/Inter-Italic-VariableFont_opsz,wght.woff2",
-            ],
+            src: ["./src/assets/fonts/Inter/Inter-Italic-VariableFont_opsz,wght.woff2"],
             weight: "100 900",
             style: "italic",
           },
@@ -43,16 +49,12 @@ export default defineConfig({
       options: {
         variants: [
           {
-            src: [
-              "./src/assets/fonts/Roboto_Mono/RobotoMono-VariableFont_wght.woff2",
-            ],
+            src: ["./src/assets/fonts/Roboto_Mono/RobotoMono-VariableFont_wght.woff2"],
             weight: "100 700",
             style: "normal",
           },
           {
-            src: [
-              "./src/assets/fonts/Roboto_Mono/RobotoMono-Italic-VariableFont_wght.woff2",
-            ],
+            src: ["./src/assets/fonts/Roboto_Mono/RobotoMono-Italic-VariableFont_wght.woff2"],
             weight: "100 700",
             style: "italic",
           },
@@ -82,7 +84,18 @@ export default defineConfig({
       },
     },
   },
-  integrations: [react(), mdx(), sitemap()],
+  integrations: [
+    react(),
+    mdx(),
+    // `astroSitemapI18n` derives the i18n-related sitemap options
+    // (the `i18n` config plus a `serialize` callback that injects
+    // `hreflang="x-default"` annotations) from the same Astro `i18n`
+    // block above. Without this, the locale-prefixed URLs PolyStella
+    // injects appear in the sitemap as duplicate content rather than
+    // as alternate-language pages, hurting SEO.
+    sitemap(astroSitemapI18n(i18n)),
+    polystella(polystellaConfig),
+  ],
   redirects: {
     "/about/approach/": "/people",
     "/about/story/": "/people",

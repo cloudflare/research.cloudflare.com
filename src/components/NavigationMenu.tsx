@@ -14,51 +14,60 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { CONSTANTS } from "@/lib/constants";
+import { locales, localeName, swapLocale } from "@/lib/i18n-utils";
+import { useLocalizedHref, useTranslations } from "polystella/react";
 
-const components: { title: string; href: string; description: string }[] = [
-  {
-    title: "All Focus Areas",
-    href: "/focus",
-    description:
-      "Driving innovation across five key areas to create a faster, safer, more private, reliable, and measurable Internet.",
-  },
-  {
-    title: "More Private",
-    href: "/focus/private",
-    description:
-      "Developing privacy-preserving systems and protocols that protect users while enabling a more secure and trustworthy Internet.",
-  },
-  {
-    title: "Safer",
-    href: "/focus/safe",
-    description:
-      "Creating production-quality security defenses that address network interference and ensure safe, reliable global connectivity.",
-  },
-  {
-    title: "Faster",
-    href: "/focus/fast",
-    description:
-      "Advancing distributed systems and caching technologies that minimize latency and accelerate the global Internet.",
-  },
-  {
-    title: "More Reliable",
-    href: "/focus/reliable",
-    description:
-      "Building robust distributed systems and time synchronization protocols that ensure the Internet remains stable and available at scale.",
-  },
-  {
-    title: "More Measurable",
-    href: "/focus/measurable",
-    description:
-      "Promoting accountability in Internet infrastructure through open standards like Certificate Transparency and tools that make critical systems verifiable.",
-  },
-];
+interface NavMenuProps {
+  dict: Record<string, string>;
+  locale: string;
+  /** `Astro.url.pathname` for the mobile drawer's locale links. */
+  pathname: string;
+}
 
-export function NavMenu() {
+export function NavMenu({ dict, locale, pathname }: NavMenuProps) {
+  const t = useTranslations(dict);
+  const lhref = useLocalizedHref(locale);
   const isMobile = useIsMobile();
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [focusAreasOpen, setFocusAreasOpen] = React.useState(false);
   const [aboutOpen, setAboutOpen] = React.useState(false);
+  const [languageOpen, setLanguageOpen] = React.useState(false);
+
+  const components: { title: string; href: string; description: string }[] = React.useMemo(
+    () => [
+      {
+        title: t("nav.focusAreas.all.title"),
+        href: lhref("/focus"),
+        description: t("nav.focusAreas.all.description"),
+      },
+      {
+        title: t("globals.morePrivate"),
+        href: lhref("/focus/private"),
+        description: t("nav.focusAreas.morePrivate.description"),
+      },
+      {
+        title: t("globals.safer"),
+        href: lhref("/focus/safe"),
+        description: t("nav.focusAreas.safer.description"),
+      },
+      {
+        title: t("globals.faster"),
+        href: lhref("/focus/fast"),
+        description: t("nav.focusAreas.faster.description"),
+      },
+      {
+        title: t("globals.moreReliable"),
+        href: lhref("/focus/reliable"),
+        description: t("nav.focusAreas.moreReliable.description"),
+      },
+      {
+        title: t("globals.moreMeasurable"),
+        href: lhref("/focus/measurable"),
+        description: t("nav.focusAreas.moreMeasurable.description"),
+      },
+    ],
+    [t, lhref],
+  );
 
   // Lock body scroll when mobile menu is open
   React.useEffect(() => {
@@ -79,7 +88,7 @@ export function NavMenu() {
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="p-2 text-page-text hover:text-baby-blue-eyes transition-colors"
-          aria-label="Toggle menu"
+          aria-label={t("a11y.toggleMenu")}
         >
           {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
@@ -92,7 +101,7 @@ export function NavMenu() {
               <button
                 onClick={() => setMobileMenuOpen(false)}
                 className="p-2 text-page-text hover:text-baby-blue-eyes transition-colors"
-                aria-label="Close menu"
+                aria-label={t("a11y.closeMenu")}
               >
                 <X size={24} />
               </button>
@@ -105,10 +114,8 @@ export function NavMenu() {
                   onClick={() => setFocusAreasOpen(!focusAreasOpen)}
                   className="text-lg font-medium text-page-text hover:text-baby-blue-eyes transition-colors w-full text-left flex items-center justify-between"
                 >
-                  Focus Areas
-                  <span className="text-sm pr-3">
-                    {focusAreasOpen ? "−" : "+"}
-                  </span>
+                  {t("nav.focusAreas")}
+                  <span className="text-sm pr-3">{focusAreasOpen ? "−" : "+"}</span>
                 </button>
                 {focusAreasOpen && (
                   <div className="mt-4 space-y-4 pl-4">
@@ -119,12 +126,8 @@ export function NavMenu() {
                         className="block mobile-nav-text"
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        <div className="text-base font-medium text-page-text">
-                          {component.title}
-                        </div>
-                        <p className="text-sm text-page-text-muted mt-1">
-                          {component.description}
-                        </p>
+                        <div className="text-base font-medium text-page-text">{component.title}</div>
+                        <p className="text-sm text-page-text-muted mt-1">{component.description}</p>
                       </a>
                     ))}
                   </div>
@@ -133,11 +136,11 @@ export function NavMenu() {
 
               {/* Other Navigation Items */}
               <a
-                href="/presentations"
+                href={lhref("/presentations")}
                 className="text-lg font-medium text-page-text hover:text-baby-blue-eyes transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Presentations
+                {t("nav.presentations")}
               </a>
 
               {/* About Section */}
@@ -146,24 +149,24 @@ export function NavMenu() {
                   onClick={() => setAboutOpen(!aboutOpen)}
                   className="text-lg font-medium text-page-text hover:text-baby-blue-eyes transition-colors w-full text-left flex items-center justify-between"
                 >
-                  About Us
+                  {t("nav.aboutUs")}
                   <span className="text-sm pr-3">{aboutOpen ? "−" : "+"}</span>
                 </button>
                 {aboutOpen && (
                   <div className="mt-4 space-y-4 pl-4">
                     <a
-                      href="/people"
+                      href={lhref("/people")}
                       className="block text-base font-medium text-page-text hover:text-baby-blue-eyes transition-colors"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      People
+                      {t("nav.people")}
                     </a>
                     <a
-                      href="/philosophy"
+                      href={lhref("/philosophy")}
                       className="block text-base font-medium text-page-text hover:text-baby-blue-eyes transition-colors"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      Philosophy
+                      {t("nav.philosophy")}
                     </a>
                   </div>
                 )}
@@ -174,8 +177,41 @@ export function NavMenu() {
                 className="text-lg font-medium text-page-text hover:text-baby-blue-eyes transition-colors"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Careers
+                {t("nav.careers")}
               </a>
+
+              {/* Language section */}
+              <div>
+                <button
+                  onClick={() => setLanguageOpen(!languageOpen)}
+                  className="text-lg font-medium text-page-text hover:text-baby-blue-eyes transition-colors w-full text-left flex items-center justify-between"
+                  aria-label={t("nav.localePicker.label")}
+                  aria-expanded={languageOpen}
+                >
+                  {t("nav.localePicker.label")}
+                  <span className="text-sm pr-3">{languageOpen ? "−" : "+"}</span>
+                </button>
+                {languageOpen && (
+                  <div className="mt-4 space-y-4 pl-4">
+                    {locales.map((targetLocale) => {
+                      const isCurrent = targetLocale === locale;
+                      return (
+                        <a
+                          key={targetLocale}
+                          href={swapLocale(pathname, targetLocale)}
+                          hrefLang={targetLocale}
+                          lang={targetLocale}
+                          aria-current={isCurrent ? "true" : undefined}
+                          className={`block text-base text-page-text hover:text-baby-blue-eyes transition-colors ${isCurrent ? "font-medium" : ""}`}
+                          onClick={() => setMobileMenuOpen(false)}
+                        >
+                          {localeName(targetLocale)}
+                        </a>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
             </nav>
           </div>
         )}
@@ -185,15 +221,11 @@ export function NavMenu() {
       <NavigationMenu viewport={isMobile} className="hidden md:flex">
         <NavigationMenuList className="flex-wrap">
           <NavigationMenuItem>
-            <NavigationMenuTrigger>Focus Areas</NavigationMenuTrigger>
+            <NavigationMenuTrigger>{t("nav.focusAreas")}</NavigationMenuTrigger>
             <NavigationMenuContent>
               <ul className="grid gap-2 sm:w-[400px] md:w-[500px] md:grid-cols-2 lg:w-[600px] z-(--z-nav) relative">
                 {components.map((component) => (
-                  <ListItem
-                    key={component.title}
-                    title={component.title}
-                    href={component.href}
-                  >
+                  <ListItem key={component.title} title={component.title} href={component.href}>
                     {component.description}
                   </ListItem>
                 ))}
@@ -201,30 +233,24 @@ export function NavMenu() {
             </NavigationMenuContent>
           </NavigationMenuItem>
           <NavigationMenuItem>
-            <NavigationMenuLink
-              asChild
-              className={navigationMenuTriggerStyle()}
-            >
-              <a href="/presentations">Presentations</a>
+            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+              <a href={lhref("/presentations")}>{t("nav.presentations")}</a>
             </NavigationMenuLink>
           </NavigationMenuItem>
 
           <NavigationMenuItem>
-            <NavigationMenuTrigger>About Us</NavigationMenuTrigger>
+            <NavigationMenuTrigger>{t("nav.aboutUs")}</NavigationMenuTrigger>
             <NavigationMenuContent>
               <ul className="grid gap-2 w-[200px] z-(--z-nav) relative p-2">
-                <ListItem title="People" href="/people" />
-                <ListItem title="Philosophy" href="/philosophy" />
+                <ListItem title={t("nav.people")} href={lhref("/people")} />
+                <ListItem title={t("nav.philosophy")} href={lhref("/philosophy")} />
               </ul>
             </NavigationMenuContent>
           </NavigationMenuItem>
 
           <NavigationMenuItem>
-            <NavigationMenuLink
-              asChild
-              className={navigationMenuTriggerStyle()}
-            >
-              <a href={CONSTANTS.CLOUDFLARE_JOBS}>Careers</a>
+            <NavigationMenuLink asChild className={navigationMenuTriggerStyle()}>
+              <a href={CONSTANTS.CLOUDFLARE_JOBS}>{t("nav.careers")}</a>
             </NavigationMenuLink>
           </NavigationMenuItem>
         </NavigationMenuList>
@@ -233,24 +259,13 @@ export function NavMenu() {
   );
 }
 
-function ListItem({
-  title,
-  children,
-  href,
-  ...props
-}: React.ComponentPropsWithoutRef<"li"> & { href: string }) {
+function ListItem({ title, children, href, ...props }: React.ComponentPropsWithoutRef<"li"> & { href: string }) {
   return (
     <li {...props}>
       <NavigationMenuLink asChild>
         <a href={href} className="group/subnav subnav">
-          <div className="text-sm leading-none font-medium subnav-title">
-            {title}
-          </div>
-          {children && (
-            <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
-              {children}
-            </p>
-          )}
+          <div className="text-sm leading-none font-medium subnav-title">{title}</div>
+          {children && <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">{children}</p>}
         </a>
       </NavigationMenuLink>
     </li>

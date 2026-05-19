@@ -3,19 +3,18 @@ import HeaderPresentations from "@/components/HeaderPresentations.astro";
 import InteriorLayout from "../layouts/interior.astro";
 import Section from "@/components/Section.astro";
 import PresentationGrid from "@/components/PresentationGrid.astro";
-import { getCollection } from "astro:content";
+
+const { t, getLocalizedCollection } = Astro.locals;
 
 // get all publication from the content collection
-const allPresentations = await getCollection('presentations');
+const allPresentations = await getLocalizedCollection("presentations");
 allPresentations.sort((a, b) => b.data.year - a.data.year);
-
 ---
 
-<InteriorLayout metaTitle="Presentations" metaDescription="Sharing our work to promote the deployment of useful ideas. Explore Cloudflare Research presentations and keynotes on the innovations and standards shaping the future of a global, secure internet.">
+<InteriorLayout metaTitle={t("presentations.metaTitle")} metaDescription={t("presentations.metaDescription")}>
   <HeaderPresentations />
 
   <Section>
     <PresentationGrid presentations={allPresentations} />
   </Section>
-
 </InteriorLayout>

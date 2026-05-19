@@ -1,5 +1,5 @@
 ---
-title: vamsi-policharla
+title: Vamsi Policharla
 position: External Collaborator
 avatar: placeholder.png
 slug: vamsi-policharla

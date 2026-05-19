@@ -5,14 +5,14 @@ import Section from "@/components/Section.astro";
 import ArticleGrid from "@/components/ArticleGrid.astro";
 import { getArticlesByPillar } from "@/lib/getArticlesByPillar";
 
-const combinedArticles = await getArticlesByPillar('private');
+const combinedArticles = await getArticlesByPillar("private", Astro.currentLocale);
+const { t } = Astro.locals;
 ---
 
-<InteriorLayout metaTitle="Private Focus Area" metaDescription="Advancing privacy-preserving systems. Access the latest research, publications, and open standards from Cloudflare dedicated to user privacy, data minimization, and secure internet protocols.">
+<InteriorLayout metaTitle={t("nav.focusAreas.morePrivate.metaTitle")} metaDescription={t("nav.focusAreas.morePrivate.description")}>
   <HeaderPrivate />
 
   <Section>
     <ArticleGrid publications={combinedArticles} />
   </Section>
-
 </InteriorLayout>

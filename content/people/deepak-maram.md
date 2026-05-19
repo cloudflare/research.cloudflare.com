@@ -1,5 +1,5 @@
 ---
-title: deepak-maram
+title: Deepak Maram
 position: External Collaborator
 avatar: placeholder.png
 slug: deepak-maram

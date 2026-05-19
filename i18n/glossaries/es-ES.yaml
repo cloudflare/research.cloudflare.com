@@ -1,0 +1,219 @@
+# Cloudflare Research site — es-ES translation glossary.
+#
+# This file pins the terminology rules the translator must follow when
+# producing the Castilian Spanish version of pages on this site. It
+# is hashed into each translated file's cache key, so editing it
+# invalidates es-ES translations on the next build (only es-ES —
+# other locales are unaffected).
+#
+# Bump `version` whenever you make a meaningful edit so the cache
+# invalidation is intentional and reviewable in version control.
+
+version: "2026-05"
+
+# Terms that must NOT be translated. They appear verbatim in output.
+# Mirrors the pt-BR / ja-JP lists; protocols and crypto primitives
+# are universal and should never be localised regardless of locale.
+doNotTranslate:
+  # ─── Cloudflare brand and products ─────────────────────────────────
+  - Cloudflare
+  - Workers
+  - Workers AI
+  - Pages
+  - R2
+  - KV
+  - D1
+  - Durable Objects
+  - Hyperdrive
+  - Queues
+  - Vectorize
+  - WARP
+  - Zero Trust
+  - Magic Transit
+  - Magic WAN
+  - Argo
+  - Spectrum
+  - Stream
+  - Privacy Pass
+  - Turnstile
+  - Radar
+  - Google
+
+  # ─── Network protocols and standards ───────────────────────────────
+  - HTTP
+  - HTTPS
+  - HTTP/2
+  - HTTP/3
+  - QUIC
+  - TCP
+  - UDP
+  - IP
+  - IPv4
+  - IPv6
+  - TLS
+  - DTLS
+  - DNS
+  - DNSSEC
+  - BGP
+  - WebRTC
+  - SCTP
+  - SMTP
+  - SSH
+  - SNI
+  - ECH
+  - NAT
+  - CDN
+  - VPN
+  - DDoS
+  - WAF
+  - PKI
+  - CA
+
+  # ─── Cryptographic primitives ──────────────────────────────────────
+  - SHA-256
+  - SHA-3
+  - AES
+  - RSA
+  - ECDSA
+  - EdDSA
+  - Ed25519
+  - X25519
+  - SIDH
+  - SIKE
+  - Kyber
+  - Dilithium
+  - Falcon
+  - SPHINCS+
+  - OPRF
+  - VOPRF
+  - HMAC
+  - HKDF
+  - PRF
+  - PRG
+  - PRP
+  - MAC
+  - HSM
+  - ZK
+  - ZKP
+  - SNARK
+  - STARK
+  - FHE
+  - MPC
+  - PSI
+  - OT
+  - GC
+
+  # ─── Conferences and venues ────────────────────────────────────────
+  - USENIX
+  - NDSS
+  - SIGCOMM
+  - NSDI
+  - OSDI
+  - SOSP
+  - IMC
+  - PETS
+  - PoPETs
+  - CCS
+  - Crypto
+  - Eurocrypt
+  - PKC
+  - TCC
+  - Asiacrypt
+  - FOCS
+  - STOC
+
+# Source-language → preferred translation. The translator should prefer
+# these renderings over its default choice. Curated for research-domain
+# vocabulary (cryptography, networking, distributed systems); marketing
+# product names live above in `doNotTranslate` instead.
+preferredTranslations:
+  edge: borde
+  latency: latencia
+  bandwidth: ancho de banda
+  caching: almacenamiento en caché
+  routing: enrutamiento
+  endpoint: punto final
+  encryption: cifrado
+  handshake: protocolo de enlace
+  certificate: certificado
+  blog post: entrada del blog
+  research paper: artículo de investigación
+  publication: publicación
+  publications: publicaciones
+  presentation: presentación
+  keynote: ponencia magistral
+
+# Categorised style rules. Author order is preserved in the rendered
+# prompt and folded into the hash, so reorder deliberately.
+#
+# Curated from the Smartling es-ES ASG with two filters:
+#   1. Drop marketing-tone rules that conflict with this site's
+#      academic register (we use formal/impersonal Spanish, not the
+#      ASG's `tú`).
+#   2. Drop rules covering content this site doesn't have (currency,
+#      time-of-day, calls to action, SEO keywords).
+styleRules:
+  - category: tone
+    instruction: >-
+      Use a formal, academic register. Prefer impersonal or third-person
+      constructions ("se observa que…", "es posible que…") over direct
+      address. Do NOT use "tú" or "vosotros"; if second-person address is
+      unavoidable, fall back to "usted".
+  - category: capitalization
+    instruction: >-
+      Use sentence case for headings and titles — capitalise only the
+      first word and proper nouns. This applies to section titles,
+      figure captions, and bullet labels.
+    example: "On-demand Object Storage Data Migration → Migración de datos de almacenamiento de objetos bajo demanda"
+  - category: numbers
+    instruction: >-
+      Use comma as the decimal separator and a non-breaking thin space
+      (U+202F) — or a regular non-breaking space — as the thousands
+      separator. Never use period as a thousands separator.
+    example: "21.3 million → 21,3 millones; 13,000 → 13 000"
+  - category: percentages
+    instruction: "Insert a non-breaking space between the number and the percent sign."
+    example: "95% → 95 %"
+  - category: dates
+    instruction: >-
+      Format dates as "D de mes de YYYY" with the month name in
+      lowercase. For date ranges, "DD-DD de mes de YYYY".
+    example: "October 31, 2024 → 31 de octubre de 2024"
+  - category: punctuation
+    instruction: >-
+      Open questions with ¿ and exclamations with ¡; close them with ?
+      and ! respectively. Both marks are required even for short rhetorical
+      questions in body prose.
+    example: "What is domain hijacking? → ¿Qué es el secuestro de dominios?"
+  - category: punctuation
+    instruction: >-
+      Use angle quotes («…») for direct quotations of source-language
+      text. Reserve double straight quotes ("…") for emphasis or for
+      quoted technical terms within a translated phrase.
+  - category: inclusivity
+    instruction: >-
+      Prefer gender-neutral phrasing where it reads naturally
+      ("la persona usuaria", "el equipo de investigación"). Do NOT use
+      "@" or "x" forms ("usuari@s", "investigadorxs") — these are
+      unsuitable for a formal academic register.
+  - category: pronouns
+    instruction: >-
+      When English uses generic "they" / "their", prefer impersonal
+      Spanish constructions over invented neutral pronouns. Pluralise
+      where the original was singular if that lets you avoid awkward
+      gendered choices.
+  - category: links-and-paths
+    instruction: >-
+      Preserve URLs, file paths, and code identifiers verbatim. When a
+      link points to a localised page that exists at a `/es-es/` prefix,
+      rewrite the path; otherwise leave the URL unchanged.
+
+# Free-text instructions appended verbatim to the translator prompt.
+notes: |
+  Use Castilian Spanish (es-ES) spelling and conventions. The tone
+  is academic and neutral — this is a research site, not marketing
+  copy. Author names, paper titles in cited bibliography, and code
+  identifiers stay verbatim in their original Latin script. The
+  audience is software-engineering and security-research
+  professionals, so precise transliteration of well-established
+  acronyms is acceptable.

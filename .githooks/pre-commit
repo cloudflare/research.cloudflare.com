@@ -1,0 +1,40 @@
+#!/bin/sh
+# Pre-commit hook: prettier format-check + UI-strings drift detection.
+#
+# Wired up via `core.hooksPath = .githooks`, set by the root
+# package.json `prepare` script on `pnpm install`. Bypass any check
+# with `git commit --no-verify` when needed.
+
+set -eu
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACMR)
+
+# ---------------------------------------------------------------
+# Step 1: prettier --check on staged files
+# ---------------------------------------------------------------
+# Bail early when nothing is staged so empty commits / merges don't
+# spend ~1s spinning up prettier. `-z` keeps NUL separators so paths
+# with spaces or newlines survive the pipeline to `xargs -0`.
+if [ -n "$STAGED" ]; then
+  # `--ignore-unknown` skips files prettier can't parse.
+  # `--no-error-on-unmatched-pattern` keeps an all-ignored set passing.
+  git diff --cached --name-only --diff-filter=ACMR -z \
+    | xargs -0 pnpm exec prettier \
+        --check \
+        --ignore-unknown \
+        --no-error-on-unmatched-pattern
+fi
+
+# ---------------------------------------------------------------
+# Step 2: UI-strings drift detection
+# ---------------------------------------------------------------
+# Only run when the commit touches the default-locale UI-strings file
+# (where additions / removals originate). Skipping otherwise keeps
+# the hook fast for the 95% of commits that don't touch i18n.
+#
+# `polystella check-ui` is pure + offline (no AI, no network), so
+# blocking the commit on its failure costs nothing and forces the
+# author to either auto-translate or hand-translate before pushing.
+if printf '%s\n' "$STAGED" | grep -qE '^src/content/i18n/'; then
+  pnpm i18n:check
+fi

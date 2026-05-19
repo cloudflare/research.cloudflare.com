@@ -1,5 +1,5 @@
 ---
-title: isaac-khor
+title: Isaac Khor
 position: External Collaborator
 avatar: placeholder.png
 slug: isaac-khor

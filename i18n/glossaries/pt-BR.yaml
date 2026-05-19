@@ -1,0 +1,196 @@
+# Cloudflare Research site — pt-BR translation glossary.
+#
+# This file pins the terminology rules the translator must follow when
+# producing the Brazilian Portuguese version of pages on this site.
+# It is hashed into each translated file's cache key, so editing it
+# invalidates pt-BR translations on the next build (only pt-BR — other
+# locales are unaffected).
+#
+# Bump `version` whenever you make a meaningful edit so the cache
+# invalidation is intentional and reviewable in version control.
+
+version: "2026-05"
+
+# Terms that must NOT be translated. They appear verbatim in output.
+# Group by family so future edits stay tidy; the loader normalises this
+# to a deduplicated, ascending-sorted list before hashing — comments
+# and ordering here have no effect on the cache key.
+doNotTranslate:
+  # ─── Cloudflare brand and products ─────────────────────────────────
+  - Cloudflare
+  - Workers
+  - Workers AI
+  - Pages
+  - R2
+  - KV
+  - D1
+  - Durable Objects
+  - Hyperdrive
+  - Queues
+  - Vectorize
+  - WARP
+  - Zero Trust
+  - Magic Transit
+  - Magic WAN
+  - Argo
+  - Spectrum
+  - Stream
+  - Privacy Pass
+  - Turnstile
+  - Radar
+  - Google
+
+  # ─── Network protocols and standards ───────────────────────────────
+  - HTTP
+  - HTTPS
+  - HTTP/2
+  - HTTP/3
+  - QUIC
+  - TCP
+  - UDP
+  - IP
+  - IPv4
+  - IPv6
+  - TLS
+  - DTLS
+  - DNS
+  - DNSSEC
+  - BGP
+  - WebRTC
+  - SCTP
+  - SMTP
+  - SSH
+  - SNI
+  - ECH
+  - NAT
+  - CDN
+  - VPN
+  - DDoS
+  - WAF
+  - PKI
+  - CA
+
+  # ─── Cryptographic primitives ──────────────────────────────────────
+  - SHA-256
+  - SHA-3
+  - AES
+  - RSA
+  - ECDSA
+  - EdDSA
+  - Ed25519
+  - X25519
+  - SIDH
+  - SIKE
+  - Kyber
+  - Dilithium
+  - Falcon
+  - SPHINCS+
+  - OPRF
+  - VOPRF
+  - HMAC
+  - HKDF
+  - PRF
+  - PRG
+  - PRP
+  - MAC
+  - HSM
+  - ZK
+  - ZKP
+  - SNARK
+  - STARK
+  - FHE
+  - MPC
+  - PSI
+  - OT
+  - GC
+
+  # ─── Conferences and venues ────────────────────────────────────────
+  - USENIX
+  - NDSS
+  - SIGCOMM
+  - NSDI
+  - OSDI
+  - SOSP
+  - IMC
+  - PETS
+  - PoPETs
+  - CCS
+  - Crypto
+  - Eurocrypt
+  - PKC
+  - TCC
+  - Asiacrypt
+  - FOCS
+  - STOC
+
+# Source-language → preferred translation. The translator should prefer
+# these renderings over its default choice. Keep the list short and
+# focused on terms where the default is wrong or inconsistent — adding
+# everyday vocabulary here just bloats the prompt.
+preferredTranslations:
+  edge: borda
+  latency: latência
+  bandwidth: largura de banda
+  caching: armazenamento em cache
+  routing: roteamento
+  endpoint: endpoint
+  encryption: criptografia
+  handshake: handshake
+  certificate: certificado
+  blog post: post do blog
+  research paper: artigo de pesquisa
+  publication: publicação
+  publications: publicações
+  presentation: apresentação
+  keynote: palestra principal
+
+# Categorised style rules. Author order is preserved in the rendered
+# prompt and folded into the hash, so reorder deliberately.
+#
+# Curated from the Smartling pt-BR ASG. Marketing-tone rules ("not too
+# formal", call-to-action voice) are intentionally dropped because this
+# site keeps the formal "você" register established in the notes block
+# below.
+styleRules:
+  - category: capitalization
+    instruction: >-
+      Use sentence case for headings and titles — capitalise only the
+      first word and proper nouns. This applies to section titles,
+      figure captions, and bullet labels.
+  - category: numbers
+    instruction: >-
+      Use comma as the decimal separator. For thousands, use a period
+      OR a non-breaking space — pick one and stay consistent within a
+      page. Never use the comma as a thousands separator.
+    example: "21.3 million → 21,3 milhões"
+  - category: percentages
+    instruction: "Insert a non-breaking space between the number and the percent sign."
+    example: "95% → 95 %"
+  - category: dates
+    instruction: >-
+      Format dates as "D de mês de YYYY" with the month name in
+      lowercase. Translate month names; never use English-style
+      abbreviations.
+    example: "October 31, 2024 → 31 de outubro de 2024"
+  - category: punctuation
+    instruction: >-
+      Use double straight quotes ("…") for direct quotations and for
+      quoted technical terms. Use em-dashes (—) without surrounding
+      spaces for parenthetical asides; do not substitute en-dashes.
+  - category: inclusivity
+    instruction: >-
+      Prefer gender-neutral phrasing where it reads naturally.
+      Do NOT use "@" or "x" forms ("usuári@s", "pesquisadorxs") —
+      these are unsuitable for a formal academic register.
+  - category: links-and-paths
+    instruction: >-
+      Preserve URLs, file paths, and code identifiers verbatim. When a
+      link points to a localised page that exists at a `/pt-br/` prefix,
+      rewrite the path; otherwise leave the URL unchanged.
+
+# Free-text instructions appended verbatim to the translator prompt.
+notes: |
+  Use Brazilian Portuguese spelling and conventions throughout. The tone
+  is academic and neutral — this is a research site, not marketing
+  copy. Prefer the formal "você" register for prose. Keep author names,
+  paper titles in cited bibliography, and code identifiers verbatim.

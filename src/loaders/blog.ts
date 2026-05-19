@@ -1,7 +1,7 @@
 import type { Loader } from "astro/loaders";
-import { z } from "astro/zod";
 import fs from "node:fs";
 import path from "node:path";
+import { polystellaLoader } from "polystella/content";
 import { blogMappings } from "../data/blog-mappings";
 
 const PEOPLE_DIR = "./content/people";
@@ -25,10 +25,7 @@ interface CachedData {
 /**
  * Fetches blog posts from the Cloudflare Worker with caching
  */
-async function fetchWithCache(
-  endpoint: string,
-  cacheFile: string
-): Promise<BlogPost[]> {
+async function fetchWithCache(endpoint: string, cacheFile: string): Promise<BlogPost[]> {
   const cachePath = path.join(CACHE_DIR, cacheFile);
 
   // Create cache directory if it doesn't exist
@@ -53,9 +50,7 @@ async function fetchWithCache(
   const response = await fetch(`${WORKER_BASE_URL}${endpoint}`);
 
   if (!response.ok) {
-    throw new Error(
-      `Failed to fetch blog posts: ${response.status} ${response.statusText}`
-    );
+    throw new Error(`Failed to fetch blog posts: ${response.status} ${response.statusText}`);
   }
 
   const data: BlogPost[] = await response.json();
@@ -90,9 +85,23 @@ function getBlogAuthorMap(): Record<string, string> {
 }
 
 /**
- * Custom Astro loader for Cloudflare blog posts
+ * Custom Astro loader for Cloudflare blog posts.
+ *
+ * Wrapped with `polystellaLoader` so polystella's content layer can
+ * auto-derive locale-sibling collections (`blog__pt-BR`, `blog__ja-JP`,
+ * etc.) and translate the `title` + `excerpt` fields per locale.
+ * Other fields (date, url, image, author, pillar, tags) pass through
+ * verbatim — the blog destinations themselves remain in English on
+ * cloudflare.com.
  */
 export function blogLoader(): Loader {
+  return polystellaLoader(rawBlogLoader(), {
+    name: "blog",
+    translatableKeys: ["title", "excerpt"],
+  });
+}
+
+function rawBlogLoader(): Loader {
   return {
     name: "blog-loader",
     load: async ({ store, logger, parseData, generateDigest }) => {
@@ -140,14 +149,9 @@ export function blogLoader(): Loader {
         for (const [blogAuthor, peopleSlug] of Object.entries(blogAuthorMap)) {
           let authorPosts: BlogPost[];
           try {
-            authorPosts = await fetchWithCache(
-              `/blog/author?name=${blogAuthor}`,
-              `blogposts_${blogAuthor}.json`
-            );
+            authorPosts = await fetchWithCache(`/blog/author?name=${blogAuthor}`, `blogposts_${blogAuthor}.json`);
           } catch (err) {
-            logger.warn(
-              `Failed to fetch posts for author "${blogAuthor}": ${err}`
-            );
+            logger.warn(`Failed to fetch posts for author "${blogAuthor}": ${err}`);
             continue;
           }
 
@@ -179,9 +183,7 @@ export function blogLoader(): Loader {
         }
 
         if (extraCount > 0) {
-          logger.info(
-            `Loaded ${extraCount} additional blog posts from per-author endpoints`
-          );
+          logger.info(`Loaded ${extraCount} additional blog posts from per-author endpoints`);
         }
       } catch (error) {
         logger.error(`Failed to load blog posts: ${error}`);
@@ -195,11 +197,6 @@ export function blogLoader(): Loader {
  * Custom loader for fetching blog posts by author
  * This can be used to augment people profiles with their blog posts
  */
-export async function fetchBlogPostsByAuthor(
-  blogAuthor: string
-): Promise<BlogPost[]> {
-  return fetchWithCache(
-    `/blog/author?name=${blogAuthor}`,
-    `blogposts_${blogAuthor}.json`
-  );
+export async function fetchBlogPostsByAuthor(blogAuthor: string): Promise<BlogPost[]> {
+  return fetchWithCache(`/blog/author?name=${blogAuthor}`, `blogposts_${blogAuthor}.json`);
 }

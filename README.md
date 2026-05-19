@@ -47,14 +47,19 @@ The website for Cloudflare Research, showcasing our work in building a better In
 
 All commands are run from the root of the project:
 
-| Command           | Action                                               |
-| :---------------- | :--------------------------------------------------- |
-| `npm install`     | Installs dependencies                                |
-| `npm run dev`     | Starts local dev server at `localhost:4321`          |
-| `npm run build`   | Build your production site to `./dist/`              |
-| `npm run preview` | Preview your build locally, before deploying         |
-| `npm run icons`   | Generate SVG sprite from icons in `/other/svg-icons` |
-| `npm run ui`      | Add shadcn/ui components                             |
+| Command               | Action                                                                                                                                             |
+| :-------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `pnpm install`        | Installs dependencies                                                                                                                              |
+| `pnpm dev`            | Starts local dev server at `localhost:4321`                                                                                                        |
+| `pnpm build`          | Build your production site to `./dist/`                                                                                                            |
+| `pnpm preview`        | Preview your build locally, before deploying                                                                                                       |
+| `pnpm icons`          | Generate SVG sprite from icons in `/other/svg-icons`                                                                                               |
+| `pnpm ui`             | Add shadcn/ui components                                                                                                                           |
+| `pnpm translate`      | Run the [PolyStella](https://github.com/cloudflare/polystella) markdown translation pipeline standalone (no Astro build). See _Translation_ below. |
+| `pnpm translate:dry`  | Same as `translate` but skips the provider + R2 writes; only prints planned R2 keys.                                                               |
+| `pnpm i18n:check`     | Detect drift in UI-string JSONs (`src/content/i18n/`). Runs offline; pre-commit hook target.                                                       |
+| `pnpm i18n:sync`      | Reconcile non-default UI-string locales against `en-US.json` (add missing keys as empty, drop extras).                                             |
+| `pnpm i18n:translate` | `i18n:sync`, then AI-fill empty placeholders via the configured provider.                                                                          |
 
 ## 📝 Content Management
 
@@ -190,6 +195,31 @@ The site is fully responsive with:
 - Responsive typography and spacing
 - Touch-friendly interactive elements
 
+## 🌐 Translation (PolyStella)
+
+Locale-aware content is translated by [PolyStella](https://github.com/cloudflare/polystella), an Astro integration consumed from upstream (pinned in `package.json`). Translations are computed by Workers AI and cached in an R2 bucket; on subsequent builds, unchanged content hits the cache and the provider is never called.
+
+General PolyStella usage, configuration, and CLI flags are documented at the upstream repo.
+
+### Standalone CLI
+
+```sh
+pnpm translate          # writes to current git branch's preview prefix (auto-detected)
+pnpm translate:dry      # preview planned R2 keys; no provider/R2 calls
+pnpm i18n:check         # drift detection for src/content/i18n/ (pre-commit hook target)
+pnpm i18n:sync          # reconcile non-default locales against en-US.json
+pnpm i18n:translate     # i18n:sync + AI-fill empty placeholders
+```
+
+Run `pnpm translate --help` for the full flag list. Workflow for editing UI strings: edit `src/content/i18n/en-US.json` → `pnpm i18n:translate` → spot-check → commit. The pre-commit hook runs `pnpm i18n:check` automatically when `src/content/i18n/` is staged.
+
+### Site-specific wiring
+
+The integration is configured in [`polystella.config.mjs`](./polystella.config.mjs) and registered in [`astro.config.mjs`](./astro.config.mjs). Two host-specific details to be aware of:
+
+- **CSS shim imports.** `routesImports: ["./src/styles/global.css"]` forces every translated route's shim to side-effect-import `global.css` so Astro emits the right `<link rel="stylesheet">` tag. This site ships all CSS in a single Vite chunk via `BaseLayout`, so the global entry covers all pages. If a future page introduces a CSS file Vite chunks separately, add it to the relevant route's `imports` or to the global `routesImports`.
+- **Sitemap hreflang.** `astroSitemapI18n(i18n, { hreflang: { en: "en-US" } })` (exported by polystella) is composed with `@astrojs/sitemap` so each URL emits `<xhtml:link rel="alternate" hreflang="…">` annotations plus `x-default`. The `i18n` config object is hoisted out of `defineConfig` so Astro routing, PolyStella, and the sitemap helper share one source of truth for the locale list.
+
 ## 🚢 Deployment
 
-The site is deployed on Cloudflare Workers with automatic deployments (via Workers Builds) from the main branch.
+The site is deployed on Cloudflare Workers with automatic deployments (via Workers Builds) from the main branch. PR previews are built and deployed automatically; their translation pass uses the branch-isolated cache described under _Translation_ above.

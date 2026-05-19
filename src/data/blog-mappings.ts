@@ -5,29 +5,14 @@ export interface BlogMapping {
 }
 
 export const blogMappings: Record<string, BlogMapping> = {
-  "http://blog.cloudflare.com/past-bots-and-humans": {
-    author: "thibault-meunier",
+  "http://blog.cloudflare.com/react2shell-rsc-vulnerabilities-exploitation-threat-brief": {
+    pillar: "safe",
+    tags: ["security", "vulnerabilities"],
   },
-  "http://blog.cloudflare.com/unweight-tensor-compression": {
-    author: "mari-galicer",
+  "http://blog.cloudflare.com/fresh-insights-from-old-data-corroborating-reports-of-turkmenistan-ip": {
+    pillar: "measurable",
+    tags: ["censorship", "measurement"],
   },
-  "http://blog.cloudflare.com/rethinking-cache-ai-humans": {
-    author: "suleman-ahmad",
-  },
-  "http://blog.cloudflare.com/radar-origin-pq-key-transparency-aspa": {
-    author: "thibault-meunier",
-  },
-  "http://blog.cloudflare.com/react2shell-rsc-vulnerabilities-exploitation-threat-brief":
-    {
-      pillar: "safe",
-      tags: ["security", "vulnerabilities"],
-    },
-  "http://blog.cloudflare.com/fresh-insights-from-old-data-corroborating-reports-of-turkmenistan-ip":
-    {
-      author: "luke-valenta",
-      pillar: "measurable",
-      tags: ["censorship", "measurement"],
-    },
   "http://blog.cloudflare.com/agent-registry": {
     author: "thibault-meunier",
     pillar: "private",
@@ -48,24 +33,18 @@ export const blogMappings: Record<string, BlogMapping> = {
     pillar: "measurable",
     tags: ["measurement", "IPv4"],
   },
-  "http://blog.cloudflare.com/how-to-build-your-own-vpn-or-the-history-of-warp":
-    {
-      author: "chris-branch",
-      pillar: "private",
-      tags: ["VPN", "privacy"],
-    },
-  "http://blog.cloudflare.com/defending-quic-from-acknowledgement-based-ddos-attacks":
-    {
-      author: "apoorv-kothari",
-      pillar: "safe",
-      tags: ["security", "DDoS", "quic"],
-    },
-  "http://blog.cloudflare.com/so-long-and-thanks-for-all-the-fish-how-to-escape-the-linux-networking-stack":
-    {
-      author: "thibault-meunier",
-      pillar: "fast",
-      tags: ["performance", "networking"],
-    },
+  "http://blog.cloudflare.com/how-to-build-your-own-vpn-or-the-history-of-warp": {
+    pillar: "private",
+    tags: ["VPN", "privacy"],
+  },
+  "http://blog.cloudflare.com/defending-quic-from-acknowledgement-based-ddos-attacks": {
+    pillar: "safe",
+    tags: ["security", "DDoS", "quic"],
+  },
+  "http://blog.cloudflare.com/so-long-and-thanks-for-all-the-fish-how-to-escape-the-linux-networking-stack": {
+    pillar: "fast",
+    tags: ["performance", "networking"],
+  },
   "http://blog.cloudflare.com/pq-2025": {
     author: "bas-westerbaan",
     pillar: "private",
@@ -101,23 +80,19 @@ export const blogMappings: Record<string, BlogMapping> = {
     pillar: "measurable",
     tags: ["measurement", "analytics"],
   },
-  "http://blog.cloudflare.com/internet-measurement-resilience-transparency-week":
-    {
-      author: "mari-galicer",
-      pillar: "measurable",
-      tags: ["measurement", "transparency"],
-    },
+  "http://blog.cloudflare.com/internet-measurement-resilience-transparency-week": {
+    pillar: "measurable",
+    tags: ["measurement", "transparency"],
+  },
   "http://blog.cloudflare.com/how-does-cloudflares-speed-test-really-work": {
     author: "lai-yi-ohlsen",
     pillar: "fast",
     tags: ["performance", "measurement"],
   },
-  "http://blog.cloudflare.com/improving-the-trustworthiness-of-javascript-on-the-web":
-    {
-      author: "michael-rosenberg",
-      pillar: "safe",
-      tags: ["security", "javascript"],
-    },
+  "http://blog.cloudflare.com/improving-the-trustworthiness-of-javascript-on-the-web": {
+    pillar: "safe",
+    tags: ["security", "javascript"],
+  },
   "http://blog.cloudflare.com/automatically-secure": {
     author: "suleman-ahmad",
     pillar: "safe",
@@ -133,12 +108,10 @@ export const blogMappings: Record<string, BlogMapping> = {
     pillar: "private",
     tags: ["cryptography", "bots"],
   },
-  "http://blog.cloudflare.com/orange-me2eets-we-made-an-end-to-end-encrypted-video-calling-app-and-it-was":
-    {
-      author: "mari-galicer",
-      pillar: "private",
-      tags: ["encryption", "privacy"],
-    },
+  "http://blog.cloudflare.com/orange-me2eets-we-made-an-end-to-end-encrypted-video-calling-app-and-it-was": {
+    pillar: "private",
+    tags: ["encryption", "privacy"],
+  },
   "http://blog.cloudflare.com/web-bot-auth": {
     author: "thibault-meunier",
     pillar: "safe",
@@ -149,29 +122,23 @@ export const blogMappings: Record<string, BlogMapping> = {
     pillar: "safe",
     tags: ["security", "certificates"],
   },
-  "http://blog.cloudflare.com/open-sourcing-openpubkey-ssh-opkssh-integrating-single-sign-on-with-ssh":
-    {
-      author: "ethan-heilman",
-      pillar: "safe",
-      tags: ["security", "SSH"],
-    },
+  "http://blog.cloudflare.com/open-sourcing-openpubkey-ssh-opkssh-integrating-single-sign-on-with-ssh": {
+    pillar: "safe",
+    tags: ["security", "SSH"],
+  },
   "http://blog.cloudflare.com/lattice-crypto-primer": {
     author: "christopher-patton",
     pillar: "private",
     tags: ["cryptography", "post-quantum"],
   },
-  "http://blog.cloudflare.com/https-only-for-cloudflare-apis-shutting-the-door-on-cleartext-traffic":
-    {
-      author: "suleman-ahmad",
-      pillar: "safe",
-      tags: ["security", "encryption"],
-    },
-  "http://blog.cloudflare.com/an-early-look-at-cryptographic-watermarks-for-ai-generated-content":
-    {
-      author: "christopher-patton",
-      pillar: "private",
-      tags: ["cryptography", "AI"],
-    },
+  "http://blog.cloudflare.com/https-only-for-cloudflare-apis-shutting-the-door-on-cleartext-traffic": {
+    pillar: "safe",
+    tags: ["security", "encryption"],
+  },
+  "http://blog.cloudflare.com/an-early-look-at-cryptographic-watermarks-for-ai-generated-content": {
+    pillar: "private",
+    tags: ["cryptography", "AI"],
+  },
   "http://blog.cloudflare.com/post-quantum-zero-trust": {
     author: "wesley-evans",
     pillar: "private",
@@ -217,12 +184,10 @@ export const blogMappings: Record<string, BlogMapping> = {
     pillar: "private",
     tags: ["post-quantum", "standards"],
   },
-  "http://blog.cloudflare.com/introducing-automatic-ssl-tls-securing-and-simplifying-origin-connectivity":
-    {
-      author: "suleman-ahmad",
-      pillar: "safe",
-      tags: ["security", "SSL"],
-    },
+  "http://blog.cloudflare.com/introducing-automatic-ssl-tls-securing-and-simplifying-origin-connectivity": {
+    pillar: "safe",
+    tags: ["security", "SSL"],
+  },
   "http://blog.cloudflare.com/harnessing-office-chaos": {
     author: "thibault-meunier",
     pillar: "private",
@@ -238,12 +203,10 @@ export const blogMappings: Record<string, BlogMapping> = {
     pillar: "private",
     tags: ["privacy", "standards"],
   },
-  "http://blog.cloudflare.com/have-your-data-and-hide-it-too-an-introduction-to-differential-privacy":
-    {
-      author: "avani-wildani",
-      pillar: "private",
-      tags: ["privacy", "differential-privacy"],
-    },
+  "http://blog.cloudflare.com/have-your-data-and-hide-it-too-an-introduction-to-differential-privacy": {
+    pillar: "private",
+    tags: ["privacy", "differential-privacy"],
+  },
   "http://blog.cloudflare.com/birthday-week-2023-wrap-up": {
     author: "dina-kozlov",
     pillar: "measurable",
@@ -269,12 +232,10 @@ export const blogMappings: Record<string, BlogMapping> = {
     pillar: "private",
     tags: ["privacy", "measurement"],
   },
-  "http://blog.cloudflare.com/connection-coalescing-with-origin-frames-fewer-dns-queries-fewer-connections":
-    {
-      author: "suleman-ahmad",
-      pillar: "fast",
-      tags: ["performance", "optimization"],
-    },
+  "http://blog.cloudflare.com/connection-coalescing-with-origin-frames-fewer-dns-queries-fewer-connections": {
+    pillar: "fast",
+    tags: ["performance", "optimization"],
+  },
   "http://blog.cloudflare.com/post-quantum-crypto-should-be-free": {
     author: "bas-westerbaan",
     pillar: "private",
@@ -290,12 +251,10 @@ export const blogMappings: Record<string, BlogMapping> = {
     pillar: "safe",
     tags: ["security", "key-management"],
   },
-  "http://blog.cloudflare.com/stronger-than-a-promise-proving-oblivious-http-privacy-properties":
-    {
-      author: "christopher-wood",
-      pillar: "private",
-      tags: ["privacy", "cryptography"],
-    },
+  "http://blog.cloudflare.com/stronger-than-a-promise-proving-oblivious-http-privacy-properties": {
+    pillar: "private",
+    tags: ["privacy", "cryptography"],
+  },
   "http://blog.cloudflare.com/post-quantum-for-all": {
     author: "bas-westerbaan",
     pillar: "private",
@@ -446,12 +405,10 @@ export const blogMappings: Record<string, BlogMapping> = {
     pillar: "reliable",
     tags: ["infrastructure", "key-management"],
   },
-  "http://blog.cloudflare.com/privacy-preserving-compromised-credential-checking":
-    {
-      author: "luke-valenta",
-      pillar: "private",
-      tags: ["privacy", "security"],
-    },
+  "http://blog.cloudflare.com/privacy-preserving-compromised-credential-checking": {
+    pillar: "private",
+    tags: ["privacy", "security"],
+  },
   "http://blog.cloudflare.com/addressing-agility": {
     author: "marwan-fayed",
     pillar: "reliable",

@@ -5,16 +5,14 @@ import Section from "@/components/Section.astro";
 import ArticleGrid from "@/components/ArticleGrid.astro";
 import { getArticlesByPillar } from "@/lib/getArticlesByPillar";
 
-const combinedArticles = await getArticlesByPillar('measurable');
+const combinedArticles = await getArticlesByPillar("measurable", Astro.currentLocale);
+const { t } = Astro.locals;
 ---
 
-<InteriorLayout metaTitle="Measurable Focus Area"
-  metaDescription="Promoting accountability in Internet infrastructure. Explore Cloudflare Research on open standards, Certificate Transparency, and the tools making global systems verifiable, transparent, and measurable."
->
+<InteriorLayout metaTitle={t("nav.focusAreas.moreMeasurable.metaTitle")} metaDescription={t("nav.focusAreas.moreMeasurable.description")}>
   <HeaderMeasurable />
 
   <Section>
     <ArticleGrid publications={combinedArticles} />
   </Section>
-
 </InteriorLayout>

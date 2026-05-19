@@ -3,19 +3,28 @@ import { cva, type VariantProps } from "class-variance-authority";
 import Icon from "./Icon.astro";
 import { formatDate } from "@/lib/dateHelpers";
 
+const { t } = Astro.locals;
+
 export const typeClassNames = cva("border-current aspect-square center border-dashed border size-[42px]", {
   variants: {
     type: {
       publication: "text-blue bg-badge-blue-bg",
       blog: "text-badge-orange-text bg-badge-orange-bg",
       video: "text-badge-pink-text bg-badge-pink-bg",
-      presentation: "text-badge-yellow-text bg-badge-yellow-bg"
-    }
+      presentation: "text-badge-yellow-text bg-badge-yellow-bg",
+    },
   },
   defaultVariants: {
-    type: "blog"
-  }
+    type: "blog",
+  },
 });
+
+const translatedTypes = {
+  publication: t("globals.publication"),
+  blog: t("globals.blog"),
+  video: t("globals.video"),
+  presentation: t("globals.presentation"),
+};
 
 interface Props {
   type: VariantProps<typeof typeClassNames>["type"];
@@ -27,9 +36,9 @@ const { type, date, year } = Astro.props;
 ---
 
 <div class="flex gap-3 font-mono leading-none text-sm mb-4">
-  <div class={typeClassNames({type})}><Icon id={type} /></div>
+  <div class={typeClassNames({ type })}><Icon id={type} /></div>
   <div>
-    <div class="uppercase mb-2 text-dark-gray">{ type }</div>
-    <div class="text-page-text-muted">{ date ? formatDate(date) : year }</div>
+    <div class="uppercase mb-2 text-dark-gray">{translatedTypes[type as keyof typeof translatedTypes]}</div>
+    <div class="text-page-text-muted">{date ? formatDate(date) : year}</div>
   </div>
 </div>

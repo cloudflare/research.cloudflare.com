@@ -1,16 +1,18 @@
 ---
 import BaseLayout from "../layouts/base.astro";
 import Nav from "../components/Nav.astro";
+import type { TranslationStatus } from "@/lib/i18n-utils";
 
 interface Props {
 	metaTitle?: string;
 	metaDescription?: string;
+	aiTranslationStatus?: TranslationStatus;
 }
 
-const {metaTitle = "", metaDescription = ""} = Astro.props;
+const {metaTitle = "", metaDescription = "", aiTranslationStatus} = Astro.props;
 ---
 
-<BaseLayout metaTitle={metaTitle} metaDescription={metaDescription}>
+<BaseLayout metaTitle={metaTitle} metaDescription={metaDescription} aiTranslationStatus={aiTranslationStatus}>
   <div class="border-b border-page-border"><Nav /></div>
   <slot />
 </BaseLayout>

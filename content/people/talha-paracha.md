@@ -1,5 +1,5 @@
 ---
-title: talha-paracha
+title: Talha Paracha
 position: External Collaborator
 avatar: placeholder.png
 slug: talha-paracha

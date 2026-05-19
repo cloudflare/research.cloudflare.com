@@ -1,5 +1,5 @@
 ---
-title: sudheesh-singanamalla
+title: Sudheesh Singanamalla
 position: External Collaborator
 avatar: placeholder.png
 slug: sudheesh-singanamalla
