@@ -56,8 +56,8 @@ importers:
         specifier: ^12.37.0
         version: 12.37.0(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
       polystella:
-        specifier: github:cloudflare/polystella#d99bf4ac2f960e3d41b3be98bedbee0740a4383f
-        version: https://codeload.github.com/cloudflare/polystella/tar.gz/d99bf4ac2f960e3d41b3be98bedbee0740a4383f(astro@6.1.9(@types/node@24.12.0)(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3))(react@19.2.4)
+        specifier: github:cloudflare/polystella#8c50309b503693b02e92edd18c8ac9babf442c95
+        version: https://codeload.github.com/cloudflare/polystella/tar.gz/8c50309b503693b02e92edd18c8ac9babf442c95(astro@6.1.9(@types/node@24.12.0)(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3))(react@19.2.4)
       react:
         specifier: ^19.2.4
         version: 19.2.4
@@ -2426,8 +2426,8 @@ packages:
     resolution: { integrity: sha512-QP88BAKvMam/3NxH6vj2o21R6MjxZUAd6nlwAS/pnGvN9IVLocLHxGYIzFhg6fUQ+5th6P4dv4eW9jX3DSIj7A== }
     engines: { node: ">=12" }
 
-  polystella@https://codeload.github.com/cloudflare/polystella/tar.gz/d99bf4ac2f960e3d41b3be98bedbee0740a4383f:
-    resolution: { tarball: https://codeload.github.com/cloudflare/polystella/tar.gz/d99bf4ac2f960e3d41b3be98bedbee0740a4383f }
+  polystella@https://codeload.github.com/cloudflare/polystella/tar.gz/8c50309b503693b02e92edd18c8ac9babf442c95:
+    resolution: { tarball: https://codeload.github.com/cloudflare/polystella/tar.gz/8c50309b503693b02e92edd18c8ac9babf442c95 }
     version: 0.2.0
     hasBin: true
     peerDependencies:
@@ -5701,7 +5701,7 @@ snapshots:
 
   picomatch@4.0.4: {}
 
-  polystella@https://codeload.github.com/cloudflare/polystella/tar.gz/d99bf4ac2f960e3d41b3be98bedbee0740a4383f(astro@6.1.9(@types/node@24.12.0)(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3))(react@19.2.4):
+  polystella@https://codeload.github.com/cloudflare/polystella/tar.gz/8c50309b503693b02e92edd18c8ac9babf442c95(astro@6.1.9(@types/node@24.12.0)(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3))(react@19.2.4):
     dependencies:
       astro: 6.1.9(@types/node@24.12.0)(jiti@2.6.1)(lightningcss@1.31.1)(rollup@4.59.0)(tsx@4.21.0)(typescript@5.9.3)(yaml@2.8.3)
       p-retry: 8.0.0

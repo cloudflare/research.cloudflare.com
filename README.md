@@ -199,7 +199,7 @@ The site is fully responsive with:
 
 Locale-aware content is translated by [PolyStella](https://github.com/cloudflare/polystella), an Astro integration consumed from upstream (pinned in `package.json`). Translations are computed by Workers AI and cached in an R2 bucket; on subsequent builds, unchanged content hits the cache and the provider is never called.
 
-General PolyStella usage, configuration, and CLI flags are documented at the upstream repo. This section covers only what is **specific to this site**: how the integration is wired in, which env vars drive cache prefixes, and the operator action required on the R2 bucket.
+General PolyStella usage, configuration, and CLI flags are documented at the upstream repo.
 
 ### Standalone CLI
 
@@ -219,32 +219,6 @@ The integration is configured in [`polystella.config.mjs`](./polystella.config.m
 
 - **CSS shim imports.** `routesImports: ["./src/styles/global.css"]` forces every translated route's shim to side-effect-import `global.css` so Astro emits the right `<link rel="stylesheet">` tag. This site ships all CSS in a single Vite chunk via `BaseLayout`, so the global entry covers all pages. If a future page introduces a CSS file Vite chunks separately, add it to the relevant route's `imports` or to the global `routesImports`.
 - **Sitemap hreflang.** `astroSitemapI18n(i18n, { hreflang: { en: "en-US" } })` (exported by polystella) is composed with `@astrojs/sitemap` so each URL emits `<xhtml:link rel="alternate" hreflang="…">` annotations plus `x-default`. The `i18n` config object is hoisted out of `defineConfig` so Astro routing, PolyStella, and the sitemap helper share one source of truth for the locale list.
-
-### Branch-isolated cache
-
-`polystella.config.mjs` dispatches the R2 configuration based on two env-var signals:
-
-- `WORKERS_CI_BRANCH` — set automatically by Cloudflare Workers Builds in CI. Unset in any local shell.
-- `POLYSTELLA_CLI=1` — set by polystella's CLI before the config loads. Marks an explicit `pnpm translate` invocation.
-
-Three resulting modes:
-
-| Mode               | Detection                                 | `r2.prefix`                         | `r2.readFallbackPrefixes` | `r2.readOnly` | Behaviour                                                                                                                                                              |
-| :----------------- | :---------------------------------------- | :---------------------------------- | :------------------------ | :------------ | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Local build        | neither env var set                       | `i18n/`                             | _(none)_                  | `true`        | `pnpm build` / `pnpm dev` reads main's cache; on miss, translates locally and stages without writing to R2. A developer's machine can never overwrite production data. |
-| CI build (main)    | `WORKERS_CI_BRANCH=main`                  | `i18n/`                             | _(none)_                  | `false`       | Production cache; the sole writer of `i18n/`.                                                                                                                          |
-| CI build (preview) | `WORKERS_CI_BRANCH=<other>`               | `previews/<sanitized-branch>/i18n/` | `["i18n/"]`               | `false`       | Preview cache; reads main's translations on miss, only writes its own variants under `previews/`.                                                                      |
-| Explicit CLI       | `POLYSTELLA_CLI=1` + branch-from-anywhere | as above (per resolved branch)      | as above                  | `false`       | `pnpm translate` writes to R2 per the branch's prefix. Branch resolution: `--branch` flag → `WORKERS_CI_BRANCH` env → `git rev-parse HEAD`.                            |
-
-Branch names with non-alphanumeric characters are sanitized to a single flat segment — `diogo/polystella-v1` becomes `previews/diogo-polystella-v1/i18n/`. The sanitization rule (`[^a-zA-Z0-9_-]+` → `-`, trim leading/trailing `-`) lives in `polystella.config.mjs`.
-
-Per-branch isolation means a PR build can re-translate edited files without polluting production's cache, while still reusing main's bytes for unchanged content. Local builds never write at all; the explicit CLI is the only way to populate non-main caches from outside CI.
-
-### R2 lifecycle (operator action)
-
-Configure a lifecycle rule on the `research-i18n-cache` bucket to expire objects under `previews/` after 30 days. This bounds storage cost as PRs come and go without requiring an explicit cleanup step on PR close. Production's `i18n/` prefix is exempt (no lifecycle rule there).
-
-PolyStella prunes within its configured `prefix` only, so a preview build can never accidentally evict production variants — the lifecycle rule handles cross-build cleanup of orphan preview prefixes.
 
 ## 🚢 Deployment
 
