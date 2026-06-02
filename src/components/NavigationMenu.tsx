@@ -242,12 +242,12 @@ function ListItem({
   return (
     <li {...props}>
       <NavigationMenuLink asChild>
-        <a href={href} className="group/subnav subnav">
+        <a href={href} title={title} className="group/subnav subnav">
           <div className="text-sm leading-none font-medium subnav-title">
             {title}
           </div>
           {children && (
-            <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
+            <p className="text-muted-foreground text-sm leading-snug">
               {children}
             </p>
           )}
