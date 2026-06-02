@@ -1,0 +1,199 @@
+---
+export const prerender = false;
+
+const title = Astro.url.searchParams.get("title") || "Cloudflare Research";
+const description = Astro.url.searchParams.get("description") || "";
+---
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+        font-family: 'Inter', system-ui, sans-serif;
+        background: #0a1628;
+        position: relative;
+      }
+
+      /* Mesh gradient background using blurry blobs */
+      .bg-gradient {
+        position: absolute;
+        inset: 0;
+        background: #1040c8;
+        z-index: 0;
+        overflow: hidden;
+      }
+
+      .blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(110px);
+      }
+
+      /* Top-left dark anchor */
+      .blob-1 {
+        width: 550px;
+        height: 480px;
+        background: #020818;
+        top: -120px;
+        left: -80px;
+        opacity: 1;
+        filter: blur(90px);
+      }
+
+      /* Bottom-right dark anchor */
+      .blob-2 {
+        width: 480px;
+        height: 420px;
+        background: #030c25;
+        bottom: -80px;
+        right: -60px;
+        opacity: 1;
+        filter: blur(85px);
+      }
+
+      /* Main bright sweep — off-center, flows top-right to mid */
+      .blob-3 {
+        width: 750px;
+        height: 550px;
+        background: #1e5cf0;
+        top: -80px;
+        left: 350px;
+        opacity: 0.85;
+        filter: blur(110px);
+      }
+
+      /* Secondary bright pool — lower left, pushes the wave down */
+      .blob-4 {
+        width: 600px;
+        height: 480px;
+        background: #1448cc;
+        bottom: -60px;
+        left: 80px;
+        opacity: 0.8;
+        filter: blur(100px);
+      }
+
+      /* Mid bright accent — right side, creates the flow */
+      .blob-5 {
+        width: 420px;
+        height: 380px;
+        background: #3366ee;
+        top: 180px;
+        right: 120px;
+        opacity: 0.5;
+        filter: blur(80px);
+      }
+
+      /* Subtle dark valley — breaks the symmetry in the center */
+      .blob-6 {
+        width: 350px;
+        height: 300px;
+        background: #050f35;
+        top: 260px;
+        left: 320px;
+        opacity: 0.6;
+        filter: blur(100px);
+      }
+
+      /* Grid overlay */
+      .bg-grid {
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+        background-size: 60px 60px;
+        z-index: 1;
+      }
+
+      /* Dark vignette edges */
+      .bg-vignette {
+        position: absolute;
+        inset: 0;
+        background: radial-gradient(ellipse 100% 100% at 50% 50%, transparent 50%, rgba(0,0,0,0.6) 100%);
+        z-index: 2;
+      }
+
+      .content {
+        position: absolute;
+        inset: 0;
+        z-index: 3;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        padding: 64px 72px;
+      }
+
+      .logo {
+        height: 36px;
+        width: auto;
+      }
+
+      .body {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .label {
+        font-size: 16px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #9ec1fc;
+      }
+
+      .title {
+        font-size: 64px;
+        font-weight: 700;
+        color: #ffffff;
+        line-height: 1.1;
+        max-width: 900px;
+      }
+
+      .description {
+        font-size: 24px;
+        font-weight: 400;
+        color: rgba(255,255,255,0.7);
+        max-width: 800px;
+        line-height: 1.4;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="bg-gradient">
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
+      <div class="blob blob-4"></div>
+      <div class="blob blob-5"></div>
+      <div class="blob blob-6"></div>
+    </div>
+    <div class="bg-grid"></div>
+    <div class="bg-vignette"></div>
+
+    <div class="content">
+      <!-- Logo top left -->
+      <img class="logo" src="/images/logo.svg" alt="Cloudflare Research" />
+
+      <!-- Title and description bottom -->
+      <div class="body">
+        <div class="label">Cloudflare Research</div>
+        <h1 class="title">{title}</h1>
+        {description && <p class="description">{description}</p>}
+      </div>
+    </div>
+  </body>
+</html>

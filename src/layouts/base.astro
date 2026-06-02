@@ -7,9 +7,10 @@ type Props = {
 	metaTitle?: string;
 	metaDescription?: string;
 	bodyClassName?: string;
+	ogImage?: string;
 }
 
-const { metaTitle, metaDescription, bodyClassName = '' } = Astro.props;
+const { metaTitle, metaDescription, bodyClassName = '', ogImage = '/images/og.jpg' } = Astro.props;
 ---
 
 <html lang="en">
@@ -26,7 +27,7 @@ const { metaTitle, metaDescription, bodyClassName = '' } = Astro.props;
 		<!-- OG -->
 		<meta property="og:title" content={metaTitle ? metaTitle + " | Cloudflare Research" : "Cloudflare Research"} />
 		{metaDescription && (<meta property="og:description" content={metaDescription} />)}
-		<meta property="og:image" content="/images/og.jpg" />
+		<meta property="og:image" content={ogImage} />
 		<meta property="og:image:width" content="1200" />
 		<meta property="og:image:height" content="630" />
 		<meta property="og:image:alt" content="Cloudflare Research" />

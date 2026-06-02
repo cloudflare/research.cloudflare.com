@@ -5,12 +5,13 @@ import Nav from "../components/Nav.astro";
 interface Props {
 	metaTitle?: string;
 	metaDescription?: string;
+	ogImage?: string;
 }
 
-const {metaTitle = "", metaDescription = ""} = Astro.props;
+const {metaTitle = "", metaDescription = "", ogImage} = Astro.props;
 ---
 
-<BaseLayout metaTitle={metaTitle} metaDescription={metaDescription}>
+<BaseLayout metaTitle={metaTitle} metaDescription={metaDescription} ogImage={ogImage}>
   <div class="border-b border-page-border"><Nav /></div>
   <slot />
 </BaseLayout>
