@@ -56,3 +56,10 @@
   X-Content-Type-Options: nosniff
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: interest-cohort=()
+
+# Link headers for agent discovery (RFC 8288)
+# Tells AI agents where to find the sitemap and the LLM-friendly site index
+# without having to parse HTML first. Scored by isitagentready.com.
+/
+  Link: </sitemap-index.xml>; rel="sitemap"; type="application/xml"
+  Link: </llms.txt>; rel="alternate"; type="text/plain"; title="LLM-friendly site index"
