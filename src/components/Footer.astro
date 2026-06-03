@@ -10,10 +10,9 @@ import Icon from "./Icon.astro";
       <!-- Logo section -->
       <div class="sm:row-span-2 xl:row-span-1">
         <a href="/">
-          <picture>
-            <source srcset="/images/logo.svg" media="(prefers-color-scheme: dark)" />
-            <img src="/images/logo--light.svg" alt="Cloudflare Research" width="197" height="53" />
-          </picture>
+          {/* Two logos stacked — CSS picks the right one based on data-theme. */}
+          <img src="/images/logo--light.svg" alt="Cloudflare Research" class="theme-logo theme-logo--light" width="197" height="53" />
+          <img src="/images/logo.svg" alt="Cloudflare Research" class="theme-logo theme-logo--dark" width="197" height="53" />
         </a>
       </div>
 
