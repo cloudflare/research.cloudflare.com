@@ -2,12 +2,63 @@ import type { Loader } from "astro/loaders";
 import { z } from "astro/zod";
 import fs from "node:fs";
 import path from "node:path";
-import { blogMappings } from "../data/blog-mappings";
+import { blogMappings as staticBlogMappings } from "../data/blog-mappings";
+import type { BlogMapping } from "../data/blog-mappings";
 
 const PEOPLE_DIR = "./content/people";
 
 const WORKER_BASE_URL = "https://website-worker.research.cloudflare.com";
 const CACHE_DIR = ".astro/cache/blog";
+
+// The admin tool API that serves live pillar/tag/author data from D1.
+// Protected by Cloudflare Access — requires a Service Token at build time.
+// Falls back to the static blog-mappings.ts if credentials aren't set.
+const MAPPINGS_API_URL =
+  "https://research-manage-blog.pcx-team.workers.dev/api/blog/mappings";
+
+/**
+ * Fetches blog post mappings from the admin tool API.
+ * Returns null if credentials are missing or the request fails,
+ * so callers can fall back to the static file gracefully.
+ */
+async function fetchBlogMappings(): Promise<Record<string, BlogMapping> | null> {
+  const clientId = process.env.CF_ACCESS_CLIENT_ID;
+  const clientSecret = process.env.CF_ACCESS_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    console.log(
+      "[blog-loader] CF_ACCESS_CLIENT_ID / CF_ACCESS_CLIENT_SECRET not set — using static blog-mappings.ts"
+    );
+    return null;
+  }
+
+  try {
+    const res = await fetch(MAPPINGS_API_URL, {
+      headers: {
+        "CF-Access-Client-Id": clientId,
+        "CF-Access-Client-Secret": clientSecret,
+      },
+    });
+
+    if (!res.ok) {
+      console.warn(
+        `[blog-loader] Mappings API returned ${res.status} — falling back to static blog-mappings.ts`
+      );
+      return null;
+    }
+
+    const data = await res.json() as Record<string, BlogMapping>;
+    console.log(
+      `[blog-loader] Loaded ${Object.keys(data).length} mappings from admin API`
+    );
+    return data;
+  } catch (err) {
+    console.warn(
+      `[blog-loader] Failed to fetch mappings API: ${err} — falling back to static blog-mappings.ts`
+    );
+    return null;
+  }
+}
 
 interface BlogPost {
   date: string;
@@ -102,6 +153,10 @@ export function blogLoader(): Loader {
         // Fetch all research blog posts
         const posts = await fetchWithCache("/blog/all", "blogposts_all.json");
 
+        // Use live mappings from the admin API if available, otherwise fall back
+        // to the static blog-mappings.ts file.
+        const blogMappings = (await fetchBlogMappings()) ?? staticBlogMappings;
+
         // Clear existing entries
         store.clear();
 
@@ -155,7 +210,7 @@ export function blogLoader(): Loader {
             if (seenLinks.has(post.link)) continue;
 
             const id = generateDigest(post.link);
-            const mapping = blogMappings[post.link];
+            const mapping = blogMappings[post.link]; // uses same live/static mappings resolved above
 
             const data = await parseData({
               id,
