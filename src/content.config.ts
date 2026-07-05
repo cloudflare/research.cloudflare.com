@@ -4,9 +4,7 @@ import { defineCollection, reference } from "astro:content";
 // 2. Import loader(s).
 //    `file` comes from polystella/content (instead of astro/loaders) so
 //    polystellaCollections can auto-derive the locale sibling for
-//    single-file collections — no `loaderOverrides.<name>` needed.
-//    The wrapper forwards to Astro's `file()` and just records the
-//    source path on the returned loader.
+//    single-file collections.
 import { glob } from "astro/loaders";
 import { file } from "polystella/content";
 import { blogLoader } from "./loaders/blog";
