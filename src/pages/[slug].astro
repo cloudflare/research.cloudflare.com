@@ -5,7 +5,7 @@ import SeeMore from "@/components/SeeMore.astro";
 import Section from "../components/Section.astro";
 import NarrowContent from "../components/NarrowContent.astro";
 import { getCollection } from "astro:content";
-import { getLocalizedEntry } from "polystella/runtime";
+import { getLocalizedEntry } from "@cloudflare/polystella/runtime";
 import { computeTranslationStatus } from "@/lib/i18n-utils";
 
 export async function getStaticPaths() {

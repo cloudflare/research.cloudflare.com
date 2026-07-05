@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { CONSTANTS } from "@/lib/constants";
 import { locales, localeName, swapLocale } from "@/lib/i18n-utils";
-import { useLocalizedHref, useTranslations } from "polystella/react";
+import { useLocalizedHref, useTranslations } from "@cloudflare/polystella/react";
 
 interface NavMenuProps {
   dict: Record<string, string>;

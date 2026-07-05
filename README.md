@@ -197,7 +197,7 @@ The site is fully responsive with:
 
 ## 🌐 Translation (PolyStella)
 
-Locale-aware content is translated by [PolyStella](https://github.com/cloudflare/polystella), an Astro integration consumed from upstream (pinned in `package.json`). Translations are computed by Workers AI and cached in an R2 bucket; on subsequent builds, unchanged content hits the cache and the provider is never called.
+Locale-aware content is translated by [PolyStella](https://github.com/cloudflare/polystella), the `@cloudflare/polystella` Astro integration. Translations are computed by Workers AI and cached in an R2 bucket; on subsequent builds, unchanged content hits the cache and the provider is never called.
 
 General PolyStella usage, configuration, and CLI flags are documented at the upstream repo.
 
@@ -218,7 +218,7 @@ Run `pnpm translate --help` for the full flag list. Workflow for editing UI stri
 The integration is configured in [`polystella.config.mjs`](./polystella.config.mjs) and registered in [`astro.config.mjs`](./astro.config.mjs). Two host-specific details to be aware of:
 
 - **CSS shim imports.** `routesImports: ["./src/styles/global.css"]` forces every translated route's shim to side-effect-import `global.css` so Astro emits the right `<link rel="stylesheet">` tag. This site ships all CSS in a single Vite chunk via `BaseLayout`, so the global entry covers all pages. If a future page introduces a CSS file Vite chunks separately, add it to the relevant route's `imports` or to the global `routesImports`.
-- **Sitemap hreflang.** `astroSitemapI18n(i18n, { hreflang: { en: "en-US" } })` (exported by polystella) is composed with `@astrojs/sitemap` so each URL emits `<xhtml:link rel="alternate" hreflang="…">` annotations plus `x-default`. The `i18n` config object is hoisted out of `defineConfig` so Astro routing, PolyStella, and the sitemap helper share one source of truth for the locale list.
+- **Sitemap hreflang.** `astroSitemapI18n(i18n, { hreflang: { en: "en-US" } })` from `@cloudflare/polystella` is composed with `@astrojs/sitemap` so each URL emits `<xhtml:link rel="alternate" hreflang="…">` annotations plus `x-default`. The `i18n` config object is hoisted out of `defineConfig` so Astro routing, PolyStella, and the sitemap helper share one source of truth for the locale list.
 
 ## 🚢 Deployment
 

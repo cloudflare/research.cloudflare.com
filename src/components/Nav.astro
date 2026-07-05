@@ -1,7 +1,7 @@
 ---
 import { NavMenu } from "./NavigationMenu";
 import { LocalePicker } from "./LocalePicker";
-import { getDictionary } from "polystella/i18n";
+import { getDictionary } from "@cloudflare/polystella/i18n";
 import { defaultLocale } from "@/lib/i18n-utils";
 
 const dict = await getDictionary(Astro.currentLocale);

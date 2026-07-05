@@ -9,7 +9,7 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { locales, localeName, swapLocale } from "@/lib/i18n-utils";
-import { useTranslations } from "polystella/react";
+import { useTranslations } from "@cloudflare/polystella/react";
 
 function GlobeIcon({ size = 16, className }: { size?: number; className?: string }) {
   return (

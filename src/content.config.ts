@@ -1,22 +1,10 @@
-// 1. Import utilities from `astro:content`
 import { defineCollection, reference } from "astro:content";
-
-// 2. Import loader(s).
-//    `file` comes from polystella/content (instead of astro/loaders) so
-//    polystellaCollections can auto-derive the locale sibling for
-//    single-file collections.
 import { glob } from "astro/loaders";
-import { file } from "polystella/content";
+import { z } from "astro/zod";
+import { file, polystellaCollections } from "@cloudflare/polystella/content";
+import { i18nLoader, i18nSchema } from "@cloudflare/polystella/i18n";
 import { blogLoader } from "./loaders/blog";
 
-// 3. Import Zod
-import { z } from "astro/zod";
-
-// 4. Import the PolyStella helpers for dynamic collections and i18n
-import { polystellaCollections } from "polystella/content";
-import { i18nLoader, i18nSchema } from "polystella/i18n";
-
-// 5. Define your collection(s)
 const site = defineCollection({
   loader: file("./content/site.toml"),
   schema: z.object({
@@ -110,17 +98,6 @@ const i18n = defineCollection({
   schema: i18nSchema(),
 });
 
-// 6. Export a single `collections` object to register your collection(s).
-//    `polystellaCollections` returns the source collections verbatim
-//    plus, for each `(collection, locale)` pair where the collection
-//    is not skipped, a sibling collection named
-//    `<collection>__<locale>` whose loader points at
-//    `.astro/i18n-staging/<locale>/<collection>/<rest>`. The build
-//    hook stages translated content there during `astro build`.
-//
-//    Locales and defaultLocale are auto-derived from
-//    `astro.config.mjs`'s `i18n` block (via `polystella:runtime-config`),
-//    so they're declared exactly once across the whole project.
 export const collections = {
   i18n,
   ...polystellaCollections({
