@@ -142,11 +142,11 @@ export function blogLoader(): Loader {
           try {
             authorPosts = await fetchWithCache(
               `/blog/author?name=${blogAuthor}`,
-              `blogposts_${blogAuthor}.json`
+              `blogposts_${blogAuthor}.json`,
             );
           } catch (err) {
             logger.warn(
-              `Failed to fetch posts for author "${blogAuthor}": ${err}`
+              `Failed to fetch posts for author "${blogAuthor}": ${err}`,
             );
             continue;
           }
@@ -180,7 +180,7 @@ export function blogLoader(): Loader {
 
         if (extraCount > 0) {
           logger.info(
-            `Loaded ${extraCount} additional blog posts from per-author endpoints`
+            `Loaded ${extraCount} additional blog posts from per-author endpoints`,
           );
         }
       } catch (error) {
