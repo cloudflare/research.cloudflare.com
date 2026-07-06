@@ -25,7 +25,7 @@ interface CachedData {
  */
 async function fetchWithCache(
   endpoint: string,
-  cacheFile: string
+  cacheFile: string,
 ): Promise<BlogPost[]> {
   const cachePath = path.join(CACHE_DIR, cacheFile);
 
@@ -52,7 +52,7 @@ async function fetchWithCache(
 
   if (!response.ok) {
     throw new Error(
-      `Failed to fetch blog posts: ${response.status} ${response.statusText}`
+      `Failed to fetch blog posts: ${response.status} ${response.statusText}`,
     );
   }
 
@@ -126,10 +126,10 @@ export function blogLoader(): Loader {
  * This can be used to augment people profiles with their blog posts
  */
 export async function fetchBlogPostsByAuthor(
-  blogAuthor: string
+  blogAuthor: string,
 ): Promise<BlogPost[]> {
   return fetchWithCache(
     `/blog/author?name=${blogAuthor}`,
-    `blogposts_${blogAuthor}.json`
+    `blogposts_${blogAuthor}.json`,
   );
 }
