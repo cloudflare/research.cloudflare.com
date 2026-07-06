@@ -12,12 +12,13 @@ const { post } = Astro.props;
 const dataTags = Astro.props["data-tags"];
 
 const year = post.data.date.getFullYear().toString();
+const dateStr = post.data.date.toISOString().split('T')[0];
 const tags = post.data.tags?.map(t => t.id) || [];
 ---
 
 <article class="p-8 flex flex-col justify-between article-card" data-tags={dataTags}>
   <div class="flex-1">
-    <ArticleHeading type="blog" date="" year={year} />
+    <ArticleHeading type="blog" date={dateStr} year={year} />
 
     <!-- title -->
     <h3 class="leading-snug text-lg font-medium text-bizarre title">
