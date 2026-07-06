@@ -1,8 +1,8 @@
 ---
-title: Rahul Chatterjee
+title: Riad S. Wahby
 position: External Collaborator
 avatar: placeholder.png
-slug: rahul-chatterjee
+slug: riad-s-wahby
 type: external
 ---
 

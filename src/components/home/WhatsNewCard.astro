@@ -22,7 +22,7 @@ const { className, title, date, link, tags } = Astro.props as Props;
     <div class="mb-10"><slot /></div>
   </div>
   { tags && (
-    <div class="mt-auto flex gap-1 items-center">
+    <div class="mt-auto flex gap-1 items-center flex-wrap">
       {tags.map(tag => (
         <Badge variant="blue">{tag}</Badge>
       ))}
