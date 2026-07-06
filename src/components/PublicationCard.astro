@@ -8,6 +8,7 @@ const { lhref } = Astro.locals;
 interface Props {
   publication: CollectionEntry<"publications">;
   authors?: CollectionEntry<"people">[];
+  tags?: string[];
   "data-tags"?: string;
 }
 
@@ -15,7 +16,7 @@ const { publication, authors } = Astro.props;
 const dataTags = Astro.props["data-tags"];
 
 const year = publication.data.year?.toString() || "";
-const tags = publication.data.related_interests || [];
+const tags = Astro.props.tags ?? publication.data.related_interests ?? [];
 ---
 
 <article class="p-8 flex flex-col justify-between article-card" data-tags={dataTags}>

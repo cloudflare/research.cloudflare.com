@@ -1,12 +1,7 @@
-/**
- * formateDate
- * @param date - string in this format: 2022-01-01
- * @returns string in this format: January 1, 2022
- */
-export const formatDate = (date: string) => {
-  return new Date(date + "T00:00:00").toLocaleDateString("en-US", {
+export const formatDate = (date: string, locale = "en-US") => {
+  return new Intl.DateTimeFormat(locale, {
     year: "numeric",
     month: "long",
     day: "numeric",
-  });
+  }).format(new Date(`${date}T00:00:00`));
 };

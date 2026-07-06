@@ -1,26 +1,61 @@
 ---
 import PresentationCard from "@/components/PresentationCard.astro";
-import {ToggleButton} from "@/components/ToggleButton.tsx";
-import type { CollectionEntry } from 'astro:content';
+import type { CollectionEntry } from "astro:content";
+import { getCollection } from "astro:content";
+import {
+  buildTagLabelRecord,
+  getInterestTagSlugs,
+  getTagLabelSources,
+  type TagLabelCandidateMap,
+} from "@/lib/tags";
 
 interface Props {
-  presentations: CollectionEntry<'presentations'>[];
+  presentations: CollectionEntry<"presentations">[];
 }
 
 const { presentations } = Astro.props;
+const locale = Astro.currentLocale ?? "en-US";
+
+const [sourcePresentations, localizedTags] = await Promise.all([
+  getCollection("presentations"),
+  Astro.locals.getLocalizedCollection("tags"),
+]);
+const sourceRelatedInterestsById = new Map(
+  sourcePresentations.map((presentation) => [presentation.id, presentation.data.related_interests ?? []]),
+);
+const labelCandidates: TagLabelCandidateMap = new Map();
+const tagSlugsByPresentationId = new Map(
+  presentations.map((presentation) => [
+    presentation.id,
+    getInterestTagSlugs(
+      sourceRelatedInterestsById.get(presentation.id) ?? presentation.data.related_interests ?? [],
+      presentation.data.related_interests ?? [],
+      labelCandidates,
+    ),
+  ]),
+);
+const uniqueTagSlugs = new Set([...tagSlugsByPresentationId.values()].flat());
+const tagLabels = buildTagLabelRecord(uniqueTagSlugs, getTagLabelSources(localizedTags), labelCandidates, locale);
 
 ---
 
 <!-- focus area cards -->
 <div id="publications-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-  {presentations.map(presentation => (
-    <PresentationCard type="presentation"
-      slug={presentation.data.youtube}
-      date=""
-      thumbnail={presentation.data.thumbnail}
-      year={presentation.data.year?.toString() || ""}
-      title={presentation.data.title}
-      tags={presentation.data.related_interests}
-      data-tags={presentation.data.related_interests?.join(',')} />
-  ))}
+  {
+    presentations.map((presentation) => {
+      const tagSlugs = tagSlugsByPresentationId.get(presentation.id) ?? [];
+      return (
+        <PresentationCard
+          type="presentation"
+          slug={presentation.data.youtube}
+          date=""
+          thumbnail={presentation.data.thumbnail}
+          year={presentation.data.year?.toString() || ""}
+          title={presentation.data.title}
+          tags={tagSlugs.map((slug) => tagLabels[slug] ?? slug)}
+          data-tags={tagSlugs.join(",")}
+        />
+      );
+    })
+  }
 </div>

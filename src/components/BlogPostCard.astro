@@ -1,19 +1,19 @@
 ---
 import Badge from "./Badge.astro";
 import ArticleHeading from "./ArticleHeading.astro";
-import type { CollectionEntry } from 'astro:content';
+import type { CollectionEntry } from "astro:content";
 
 interface Props {
-  post: CollectionEntry<'blog'>;
+  post: CollectionEntry<"blog">;
+  tags?: string[];
   "data-tags"?: string;
 }
 
-const { post } = Astro.props;
+const { post, tags = [] } = Astro.props;
 const dataTags = Astro.props["data-tags"];
 
 const year = post.data.date.getFullYear().toString();
-const dateStr = post.data.date.toISOString().split('T')[0];
-const tags = post.data.tags?.map(t => t.id) || [];
+const dateStr = post.data.date.toISOString().split("T")[0];
 ---
 
 <article class="p-8 flex flex-col justify-between article-card" data-tags={dataTags}>

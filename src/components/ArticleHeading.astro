@@ -4,6 +4,7 @@ import Icon from "./Icon.astro";
 import { formatDate } from "@/lib/dateHelpers";
 
 const { t } = Astro.locals;
+const locale = Astro.currentLocale ?? "en-US";
 
 export const typeClassNames = cva("border-current aspect-square center border-dashed border size-[42px]", {
   variants: {
@@ -39,6 +40,6 @@ const { type, date, year } = Astro.props;
   <div class={typeClassNames({ type })}><Icon id={type} /></div>
   <div>
     <div class="uppercase mb-2 text-dark-gray">{translatedTypes[type as keyof typeof translatedTypes]}</div>
-    <div class="text-page-text-muted">{date ? formatDate(date) : year}</div>
+    <div class="text-page-text-muted">{date ? formatDate(date, locale) : year}</div>
   </div>
 </div>

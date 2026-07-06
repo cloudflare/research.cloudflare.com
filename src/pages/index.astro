@@ -9,8 +9,16 @@ import ButtonLink from "@/components/ButtonLink.astro";
 import Icon from "@/components/Icon.astro";
 import { CONSTANTS } from "@/lib/constants";
 import SeeMore from "@/components/SeeMore.astro";
+import { getCollection } from "astro:content";
+import {
+  buildTagLabelRecord,
+  getPublicationTagSlugs,
+  getTagLabelSources,
+  type TagLabelCandidateMap,
+} from "@/lib/tags";
 
 const { t, lhref, getLocalizedCollection } = Astro.locals;
+const locale = Astro.currentLocale ?? "en-US";
 
 // Pull in 3 most recent publications (2025+), sorted by date
 const recentPublications = (await getLocalizedCollection("publications", ({ data }) => data.year && data.year >= 2025))
@@ -20,6 +28,23 @@ const recentPublications = (await getLocalizedCollection("publications", ({ data
     return dateB.getTime() - dateA.getTime();
   })
   .slice(0, 3);
+
+const [sourcePublications, localizedTags] = await Promise.all([
+  getCollection("publications"),
+  getLocalizedCollection("tags"),
+]);
+const sourceRelatedInterestsById = new Map(
+  sourcePublications.map((publication) => [publication.id, publication.data.related_interests ?? []]),
+);
+const labelCandidates: TagLabelCandidateMap = new Map();
+const tagSlugsByPublicationId = new Map(
+  recentPublications.map((publication) => [
+    publication.id,
+    getPublicationTagSlugs(publication, sourceRelatedInterestsById, labelCandidates),
+  ]),
+);
+const uniqueTagSlugs = new Set([...tagSlugsByPublicationId.values()].flat());
+const tagLabels = buildTagLabelRecord(uniqueTagSlugs, getTagLabelSources(localizedTags), labelCandidates, locale);
 
 // No `aiTranslationStatus` prop: the home's visible content is mostly UI
 // strings (translated via the i18n dictionary), not a single primary
@@ -116,7 +141,7 @@ const recentPublications = (await getLocalizedCollection("publications", ({ data
             link={lhref(`/${publication.id}`) || ""}
             date={publication.data.year?.toString() || ""}
             title={publication.data.title}
-            tags={publication.data.related_interests || []}
+            tags={(tagSlugsByPublicationId.get(publication.id) ?? []).map((slug) => tagLabels[slug] ?? slug)}
           />
         ))
       }
