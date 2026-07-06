@@ -1,3 +1,4 @@
 dist/
 .astro/
 .wrangler/
+**/*.umd.js

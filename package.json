@@ -10,7 +10,8 @@
     "astro": "astro",
     "icons": "lemon-lime-svgs",
     "ui": "NODE_TLS_REJECT_UNAUTHORIZED=0 pnpm dlx shadcn@latest add",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@astrojs/cloudflare": "^13.1.10",

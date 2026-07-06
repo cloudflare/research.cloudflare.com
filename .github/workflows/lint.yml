@@ -21,4 +21,4 @@ jobs:
           node-version: 24.15.0
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec prettier --check .
+      - run: pnpm format:check
