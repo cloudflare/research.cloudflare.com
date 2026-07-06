@@ -1,9 +1,9 @@
 import "dotenv/config";
 
 /**
- * Three-mode dispatch for the R2 cache:
+ * Three-mode dispatch for the R2 translation cache:
  *
- *   1. Local build (`pnpm build` / `pnpm dev`, no env signals):
+ *   1. Local build:
  *      Read main's `i18n/` prefix, never write to R2. A developer's
  *      build can never overwrite production data. Translation is
  *      skipped by default (`dryRun: true`) to avoid burning Workers
@@ -25,20 +25,6 @@ import "dotenv/config";
  *      preview prefix. The CLI is the only path that lets a
  *      developer write to R2 from outside CI; the explicit
  *      invocation is the consent.
- *
- *
- * Branch sanitisation:
- *   Branch names commonly contain `/` (e.g. `diogo/polystella-v1`).
- *   Embedded slashes work in R2 keys but fragment a branch's cache
- *   across nested folders and let two branches collide on a shared
- *   namespace component (`diogo/foo` and `diogo/bar` both nest
- *   under `previews/diogo/`). We flatten to a single-level segment.
- *
- *   The sanitisation is lossy: `diogo/foo-bar` and `diogo-foo-bar`
- *   both normalise to `diogo-foo-bar` and would share a cache. The
- *   cache is content-addressed so no data corruption is possible
- *   even on a collision — worst case is one branch reads the
- *   other's translations of an identical source hash.
  */
 const sanitizeBranchSegment = (name) => {
   const sanitized = name.replace(/[^a-zA-Z0-9_-]+/g, "-").replace(/^-+|-+$/g, "");
@@ -56,10 +42,7 @@ const branchSegment = sanitizeBranchSegment(branch);
 /** @type {import('@cloudflare/polystella').PolyStellaOptions} */
 const config = {
   // Locale set is configured in `astro.config.mjs` under `i18n` and
-  // read (never written) by PolyStella at `astro:config:setup`. To
-  // change `defaultLocale` or add/remove a target locale, edit the
-  // Astro config; PolyStella picks it up automatically and folds the
-  // resolved set into every cache key.
+  // read by PolyStella at `astro:config:setup`.
 
   sourceDir: "./content",
 
@@ -90,8 +73,6 @@ const config = {
       "tags/**": ["name", "description"],
       "presentations/**": ["title", "related_interests"],
     },
-    // Source-language context included in every prompt batch. Not part of
-    // the cache-key hash, so edits here do not invalidate translations.
     contextKeys: {
       "publications/**": ["title", "metaDescription"],
       "presentations/**": ["title"],
@@ -175,8 +156,8 @@ const config = {
     keepLastN: isLocalBuild
       ? false // readOnly already disables prune; setting `false` is belt + braces.
       : isProduction
-        ? 3
-        : 5, // preview branches churn hashes faster, keep more variants.
+        ? 2
+        : 3, // preview branches churn hashes faster, keep more variants.
   },
 
   provider: {
@@ -186,40 +167,16 @@ const config = {
     // Verify all model ids against the live catalog at
     // https://developers.cloudflare.com/workers-ai/models/ before changing them.
     model: {
-      // Llama 3.3 70B (FP8-quantised, "fast" variant) is the
-      // default for Latin-script locales (pt-BR, es-ES). The
-      // earlier 3.1-8B default produced a steady stream of
-      // marker-protocol failures on this corpus — empty bodies
-      // for short headings, hallucinated `fm:abstract` /
-      // `fm:content` ids on academic-shaped content, typo'd marker
-      // prefixes (`fn:author` instead of `fm:`). Llama 3.3 is
-      // dramatically better at instruction-following on the
-      // marker-delimited prompt, so retries clear the residue
-      // when they do occur. FP8-fast keeps inference latency
-      // close to the 8B model's footprint.
       default: "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
-      // Qwen 3rd-generation MoE, advertised "groundbreaking
-      // multilingual support". Replaces the earlier
-      // `@cf/qwen/qwen2.5-coder-32b-instruct` (a *code-specific*
-      // model — wrong fit for prose translation). Qwen family is
-      // best-in-class for CJK per the RFC's reasoning.
       "ja-JP": "@cf/qwen/qwen3-30b-a3b-fp8",
     },
   },
 
-  // Per-locale terminology rules. The integration loads one YAML per
-  // locale from `./i18n/glossary/<locale>.yaml`, hashes the contents,
-  // and folds that hash into each translated file's cache key — so a
-  // glossary edit invalidates only the affected locale's translations.
+  // Per-locale terminology rules.
   glossary: {
     file: "./i18n/glossaries/{locale}.yaml",
   },
 
-  // The package ships a generic "You are a professional translator."
-  // opener. Use `context` to add a single line of site-/domain-specific
-  // framing right after that opener, before the source/target locale
-  // line. Keep it short and prescriptive — the model treats it as part
-  // of its role definition, not as content to translate.
   prompt: {
     context:
       "Specialise in technical research content from the Cloudflare Research portal: cryptography, networking, distributed systems, and applied security.",
