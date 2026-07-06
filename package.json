@@ -11,6 +11,7 @@
     "icons": "lemon-lime-svgs",
     "ui": "NODE_TLS_REJECT_UNAUTHORIZED=0 pnpm dlx shadcn@latest add",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "prepare": "git config core.hooksPath .githooks 2>/dev/null || true",
     "translate": "polystella translate",
     "translate:dry": "polystella translate --dry-run",
