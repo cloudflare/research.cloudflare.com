@@ -7,6 +7,8 @@ import { blogMappings } from "../data/blog-mappings";
 const PEOPLE_DIR = "./content/people";
 
 const WORKER_BASE_URL = "https://website-worker.research.cloudflare.com";
+// Raise this to "2" when needed
+const BLOG_ENDPOINT_VERSION = "1";
 const CACHE_DIR = ".astro/cache/blog";
 
 interface BlogPost {
@@ -20,6 +22,11 @@ interface BlogPost {
 interface CachedData {
   timestamp: number;
   data: BlogPost[];
+}
+
+function blogEndpoint(path: string, params: Record<string, string> = {}): string {
+  const searchParams = new URLSearchParams({ ...params, v: BLOG_ENDPOINT_VERSION });
+  return `${path}?${searchParams}`;
 }
 
 /**
@@ -103,7 +110,7 @@ function rawBlogLoader(): Loader {
 
       try {
         // Fetch all research blog posts
-        const posts = await fetchWithCache("/blog/all", "blogposts_all.json");
+        const posts = await fetchWithCache(blogEndpoint("/blog/all"), `blogposts_v${BLOG_ENDPOINT_VERSION}_all.json`);
 
         // Clear existing entries
         store.clear();
@@ -143,7 +150,10 @@ function rawBlogLoader(): Loader {
         for (const [blogAuthor, peopleSlug] of Object.entries(blogAuthorMap)) {
           let authorPosts: BlogPost[];
           try {
-            authorPosts = await fetchWithCache(`/blog/author?name=${blogAuthor}`, `blogposts_${blogAuthor}.json`);
+            authorPosts = await fetchWithCache(
+              blogEndpoint("/blog/author", { name: blogAuthor }),
+              `blogposts_v${BLOG_ENDPOINT_VERSION}_${blogAuthor}.json`,
+            );
           } catch (err) {
             logger.warn(`Failed to fetch posts for author "${blogAuthor}": ${err}`);
             continue;
@@ -192,5 +202,5 @@ function rawBlogLoader(): Loader {
  * This can be used to augment people profiles with their blog posts
  */
 export async function fetchBlogPostsByAuthor(blogAuthor: string): Promise<BlogPost[]> {
-  return fetchWithCache(`/blog/author?name=${blogAuthor}`, `blogposts_${blogAuthor}.json`);
+  return fetchWithCache(blogEndpoint("/blog/author", { name: blogAuthor }), `blogposts_v${BLOG_ENDPOINT_VERSION}_${blogAuthor}.json`);
 }

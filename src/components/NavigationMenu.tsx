@@ -20,7 +20,7 @@ import { useLocalizedHref, useTranslations } from "@cloudflare/polystella/react"
 interface NavMenuProps {
   dict: Record<string, string>;
   locale: string;
-  /** `Astro.url.pathname` for the mobile drawer's locale links. */
+  /** Current path, optionally including search/hash, for the mobile drawer's locale links. */
   pathname: string;
 }
 
@@ -28,6 +28,7 @@ export function NavMenu({ dict, locale, pathname }: NavMenuProps) {
   const t = useTranslations(dict);
   const lhref = useLocalizedHref(locale);
   const isMobile = useIsMobile();
+  const [currentPath, setCurrentPath] = React.useState(pathname);
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [focusAreasOpen, setFocusAreasOpen] = React.useState(false);
   const [aboutOpen, setAboutOpen] = React.useState(false);
@@ -68,6 +69,21 @@ export function NavMenu({ dict, locale, pathname }: NavMenuProps) {
     ],
     [t, lhref],
   );
+
+  // Query strings are only available in the browser on statically rendered pages.
+  React.useEffect(() => {
+    const updateCurrentPath = () => {
+      setCurrentPath(`${window.location.pathname}${window.location.search}${window.location.hash}`);
+    };
+
+    updateCurrentPath();
+    window.addEventListener("tagsChanged", updateCurrentPath);
+    window.addEventListener("popstate", updateCurrentPath);
+    return () => {
+      window.removeEventListener("tagsChanged", updateCurrentPath);
+      window.removeEventListener("popstate", updateCurrentPath);
+    };
+  }, []);
 
   // Lock body scroll when mobile menu is open
   React.useEffect(() => {
@@ -198,7 +214,7 @@ export function NavMenu({ dict, locale, pathname }: NavMenuProps) {
                       return (
                         <a
                           key={targetLocale}
-                          href={swapLocale(pathname, targetLocale)}
+                          href={swapLocale(currentPath, targetLocale)}
                           hrefLang={targetLocale}
                           lang={targetLocale}
                           aria-current={isCurrent ? "true" : undefined}

@@ -14,10 +14,10 @@ const { t, lhref } = Astro.locals;
 
 const dict = await getDictionary(Astro.currentLocale);
 const currentLocale = Astro.currentLocale ?? defaultLocale;
-const pathname = Astro.url.pathname;
+const currentPath = `${Astro.url.pathname}${Astro.url.search}`;
 
 const showAiBadge = aiTranslationStatus === "ai";
-const originalHref = swapLocale(pathname, defaultLocale);
+const originalHref = swapLocale(currentPath, defaultLocale);
 ---
 
 <footer class="pt-11">
@@ -137,13 +137,13 @@ const originalHref = swapLocale(pathname, defaultLocale);
             <span class="inline-flex items-center px-2 py-0.5 rounded border border-page-border-subtle font-mono text-xs uppercase tracking-wide">
               {t("notice.aiTranslated.badge")}
             </span>
-            <a href={originalHref} hreflang={defaultLocale} lang={defaultLocale} class="hover:text-page-text hover:underline">
+            <a href={originalHref} hreflang={defaultLocale} lang={defaultLocale} data-ai-original-link class="hover:text-page-text hover:underline">
               {t("notice.aiTranslated.viewOriginal")}
             </a>
           </div>
         )
       }
-      <LocalePicker client:load dict={dict} locale={currentLocale} pathname={pathname} placement="up" />
+      <LocalePicker client:load dict={dict} locale={currentLocale} pathname={currentPath} placement="up" />
     </div>
   </div>
 </footer>

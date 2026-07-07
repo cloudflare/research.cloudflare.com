@@ -12,12 +12,13 @@
  * Storage key: `polystella:notice:<locale>:v1`. Bump the version
  * literal here AND in `BaseLayout`'s head script to re-show.
  */
-import { swapLocale, defaultLocale } from "@/lib/i18n-utils";
+import { swapLocale, defaultLocale, locales } from "@/lib/i18n-utils";
 
 const { t } = Astro.locals;
 
 const locale = Astro.currentLocale ?? defaultLocale;
-const originalHref = swapLocale(Astro.url.pathname, defaultLocale);
+const originalHref = swapLocale(Astro.url, defaultLocale);
+const nonDefaultLocales = locales.filter((l) => l !== defaultLocale);
 const NOTICE_VERSION = "v1";
 ---
 
@@ -55,6 +56,7 @@ const NOTICE_VERSION = "v1";
       href={originalHref}
       hreflang={defaultLocale}
       lang={defaultLocale}
+      data-ai-original-link
       class="text-sm underline hover:text-baby-blue-eyes"
     >
       {t("notice.aiTranslated.viewOriginal")}
@@ -62,11 +64,40 @@ const NOTICE_VERSION = "v1";
   </div>
 </aside>
 
-<script is:inline define:vars={{ locale, version: NOTICE_VERSION }}>
+<script is:inline define:vars={{ locale, version: NOTICE_VERSION, defaultLocale, nonDefaultLocales }}>
   // Wrapped in try/catch: Safari private mode and locked-down environments
   // throw on localStorage access. Failing silently is correct — the banner
   // re-appears next visit, acceptable degradation.
   try {
+    function swapBrowserLocale(targetLocale) {
+      var pathname = window.location.pathname;
+      var suffix = window.location.search + window.location.hash;
+      var segments = pathname.split("/").filter(function (segment) {
+        return segment.length > 0;
+      });
+      var hasLocalePrefix = segments.length > 0 && nonDefaultLocales.indexOf(segments[0]) !== -1;
+      var logicalSegments = hasLocalePrefix ? segments.slice(1) : segments;
+      var trailingSlash = pathname.endsWith("/");
+
+      if (targetLocale === defaultLocale) {
+        return (logicalSegments.length === 0 ? "/" : "/" + logicalSegments.join("/") + (trailingSlash ? "/" : "")) + suffix;
+      }
+      return (logicalSegments.length === 0 ? "/" + targetLocale + "/" : "/" + targetLocale + "/" + logicalSegments.join("/") + (trailingSlash ? "/" : "")) + suffix;
+    }
+
+    function updateOriginalLinks() {
+      document.querySelectorAll("[data-ai-original-link]").forEach(function (link) {
+        link.setAttribute("href", swapBrowserLocale(defaultLocale));
+      });
+    }
+
+    updateOriginalLinks();
+    window.addEventListener("tagsChanged", updateOriginalLinks);
+    window.addEventListener("popstate", updateOriginalLinks);
+    document.querySelectorAll("[data-ai-original-link]").forEach(function (link) {
+      link.addEventListener("click", updateOriginalLinks);
+    });
+
     var key = "polystella:notice:" + locale + ":" + version;
     document.querySelectorAll("[data-translation-banner-dismiss]").forEach(function (button) {
       button.addEventListener("click", function () {

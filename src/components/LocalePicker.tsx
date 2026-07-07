@@ -1,5 +1,6 @@
 "use client";
 
+import * as React from "react";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -30,6 +31,7 @@ function GlobeIcon({ size = 16, className }: { size?: number; className?: string
 interface LocalePickerProps {
   dict: Record<string, string>;
   locale: string;
+  /** Current path, optionally including search/hash, for locale switch links. */
   pathname: string;
   /** Dropdown open direction. "up" anchors content above the trigger (use in the footer). */
   placement?: "up" | "down";
@@ -37,10 +39,25 @@ interface LocalePickerProps {
 
 export function LocalePicker({ dict, locale, pathname, placement = "down" }: LocalePickerProps) {
   const t = useTranslations(dict);
+  const [currentPath, setCurrentPath] = React.useState(pathname);
   // `!` forces priority over the variant-prefixed `top-full` / `mt-1.5`
   // defaults baked into `NavigationMenuContent`; tw-merge doesn't always
   // resolve those conflicts reliably across variant boundaries.
   const contentClassName = placement === "up" ? "left-auto right-0 top-auto! bottom-full! mt-0! mb-1.5!" : "left-auto right-0";
+
+  React.useEffect(() => {
+    const updateCurrentPath = () => {
+      setCurrentPath(`${window.location.pathname}${window.location.search}${window.location.hash}`);
+    };
+
+    updateCurrentPath();
+    window.addEventListener("tagsChanged", updateCurrentPath);
+    window.addEventListener("popstate", updateCurrentPath);
+    return () => {
+      window.removeEventListener("tagsChanged", updateCurrentPath);
+      window.removeEventListener("popstate", updateCurrentPath);
+    };
+  }, []);
 
   return (
     <NavigationMenu viewport={false}>
@@ -60,7 +77,7 @@ export function LocalePicker({ dict, locale, pathname, placement = "down" }: Loc
                   <li key={targetLocale}>
                     <NavigationMenuLink asChild>
                       <a
-                        href={swapLocale(pathname, targetLocale)}
+                        href={swapLocale(currentPath, targetLocale)}
                         hrefLang={targetLocale}
                         lang={targetLocale}
                         aria-current={isCurrent ? "true" : undefined}

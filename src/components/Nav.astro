@@ -7,7 +7,7 @@ import { defaultLocale } from "@/lib/i18n-utils";
 const dict = await getDictionary(Astro.currentLocale);
 const { lhref } = Astro.locals;
 const currentLocale = Astro.currentLocale ?? defaultLocale;
-const pathname = Astro.url.pathname;
+const currentPath = `${Astro.url.pathname}${Astro.url.search}`;
 ---
 
 <div class="flex items-center justify-between py-4 px-3 sm:px-5">
@@ -20,10 +20,10 @@ const pathname = Astro.url.pathname;
     </a>
   </div>
   <nav class="flex-1 flex justify-end md:justify-end lg:justify-center">
-    <NavMenu client:load dict={dict} locale={currentLocale} pathname={pathname} />
+    <NavMenu client:load dict={dict} locale={currentLocale} pathname={currentPath} />
   </nav>
   <!-- LocalePicker hidden below `lg`; mobile drawer + footer cover smaller screens -->
   <div class="hidden lg:flex lg:justify-end w-[197px]">
-    <LocalePicker client:load dict={dict} locale={currentLocale} pathname={pathname} />
+    <LocalePicker client:load dict={dict} locale={currentLocale} pathname={currentPath} />
   </div>
 </div>
