@@ -23,8 +23,8 @@ importers:
         specifier: ^3.7.3
         version: 3.7.3
       "@cloudflare/polystella":
-        specifier: https://pkg.pr.new/@cloudflare/polystella@c54f410
-        version: https://pkg.pr.new/@cloudflare/polystella@c54f410(astro@7.0.6(@astrojs/markdown-remark@7.2.1)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@24.12.0)(jiti@2.7.0)(rollup@4.59.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.8.3))(react@19.2.4)
+        specifier: 0.4.0
+        version: 0.4.0(astro@7.0.6(@astrojs/markdown-remark@7.2.1)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@24.12.0)(jiti@2.7.0)(rollup@4.59.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.8.3))(react@19.2.4)
       "@radix-ui/react-dialog":
         specifier: ^1.1.15
         version: 1.1.15(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
@@ -353,13 +353,8 @@ packages:
     resolution: { integrity: sha512-jxQYkj8dSIzc0cD6cMMNdOc1UVjqSqu8BZdor5s8cGjW2I8BjODt/kWPVdY+u9zj3ms75Q5qaZgnxUad83+eAg== }
     engines: { node: ">=22.0.0" }
 
-  "@cloudflare/polystella@https://pkg.pr.new/@cloudflare/polystella@c54f410":
-    resolution:
-      {
-        integrity: sha512-Bak8zmon7Ao1IWo4bARr3AcKSAwAuFRPuAGJc22UemsW1lU8UGxSQHNvnUYmpOejykUmK3S1aPeoCfD0dko8Og==,
-        tarball: https://pkg.pr.new/@cloudflare/polystella@c54f410,
-      }
-    version: 0.3.1
+  "@cloudflare/polystella@0.4.0":
+    resolution: { integrity: sha512-EcpGO5u1NxIn0nh0nAWeippkK0PjCvpjP09cuAtmQDivKabwdQNs9HKPTO2NII0dlxuW5plPuBlzknb45y2iFw== }
     hasBin: true
     peerDependencies:
       astro: ^7.0.0
@@ -3672,7 +3667,7 @@ snapshots:
 
   "@cloudflare/kv-asset-handler@0.5.0": {}
 
-  "@cloudflare/polystella@https://pkg.pr.new/@cloudflare/polystella@c54f410(astro@7.0.6(@astrojs/markdown-remark@7.2.1)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@24.12.0)(jiti@2.7.0)(rollup@4.59.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.8.3))(react@19.2.4)":
+  "@cloudflare/polystella@0.4.0(astro@7.0.6(@astrojs/markdown-remark@7.2.1)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@24.12.0)(jiti@2.7.0)(rollup@4.59.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.8.3))(react@19.2.4)":
     dependencies:
       acorn: 8.17.0
       astro: 7.0.6(@astrojs/markdown-remark@7.2.1)(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.1)(@types/node@24.12.0)(jiti@2.7.0)(rollup@4.59.0)(terser@5.48.0)(tsx@4.21.0)(yaml@2.8.3)

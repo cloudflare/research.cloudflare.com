@@ -25,7 +25,7 @@
     "@astrojs/mdx": "^7.0.2",
     "@astrojs/react": "^6.0.1",
     "@astrojs/sitemap": "^3.7.3",
-    "@cloudflare/polystella": "https://pkg.pr.new/@cloudflare/polystella@c54f410",
+    "@cloudflare/polystella": "0.4.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-navigation-menu": "^1.2.14",
     "@tailwindcss/vite": "^4.3.2",
