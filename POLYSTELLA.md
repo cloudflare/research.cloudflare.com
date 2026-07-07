@@ -79,6 +79,8 @@ pnpm translate
 
 The standalone CLI is the explicit path that can write translation cache entries to R2 outside CI. On `main`, it writes under `i18n/`; on other branches, it writes under `previews/<branch>/i18n/` and falls back to production cache entries on misses.
 
+First-time content translation, or translation after a hash-affecting change such as glossary, prompt, parser, or config updates, can take a long time because this site has a large content corpus. For large translation refreshes, prefer running `pnpm translate` first so the R2 cache is populated before relying on an Astro build. If translation happens during a CI/build run and the build times out or fails partway through, restart it; already completed translations remain cached, so the next run continues from the remaining uncached work and will eventually complete.
+
 Run this for the full CLI help:
 
 ```sh
@@ -186,6 +188,8 @@ PolyStella uses a three-mode cache policy:
 | `pnpm translate` CLI | Same branch policy as CI, by explicit developer action         |
 
 Generated files under `.astro/i18n-staging` are build artifacts. Do not edit or commit them.
+
+Large translation refreshes may exceed a single build's practical runtime, especially the first time a locale/content set is processed or after a translation hash change invalidates many cache entries. The safest path is to pre-populate R2 with `pnpm translate`; otherwise, monitor the build and restart it if it times out or fails. PolyStella skips cached translations on the next run, so repeated runs make forward progress instead of starting over.
 
 ## Files To Know
 
