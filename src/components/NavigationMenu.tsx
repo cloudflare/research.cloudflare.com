@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LayoutGrid } from "lucide-react";
 
 import { useIsMobile } from "@/hooks/useMobile";
 import {
@@ -14,45 +14,82 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import { CONSTANTS } from "@/lib/constants";
+import Icon from "@/components/Icon";
 
-const components: { title: string; href: string; description: string }[] = [
+// Focus area icons reference the shared sprite at /images/icons/sprite.svg
+// (same source the rest of the site uses via the Icon component).
+// "All Focus Areas" uses Lucide's LayoutGrid since there's no matching sprite icon.
+
+type FocusItem = {
+  title: string;
+  href: string;
+  description: string;
+  iconId?: string; // sprite id in /images/icons/sprite.svg
+  LucideIcon?: React.ComponentType<{ className?: string; size?: number }>;
+};
+
+const components: FocusItem[] = [
   {
     title: "All Focus Areas",
     href: "/focus",
     description:
       "Driving innovation across five key areas to create a faster, safer, more private, reliable, and measurable Internet.",
+    LucideIcon: LayoutGrid,
   },
   {
     title: "More Private",
     href: "/focus/private",
     description:
       "Developing privacy-preserving systems and protocols that protect users while enabling a more secure and trustworthy Internet.",
+    iconId: "hidden",
   },
   {
     title: "Safer",
     href: "/focus/safe",
     description:
       "Creating production-quality security defenses that address network interference and ensure safe, reliable global connectivity.",
+    iconId: "hand",
   },
   {
     title: "Faster",
     href: "/focus/fast",
     description:
       "Advancing distributed systems and caching technologies that minimize latency and accelerate the global Internet.",
+    iconId: "bolt",
   },
   {
     title: "More Reliable",
     href: "/focus/reliable",
     description:
       "Building robust distributed systems and time synchronization protocols that ensure the Internet remains stable and available at scale.",
+    iconId: "shield",
   },
   {
     title: "More Measurable",
     href: "/focus/measurable",
     description:
       "Promoting accountability in Internet infrastructure through open standards like Certificate Transparency and tools that make critical systems verifiable.",
+    iconId: "transparent",
   },
 ];
+
+function FocusIcon({
+  item,
+  className,
+  size = 16,
+}: {
+  item: FocusItem;
+  className?: string;
+  size?: number;
+}) {
+  if (item.LucideIcon) {
+    return <item.LucideIcon className={className} size={size} />;
+  }
+  if (item.iconId) {
+    return <Icon id={item.iconId} size={size} className={className} />;
+  }
+  return null;
+}
 
 export function NavMenu() {
   const isMobile = useIsMobile();
@@ -116,15 +153,21 @@ export function NavMenu() {
                       <a
                         key={component.title}
                         href={component.href}
-                        className="block mobile-nav-text"
+                        className="flex items-start gap-3 mobile-nav-text"
                         onClick={() => setMobileMenuOpen(false)}
                       >
-                        <div className="text-base font-medium text-page-text">
-                          {component.title}
+                        <FocusIcon
+                          item={component}
+                          className="shrink-0 mt-0.5 text-page-text-muted"
+                        />
+                        <div>
+                          <div className="text-base font-medium text-page-text">
+                            {component.title}
+                          </div>
+                          <p className="text-sm text-page-text-muted mt-1">
+                            {component.description}
+                          </p>
                         </div>
-                        <p className="text-sm text-page-text-muted mt-1">
-                          {component.description}
-                        </p>
                       </a>
                     ))}
                   </div>
@@ -186,13 +229,19 @@ export function NavMenu() {
         <NavigationMenuList className="flex-wrap">
           <NavigationMenuItem>
             <NavigationMenuTrigger>Focus Areas</NavigationMenuTrigger>
-            <NavigationMenuContent>
-              <ul className="grid gap-2 sm:w-[400px] md:w-[500px] md:grid-cols-2 lg:w-[600px] z-(--z-nav) relative">
+            <NavigationMenuContent className="md:!fixed md:!top-16 md:!left-1/2 md:!-translate-x-1/2 md:!w-auto">
+              <ul className="grid gap-x-8 gap-y-6 sm:w-[520px] md:w-[720px] lg:w-[880px] md:grid-cols-3 p-6 z-(--z-nav) relative">
                 {components.map((component) => (
                   <ListItem
                     key={component.title}
                     title={component.title}
                     href={component.href}
+                    icon={
+                      <FocusIcon
+                        item={component}
+                        className="shrink-0 text-page-text-muted"
+                      />
+                    }
                   >
                     {component.description}
                   </ListItem>
@@ -237,17 +286,24 @@ function ListItem({
   title,
   children,
   href,
+  icon,
   ...props
-}: React.ComponentPropsWithoutRef<"li"> & { href: string }) {
+}: React.ComponentPropsWithoutRef<"li"> & {
+  href: string;
+  icon?: React.ReactNode;
+}) {
   return (
     <li {...props}>
       <NavigationMenuLink asChild>
-        <a href={href} className="group/subnav subnav">
-          <div className="text-sm leading-none font-medium subnav-title">
-            {title}
+        <a href={href} className="group/subnav subnav block">
+          <div className="flex items-center gap-2 mb-1">
+            {icon}
+            <div className="text-sm leading-none font-medium subnav-title">
+              {title}
+            </div>
           </div>
           {children && (
-            <p className="text-muted-foreground line-clamp-2 text-sm leading-snug">
+            <p className="text-muted-foreground text-sm leading-snug pl-6">
               {children}
             </p>
           )}

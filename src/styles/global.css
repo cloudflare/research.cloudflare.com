@@ -646,7 +646,7 @@
   }
 
   .subnav-wrapper {
-    @apply bg-popover text-popover-foreground;
+    @apply bg-popover text-popover-foreground rounded-lg border border-page-border;
 
     /* prefers dark mode */
     @media (prefers-color-scheme: dark) {
