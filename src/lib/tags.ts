@@ -55,68 +55,6 @@ const SPECIAL_TAG_LABELS: Record<string, string> = {
   yaml: "YAML",
 };
 
-const LOCALIZED_TAG_LABELS: Record<string, Record<string, string>> = {
-  "pt-BR": {
-    ai: "Inteligência artificial",
-    analytics: "Análises",
-    announcements: "Anúncios",
-    applications: "Aplicações",
-    authentication: "Autenticação",
-    automation: "Automação",
-    bots: "Bots",
-    caching: "Armazenamento em cache",
-    censorship: "Censura",
-    certificates: "Certificados",
-    collaboration: "Colaboração",
-    compression: "Compressão",
-    cryptography: "Criptografia",
-    data: "Dados",
-    ddos: "DDoS",
-    detection: "Detecção",
-    "differential-privacy": "Privacidade diferencial",
-    "distributed-systems": "Sistemas distribuídos",
-    dns: "DNS",
-    education: "Educação",
-    encryption: "Criptografia de dados",
-    "formal-verification": "Verificação formal",
-    "gpu-systems": "Sistemas de GPU",
-    infrastructure: "Infraestrutura",
-    ipfs: "IPFS",
-    ipv4: "IPv4",
-    javascript: "JavaScript",
-    "key-management": "Gerenciamento de chaves",
-    "machine-learning": "Aprendizado de máquina",
-    malware: "Malware",
-    measurement: "Medição",
-    networking: "Redes",
-    optimization: "Otimização",
-    passwords: "Senhas",
-    performance: "Desempenho",
-    "post-quantum": "Pós-quântico",
-    privacy: "Privacidade",
-    protocols: "Protocolos",
-    proxies: "Proxies",
-    quic: "QUIC",
-    randomness: "Aleatoriedade",
-    research: "Pesquisa",
-    resilience: "Resiliência",
-    security: "Segurança",
-    similarity: "Similaridade",
-    ssh: "SSH",
-    ssl: "SSL",
-    standards: "Padrões",
-    storage: "Armazenamento",
-    tcp: "TCP",
-    transparency: "Transparência",
-    tunnel: "Túnel",
-    vpn: "VPN",
-    vulnerabilities: "Vulnerabilidades",
-    web3: "Web3",
-    "workload-analysis": "Análise de carga de trabalho",
-    "zero-trust": "Zero Trust",
-  },
-};
-
 export function normalizeTagSlug(value: string | null | undefined): string {
   return (value ?? "")
     .trim()
@@ -206,9 +144,6 @@ export function getBlogTagSlugs(post: CollectionEntry<"blog">): string[] {
 }
 
 export function resolveTagLabel(slug: string, labelSources: TagLabelSourceMap, candidates: TagLabelCandidateMap, locale: string): string {
-  const localizedLabel = LOCALIZED_TAG_LABELS[locale]?.[slug];
-  if (localizedLabel) return localizedLabel;
-
   const source = labelSources.get(slug);
   if (source?.localized) return source.label;
 
