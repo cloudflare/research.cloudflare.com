@@ -1,20 +1,24 @@
 ---
 import { NavMenu } from "./NavigationMenu"
+import { ThemeToggle } from "./ThemeToggle"
 ---
 
 <div class="flex items-center justify-between py-4 px-3 sm:px-5">
   <div class="shrink-0">
     <a href="/">
-      <picture>
-        <source srcset="/images/logo.svg" media="(prefers-color-scheme: dark)" />
-        <img src="/images/logo--light.svg" alt="Cloudflare Research" class="h-8 sm:h-auto" width="191" height="32" />
-      </picture>
+      {/* Two logos stacked — CSS shows the right one based on data-theme on <html>.
+          See `.theme-logo--light` / `.theme-logo--dark` in global.css. */}
+      <img src="/images/logo--light.svg" alt="Cloudflare Research" class="theme-logo theme-logo--light h-8 sm:h-auto" width="191" height="32" />
+      <img src="/images/logo.svg" alt="Cloudflare Research" class="theme-logo theme-logo--dark h-8 sm:h-auto" width="191" height="32" />
     </a>
   </div>
   <nav class="flex-1 flex justify-end md:justify-end lg:justify-center">
     <NavMenu client:load />
   </nav>
-  <div class="hidden lg:block w-[197px] text-page-text text-right">
-    &nbsp;
+  <div class="hidden lg:flex w-[197px] items-center justify-end">
+    <ThemeToggle client:load />
+  </div>
+  <div class="lg:hidden">
+    <ThemeToggle client:load />
   </div>
 </div>

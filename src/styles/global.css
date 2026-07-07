@@ -8,9 +8,46 @@
 
 @custom-variant dark (&:is(.dark *));
 
-/* System preference-based dark mode */
+/* Dark mode shadcn vars — driven by the toggle (data-theme on <html>).
+   The inline script in base.astro always resolves "system" to "light" or "dark"
+   so we only need to react to those two values here. */
+:root[data-theme="dark"] {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.488 0.243 264.376);
+  --chart-2: oklch(0.696 0.17 162.48);
+  --chart-3: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.627 0.265 303.9);
+  --chart-5: oklch(0.645 0.246 16.439);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+/* Fallback for users with JS disabled — follows OS preference */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --background: oklch(0.145 0 0);
     --foreground: oklch(0.985 0 0);
     --card: oklch(0.205 0 0);
@@ -230,16 +267,41 @@
   --badge-pink-bg: #fce7f3;
 }
 
-/* Dark mode semantic colors */
+/* Dark mode page semantic colors — driven by the toggle */
+:root[data-theme="dark"] {
+  --page-bg: #121212;
+  --page-text: #ffffff;
+  --page-text-muted: #989796;
+  --page-border: #2d2c2a;
+  --page-border-subtle: #353332;
+
+  --badge-blue-text: #4e84f7;
+  --badge-blue-bg: #0c1628;
+  --badge-purple-text: #8443f0;
+  --badge-purple-bg: #130a25;
+  --badge-green-text: #8cc560;
+  --badge-green-bg: #17210f;
+  --badge-orange-text: #ef6836;
+  --badge-orange-bg: #31190f;
+  --badge-white-text: #ffffff;
+  --badge-white-bg: #272727;
+  --badge-red-text: #ea336f;
+  --badge-red-bg: #260312;
+  --badge-yellow-text: #e9b46a;
+  --badge-yellow-bg: #261d11;
+  --badge-pink-text: #c441c6;
+  --badge-pink-bg: #160418;
+}
+
+/* Fallback for users with JS disabled — follows OS preference */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme]) {
     --page-bg: #121212;
     --page-text: #ffffff;
     --page-text-muted: #989796;
     --page-border: #2d2c2a;
     --page-border-subtle: #353332;
 
-    /* Dark mode badge colors */
     --badge-blue-text: #4e84f7;
     --badge-blue-bg: #0c1628;
     --badge-purple-text: #8443f0;
@@ -395,13 +457,13 @@
     }
   }
 
-  /* Override logo in home header to always use dark logo */
-  #home-header picture source {
+  /* Override logo in home header to always use the white-text logo
+     (the home header has a blue background that needs white text in both themes). */
+  #home-header .theme-logo--light {
     display: none;
   }
-
-  #home-header picture img {
-    content: url("/images/logo.svg");
+  #home-header .theme-logo--dark {
+    display: inline-block;
   }
 
   /* Override navigation menu items in home header to always be white */
@@ -651,6 +713,27 @@
     /* prefers dark mode */
     @media (prefers-color-scheme: dark) {
       @apply bg-popover-foreground text-popover;
+    }
+  }
+
+  /* Theme-aware logo swap. Defaults assume light theme.
+     The data-theme attribute on <html> overrides. */
+  .theme-logo--dark {
+    display: none;
+  }
+  :root[data-theme="dark"] .theme-logo--light {
+    display: none;
+  }
+  :root[data-theme="dark"] .theme-logo--dark {
+    display: inline-block;
+  }
+  /* Fallback when JS is disabled — follow OS preference */
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme]) .theme-logo--light {
+      display: none;
+    }
+    :root:not([data-theme]) .theme-logo--dark {
+      display: inline-block;
     }
   }
 }

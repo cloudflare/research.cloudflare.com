@@ -14,6 +14,30 @@ const { metaTitle, metaDescription, bodyClassName = '' } = Astro.props;
 
 <html lang="en">
 	<head>
+		{/*
+			Theme bootstrap: runs synchronously before paint to prevent FOUC.
+			Reads the user's saved choice from localStorage (set by the toggle).
+			Valid values: "light" | "dark" | "system" (or null = system).
+			Sets data-theme="light" or data-theme="dark" on <html> so CSS can react.
+			When the choice is "system", we still resolve to a concrete value here
+			so styles only need to handle the two explicit states.
+		*/}
+		<script is:inline>
+			(function () {
+				try {
+					var stored = localStorage.getItem("theme");
+					var pref = stored === "light" || stored === "dark" ? stored : null;
+					var resolved =
+						pref ||
+						(window.matchMedia("(prefers-color-scheme: dark)").matches
+							? "dark"
+							: "light");
+					document.documentElement.dataset.theme = resolved;
+				} catch (e) {
+					// localStorage blocked — fall back to OS preference via CSS.
+				}
+			})();
+		</script>
 		<meta charset="utf-8" />
 		<link rel="icon" type="image/png" href="/favicon.png" />
 		<meta name="viewport" content="width=device-width" />
