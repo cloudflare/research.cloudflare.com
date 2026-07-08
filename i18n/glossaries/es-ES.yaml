@@ -122,6 +122,10 @@ doNotTranslate:
   - FOCS
   - STOC
 
+  # others
+  - Proxy
+  - Proxies
+
 # Source-language → preferred translation. The translator should prefer
 # these renderings over its default choice. Curated for research-domain
 # vocabulary (cryptography, networking, distributed systems); marketing
