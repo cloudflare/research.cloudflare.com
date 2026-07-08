@@ -7,139 +7,160 @@ import FeaturedResearch from "@/components/home/FeaturedResearch.astro";
 import Section from "@/components/Section.astro";
 import ButtonLink from "@/components/ButtonLink.astro";
 import Icon from "@/components/Icon.astro";
-import { getCollection } from "astro:content";
 import { CONSTANTS } from "@/lib/constants";
 import SeeMore from "@/components/SeeMore.astro";
-import { linkDescriptions } from "@/data/seo";
+import { getCollection } from "astro:content";
+import {
+  buildTagLabelRecord,
+  getPublicationTagSlugs,
+  getTagLabelSources,
+  type TagLabelCandidateMap,
+} from "@/lib/tags";
+
+const { t, lhref, getLocalizedCollection } = Astro.locals;
+const locale = Astro.currentLocale ?? "en-US";
 
 // Pull in 3 most recent publications (2025+), sorted by date
-const recentPublications = (
-	await getCollection(
-		"publications",
-		({ data }) => data.year && data.year >= 2025,
-	)
-).sort((a, b) => {
-	const dateA = a.data.date || new Date(a.data.year || 0, 11, 31);
-	const dateB = b.data.date || new Date(b.data.year || 0, 11, 31);
-	return dateB.getTime() - dateA.getTime();
-}).slice(0, 3);
+const recentPublications = (await getLocalizedCollection("publications", ({ data }) => data.year && data.year >= 2025))
+  .sort((a, b) => {
+    const dateA = a.data.date || new Date(a.data.year || 0, 11, 31);
+    const dateB = b.data.date || new Date(b.data.year || 0, 11, 31);
+    return dateB.getTime() - dateA.getTime();
+  })
+  .slice(0, 3);
+
+const [sourcePublications, localizedTags] = await Promise.all([
+  getCollection("publications"),
+  getLocalizedCollection("tags"),
+]);
+const sourceRelatedInterestsById = new Map(
+  sourcePublications.map((publication) => [publication.id, publication.data.related_interests ?? []]),
+);
+const labelCandidates: TagLabelCandidateMap = new Map();
+const tagSlugsByPublicationId = new Map(
+  recentPublications.map((publication) => [
+    publication.id,
+    getPublicationTagSlugs(publication, sourceRelatedInterestsById, labelCandidates),
+  ]),
+);
+const uniqueTagSlugs = new Set([...tagSlugsByPublicationId.values()].flat());
+const tagLabels = buildTagLabelRecord(uniqueTagSlugs, getTagLabelSources(localizedTags), labelCandidates, locale);
+
+// No `aiTranslationStatus` prop: the home's visible content is mostly UI
+// strings (translated via the i18n dictionary), not a single primary
+// entry. Let `BaseLayout`'s locale-based default ("ai" for non-default
+// locales) drive the banner so it shows whenever the page chrome is
+// in a non-default language, regardless of whether the optional
+// `site.toml` sidecar happens to be staged.
 ---
 
-<BaseLayout
-	bodyClassName="home"
-	metaDescription="Cloudflare Research explores the future of the internet by bridging the gap between academic theory and real-world implementation. Discover our work in cryptography, networking, security, and privacy to help build a better, more secure web."
->
-	<Fragment slot="head">
-		<link rel="preload" href="/unicornStudio.umd.js" as="script">
-		<link rel="preload" href="/blue_liquid.json" as="fetch" crossorigin>
-	</Fragment>
-	<!-- header -->
-	<Header />
+<BaseLayout bodyClassName="home" metaDescription={t("home.metaDescription")}>
+  <Fragment slot="head">
+    <link rel="preload" href="/unicornStudio.umd.js" as="script" />
+    <link rel="preload" href="/blue_liquid.json" as="fetch" crossorigin />
+  </Fragment>
+  <!-- header -->
+  <Header />
 
-	<!-- featured research -->
-	<FeaturedResearch />
+  <!-- featured research -->
+  <FeaturedResearch />
 
-	<!-- focus areas -->
-	<Section className="pt-14 pb-12">
-		<h2 class="heading mb-3 text-left md:text-center text-quartz px-8 md:px-4">
-			Helping build a better Internet
-		</h2>
-		<h3
-			class="subheading mb-8 text-left md:text-center text-stack px-8 md:px-4"
-		>
-			Our Research Focus Areas
-		</h3>
-		<div
-			class="flex flex-wrap gap-4 justify-center -mx-px relative connector-top-left mb-5 border-t-2 sm:border-t-0 border-page-border"
-		>
-			<FocusArea
-				icon="hidden"
-				title="More Private"
-				seeMore="/focus/private"
-				className="w-[calc(100%-2px)] md:w-[calc(49%-2px)] lg:w-[calc(33%-8px)]"
-				description={linkDescriptions.private}
-			>
-				Advancing privacy-enhancing technologies for everyone.
-			</FocusArea>
-			<FocusArea
-				icon="hand"
-				title="Safer"
-				seeMore="/focus/safe"
-				className="w-[calc(100%-2px)] md:w-[calc(49%-2px)] lg:w-[calc(33%-8px)]"
-				description={linkDescriptions.safe}
-			>
-				Pioneering new cryptographic and security methods.
-			</FocusArea>
-			<FocusArea
-				icon="bolt"
-				title="Faster"
-				seeMore="/focus/fast"
-				className="w-[calc(100%-2px)] md:w-[calc(49%-2px)] lg:w-[calc(33%-8px)]"
-				description={linkDescriptions.fast}
-			>
-				Developing next-generation network protocols.
-			</FocusArea>
-			<FocusArea
-				icon="shield"
-				title="More Reliable"
-				seeMore="/focus/reliable"
-				className="w-[calc(100%-2px)] md:w-[calc(49%-2px)] lg:w-[calc(33%-8px)]"
-				description={linkDescriptions.reliable}
-			>
-				Optimising distributed systems for resilience at a global scale.
-			</FocusArea>
-			<FocusArea
-				icon="transparent"
-				title="More Measurable"
-				seeMore="/focus/measurable"
-				className="w-[calc(100%-2px)] md:w-[calc(49%-2px)] lg:w-[calc(33%-8px)]"
-				description={linkDescriptions.measurable}
-			>
-				Increasing visibility into Internet systems through open measurement,
-				research, and shared data.
-			</FocusArea>
-		</div>
-		<div class="flex justify-center">
-			<SeeMore href="/focus">View All</SeeMore>
-		</div>
-	</Section>
+  <!-- focus areas -->
+  <Section className="pt-14 pb-12">
+    <h2 class="heading mb-3 text-left md:text-center text-quartz px-8 md:px-4">
+      {t("home.focusAreas.heading")}
+    </h2>
+    <h3 class="subheading mb-8 text-left md:text-center text-stack px-8 md:px-4">
+      {t("home.focusAreas.subheading")}
+    </h3>
+    <div class="flex flex-wrap gap-4 justify-center -mx-px relative connector-top-left mb-5 border-t-2 sm:border-t-0 border-page-border">
+      <FocusArea
+        icon="hidden"
+        title={t("globals.morePrivate")}
+        seeMore={lhref("/focus/private")}
+        className="w-[calc(100%-2px)] md:w-[calc(49%-2px)] lg:w-[calc(33%-8px)]"
+        description={t("seo.morePrivate")}
+      >
+        {t("home.focusAreas.morePrivate.blurb")}
+      </FocusArea>
+      <FocusArea
+        icon="hand"
+        title={t("globals.safer")}
+        seeMore={lhref("/focus/safe")}
+        className="w-[calc(100%-2px)] md:w-[calc(49%-2px)] lg:w-[calc(33%-8px)]"
+        description={t("seo.safer")}
+      >
+        {t("home.focusAreas.safer.blurb")}
+      </FocusArea>
+      <FocusArea
+        icon="bolt"
+        title={t("globals.faster")}
+        seeMore={lhref("/focus/fast")}
+        className="w-[calc(100%-2px)] md:w-[calc(49%-2px)] lg:w-[calc(33%-8px)]"
+        description={t("seo.faster")}
+      >
+        {t("home.focusAreas.faster.blurb")}
+      </FocusArea>
+      <FocusArea
+        icon="shield"
+        title={t("globals.moreReliable")}
+        seeMore={lhref("/focus/reliable")}
+        className="w-[calc(100%-2px)] md:w-[calc(49%-2px)] lg:w-[calc(33%-8px)]"
+        description={t("seo.moreReliable")}
+      >
+        {t("home.focusAreas.moreReliable.blurb")}
+      </FocusArea>
+      <FocusArea
+        icon="transparent"
+        title={t("globals.moreMeasurable")}
+        seeMore={lhref("/focus/measurable")}
+        className="w-[calc(100%-2px)] md:w-[calc(49%-2px)] lg:w-[calc(33%-8px)]"
+        description={t("seo.moreMeasurable")}
+      >
+        {t("home.focusAreas.moreMeasurable.blurb")}
+      </FocusArea>
+    </div>
+    <div class="flex justify-center">
+      <SeeMore href={lhref("/focus")}>{t("globals.viewAll")}</SeeMore>
+    </div>
+  </Section>
 
-	<!-- what's new -->
-	<Section className="pb-4 pt-14">
-		<h2 class="heading md:text-center text-quartz px-8 md:px-4 mb-3">
-			What's New
-		</h2>
-		<h3 class="subheading md:text-center mb-10 text-stack px-8 md:px-4">
-			New research, publications, and insights from our ongoing work.
-		</h3>
-		<div class="flex flex-col md:flex-row gap-3">
-			{
-				recentPublications.map((publication) => (
-					<WhatsNewCard
-						className="flex-1"
-						link={`/${publication.id}` || ""}
-						date={publication.data.year?.toString() || ""}
-						title={publication.data.title}
-						tags={publication.data.related_interests || []}
-					/>
-				))
-			}
-		</div>
-	</Section>
+  <!-- what's new -->
+  <Section className="pb-4 pt-14">
+    <h2 class="heading md:text-center text-quartz px-8 md:px-4 mb-3">
+      {t("home.whatsNew.heading")}
+    </h2>
+    <h3 class="subheading md:text-center mb-10 text-stack px-8 md:px-4">
+      {t("home.whatsNew.subheading")}
+    </h3>
+    <div class="flex flex-col md:flex-row gap-3">
+      {
+        recentPublications.map((publication) => (
+          <WhatsNewCard
+            className="flex-1"
+            link={lhref(`/${publication.id}`) || ""}
+            date={publication.data.year?.toString() || ""}
+            title={publication.data.title}
+            tags={(tagSlugsByPublicationId.get(publication.id) ?? []).map((slug) => tagLabels[slug] ?? slug)}
+          />
+        ))
+      }
+    </div>
+  </Section>
 
-	<!-- careers in research -->
-	<Section className="pb-14">
-		<h2 class="heading md:text-center text-quartz pt-14 px-8 mb-3">
-			Careers in Research
-		</h2>
-		<h3 class="subheading md:text-center mb-10 text-stack px-8">
-			Help shape a safer, more reliable, and more transparent Internet.
-		</h3>
-		<div class="md:text-center ml-8 md:ml-0">
-			<ButtonLink href={CONSTANTS.CLOUDFLARE_CAREERS}
-				>All Open Roles at Cloudflare
-				<Icon id="arrowUpRight" />
-			</ButtonLink>
-		</div>
-	</Section>
+  <!-- careers in research -->
+  <Section className="pb-14">
+    <h2 class="heading md:text-center text-quartz pt-14 px-8 mb-3">
+      {t("home.careers.heading")}
+    </h2>
+    <h3 class="subheading md:text-center mb-10 text-stack px-8">
+      {t("home.careers.subheading")}
+    </h3>
+    <div class="md:text-center ml-8 md:ml-0">
+      <ButtonLink href={CONSTANTS.CLOUDFLARE_CAREERS}
+        >{t("home.careers.cta")}
+        <Icon id="arrowUpRight" />
+      </ButtonLink>
+    </div>
+  </Section>
 </BaseLayout>

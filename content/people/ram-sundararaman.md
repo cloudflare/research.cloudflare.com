@@ -1,5 +1,5 @@
 ---
-title: ram-sundararaman
+title: Ram Sundararaman
 position: External Collaborator
 avatar: placeholder.png
 slug: ram-sundararaman

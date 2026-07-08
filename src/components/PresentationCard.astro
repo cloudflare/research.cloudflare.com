@@ -3,6 +3,7 @@ import { type VariantProps } from "class-variance-authority";
 import Badge from "./Badge.astro";
 import ArticleHeading, { type typeClassNames } from "./ArticleHeading.astro";
 
+const { lhref } = Astro.locals;
 interface Props {
   authors?: Author[];
   slug: string;
@@ -26,27 +27,46 @@ const dataTags = Astro.props["data-tags"];
     <!-- title -->
     <h3 class="leading-snug text-lg font-medium text-bizarre title">
       <a href={slug} target="_blank" class="hover:underline">
-        { title }
+        {title}
       </a>
     </h3>
 
     <!-- authors -->
-    {authors && (
-      <div class="text-sm font-medium text-page-text-muted authors">
-        {authors.map((author, index) => (
-          <>{index > 0 && ", "}<a href={`/people/${author.id}`} class="hover:underline hover:text-bizarre">{author.id}</a></>
-        ))}
-      </div>
-    )}
+    {
+      authors && (
+        <div class="text-sm font-medium text-page-text-muted authors">
+          {authors.map((author, index) => (
+            <>
+              {index > 0 && ", "}
+              <a href={lhref(`/people/${author.id}`)} class="hover:underline hover:text-bizarre">
+                {author.id}
+              </a>
+            </>
+          ))}
+        </div>
+      )
+    }
 
     <!-- thumbnail -->
-    { thumbnail && <a href={slug} target="_blank"><img src={thumbnail} alt={title} class="thumbnail aspect-video object-cover" loading="lazy" decoding="async" /></a> }
+    {
+      thumbnail && (
+        <a href={slug} target="_blank">
+          <img src={thumbnail} alt={title} class="thumbnail aspect-video object-cover" loading="lazy" decoding="async" />
+        </a>
+      )
+    }
   </div>
 
   <!-- tags -->
-  { tags && (
-    <div class="flex flex-wrap gap-1">
-      {tags.map((tag, i) => <Badge key={i} color="blue">{tag}</Badge>)}
-    </div>
-  )}
+  {
+    tags && (
+      <div class="flex flex-wrap gap-1">
+        {tags.map((tag, i) => (
+          <Badge key={i} color="blue">
+            {tag}
+          </Badge>
+        ))}
+      </div>
+    )
+  }
 </article>

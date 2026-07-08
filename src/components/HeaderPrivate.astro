@@ -1,4 +1,8 @@
+---
+const { t } = Astro.locals;
+---
+
 <header class="interior-header">
-  <h1 class="heading">More Private</h1>
-  <h2 class="subheading">Developing privacy-preserving systems and protocols that protect users while enabling a more secure and trustworthy Internet.</h2>
+  <h1 class="heading">{t("globals.morePrivate")}</h1>
+  <h2 class="subheading">{t("nav.focusAreas.morePrivate.description")}</h2>
 </header>

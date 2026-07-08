@@ -20,11 +20,17 @@ pnpm-debug.log*
 .env
 .env.production
 
+# polystella debug previews (translated MDX dumped for local inspection;
+# ephemeral, replaced by the cache layer once that lands)
+i18n/.preview/
+
 # macOS-specific files
 .DS_Store
 
 # jetbrains setting folder
 .idea/
 
-docs/
-plans/
+/docs/
+/plans/
+
+i18n-r2-report.json

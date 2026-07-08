@@ -1,6 +1,23 @@
 ---
 import { CONSTANTS } from "../lib/constants";
 import Icon from "./Icon.astro";
+import { LocalePicker } from "./LocalePicker";
+import { getDictionary } from "@cloudflare/polystella/i18n";
+import { defaultLocale, swapLocale, type TranslationStatus } from "@/lib/i18n-utils";
+
+interface Props {
+  aiTranslationStatus?: TranslationStatus;
+}
+
+const { aiTranslationStatus = "source" } = Astro.props;
+const { t, lhref } = Astro.locals;
+
+const dict = await getDictionary(Astro.currentLocale);
+const currentLocale = Astro.currentLocale ?? defaultLocale;
+const currentPath = `${Astro.url.pathname}${Astro.url.search}`;
+
+const showAiBadge = aiTranslationStatus === "ai";
+const originalHref = swapLocale(currentPath, defaultLocale);
 ---
 
 <footer class="pt-11">
@@ -19,55 +36,80 @@ import Icon from "./Icon.astro";
 
       <!-- Focus Areas -->
       <div>
-        <h3>Focus Areas</h3>
+        <h3>{t("footer.focusAreas")}</h3>
         <hr />
         <ul>
-          <li><a href="/focus/private">More Private</a></li>
-          <li><a href="/focus/safe">Safer</a></li>
-          <li><a href="/focus/fast">Faster</a></li>
-          <li><a href="/focus/reliable">More Reliable</a></li>
-          <li><a href="/focus/measurable">More Measurable</a></li>
+          <li>
+            <a href={lhref("/focus/private")}>{t("globals.morePrivate")}</a>
+          </li>
+          <li><a href={lhref("/focus/safe")}>{t("globals.safer")}</a></li>
+          <li><a href={lhref("/focus/fast")}>{t("globals.faster")}</a></li>
+          <li>
+            <a href={lhref("/focus/reliable")}>{t("globals.moreReliable")}</a>
+          </li>
+          <li>
+            <a href={lhref("/focus/measurable")}>{t("globals.moreMeasurable")}</a>
+          </li>
         </ul>
       </div>
 
       <!-- Outreach -->
       <nav>
-        <h3>Outreach</h3>
+        <h3>{t("footer.outreach")}</h3>
         <hr />
         <ul>
-          <li><a href="/presentations">Presentations + Keynotes</a></li>
+          <li>
+            <a href={lhref("/presentations")}>{t("footer.outreach.presentations")}</a>
+          </li>
         </ul>
       </nav>
 
       <!-- About Us -->
       <div>
-        <h3>About Us</h3>
+        <h3>{t("footer.aboutUs")}</h3>
         <hr />
         <ul>
-          <li><a href="/people">People</a></li>
-          <li><a href="/philosophy">Philosophy</a></li>
+          <li><a href={lhref("/people")}>{t("footer.aboutUs.people")}</a></li>
+          <li><a href={lhref("/philosophy")}>{t("footer.aboutUs.philosophy")}</a></li>
         </ul>
       </div>
 
       <!-- Careers -->
       <div>
-        <h3>Careers</h3>
+        <h3>{t("footer.careers")}</h3>
         <hr />
         <ul>
           <li>
-            <a href={CONSTANTS.CLOUDFLARE_CAREERS} target="_blank" rel="noopener noreferrer" class="text-page-text-muted text-base hover:text-page-text transition-colors group/footer">
-              <span class="inline">Careers in Research</span>
-              <Icon id="arrowUpRight" class="inline external-arrow" />
-            </a></li>
-          <li>
-            <a href={CONSTANTS.CLOUDFLARE_JOBS} target="_blank" rel="noopener noreferrer" class="text-page-text-muted text-base hover:text-page-text transition-colors group/footer">
-              <span class="inline">All Open Roles at Cloudflare</span>
+            <a
+              href={CONSTANTS.CLOUDFLARE_CAREERS}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-page-text-muted text-base hover:text-page-text transition-colors group/footer"
+            >
+              <span class="inline">{t("footer.careers.inResearch")}</span>
               <Icon id="arrowUpRight" class="inline external-arrow" />
             </a>
           </li>
           <li>
-            <a href={CONSTANTS.CLOUDFLARE_CAREERS} target="_blank" rel="noopener noreferrer" class="text-page-text-muted text-base hover:text-page-text transition-colors group/footer">
-              Working at Cloudflare<Icon id="arrowUpRight" class="inline external-arrow" />
+            <a
+              href={CONSTANTS.CLOUDFLARE_JOBS}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-page-text-muted text-base hover:text-page-text transition-colors group/footer"
+            >
+              <span class="inline">{t("footer.careers.allOpenRoles")}</span>
+              <Icon id="arrowUpRight" class="inline external-arrow" />
+            </a>
+          </li>
+          <li>
+            <a
+              href={CONSTANTS.CLOUDFLARE_CAREERS}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="text-page-text-muted text-base hover:text-page-text transition-colors group/footer"
+            >
+              {t("footer.careers.workingAt")}
+              <Icon id="arrowUpRight" class="inline external-arrow" />
             </a>
           </li>
         </ul>
@@ -75,15 +117,33 @@ import Icon from "./Icon.astro";
     </nav>
   </div>
 
-  <!-- Legal -->
-  <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center sm:gap-4 text-page-text-muted border-t border-page-border pt-4 pb-5 px-8
-    [&_a]:text-page-text-muted [&_a]:text-sm] [&_a:hover]:text-page-text [&_a:hover]:underline
-  ">
-    <div class="text-left">
-      Copyright &copy;{new Date().getFullYear()}.
+  <!-- Legal (left) + AI badge + locale picker (right) -->
+  <div
+    class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between sm:gap-6 text-page-text-muted border-t border-page-border pt-4 pb-5 px-8
+    [&_a]:text-page-text-muted [&_a]:text-sm [&_a:hover]:text-page-text [&_a:hover]:underline"
+  >
+    <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:gap-3 text-sm">
+      <span>{t("footer.legal.copyright", { year: new Date().getFullYear() })}</span>
+      <span>
+        <a href={CONSTANTS.PRIVACY_POLICY}>{t("footer.legal.privacyPolicy")}</a> . <a href={CONSTANTS.TERMS_OF_SERVICE}
+          >{t("footer.legal.terms")}</a
+        > . <a href={CONSTANTS.GDPR}>{t("footer.legal.gdpr")}</a>
+      </span>
     </div>
-    <div class="text-left sm:text-right">
-      <a href={CONSTANTS.PRIVACY_POLICY}>Privacy Policy</a> . <a href={CONSTANTS.TERMS_OF_SERVICE}>Terms of Service</a> . <a href={CONSTANTS.GDPR}>GDPR</a>
+    <div class="flex items-center gap-3 sm:gap-4">
+      {
+        showAiBadge && (
+          <div class="flex items-center gap-2 text-sm">
+            <span class="inline-flex items-center px-2 py-0.5 rounded border border-page-border-subtle font-mono text-xs uppercase tracking-wide">
+              {t("notice.aiTranslated.badge")}
+            </span>
+            <a href={originalHref} hreflang={defaultLocale} lang={defaultLocale} data-ai-original-link class="hover:text-page-text hover:underline">
+              {t("notice.aiTranslated.viewOriginal")}
+            </a>
+          </div>
+        )
+      }
+      <LocalePicker client:load dict={dict} locale={currentLocale} pathname={currentPath} placement="up" />
     </div>
   </div>
 </footer>

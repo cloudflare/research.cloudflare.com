@@ -1,19 +1,20 @@
 ---
 import InteriorLayout from "../layouts/interior.astro";
-import Section from "../components/Section.astro";
 import ButtonLink from "../components/ButtonLink.astro";
+
+const { t, lhref } = Astro.locals;
 ---
 
 <InteriorLayout metaTitle="404">
+  <header class="interior-header py-[100px] four-o-four">
+    <h1 class="heading">{t("error404.heading")}</h1>
+    <h2 class="subheading mb-18">
+      {t("error404.subheading")}
+    </h2>
 
-    <header class="interior-header py-[100px] four-o-four">
-      <h1 class="heading">404: Still a Hypothesis</h1>
-      <h2 class="subheading mb-18">Our goal is to take computer science domains from hypothesis to reality. Unfortunately, this specific page is still just a hypothesis.</h2>
-
-      <div class="flex items-center gap-4 justify-center">
-        <!-- <a href="/philosophy" class="text-page-text border-b border-page-text hover:border-flame text-lg font-medium">Learn about our Research</a> -->
-        <ButtonLink href="/focus">Read our Papers</ButtonLink>
-      </div>
-    </header>
-
+    <div class="flex items-center gap-4 justify-center">
+      <!-- <a href="/philosophy" class="text-page-text border-b border-page-text hover:border-flame text-lg font-medium">Learn about our Research</a> -->
+      <ButtonLink href={lhref("/focus")}>{t("error404.cta")}</ButtonLink>
+    </div>
+  </header>
 </InteriorLayout>

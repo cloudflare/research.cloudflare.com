@@ -4,3 +4,4 @@ title = "Unweight: Lossless MLP Weight Compression for LLM Inference"
 description = "Unweight is a lossless compression system for LLM weight tensors achieving 1.44x compression on BF16 MLP weights with GPU-native decompression for inference on NVIDIA Hopper GPUs (H100, H200)."
 link = "/nikulin2026"
 buttonLabel = "Read the Full Article"
+

@@ -1,5 +1,5 @@
 ---
-title: alishah-chator
+title: Alishah Chator
 position: External Collaborator
 avatar: placeholder.png
 slug: alishah-chator

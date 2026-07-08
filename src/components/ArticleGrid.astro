@@ -1,90 +1,114 @@
 ---
 import BlogPostCard from "@/components/BlogPostCard.astro";
 import PublicationCard from "@/components/PublicationCard.astro";
-import {ToggleButton} from "@/components/ToggleButton.tsx";
-import type { CollectionEntry } from 'astro:content';
-import { getEntry } from 'astro:content';
+import { ToggleButton } from "@/components/ToggleButton.tsx";
+import type { CollectionEntry } from "astro:content";
+import { getCollection, getEntry } from "astro:content";
+import {
+  buildTagLabelRecord,
+  getBlogTagSlugs,
+  getPublicationTagSlugs,
+  getTagLabelSources,
+  type TagLabelCandidateMap,
+} from "@/lib/tags";
+
+const { t } = Astro.locals;
+const locale = Astro.currentLocale ?? "en-US";
 
 interface Props {
-  publications: (CollectionEntry<'publications'> | CollectionEntry<'blog'>)[];
+  publications: (CollectionEntry<"publications"> | CollectionEntry<"blog">)[];
   showFilters?: boolean;
 }
 
 const { publications, showFilters = true } = Astro.props;
 
+const [sourcePublications, localizedTags] = await Promise.all([
+  getCollection("publications"),
+  Astro.locals.getLocalizedCollection("tags"),
+]);
+const sourceRelatedInterestsById = new Map(
+  sourcePublications.map((publication) => [publication.id, publication.data.related_interests ?? []]),
+);
+const labelSources = getTagLabelSources(localizedTags);
+const labelCandidates: TagLabelCandidateMap = new Map();
+
 // Process all items in their original order to maintain date sorting
 const allItems = await Promise.all(
   publications.map(async (item) => {
-    if (item.collection === 'blog') {
-      return { type: 'blog' as const, post: item };
+    if (item.collection === "blog") {
+      return { type: "blog" as const, post: item };
     } else {
       // Publication - resolve authors
-      const pub = item as CollectionEntry<'publications'>;
+      const pub = item as CollectionEntry<"publications">;
       if (!pub.data.authors) {
-        return { type: 'publication' as const, publication: pub, authors: undefined };
+        return { type: "publication" as const, publication: pub, authors: undefined };
       }
       const authorEntries = await Promise.all(pub.data.authors.map((ref: any) => getEntry(ref)));
       const authors = authorEntries.filter((author: any): author is NonNullable<typeof author> => author !== undefined);
-      return { type: 'publication' as const, publication: pub, authors: authors.length > 0 ? authors : undefined };
+      return { type: "publication" as const, publication: pub, authors: authors.length > 0 ? authors : undefined };
     }
-  })
+  }),
 );
 
-// Extract unique tags from the publications' related_interests and blog tags
-const uniqueTags = Array.from(
-  new Set(
-    publications
-      .flatMap(pub => {
-        // Publications use related_interests, blogs use tags
-        if (pub.collection === 'blog') {
-          return pub.data.tags?.map((t: any) => t.id) || [];
-        }
-        return pub.data.related_interests || [];
-      })
-  )
-).sort().map((tag: any) => ({
-  slug: tag,
-  name: tag.split('-').map((word: any) => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')
-}));
+const tagSlugsByItemId = new Map(
+  publications.map((publication) => [
+    `${publication.collection}:${publication.id}`,
+    publication.collection === "blog"
+      ? getBlogTagSlugs(publication)
+      : getPublicationTagSlugs(publication, sourceRelatedInterestsById, labelCandidates),
+  ]),
+);
 
+const uniqueTagSlugs = new Set([...tagSlugsByItemId.values()].flat());
+const tagLabels = buildTagLabelRecord(uniqueTagSlugs, labelSources, labelCandidates, locale);
+
+const uniqueTags = [...uniqueTagSlugs]
+  .map((slug) => ({ slug, name: tagLabels[slug] ?? slug }))
+  .sort((a, b) => a.name.localeCompare(b.name, locale));
 ---
 
 <div class="flex flex-col-reverse lg:flex-col">
-
-<!-- filter options -->
-{showFilters && (
-<div class="center flex-wrap gap-2 p-5 border-t-2 lg:border-t-0 border-b-2 border-page-border">
-  <strong class="text-page-text inline-block py-2 px-[18px]">Filter by:</strong>
+  <!-- filter options -->
   {
-    uniqueTags.map(tag => (
-      <ToggleButton color="blue" defaultValue={false} tagSlug={tag.slug} client:load>{tag.name}</ToggleButton>
-    ))
+    showFilters && (
+      <div class="center flex-wrap gap-2 p-5 border-t-2 lg:border-t-0 border-b-2 border-page-border">
+        <strong class="text-page-text inline-block py-2 px-[18px]">{t("globals.filterBy")}</strong>
+        {uniqueTags.map((tag) => (
+          <ToggleButton color="blue" defaultValue={false} tagSlug={tag.slug} client:load>
+            {tag.name}
+          </ToggleButton>
+        ))}
+      </div>
+    )
   }
-</div>
-)}
 
-<!-- focus area cards -->
-<div id="publications-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-  {allItems.map(item => {
-    if (item.type === 'blog') {
-      const tags = item.post.data.tags?.map((t: any) => t.id) || [];
-      return (
-        <BlogPostCard
-          post={item.post}
-          data-tags={tags.join(',')} />
-      );
-    } else {
-      const tags = item.publication.data.related_interests || [];
-      return (
-        <PublicationCard
-          publication={item.publication}
-          authors={item.authors}
-          data-tags={tags.join(',')} />
-      );
+  <!-- focus area cards -->
+  <div id="publications-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+    {
+      allItems.map((item) => {
+        if (item.type === "blog") {
+          const tagSlugs = tagSlugsByItemId.get(`${item.post.collection}:${item.post.id}`) ?? [];
+          return (
+            <BlogPostCard
+              post={item.post}
+              tags={tagSlugs.map((slug) => tagLabels[slug] ?? slug)}
+              data-tags={tagSlugs.join(",")}
+            />
+          );
+        } else {
+          const tagSlugs = tagSlugsByItemId.get(`${item.publication.collection}:${item.publication.id}`) ?? [];
+          return (
+            <PublicationCard
+              publication={item.publication}
+              authors={item.authors}
+              tags={tagSlugs.map((slug) => tagLabels[slug] ?? slug)}
+              data-tags={tagSlugs.join(",")}
+            />
+          );
+        }
+      })
     }
-  })}
-</div>
-
+  </div>
 </div>
 
 <script>
@@ -94,28 +118,32 @@ const uniqueTags = Array.from(
   // Client-side filtering based on URL tags
   function filterPublications() {
     const params = new URLSearchParams(window.location.search);
-    const selectedTags = params.get('tags')?.split(',').filter(t => t) || [];
+    const selectedTags =
+      params
+        .get("tags")
+        ?.split(",")
+        .filter((t) => t) || [];
 
-    const grid = document.querySelector('#publications-grid');
+    const grid = document.querySelector("#publications-grid");
     if (!grid) return;
 
     // Store all articles if not already stored
     if (allArticles.length === 0) {
-      allArticles = Array.from(grid.querySelectorAll('article'));
+      allArticles = Array.from(grid.querySelectorAll("article"));
     }
 
     // Clear the grid
-    grid.innerHTML = '';
+    grid.innerHTML = "";
 
     // Add back only the articles that match
     allArticles.forEach((article) => {
-      const articleTags = (article.getAttribute('data-tags') || '').split(',');
+      const articleTags = (article.getAttribute("data-tags") || "").split(",");
 
       if (selectedTags.length === 0) {
         // No filters, show all
         grid.appendChild(article);
       } else {
-        const hasMatch = selectedTags.some(tag => articleTags.includes(tag));
+        const hasMatch = selectedTags.some((tag) => articleTags.includes(tag));
         if (hasMatch) {
           grid.appendChild(article);
         }
@@ -127,5 +155,5 @@ const uniqueTags = Array.from(
   filterPublications();
 
   // Listen for tag changes from ToggleButton
-  window.addEventListener('tagsChanged', filterPublications);
+  window.addEventListener("tagsChanged", filterPublications);
 </script>

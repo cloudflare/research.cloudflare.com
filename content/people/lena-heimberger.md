@@ -1,5 +1,5 @@
 ---
-title: lena-heimberger
+title: Lena Heimberger
 position: External Collaborator
 avatar: placeholder.png
 slug: lena-heimberger

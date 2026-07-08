@@ -3,71 +3,95 @@ import InteriorLayout from "../layouts/interior.astro";
 import ArticleHeading, { type typeClassNames } from "../components/ArticleHeading.astro";
 import SeeMore from "@/components/SeeMore.astro";
 import Section from "../components/Section.astro";
-import NarrowContent from "../components/NarrowContent.astro"
-import { getCollection, getEntry } from "astro:content";
+import NarrowContent from "../components/NarrowContent.astro";
+import { getCollection } from "astro:content";
+import { getLocalizedEntry } from "@cloudflare/polystella/runtime";
+import { computeTranslationStatus } from "@/lib/i18n-utils";
 
 export async function getStaticPaths() {
-  const publications = await getCollection('publications');
+  const publications = await getCollection("publications");
   return publications.map((pub) => ({ params: { slug: pub.id } }));
 }
+
+const { t, lhref } = Astro.locals;
 
 // get the slug from the URL
 const { slug } = Astro.params;
 
 // get the content from the publications collection
-const publication = await getCollection('publications', (publication) => publication.id === slug);
+const publication = await getLocalizedEntry("publications", slug, Astro.currentLocale);
 
-// Resolve author references to get full person data
-const resolvedAuthors = publication[0].data.authors
+const resolvedAuthors = publication?.data.authors
   ? await Promise.all(
-      publication[0].data.authors.map(async (ref) => {
-        const author = await getEntry(ref);
+      publication.data.authors.map(async (ref) => {
+        const author = await getLocalizedEntry(ref, Astro.currentLocale);
         return author;
-      })
+      }),
     )
   : undefined;
 
 // Filter out any undefined entries (missing authors)
 const authors = resolvedAuthors?.filter((author): author is NonNullable<typeof author> => author !== undefined);
+
+const aiTranslationStatus = computeTranslationStatus(Astro.currentLocale, publication);
 ---
 
-<InteriorLayout metaTitle="Blog">
+<InteriorLayout metaTitle="Blog" aiTranslationStatus={aiTranslationStatus}>
   <Section>
     <NarrowContent>
-    <div class="mb-3"><ArticleHeading type="publication" year={publication[0].data.year?.toString()} /></div>
-
-    <h1 class="heading mb-10">{publication[0].data.title}</h1>
-
-    {authors && authors.length > 0 && (
-      <div class="mb-10">
-        <h2 class="heading-label">Contributors</h2>
-        <p class="text-sm font-medium text-page-text-muted">
-          {authors.map((author, index) => (
-            <>{index > 0 && ", "}{author.data.type === 'external' ? (
-              <span>{author.data.title}</span>
-            ) : (
-              <a href={`/people/${author.id}`} class="hover:text-page-text hover:underline">{author.data.title}</a>
-            )}</>
-          ))}
-        </p>
+      <div class="mb-3">
+        <ArticleHeading type="publication" year={publication?.data.year?.toString()} />
       </div>
-    )}
 
-    {publication[0].data.location && (
-      <div class="box">
-        <h2 class="heading-label">Details</h2>
-        <div class="text-sm font-medium text-page-text-muted leading-loose">{publication[0].data.location}</div>
-      </div>
-    )}
+      <h1 class="heading mb-10">{publication?.data.title}</h1>
 
-    {publication[0].data.url && (<div class="mb-10 relative md:-left-6"><SeeMore href={publication[0].data.url}>View</SeeMore></div>)}
+      {
+        authors && authors.length > 0 && (
+          <div class="mb-10">
+            <h2 class="heading-label">{t("publication.contributors")}</h2>
+            <p class="text-sm font-medium text-page-text-muted">
+              {authors.map((author, index) => (
+                <>
+                  {index > 0 && ", "}
+                  {author.data.type === "external" ? (
+                    <span>{author.data.title}</span>
+                  ) : (
+                    <a href={lhref(`/people/${author.id}`)} class="hover:text-page-text hover:underline">
+                      {author.data.title}
+                    </a>
+                  )}
+                </>
+              ))}
+            </p>
+          </div>
+        )
+      }
 
-    {publication[0].body && (
-      <>
-        <h2 class="heading-label">Abstract</h2>
-        {publication[0].body}
-      </>
-    )}
+      {
+        publication?.data.location && (
+          <div class="box">
+            <h2 class="heading-label">{t("publication.details")}</h2>
+            <div class="text-sm font-medium text-page-text-muted leading-loose">{publication.data.location}</div>
+          </div>
+        )
+      }
+
+      {
+        publication?.data.url && (
+          <div class="mb-10 relative md:-left-6">
+            <SeeMore href={publication.data.url}>{t("globals.view")}</SeeMore>
+          </div>
+        )
+      }
+
+      {
+        publication?.body && (
+          <>
+            <h2 class="heading-label">{t("publication.abstract")}</h2>
+            {publication.body}
+          </>
+        )
+      }
     </NarrowContent>
   </Section>
 </InteriorLayout>

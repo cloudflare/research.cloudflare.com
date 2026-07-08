@@ -5,14 +5,14 @@ import Section from "@/components/Section.astro";
 import ArticleGrid from "@/components/ArticleGrid.astro";
 import { getArticlesByPillar } from "@/lib/getArticlesByPillar";
 
-const combinedArticles = await getArticlesByPillar('reliable');
+const combinedArticles = await getArticlesByPillar("reliable", Astro.currentLocale);
+const { t } = Astro.locals;
 ---
 
-<InteriorLayout metaTitle="Reliable Focus Area" metaDescription="Ensuring a stable and available Internet. Explore Cloudflare Research on robust distributed systems, secure time synchronization protocols, and the architecture that keeps global networks resilient at scale.">
+<InteriorLayout metaTitle={t("nav.focusAreas.moreReliable.metaTitle")} metaDescription={t("nav.focusAreas.moreReliable.description")}>
   <HeaderReliable />
 
   <Section>
     <ArticleGrid publications={combinedArticles} />
   </Section>
-
 </InteriorLayout>

@@ -1,0 +1,111 @@
+---
+/**
+ * Floating "cookie-notice" style notice for AI-translated pages.
+ * Visibility is gated by `BaseLayout` on `aiTranslationStatus`; this
+ * component renders the DOM and wires up the dismiss button.
+ *
+ * Anti-flash: a tiny inline script in `BaseLayout`'s `<head>` reads
+ * `localStorage` synchronously and sets `data-translation-notice` on
+ * `<html>` before paint; the CSS rule in `global.css` then hides
+ * `.translation-banner` for already-dismissed visitors.
+ *
+ * Storage key: `polystella:notice:<locale>:v1`. Bump the version
+ * literal here AND in `BaseLayout`'s head script to re-show.
+ */
+import { swapLocale, defaultLocale, locales } from "@/lib/i18n-utils";
+
+const { t } = Astro.locals;
+
+const locale = Astro.currentLocale ?? defaultLocale;
+const originalHref = swapLocale(Astro.url, defaultLocale);
+const nonDefaultLocales = locales.filter((l) => l !== defaultLocale);
+const NOTICE_VERSION = "v1";
+---
+
+<aside
+  class="translation-banner fixed left-3 right-3 bottom-3 sm:left-auto sm:max-w-md sm:right-6 sm:bottom-6 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300"
+  role="status"
+  aria-live="polite"
+  data-translation-notice-locale={locale}
+>
+  <div class="relative bg-page-bg border border-page-border rounded-lg shadow-lg p-4 pr-10">
+    <button
+      type="button"
+      data-translation-banner-dismiss
+      aria-label={t("notice.aiTranslated.dismiss")}
+      class="absolute top-2 right-2 p-1.5 text-page-text-muted hover:text-page-text rounded transition-colors"
+    >
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M18 6 6 18M6 6l12 12"></path>
+      </svg>
+    </button>
+    <p class="text-sm text-page-text leading-relaxed mb-2">
+      {t("notice.aiTranslated.body")}
+    </p>
+    <a
+      href={originalHref}
+      hreflang={defaultLocale}
+      lang={defaultLocale}
+      data-ai-original-link
+      class="text-sm underline hover:text-baby-blue-eyes"
+    >
+      {t("notice.aiTranslated.viewOriginal")}
+    </a>
+  </div>
+</aside>
+
+<script is:inline define:vars={{ locale, version: NOTICE_VERSION, defaultLocale, nonDefaultLocales }}>
+  // Wrapped in try/catch: Safari private mode and locked-down environments
+  // throw on localStorage access. Failing silently is correct — the banner
+  // re-appears next visit, acceptable degradation.
+  try {
+    function swapBrowserLocale(targetLocale) {
+      var pathname = window.location.pathname;
+      var suffix = window.location.search + window.location.hash;
+      var segments = pathname.split("/").filter(function (segment) {
+        return segment.length > 0;
+      });
+      var hasLocalePrefix = segments.length > 0 && nonDefaultLocales.indexOf(segments[0]) !== -1;
+      var logicalSegments = hasLocalePrefix ? segments.slice(1) : segments;
+      var trailingSlash = pathname.endsWith("/");
+
+      if (targetLocale === defaultLocale) {
+        return (logicalSegments.length === 0 ? "/" : "/" + logicalSegments.join("/") + (trailingSlash ? "/" : "")) + suffix;
+      }
+      return (logicalSegments.length === 0 ? "/" + targetLocale + "/" : "/" + targetLocale + "/" + logicalSegments.join("/") + (trailingSlash ? "/" : "")) + suffix;
+    }
+
+    function updateOriginalLinks() {
+      document.querySelectorAll("[data-ai-original-link]").forEach(function (link) {
+        link.setAttribute("href", swapBrowserLocale(defaultLocale));
+      });
+    }
+
+    updateOriginalLinks();
+    window.addEventListener("tagsChanged", updateOriginalLinks);
+    window.addEventListener("popstate", updateOriginalLinks);
+    document.querySelectorAll("[data-ai-original-link]").forEach(function (link) {
+      link.addEventListener("click", updateOriginalLinks);
+    });
+
+    var key = "polystella:notice:" + locale + ":" + version;
+    document.querySelectorAll("[data-translation-banner-dismiss]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        try {
+          localStorage.setItem(key, "dismissed");
+        } catch (e) {}
+        document.documentElement.dataset.translationNotice = "dismissed";
+      });
+    });
+  } catch (e) {}
+</script>

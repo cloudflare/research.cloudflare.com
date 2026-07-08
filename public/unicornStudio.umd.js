@@ -47,8 +47,7 @@
   let h = class {
     constructor(e) {
       if (((this.type = "Scene"), e && "Renderer" === e.type)) {
-        if (!e.gl)
-          return void a(this.type + ": Renderer WebGL context is undefined", e);
+        if (!e.gl) return void a(this.type + ": Renderer WebGL context is undefined", e);
       } else a(this.type + ": Renderer not passed as first argument", e);
       ((this.renderer = e), (this.gl = e.gl), this.initStacks());
     }
@@ -95,10 +94,8 @@
       ((s = Math.max(0, s)),
         t.splice(s, 0, e),
         e.target._depth
-          ? (t.sort((e, t) => e.index - t.index),
-            t.sort((e, t) => t.renderOrder - e.renderOrder))
-          : (t.sort((e, t) => t.index - e.index),
-            t.sort((e, t) => e.renderOrder - t.renderOrder)),
+          ? (t.sort((e, t) => e.index - t.index), t.sort((e, t) => t.renderOrder - e.renderOrder))
+          : (t.sort((e, t) => t.index - e.index), t.sort((e, t) => e.renderOrder - t.renderOrder)),
         t.sort((e, t) => e.target.index - t.target.index),
         (this.stacks.renderTargets = t));
     }
@@ -116,12 +113,7 @@
           s = i + 1;
           break;
         }
-      return (
-        (s = Math.max(0, s)),
-        t.splice(s, 0, e),
-        t.sort((e, t) => e.index - t.index),
-        t
-      );
+      return ((s = Math.max(0, s)), t.splice(s, 0, e), t.sort((e, t) => e.index - t.index), t);
     }
     addPlane(e) {
       if ("PingPongPlane" === e.type) this.stacks.pingPong.push(e);
@@ -195,10 +187,8 @@
     }
     addShaderPass(e) {
       e._isScenePass
-        ? (this.stacks.scenePasses.push(e),
-          this.sortShaderPassStack(this.stacks.scenePasses))
-        : (this.stacks.renderPasses.push(e),
-          this.sortShaderPassStack(this.stacks.renderPasses));
+        ? (this.stacks.scenePasses.push(e), this.sortShaderPassStack(this.stacks.scenePasses))
+        : (this.stacks.renderPasses.push(e), this.sortShaderPassStack(this.stacks.renderPasses));
     }
     removeShaderPass(e) {
       this.resetShaderPassStacks();
@@ -211,8 +201,7 @@
       this.stacks.scenePasses.length &&
         0 === this.stacks.renderPasses.length &&
         this.renderer.planes.length &&
-        ((this.renderer.state.scenePassIndex = 0),
-        this.renderer.bindFrameBuffer(this.stacks.scenePasses[0].target));
+        ((this.renderer.state.scenePassIndex = 0), this.renderer.bindFrameBuffer(this.stacks.scenePasses[0].target));
     }
     drawRenderPasses() {
       this.stacks.scenePasses.length &&
@@ -225,8 +214,7 @@
           this.renderer.clearDepth());
     }
     drawScenePasses() {
-      for (let e = 0; e < this.stacks.scenePasses.length; e++)
-        this.stacks.scenePasses[e]._startDrawing();
+      for (let e = 0; e < this.stacks.scenePasses.length; e++) this.stacks.scenePasses[e]._startDrawing();
     }
     drawPingPongStack() {
       for (let e = 0; e < this.stacks.pingPong.length; e++) {
@@ -362,15 +350,11 @@
       if (
         ((this.gl = this.canvas.getContext("webgl2", x)),
         (this._isWebGL2 = !!this.gl),
-        this.gl ||
-          (this.gl =
-            this.canvas.getContext("webgl", x) ||
-            this.canvas.getContext("experimental-webgl", x)),
+        this.gl || (this.gl = this.canvas.getContext("webgl", x) || this.canvas.getContext("experimental-webgl", x)),
         !this.gl)
       )
         return (
-          this.production ||
-            r(this.type + ": WebGL context could not be created"),
+          this.production || r(this.type + ": WebGL context could not be created"),
           (this.state.isActive = !1),
           void (this.onError && this.onError())
         );
@@ -580,12 +564,9 @@
         ));
     }
     resize() {
-      for (let e = 0; e < this.planes.length; e++)
-        this.planes[e]._canDraw && this.planes[e].resize();
-      for (let e = 0; e < this.shaderPasses.length; e++)
-        this.shaderPasses[e]._canDraw && this.shaderPasses[e].resize();
-      for (let e = 0; e < this.renderTargets.length; e++)
-        this.renderTargets[e].resize();
+      for (let e = 0; e < this.planes.length; e++) this.planes[e]._canDraw && this.planes[e].resize();
+      for (let e = 0; e < this.shaderPasses.length; e++) this.shaderPasses[e]._canDraw && this.shaderPasses[e].resize();
+      for (let e = 0; e < this.renderTargets.length; e++) this.renderTargets[e].resize();
       this.needRender();
     }
     clear() {
@@ -618,9 +599,7 @@
     setDepthTest(e) {
       e && !this.state.depthTest
         ? ((this.state.depthTest = e), this.gl.enable(this.gl.DEPTH_TEST))
-        : !e &&
-          this.state.depthTest &&
-          ((this.state.depthTest = e), this.gl.disable(this.gl.DEPTH_TEST));
+        : !e && this.state.depthTest && ((this.state.depthTest = e), this.gl.disable(this.gl.DEPTH_TEST));
     }
     setDepthFunc() {
       this.gl.depthFunc(this.gl.LEQUAL);
@@ -628,9 +607,7 @@
     setBlending(e = !1) {
       e && !this.state.blending
         ? ((this.state.blending = e), this.gl.enable(this.gl.BLEND))
-        : !e &&
-          this.state.blending &&
-          ((this.state.blending = e), this.gl.disable(this.gl.BLEND));
+        : !e && this.state.blending && ((this.state.blending = e), this.gl.disable(this.gl.BLEND));
     }
     setBlendFunc() {
       (this.gl.enable(this.gl.BLEND),
@@ -650,16 +627,14 @@
     }
     setFaceCulling(e) {
       if (this.state.cullFace !== e)
-        if (((this.state.cullFace = e), "none" === e))
-          this.gl.disable(this.gl.CULL_FACE);
+        if (((this.state.cullFace = e), "none" === e)) this.gl.disable(this.gl.CULL_FACE);
         else {
           const t = "front" === e ? this.gl.FRONT : this.gl.BACK;
           (this.gl.enable(this.gl.CULL_FACE), this.gl.cullFace(t));
         }
     }
     useProgram(e) {
-      (null !== this.state.currentProgramID &&
-        this.state.currentProgramID === e.id) ||
+      (null !== this.state.currentProgramID && this.state.currentProgramID === e.id) ||
         (this.gl.useProgram(e.program), (this.state.currentProgramID = e.id));
     }
     removePlane(e) {
@@ -677,9 +652,7 @@
           "PingPongPlane" !== t.type && t.target && t.target.uuid === e.uuid,
       );
       for (let s = 0; s < this.planes.length; s++)
-        this.planes[s].target &&
-          this.planes[s].target.uuid === e.uuid &&
-          (this.planes[s].target = null);
+        this.planes[s].target && this.planes[s].target.uuid === e.uuid && (this.planes[s].target = null);
       this.renderTargets = this.renderTargets.filter((t) => t.uuid !== e.uuid);
       for (let s = 0; s < this.renderTargets.length; s++)
         this.renderTargets[s].index = s;
@@ -708,10 +681,7 @@
       this.state.forceRender = !0;
     }
     render() {
-      this.gl &&
-        (this.clear(),
-        (this.state.currentGeometryID = null),
-        this.scene.draw());
+      this.gl && (this.clear(), (this.state.currentGeometryID = null), this.scene.draw());
     }
     deletePrograms() {
       for (let e = 0; e < this.cache.programs.length; e++) {
@@ -721,12 +691,9 @@
     }
     dispose() {
       if (!this.gl) return;
-      for (this.state.isActive = !1; this.planes.length > 0; )
-        this.removePlane(this.planes[0]);
-      for (; this.shaderPasses.length > 0; )
-        this.removeShaderPass(this.shaderPasses[0]);
-      for (; this.renderTargets.length > 0; )
-        this.removeRenderTarget(this.renderTargets[0]);
+      for (this.state.isActive = !1; this.planes.length > 0; ) this.removePlane(this.planes[0]);
+      for (; this.shaderPasses.length > 0; ) this.removeShaderPass(this.shaderPasses[0]);
+      for (; this.renderTargets.length > 0; ) this.removeRenderTarget(this.renderTargets[0]);
       let e = this.nextRender.add(() => {
         0 === this.planes.length &&
           0 === this.shaderPasses.length &&
@@ -787,8 +754,7 @@
         this.onScroll && this.onScroll(this.lastXDelta, this.lastYDelta));
     }
     dispose() {
-      this.shouldWatch &&
-        window.removeEventListener("scroll", this.handler, { passive: !0 });
+      this.shouldWatch && window.removeEventListener("scroll", this.handler, { passive: !0 });
     }
   }
   class p {
@@ -1055,25 +1021,15 @@
   class m {
     constructor(e, t, s) {
       if (((this.type = "Uniforms"), e && "Renderer" === e.type)) {
-        if (!e.gl)
-          return void a(this.type + ": Renderer WebGL context is undefined", e);
+        if (!e.gl) return void a(this.type + ": Renderer WebGL context is undefined", e);
       } else a(this.type + ": Renderer not passed as first argument", e);
-      if (
-        ((this.renderer = e),
-        (this.gl = e.gl),
-        (this.program = t),
-        (this.uniforms = {}),
-        s)
-      )
+      if (((this.renderer = e), (this.gl = e.gl), (this.program = t), (this.uniforms = {}), s))
         for (const i in s) {
           const e = s[i];
           this.uniforms[i] = {
             name: e.name,
             type: e.type,
-            value:
-              e.value.clone && "function" == typeof e.value.clone
-                ? e.value.clone()
-                : e.value,
+            value: e.value.clone && "function" == typeof e.value.clone ? e.value.clone() : e.value,
             update: null,
           };
         }
@@ -1138,8 +1094,7 @@
           e.update = this.setUniformMatrix4fv.bind(this);
           break;
         default:
-          this.renderer.production ||
-            r(this.type + ": This uniform type is not handled : ", e.type);
+          this.renderer.production || r(this.type + ": This uniform type is not handled : ", e.type);
       }
     }
     setInternalFormat(e) {
@@ -1274,9 +1229,7 @@
         : this.gl.uniform2i(e.location, e.value[0], e.value[1]);
     }
     setUniform2iv(e) {
-      "Vec2" === e._internalFormat
-        ? this.gl.uniform2iv(e.location, [e.value.x, e.value.y])
-        : this.gl.uniform2iv(e.location, e.value);
+      "Vec2" === e._internalFormat ? this.gl.uniform2iv(e.location, [e.value.x, e.value.y]) : this.gl.uniform2iv(e.location, e.value);
     }
     setUniform2f(e) {
       "Vec2" === e._internalFormat
@@ -1284,9 +1237,7 @@
         : this.gl.uniform2f(e.location, e.value[0], e.value[1]);
     }
     setUniform2fv(e) {
-      "Vec2" === e._internalFormat
-        ? this.gl.uniform2fv(e.location, [e.value.x, e.value.y])
-        : this.gl.uniform2fv(e.location, e.value);
+      "Vec2" === e._internalFormat ? this.gl.uniform2fv(e.location, [e.value.x, e.value.y]) : this.gl.uniform2fv(e.location, e.value);
     }
     setUniform3i(e) {
       "Vec3" === e._internalFormat
@@ -1327,12 +1278,7 @@
     }
     setUniform4iv(e) {
       "Quat" === e._internalFormat
-        ? this.gl.uniform4iv(e.location, [
-            e.value.elements[0],
-            e.value.elements[1],
-            e.value.elements[2],
-            e.value[3],
-          ])
+        ? this.gl.uniform4iv(e.location, [e.value.elements[0], e.value.elements[1], e.value.elements[2], e.value[3]])
         : this.gl.uniform4iv(e.location, e.value);
     }
     setUniform4f(e) {
@@ -1354,12 +1300,7 @@
     }
     setUniform4fv(e) {
       "Quat" === e._internalFormat
-        ? this.gl.uniform4fv(e.location, [
-            e.value.elements[0],
-            e.value.elements[1],
-            e.value.elements[2],
-            e.value[3],
-          ])
+        ? this.gl.uniform4fv(e.location, [e.value.elements[0], e.value.elements[1], e.value.elements[2], e.value[3]])
         : this.gl.uniform4fv(e.location, e.value);
     }
     setUniformMatrix2fv(e) {
@@ -1391,11 +1332,7 @@
       _ +
       "\nuniform mat4 uMVMatrix;\nuniform mat4 uPMatrix;\n\nvoid main() {\n    vTextureCoord = aTextureCoord;\n    vVertexPosition = aVertexPosition;\n    \n    gl_Position = uPMatrix * uMVMatrix * vec4(aVertexPosition, 1.0);\n}\n"
     ).replace(/\n/g, ""),
-    v = (
-      g +
-      _ +
-      "\nvoid main() {\n    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);\n}\n"
-    ).replace(/\n/g, ""),
+    v = (g + _ + "\nvoid main() {\n    gl_FragColor = vec4(0.0, 0.0, 0.0, 1.0);\n}\n").replace(/\n/g, ""),
     y = (
       g +
       f +
@@ -1411,8 +1348,7 @@
   class T {
     constructor(e, { parent: t, vertexShader: s, fragmentShader: i } = {}) {
       if (((this.type = "Program"), e && "Renderer" === e.type)) {
-        if (!e.gl)
-          return void a(this.type + ": Renderer WebGL context is undefined", e);
+        if (!e.gl) return void a(this.type + ": Renderer WebGL context is undefined", e);
       } else a(this.type + ": Renderer not passed as first argument", e);
       ((this.renderer = e),
         (this.gl = this.renderer.gl),
@@ -1444,11 +1380,9 @@
       if (
         (this.gl.shaderSource(s, e),
         this.gl.compileShader(s),
-        !this.renderer.production &&
-          !this.gl.getShaderParameter(s, this.gl.COMPILE_STATUS))
+        !this.renderer.production && !this.gl.getShaderParameter(s, this.gl.COMPILE_STATUS))
       ) {
-        const e =
-          t === this.gl.VERTEX_SHADER ? "vertex shader" : "fragment shader";
+        const e = t === this.gl.VERTEX_SHADER ? "vertex shader" : "fragment shader";
         let i = this.gl.getShaderSource(s).split("\n");
         for (let t = 0; t < i.length; t++) i[t] = t + 1 + ": " + i[t];
         return (
@@ -1498,9 +1432,7 @@
           (this.activeUniforms = e.activeUniforms),
           (this.activeAttributes = e.activeAttributes),
           this.createProgram())
-        : (this.useNewShaders(),
-          this.compiled &&
-            (this.createProgram(), this.renderer.cache.addProgram(this)));
+        : (this.useNewShaders(), this.compiled && (this.createProgram(), this.renderer.cache.addProgram(this)));
     }
     createProgram() {
       if (
@@ -1510,8 +1442,7 @@
         this.gl.attachShader(this.program, this.vertexShader),
         this.gl.attachShader(this.program, this.fragmentShader),
         this.gl.linkProgram(this.program),
-        !this.renderer.production &&
-          !this.gl.getProgramParameter(this.program, this.gl.LINK_STATUS))
+        !this.renderer.production && !this.gl.getProgramParameter(this.program, this.gl.LINK_STATUS))
       )
         return (
           r(
@@ -1531,9 +1462,7 @@
           void this.createProgram()
         );
       if (
-        (this.gl.deleteShader(this.vertexShader),
-        this.gl.deleteShader(this.fragmentShader),
-        !this.activeUniforms || !this.activeAttributes)
+        (this.gl.deleteShader(this.vertexShader), this.gl.deleteShader(this.fragmentShader), !this.activeUniforms || !this.activeAttributes)
       ) {
         this.activeUniforms = { textures: [], textureMatrices: [] };
         const e = this.gl.getProgramParameter(
@@ -1574,8 +1503,7 @@
   class w {
     constructor(e, { program: t = null, width: s = 1, height: i = 1 } = {}) {
       if (((this.type = "Geometry"), e && "Renderer" === e.type)) {
-        if (!e.gl)
-          return void a(this.type + ": Renderer WebGL context is undefined", e);
+        if (!e.gl) return void a(this.type + ": Renderer WebGL context is undefined", e);
       } else a(this.type + ": Renderer not passed as first argument", e);
       ((this.renderer = e),
         (this.gl = this.renderer.gl),
@@ -1598,8 +1526,7 @@
     setVerticesUVs() {
       const e = this.renderer.cache.getGeometryFromID(this.definition.id);
       e
-        ? ((this.attributes.vertexPosition.array = e.vertices),
-          (this.attributes.textureCoord.array = e.uvs))
+        ? ((this.attributes.vertexPosition.array = e.vertices), (this.attributes.textureCoord.array = e.uvs))
         : (this.computeVerticesUVs(),
           this.renderer.cache.addGeometry(
             this.definition.id,
@@ -1611,8 +1538,7 @@
       ((this.program = e),
         this.initAttributes(),
         this.renderer._isWebGL2
-          ? ((this._vao = this.gl.createVertexArray()),
-            this.gl.bindVertexArray(this._vao))
+          ? ((this._vao = this.gl.createVertexArray()), this.gl.bindVertexArray(this._vao))
           : this.renderer.extensions.OES_vertex_array_object &&
             ((this._vao =
               this.renderer.extensions.OES_vertex_array_object.createVertexArrayOES()),
@@ -1623,11 +1549,7 @@
     }
     initAttributes() {
       for (const e in this.attributes) {
-        if (
-          ((this.attributes[e].isActive =
-            this.program.activeAttributes.includes(this.attributes[e].name)),
-          !this.attributes[e].isActive)
-        )
+        if (((this.attributes[e].isActive = this.program.activeAttributes.includes(this.attributes[e].name)), !this.attributes[e].isActive))
           return;
         ((this.attributes[e].location = this.gl.getAttribLocation(
           this.program.program,
@@ -1799,38 +1721,22 @@
         s = e.elements;
       let i = new R();
       return (
-        (i.elements[0] =
-          s[0] * t[0] + s[1] * t[4] + s[2] * t[8] + s[3] * t[12]),
-        (i.elements[1] =
-          s[0] * t[1] + s[1] * t[5] + s[2] * t[9] + s[3] * t[13]),
-        (i.elements[2] =
-          s[0] * t[2] + s[1] * t[6] + s[2] * t[10] + s[3] * t[14]),
-        (i.elements[3] =
-          s[0] * t[3] + s[1] * t[7] + s[2] * t[11] + s[3] * t[15]),
-        (i.elements[4] =
-          s[4] * t[0] + s[5] * t[4] + s[6] * t[8] + s[7] * t[12]),
-        (i.elements[5] =
-          s[4] * t[1] + s[5] * t[5] + s[6] * t[9] + s[7] * t[13]),
-        (i.elements[6] =
-          s[4] * t[2] + s[5] * t[6] + s[6] * t[10] + s[7] * t[14]),
-        (i.elements[7] =
-          s[4] * t[3] + s[5] * t[7] + s[6] * t[11] + s[7] * t[15]),
-        (i.elements[8] =
-          s[8] * t[0] + s[9] * t[4] + s[10] * t[8] + s[11] * t[12]),
-        (i.elements[9] =
-          s[8] * t[1] + s[9] * t[5] + s[10] * t[9] + s[11] * t[13]),
-        (i.elements[10] =
-          s[8] * t[2] + s[9] * t[6] + s[10] * t[10] + s[11] * t[14]),
-        (i.elements[11] =
-          s[8] * t[3] + s[9] * t[7] + s[10] * t[11] + s[11] * t[15]),
-        (i.elements[12] =
-          s[12] * t[0] + s[13] * t[4] + s[14] * t[8] + s[15] * t[12]),
-        (i.elements[13] =
-          s[12] * t[1] + s[13] * t[5] + s[14] * t[9] + s[15] * t[13]),
-        (i.elements[14] =
-          s[12] * t[2] + s[13] * t[6] + s[14] * t[10] + s[15] * t[14]),
-        (i.elements[15] =
-          s[12] * t[3] + s[13] * t[7] + s[14] * t[11] + s[15] * t[15]),
+        (i.elements[0] = s[0] * t[0] + s[1] * t[4] + s[2] * t[8] + s[3] * t[12]),
+        (i.elements[1] = s[0] * t[1] + s[1] * t[5] + s[2] * t[9] + s[3] * t[13]),
+        (i.elements[2] = s[0] * t[2] + s[1] * t[6] + s[2] * t[10] + s[3] * t[14]),
+        (i.elements[3] = s[0] * t[3] + s[1] * t[7] + s[2] * t[11] + s[3] * t[15]),
+        (i.elements[4] = s[4] * t[0] + s[5] * t[4] + s[6] * t[8] + s[7] * t[12]),
+        (i.elements[5] = s[4] * t[1] + s[5] * t[5] + s[6] * t[9] + s[7] * t[13]),
+        (i.elements[6] = s[4] * t[2] + s[5] * t[6] + s[6] * t[10] + s[7] * t[14]),
+        (i.elements[7] = s[4] * t[3] + s[5] * t[7] + s[6] * t[11] + s[7] * t[15]),
+        (i.elements[8] = s[8] * t[0] + s[9] * t[4] + s[10] * t[8] + s[11] * t[12]),
+        (i.elements[9] = s[8] * t[1] + s[9] * t[5] + s[10] * t[9] + s[11] * t[13]),
+        (i.elements[10] = s[8] * t[2] + s[9] * t[6] + s[10] * t[10] + s[11] * t[14]),
+        (i.elements[11] = s[8] * t[3] + s[9] * t[7] + s[10] * t[11] + s[11] * t[15]),
+        (i.elements[12] = s[12] * t[0] + s[13] * t[4] + s[14] * t[8] + s[15] * t[12]),
+        (i.elements[13] = s[12] * t[1] + s[13] * t[5] + s[14] * t[9] + s[15] * t[13]),
+        (i.elements[14] = s[12] * t[2] + s[13] * t[6] + s[14] * t[10] + s[15] * t[14]),
+        (i.elements[15] = s[12] * t[3] + s[13] * t[7] + s[14] * t[11] + s[15] * t[15]),
         i
       );
     }
@@ -2050,25 +1956,13 @@
       return new E(this._x, this._y);
     }
     sanitizeNaNValuesWith(e) {
-      return (
-        (this._x = isNaN(this._x) ? e.x : parseFloat(this._x)),
-        (this._y = isNaN(this._y) ? e.y : parseFloat(this._y)),
-        this
-      );
+      return ((this._x = isNaN(this._x) ? e.x : parseFloat(this._x)), (this._y = isNaN(this._y) ? e.y : parseFloat(this._y)), this);
     }
     max(e) {
-      return (
-        (this._x = Math.max(this._x, e.x)),
-        (this._y = Math.max(this._y, e.y)),
-        this
-      );
+      return ((this._x = Math.max(this._x, e.x)), (this._y = Math.max(this._y, e.y)), this);
     }
     min(e) {
-      return (
-        (this._x = Math.min(this._x, e.x)),
-        (this._y = Math.min(this._y, e.y)),
-        this
-      );
+      return ((this._x = Math.min(this._x, e.x)), (this._y = Math.min(this._y, e.y)), this);
     }
     equals(e) {
       return this._x === e.x && this._y === e.y;
@@ -2150,33 +2044,17 @@
       );
     }
     max(e) {
-      return (
-        (this._x = Math.max(this._x, e.x)),
-        (this._y = Math.max(this._y, e.y)),
-        (this._z = Math.max(this._z, e.z)),
-        this
-      );
+      return ((this._x = Math.max(this._x, e.x)), (this._y = Math.max(this._y, e.y)), (this._z = Math.max(this._z, e.z)), this);
     }
     min(e) {
-      return (
-        (this._x = Math.min(this._x, e.x)),
-        (this._y = Math.min(this._y, e.y)),
-        (this._z = Math.min(this._z, e.z)),
-        this
-      );
+      return ((this._x = Math.min(this._x, e.x)), (this._y = Math.min(this._y, e.y)), (this._z = Math.min(this._z, e.z)), this);
     }
     equals(e) {
       return this._x === e.x && this._y === e.y && this._z === e.z;
     }
     normalize() {
       let e = this._x * this._x + this._y * this._y + this._z * this._z;
-      return (
-        e > 0 && (e = 1 / Math.sqrt(e)),
-        (this._x *= e),
-        (this._y *= e),
-        (this._z *= e),
-        this
-      );
+      return (e > 0 && (e = 1 / Math.sqrt(e)), (this._x *= e), (this._y *= e), (this._z *= e), this);
     }
     dot(e) {
       return this._x * e.x + this._y * e.y + this._z * e.z;
@@ -2247,10 +2125,7 @@
         magFilter: m,
       } = {},
     ) {
-      if (
-        ((this.type = "Texture"),
-        (e = (e && e.renderer) || e) && "Renderer" === e.type)
-      ) {
+      if (((this.type = "Texture"), (e = (e && e.renderer) || e) && "Renderer" === e.type)) {
         if (!e.gl)
           return void (
             e.production ||
@@ -2360,8 +2235,7 @@
         this._copiedFrom)
       ) {
         const e = this.renderer.nextRender.add(() => {
-          this._copiedFrom._canDraw &&
-            (this._restoreFromTexture(), (e.keep = !1));
+          this._copiedFrom._canDraw && (this._restoreFromTexture(), (e.keep = !1));
         }, !0);
       } else
         (this._initTexture(),
@@ -2393,9 +2267,7 @@
     _setParent() {
       if (
         ((this._sampler.name = this._samplerName || "uSampler" + this.index),
-        (this._textureMatrix.name = this._samplerName
-          ? this._samplerName + "Matrix"
-          : "uTextureMatrix" + this.index),
+        (this._textureMatrix.name = this._samplerName ? this._samplerName + "Matrix" : "uTextureMatrix" + this.index),
         this._parent._program)
       ) {
         if (!this._parent._program.compiled)
@@ -2408,9 +2280,7 @@
           );
         if ((this._setTextureUniforms(), this._copyOnInit)) {
           const e = this.renderer.nextRender.add(() => {
-            this._copiedFrom._canDraw &&
-              this._copiedFrom._uploaded &&
-              (this.copy(this._copiedFrom), (e.keep = !1));
+            this._copiedFrom._canDraw && this._copiedFrom._uploaded && (this.copy(this._copiedFrom), (e.keep = !1));
           }, !0);
           return;
         }
@@ -2425,12 +2295,8 @@
       } else
         "RenderTarget" === this._parent.type &&
           ((this._size = {
-            width:
-              (this._parent._size && this._parent._size.width) ||
-              this.renderer._boundingRect.width,
-            height:
-              (this._parent._size && this._parent._size.height) ||
-              this.renderer._boundingRect.height,
+            width: (this._parent._size && this._parent._size.width) || this.renderer._boundingRect.width,
+            height: (this._parent._size && this._parent._size.height) || this.renderer._boundingRect.height,
           }),
           this._upload(),
           this._updateTexParameters(),
@@ -2465,15 +2331,9 @@
           (this.parameters.generateMipmap = e.parameters.generateMipmap),
           (this._state.generateMipmap = null),
           (this._size = e._size),
-          !this._sourceLoaded &&
-            e._sourceLoaded &&
-            this._onSourceLoadedCallback &&
-            this._onSourceLoadedCallback(),
+          !this._sourceLoaded && e._sourceLoaded && this._onSourceLoadedCallback && this._onSourceLoadedCallback(),
           (this._sourceLoaded = e._sourceLoaded),
-          !this._uploaded &&
-            e._uploaded &&
-            this._onSourceUploadedCallback &&
-            this._onSourceUploadedCallback(),
+          !this._uploaded && e._uploaded && this._onSourceUploadedCallback && this._onSourceUploadedCallback(),
           (this._uploaded = e._uploaded),
           (this.sourceType = e.sourceType),
           (this.source = e.source),
@@ -2486,8 +2346,7 @@
             (this._setSize(), (this._canDraw = !0)),
           this._updateTexParameters(),
           this.renderer.needRender())
-        : this.renderer.production ||
-          r(this.type + ": Unable to set the texture from texture:", e);
+        : this.renderer.production || r(this.type + ": Unable to set the texture from texture:", e);
     }
     setSource(e) {
       this._sourceLoaded ||
@@ -2533,25 +2392,16 @@
       ((this.source = e),
         (this.sourceType = t),
         (this._size = {
-          width:
-            this.source.naturalWidth ||
-            this.source.width ||
-            this.source.videoWidth,
-          height:
-            this.source.naturalHeight ||
-            this.source.height ||
-            this.source.videoHeight,
+          width: this.source.naturalWidth || this.source.width || this.source.videoWidth,
+          height: this.source.naturalHeight || this.source.height || this.source.videoHeight,
         }),
         (this._sourceLoaded = !0),
         this.gl.bindTexture(this.gl.TEXTURE_2D, this._sampler.texture),
         this.resize(),
         (this._globalParameters.flipY = !0),
-        (this._globalParameters.premultiplyAlpha =
-          this._globalParameters.shouldPremultiplyAlpha),
+        (this._globalParameters.premultiplyAlpha = this._globalParameters.shouldPremultiplyAlpha),
         "image" === this.sourceType &&
-          ((this.parameters.generateMipmap =
-            this.parameters.generateMipmap ||
-            null === this.parameters.generateMipmap),
+          ((this.parameters.generateMipmap = this.parameters.generateMipmap || null === this.parameters.generateMipmap),
           (this.parameters._shouldUpdate = this.parameters.generateMipmap),
           (this._state.generateMipmap = !1),
           this._upload()),
@@ -2581,10 +2431,8 @@
           (this.renderer.state.premultiplyAlpha =
             this._globalParameters.premultiplyAlpha)),
         "half-float" === this._globalParameters.floatingPoint
-          ? this.renderer._isWebGL2 &&
-            this.renderer.extensions.EXT_color_buffer_float
-            ? ((this._globalParameters.internalFormat = this.gl.RGBA16F),
-              (this._globalParameters.type = this.gl.HALF_FLOAT))
+          ? this.renderer._isWebGL2 && this.renderer.extensions.EXT_color_buffer_float
+            ? ((this._globalParameters.internalFormat = this.gl.RGBA16F), (this._globalParameters.type = this.gl.HALF_FLOAT))
             : this.renderer.extensions.OES_texture_half_float
               ? (this._globalParameters.type =
                   this.renderer.extensions.OES_texture_half_float.HALF_FLOAT_OES)
@@ -2594,10 +2442,8 @@
                     ": could not use half-float textures because the extension is not available",
                 )
           : "float" === this._globalParameters.floatingPoint &&
-            (this.renderer._isWebGL2 &&
-            this.renderer.extensions.EXT_color_buffer_float
-              ? ((this._globalParameters.internalFormat = this.gl.RGBA16F),
-                (this._globalParameters.type = this.gl.FLOAT))
+            (this.renderer._isWebGL2 && this.renderer.extensions.EXT_color_buffer_float
+              ? ((this._globalParameters.internalFormat = this.gl.RGBA16F), (this._globalParameters.type = this.gl.FLOAT))
               : this.renderer.extensions.OES_texture_float
                 ? (this._globalParameters.type =
                     this.renderer.extensions.OES_texture_half_float.FLOAT)
@@ -2612,9 +2458,7 @@
         this.renderer.state.activeTexture !== this.index &&
         this._bindTexture(),
         this.parameters.wrapS !== this._state.wrapS &&
-          (this.renderer._isWebGL2 ||
-            (o(this._size.width) && o(this._size.height)) ||
-            (this.parameters.wrapS = this.gl.CLAMP_TO_EDGE),
+          (this.renderer._isWebGL2 || (o(this._size.width) && o(this._size.height)) || (this.parameters.wrapS = this.gl.CLAMP_TO_EDGE),
           this.parameters.wrapS !== this.gl.REPEAT &&
             this.parameters.wrapS !== this.gl.CLAMP_TO_EDGE &&
             this.parameters.wrapS !== this.gl.MIRRORED_REPEAT &&
@@ -2634,9 +2478,7 @@
           ),
           (this._state.wrapS = this.parameters.wrapS)),
         this.parameters.wrapT !== this._state.wrapT &&
-          (this.renderer._isWebGL2 ||
-            (o(this._size.width) && o(this._size.height)) ||
-            (this.parameters.wrapT = this.gl.CLAMP_TO_EDGE),
+          (this.renderer._isWebGL2 || (o(this._size.width) && o(this._size.height)) || (this.parameters.wrapT = this.gl.CLAMP_TO_EDGE),
           this.parameters.wrapT !== this.gl.REPEAT &&
             this.parameters.wrapT !== this.gl.CLAMP_TO_EDGE &&
             this.parameters.wrapT !== this.gl.MIRRORED_REPEAT &&
@@ -2658,18 +2500,13 @@
         this.parameters.generateMipmap &&
           !this._state.generateMipmap &&
           this.source &&
-          (this.renderer._isWebGL2 ||
-          (o(this._size.width) && o(this._size.height))
+          (this.renderer._isWebGL2 || (o(this._size.width) && o(this._size.height))
             ? this.gl.generateMipmap(this.gl.TEXTURE_2D)
             : (this.parameters.generateMipmap = !1),
           (this._state.generateMipmap = this.parameters.generateMipmap)),
         this.parameters.minFilter !== this._state.minFilter &&
-          (this.renderer._isWebGL2 ||
-            (o(this._size.width) && o(this._size.height)) ||
-            (this.parameters.minFilter = this.gl.LINEAR),
-          this.parameters.generateMipmap ||
-            null === this.parameters.generateMipmap ||
-            (this.parameters.minFilter = this.gl.LINEAR),
+          (this.renderer._isWebGL2 || (o(this._size.width) && o(this._size.height)) || (this.parameters.minFilter = this.gl.LINEAR),
+          this.parameters.generateMipmap || null === this.parameters.generateMipmap || (this.parameters.minFilter = this.gl.LINEAR),
           this.parameters.minFilter !== this.gl.LINEAR &&
             this.parameters.minFilter !== this.gl.NEAREST &&
             this.parameters.minFilter !== this.gl.NEAREST_MIPMAP_NEAREST &&
@@ -2692,9 +2529,7 @@
           ),
           (this._state.minFilter = this.parameters.minFilter)),
         this.parameters.magFilter !== this._state.magFilter &&
-          (this.renderer._isWebGL2 ||
-            (o(this._size.width) && o(this._size.height)) ||
-            (this.parameters.magFilter = this.gl.LINEAR),
+          (this.renderer._isWebGL2 || (o(this._size.width) && o(this._size.height)) || (this.parameters.magFilter = this.gl.LINEAR),
           this.parameters.magFilter !== this.gl.LINEAR &&
             this.parameters.magFilter !== this.gl.NEAREST &&
             (this.renderer.production ||
@@ -2728,20 +2563,16 @@
       }
     }
     setWrapS(e) {
-      this.parameters.wrapS !== e &&
-        ((this.parameters.wrapS = e), (this.parameters._shouldUpdate = !0));
+      this.parameters.wrapS !== e && ((this.parameters.wrapS = e), (this.parameters._shouldUpdate = !0));
     }
     setWrapT(e) {
-      this.parameters.wrapT !== e &&
-        ((this.parameters.wrapT = e), (this.parameters._shouldUpdate = !0));
+      this.parameters.wrapT !== e && ((this.parameters.wrapT = e), (this.parameters._shouldUpdate = !0));
     }
     setMinFilter(e) {
-      this.parameters.minFilter !== e &&
-        ((this.parameters.minFilter = e), (this.parameters._shouldUpdate = !0));
+      this.parameters.minFilter !== e && ((this.parameters.minFilter = e), (this.parameters._shouldUpdate = !0));
     }
     setMagFilter(e) {
-      this.parameters.magFilter !== e &&
-        ((this.parameters.magFilter = e), (this.parameters._shouldUpdate = !0));
+      this.parameters.magFilter !== e && ((this.parameters.magFilter = e), (this.parameters._shouldUpdate = !0));
     }
     setAnisotropy(e) {
       ((e = isNaN(e) ? this.parameters.anisotropy : e),
@@ -2753,8 +2584,7 @@
       this._forceUpdate = !0;
     }
     _videoFrameCallback() {
-      if (((this._willUpdate = !0), this.source))
-        this.source.requestVideoFrameCallback(() => this._videoFrameCallback());
+      if (((this._willUpdate = !0), this.source)) this.source.requestVideoFrameCallback(() => this._videoFrameCallback());
       else {
         const e = this.renderer.nextRender.add(() => {
           this.source &&
@@ -2806,9 +2636,7 @@
           xOffset: 0,
           yOffset: 0,
         };
-      const e = this._parent.scale
-          ? S.set(this._parent.scale.x, this._parent.scale.y)
-          : S.set(1, 1),
+      const e = this._parent.scale ? S.set(this._parent.scale.x, this._parent.scale.y) : S.set(1, 1),
         t = this._parent._boundingRect.document.width * e.x,
         s = this._parent._boundingRect.document.height * e.y,
         i = this._size.width,
@@ -2818,9 +2646,7 @@
       let o = 0,
         h = 0;
       return (
-        n > a
-          ? (h = Math.min(0, s - t * (1 / a)))
-          : n < a && (o = Math.min(0, t - s * a)),
+        n > a ? (h = Math.min(0, s - t * (1 / a))) : n < a && (o = Math.min(0, t - s * a)),
         {
           parentWidth: t,
           parentHeight: s,
@@ -2862,12 +2688,8 @@
     resize() {
       ("fbo" === this.sourceType
         ? ((this._size = {
-            width:
-              (this._parent._size && this._parent._size.width) ||
-              this._parent._boundingRect.document.width,
-            height:
-              (this._parent._size && this._parent._size.height) ||
-              this._parent._boundingRect.document.height,
+            width: (this._parent._size && this._parent._size.width) || this._parent._boundingRect.document.width,
+            height: (this._parent._size && this._parent._size.height) || this._parent._boundingRect.document.height,
           }),
           this._copiedFrom ||
             (this.gl.bindTexture(this.gl.TEXTURE_2D, this._sampler.texture),
@@ -2884,14 +2706,8 @@
             )))
         : this.source &&
           (this._size = {
-            width:
-              this.source.naturalWidth ||
-              this.source.width ||
-              this.source.videoWidth,
-            height:
-              this.source.naturalHeight ||
-              this.source.height ||
-              this.source.videoHeight,
+            width: this.source.naturalWidth || this.source.width || this.source.videoWidth,
+            height: this.source.naturalHeight || this.source.height || this.source.videoHeight,
           }),
         this._setSize());
     }
@@ -2939,8 +2755,7 @@
     _bindTexture() {
       this._canDraw &&
         (this.renderer.state.activeTexture !== this.index &&
-          (this.gl.activeTexture(this.gl.TEXTURE0 + this.index),
-          (this.renderer.state.activeTexture = this.index)),
+          (this.gl.activeTexture(this.gl.TEXTURE0 + this.index), (this.renderer.state.activeTexture = this.index)),
         this.gl.bindTexture(this.gl.TEXTURE_2D, this._sampler.texture),
         this._sampler.isTextureBound ||
           ((this._sampler.isTextureBound = !!this.gl.getParameter(
@@ -2957,8 +2772,7 @@
           this.source.readyState >= this.source.HAVE_CURRENT_DATA &&
           !this.source.paused &&
           (this._willUpdate = !0),
-        (this._forceUpdate || (this._willUpdate && this.shouldUpdate)) &&
-          ((this._state.generateMipmap = !1), this._upload()),
+        (this._forceUpdate || (this._willUpdate && this.shouldUpdate)) && ((this._state.generateMipmap = !1), this._upload()),
         "video" === this.sourceType && (this._willUpdate = !1),
         (this._forceUpdate = !1)),
         this.parameters._shouldUpdate &&
@@ -2993,12 +2807,8 @@
   }
   class A {
     constructor(e, t = "anonymous") {
-      if (
-        ((this.type = "TextureLoader"),
-        (e = (e && e.renderer) || e) && "Renderer" === e.type)
-      ) {
-        if (!e.gl)
-          return void a(this.type + ": Renderer WebGL context is undefined", e);
+      if (((this.type = "TextureLoader"), (e = (e && e.renderer) || e) && "Renderer" === e.type)) {
+        if (!e.gl) return void a(this.type + ": Renderer WebGL context is undefined", e);
       } else a(this.type + ": Renderer not passed as first argument", e);
       ((this.renderer = e),
         (this.gl = this.renderer.gl),
@@ -3038,9 +2848,7 @@
               /\.(jpeg|jpg|jfif|pjpeg|pjp|gif|bmp|png|webp|svg|avif|apng)$/,
             )
             ? (t = "image")
-            : null !==
-                e.match(/\.(webm|mp4|mpg|mpeg|avi|ogg|ogm|ogv|mov|av1)$/) &&
-              (t = "video")
+            : null !== e.match(/\.(webm|mp4|mpg|mpeg|avi|ogg|ogm|ogv|mov|av1)$/) && (t = "video")
           : "IMG" === e.tagName.toUpperCase()
             ? (t = "image")
             : "VIDEO" === e.tagName.toUpperCase()
@@ -3057,9 +2865,7 @@
           (t.crossOrigin = this.crossOrigin),
           "string" == typeof e
             ? (t.src = e)
-            : ((t.src = e.src),
-              e.hasAttribute("data-sampler") &&
-                t.setAttribute("data-sampler", e.getAttribute("data-sampler"))),
+            : ((t.src = e.src), e.hasAttribute("data-sampler") && t.setAttribute("data-sampler", e.getAttribute("data-sampler"))),
           t
         );
       }
@@ -3071,9 +2877,7 @@
           (t.crossOrigin = this.crossOrigin),
           "string" == typeof e
             ? (t.src = e)
-            : ((t.src = e.src),
-              e.hasAttribute("data-sampler") &&
-                t.setAttribute("data-sampler", e.getAttribute("data-sampler"))),
+            : ((t.src = e.src), e.hasAttribute("data-sampler") && t.setAttribute("data-sampler", e.getAttribute("data-sampler"))),
           t
         );
       }
@@ -3115,15 +2919,10 @@
             : a.sampler),
           (a.fromTexture = r));
         const t = new k(this.renderer, a);
-        return (
-          this._sourceLoaded(r.source, t, s),
-          void (this._parent && this._addToParent(t, r.source, "image"))
-        );
+        return (this._sourceLoaded(r.source, t, s), void (this._parent && this._addToParent(t, r.source, "image")));
       }
       const n = this._createImage(e);
-      a.sampler = n.hasAttribute("data-sampler")
-        ? n.getAttribute("data-sampler")
-        : a.sampler;
+      a.sampler = n.hasAttribute("data-sampler") ? n.getAttribute("data-sampler") : a.sampler;
       const o = new k(this.renderer, a),
         h = this._addElement(n, o, s, i);
       (n.complete
@@ -3193,9 +2992,7 @@
         ("image" === e.sourceType
           ? t.source.removeEventListener("load", t.load, !1)
           : "video" === e.sourceType &&
-            (t.videoFrameCallback &&
-              e._videoFrameCallbackID &&
-              t.source.cancelVideoFrameCallback(e._videoFrameCallbackID),
+            (t.videoFrameCallback && e._videoFrameCallbackID && t.source.cancelVideoFrameCallback(e._videoFrameCallbackID),
             t.source.removeEventListener("canplaythrough", t.load, !1),
             t.source.pause(),
             t.source.removeAttribute("src"),
@@ -3220,8 +3017,7 @@
         "Plane" !== this._parent.type &&
           "PingPongPlane" !== this._parent.type &&
           "ShaderPass" !== this._parent.type &&
-          (r(this.type + ": Wrong parent type assigned to this loader"),
-          (this._parent = null)),
+          (r(this.type + ": Wrong parent type assigned to this loader"), (this._parent = null)),
         (this.sourcesLoaded = s),
         (this.sourcesToLoad = i),
         (this.complete = a),
@@ -3311,10 +3107,7 @@
         (this.renderOrder = d),
         (this._depthTest = u),
         (this.cullFace = c),
-        "back" !== this.cullFace &&
-          "front" !== this.cullFace &&
-          "none" !== this.cullFace &&
-          (this.cullFace = "back"),
+        "back" !== this.cullFace && "front" !== this.cullFace && "none" !== this.cullFace && (this.cullFace = "back"),
         (this.textures = []),
         (this._texturesOptions = Object.assign(
           {
@@ -3329,14 +3122,8 @@
           p,
         )),
         (this.crossOrigin = m),
-        !r &&
-          s &&
-          document.getElementById(s) &&
-          (r = document.getElementById(s).innerHTML),
-        !n &&
-          i &&
-          document.getElementById(i) &&
-          (n = document.getElementById(i).innerHTML),
+        !r && s && document.getElementById(s) && (r = document.getElementById(s).innerHTML),
+        !n && i && document.getElementById(i) && (n = document.getElementById(i).innerHTML),
         this._initMesh(),
         (h = parseInt(h)),
         (l = parseInt(l)),
@@ -3500,8 +3287,7 @@
           const e = t.source.play();
           void 0 !== e &&
             e.catch((e) => {
-              this.renderer.production ||
-                r(this.type + ": Could not play the video : ", e);
+              this.renderer.production || r(this.type + ": Could not play the video : ", e);
             });
         }
       }
@@ -3626,10 +3412,8 @@
         height: this._boundingRect.document.height,
         top: this._boundingRect.document.top,
         left: this._boundingRect.document.left,
-        right:
-          this._boundingRect.document.left + this._boundingRect.document.width,
-        bottom:
-          this._boundingRect.document.top + this._boundingRect.document.height,
+        right: this._boundingRect.document.left + this._boundingRect.document.width,
+        bottom: this._boundingRect.document.top + this._boundingRect.document.height,
       };
     }
     resize() {
@@ -3657,10 +3441,8 @@
             this._boundingRect.document.height * t.y) /
             2,
         ),
-        i =
-          (this._boundingRect.document.width * t.x) / this.renderer.pixelRatio,
-        r =
-          (this._boundingRect.document.height * t.y) / this.renderer.pixelRatio,
+        i = (this._boundingRect.document.width * t.x) / this.renderer.pixelRatio,
+        r = (this._boundingRect.document.height * t.y) / this.renderer.pixelRatio,
         a = (this._boundingRect.document.top + s.y) / this.renderer.pixelRatio,
         n = (this._boundingRect.document.left + s.x) / this.renderer.pixelRatio;
       return O.set(((e.x - n) / i) * 2 - 1, 1 - ((e.y - a) / r) * 2);
@@ -3772,24 +3554,7 @@
         d = (t + n) / (t - n),
         u = -(this.far + this.near) / (this.far - this.near),
         c = (-2 * this.far * this.near) / (this.far - this.near);
-      this.projectionMatrix.setFromArray([
-        o,
-        0,
-        0,
-        0,
-        0,
-        h,
-        0,
-        0,
-        l,
-        d,
-        u,
-        -1,
-        0,
-        0,
-        c,
-        0,
-      ]);
+      this.projectionMatrix.setFromArray([o, 0, 0, 0, 0, h, 0, 0, l, d, u, -1, 0, 0, c, 0]);
     }
     forceUpdate() {
       this._shouldUpdate = !0;
@@ -3803,13 +3568,7 @@
       ((this.type = "Quat"), (this.elements = e), (this.axisOrder = t));
     }
     setFromArray(e) {
-      return (
-        (this.elements[0] = e[0]),
-        (this.elements[1] = e[1]),
-        (this.elements[2] = e[2]),
-        (this.elements[3] = e[3]),
-        this
-      );
+      return ((this.elements[0] = e[0]), (this.elements[1] = e[1]), (this.elements[2] = e[2]), (this.elements[3] = e[3]), this);
     }
     setAxisOrder(e) {
       switch ((e = e.toUpperCase())) {
@@ -4015,10 +3774,7 @@
             ));
     }
     removeRenderTarget() {
-      this.target &&
-        (this.renderer.scene.removePlane(this),
-        (this.target = null),
-        this.renderer.scene.addPlane(this));
+      this.target && (this.renderer.scene.removePlane(this), (this.target = null), this.renderer.scene.addPlane(this));
     }
     _initPositions() {
       (this._initMatrices(),
@@ -4365,12 +4121,7 @@
       return t;
     }
     _getWorldCoords() {
-      const e = [
-        H.set(-1, 1, 0),
-        G.set(1, 1, 0),
-        j.set(1, -1, 0),
-        X.set(-1, -1, 0),
-      ];
+      const e = [H.set(-1, 1, 0), G.set(1, 1, 0), j.set(1, -1, 0), X.set(-1, -1, 0)];
       let t = [],
         s = [];
       for (let o = 0; o < e.length; o++) {
@@ -4404,16 +4155,10 @@
         (this._boundingRect.worldToDocument = {
           width: t.width * this.renderer._boundingRect.width,
           height: t.height * this.renderer._boundingRect.height,
-          top:
-            t.top * this.renderer._boundingRect.height +
-            this.renderer._boundingRect.top,
-          left:
-            t.left * this.renderer._boundingRect.width +
-            this.renderer._boundingRect.left,
+          top: t.top * this.renderer._boundingRect.height + this.renderer._boundingRect.top,
+          left: t.left * this.renderer._boundingRect.width + this.renderer._boundingRect.left,
           right:
-            t.left * this.renderer._boundingRect.width +
-            this.renderer._boundingRect.left +
-            t.width * this.renderer._boundingRect.width,
+            t.left * this.renderer._boundingRect.width + this.renderer._boundingRect.left + t.width * this.renderer._boundingRect.width,
           bottom:
             t.top * this.renderer._boundingRect.height +
             this.renderer._boundingRect.top +
@@ -4422,37 +4167,26 @@
     }
     getWebGLBoundingRect() {
       return this._matrices.modelViewProjection
-        ? ((this._boundingRect.worldToDocument && !this.alwaysDraw) ||
-            this._computeWebGLBoundingRect(),
-          this._boundingRect.worldToDocument)
+        ? ((this._boundingRect.worldToDocument && !this.alwaysDraw) || this._computeWebGLBoundingRect(), this._boundingRect.worldToDocument)
         : this._boundingRect.document;
     }
     _getWebGLDrawRect() {
       return (
         this._computeWebGLBoundingRect(),
         {
-          top:
-            this._boundingRect.worldToDocument.top - this.drawCheckMargins.top,
-          right:
-            this._boundingRect.worldToDocument.right +
-            this.drawCheckMargins.right,
-          bottom:
-            this._boundingRect.worldToDocument.bottom +
-            this.drawCheckMargins.bottom,
-          left:
-            this._boundingRect.worldToDocument.left -
-            this.drawCheckMargins.left,
+          top: this._boundingRect.worldToDocument.top - this.drawCheckMargins.top,
+          right: this._boundingRect.worldToDocument.right + this.drawCheckMargins.right,
+          bottom: this._boundingRect.worldToDocument.bottom + this.drawCheckMargins.bottom,
+          left: this._boundingRect.worldToDocument.left - this.drawCheckMargins.left,
         }
       );
     }
     _shouldDrawCheck() {
       const e = this._getWebGLDrawRect();
       Math.round(e.right) <= this.renderer._boundingRect.left ||
-      Math.round(e.left) >=
-        this.renderer._boundingRect.left + this.renderer._boundingRect.width ||
+      Math.round(e.left) >= this.renderer._boundingRect.left + this.renderer._boundingRect.width ||
       Math.round(e.bottom) <= this.renderer._boundingRect.top ||
-      Math.round(e.top) >=
-        this.renderer._boundingRect.top + this.renderer._boundingRect.height
+      Math.round(e.top) >= this.renderer._boundingRect.top + this.renderer._boundingRect.height
         ? this._shouldDraw &&
           ((this._shouldDraw = !1),
           this.renderer.nextRender.add(
@@ -4466,9 +4200,7 @@
           (this._shouldDraw = !0));
     }
     isDrawn() {
-      return (
-        this._canDraw && this.visible && (this._shouldDraw || this.alwaysDraw)
-      );
+      return this._canDraw && this.visible && (this._shouldDraw || this.alwaysDraw);
     }
     enableDepthTest(e) {
       this._depthTest = e;
@@ -4491,33 +4223,18 @@
         (this._onRenderCallback && this._onRenderCallback(),
         this.target
           ? this.renderer.bindFrameBuffer(this.target)
-          : null === this.renderer.state.scenePassIndex &&
-            this.renderer.bindFrameBuffer(null),
+          : null === this.renderer.state.scenePassIndex && this.renderer.bindFrameBuffer(null),
         this._setPerspectiveMatrix(),
         this._setMVMatrix(),
         (this.alwaysDraw || this._shouldDraw) && this.visible && this._draw());
     }
     mouseToPlaneCoords(e) {
-      if (
-        ($.setAxisOrder(this.quaternion.axisOrder),
-        $.equals(this.quaternion) && Z.equals(this.transformOrigin))
-      )
+      if (($.setAxisOrder(this.quaternion.axisOrder), $.equals(this.quaternion) && Z.equals(this.transformOrigin)))
         return super.mouseToPlaneCoords(e);
       {
         const t = {
-            x:
-              (e.x /
-                (this.renderer._boundingRect.width /
-                  this.renderer.pixelRatio)) *
-                2 -
-              1,
-            y:
-              2 *
-                (1 -
-                  e.y /
-                    (this.renderer._boundingRect.height /
-                      this.renderer.pixelRatio)) -
-              1,
+            x: (e.x / (this.renderer._boundingRect.width / this.renderer.pixelRatio)) * 2 - 1,
+            y: 2 * (1 - e.y / (this.renderer._boundingRect.height / this.renderer.pixelRatio)) - 1,
           },
           s = this.camera.position.clone(),
           i = Q.set(t.x, t.y, -0.5);
@@ -4566,10 +4283,7 @@
         texturesOptions: d = {},
       } = {},
     ) {
-      if (
-        ((this.type = "RenderTarget"),
-        (e = (e && e.renderer) || e) && "Renderer" === e.type)
-      ) {
+      if (((this.type = "RenderTarget"), (e = (e && e.renderer) || e) && "Renderer" === e.type)) {
         if (!e.gl)
           return void (
             e.production ||
@@ -4588,12 +4302,8 @@
         (this._depth = s),
         (this._shouldClear = i),
         (this._maxSize = {
-          width: r
-            ? Math.min(this.renderer.state.maxTextureSize / 4, r)
-            : this.renderer.state.maxTextureSize / 4,
-          height: o
-            ? Math.min(this.renderer.state.maxTextureSize / 4, o)
-            : this.renderer.state.maxTextureSize / 4,
+          width: r ? Math.min(this.renderer.state.maxTextureSize / 4, r) : this.renderer.state.maxTextureSize / 4,
+          height: o ? Math.min(this.renderer.state.maxTextureSize / 4, o) : this.renderer.state.maxTextureSize / 4,
         }),
         (this._minSize = {
           width: h * this.renderer.pixelRatio,
@@ -4874,20 +4584,16 @@
       linear: (e) => e,
       easeInQuad: (e) => e * e,
       easeOutQuad: (e) => 1 - (1 - e) * (1 - e),
-      easeInOutQuad: (e) =>
-        e < 0.5 ? 2 * e * e : 1 - Math.pow(-2 * e + 2, 2) / 2,
+      easeInOutQuad: (e) => (e < 0.5 ? 2 * e * e : 1 - Math.pow(-2 * e + 2, 2) / 2),
       easeInCubic: (e) => e * e * e,
       easeOutCubic: (e) => 1 - Math.pow(1 - e, 3),
-      easeInOutCubic: (e) =>
-        e < 0.5 ? 4 * e * e * e : 1 - Math.pow(-2 * e + 2, 3) / 2,
+      easeInOutCubic: (e) => (e < 0.5 ? 4 * e * e * e : 1 - Math.pow(-2 * e + 2, 3) / 2),
       easeInQuart: (e) => e ** 4,
       easeOutQuart: (e) => 1 - Math.pow(1 - e, 4),
-      easeInOutQuart: (e) =>
-        e < 0.5 ? 8 * e ** 4 : 1 - Math.pow(-2 * e + 2, 4) / 2,
+      easeInOutQuart: (e) => (e < 0.5 ? 8 * e ** 4 : 1 - Math.pow(-2 * e + 2, 4) / 2),
       easeInQuint: (e) => e ** 5,
       easeOutQuint: (e) => 1 - Math.pow(1 - e, 5),
-      easeInOutQuint: (e) =>
-        e < 0.5 ? 16 * e ** 5 : 1 - Math.pow(-2 * e + 2, 5) / 2,
+      easeInOutQuint: (e) => (e < 0.5 ? 16 * e ** 5 : 1 - Math.pow(-2 * e + 2, 5) / 2),
       easeOutElastic: (e) => {
         const t = (2 * Math.PI) / 3;
         return 0 === e
@@ -4922,10 +4628,7 @@
       easeInOutSine: (e) => -(Math.cos(Math.PI * e) - 1) / 2,
       easeInCirc: (e) => 1 - Math.sqrt(1 - e ** 2),
       easeOutCirc: (e) => Math.sqrt(1 - Math.pow(e - 1, 2)),
-      easeInOutCirc: (e) =>
-        e < 0.5
-          ? (1 - Math.sqrt(1 - (2 * e) ** 2)) / 2
-          : (Math.sqrt(1 - Math.pow(-2 * e + 2, 2)) + 1) / 2,
+      easeInOutCirc: (e) => (e < 0.5 ? (1 - Math.sqrt(1 - (2 * e) ** 2)) / 2 : (Math.sqrt(1 - Math.pow(-2 * e + 2, 2)) + 1) / 2),
       easeInExpo: (e) => (0 === e ? 0 : Math.pow(2, 10 * e - 10)),
       easeOutExpo: (e) => (1 === e ? 1 : 1 - Math.pow(2, -10 * e)),
       easeInOutExpo: (e) =>
@@ -4946,9 +4649,7 @@
       },
       easeInOutBack: (e) => {
         const t = 2.5949095;
-        return e < 0.5
-          ? (Math.pow(2 * e, 2) * (7.189819 * e - t)) / 2
-          : (Math.pow(2 * e - 2, 2) * ((t + 1) * (2 * e - 2) + t) + 2) / 2;
+        return e < 0.5 ? (Math.pow(2 * e, 2) * (7.189819 * e - t)) / 2 : (Math.pow(2 * e - 2, 2) * ((t + 1) * (2 * e - 2) + t) + 2) / 2;
       },
     };
     if ("string" == typeof e && (e.includes("=>") || e.includes("function")))
@@ -4976,24 +4677,11 @@
   }
   function Me(e) {
     if (void 0 !== e.local.isDynamicCache) return e.local.isDynamicCache;
-    const t = [
-        "trackMouse",
-        "axisTilt",
-        "trackMouseMove",
-        "rotationTracking",
-        "lightTracking",
-      ].some((t) => e.hasOwnProperty(t) && 0 !== e[t]),
-      s =
-        e.states &&
-        [
-          ...e.states.appear,
-          ...e.states.scroll,
-          ...e.states.hover,
-          ...e.states.mousemove,
-        ].length > 0,
-      i =
-        ("effect" === e.layerType || e.isModel) &&
-        (e.animating || e.usesPingPong),
+    const t = ["trackMouse", "axisTilt", "trackMouseMove", "rotationTracking", "lightTracking"].some(
+        (t) => e.hasOwnProperty(t) && 0 !== e[t],
+      ),
+      s = e.states && [...e.states.appear, ...e.states.scroll, ...e.states.hover, ...e.states.mousemove].length > 0,
+      i = ("effect" === e.layerType || e.isModel) && (e.animating || e.usesPingPong),
       r = "video" === e.type,
       a = t || s || i || r;
     return ((e.local.isDynamicCache = a), a);
@@ -5038,40 +4726,20 @@
       (e.forEach((e) => {
         e.destroyed ||
           (e.isInView && e.initialized
-            ? ((e.rendering = !0),
-              s - (e.lastTime || 0) >= e.frameDuration &&
-                !e.paused &&
-                (e.renderFrame(), (e.lastTime = s)),
-              (i = !0))
+            ? ((e.rendering = !0), s - (e.lastTime || 0) >= e.frameDuration && !e.paused && (e.renderFrame(), (e.lastTime = s)), (i = !0))
             : (e.rendering = !1));
       }),
         (!ge || s - ge > 64) &&
-          ((ce = window.scrollY || window.pageYOffset),
-          (me = ce - pe),
-          (pe = ce),
-          (ge = s),
-          (me > 1e3 || (me < 0 && !pe && !ce)) && Ze()),
+          ((ce = window.scrollY || window.pageYOffset), (me = ce - pe), (pe = ce), (ge = s), (me > 1e3 || (me < 0 && !pe && !ce)) && Ze()),
         i
           ? (!(function () {
               let e = performance.now();
               st.forEach((t) => {
                 var s, i, r, a, n, o;
-                if (
-                  t.isInView &&
-                  (null == (i = null == (s = t.curtain) ? void 0 : s.planes)
-                    ? void 0
-                    : i.find((e) => e.uniforms.mousePos))
-                )
+                if (t.isInView && (null == (i = null == (s = t.curtain) ? void 0 : s.planes) ? void 0 : i.find((e) => e.uniforms.mousePos)))
                   if (
-                    (Re() &&
-                      (null ==
-                      (a = null == (r = t.interactivity) ? void 0 : r.mouse)
-                        ? void 0
-                        : a.disableMobile)) ||
-                    (null ==
-                    (o = null == (n = t.interactivity) ? void 0 : n.mouse)
-                      ? void 0
-                      : o.disabled)
+                    (Re() && (null == (a = null == (r = t.interactivity) ? void 0 : r.mouse) ? void 0 : a.disableMobile)) ||
+                    (null == (o = null == (n = t.interactivity) ? void 0 : n.mouse) ? void 0 : o.disabled)
                   );
                   else {
                     ((t.mouse.pos.y = t.mouse.movePos.y),
@@ -5095,8 +4763,7 @@
     e.length ? (oe = requestAnimationFrame(t)) : cancelAnimationFrame(oe);
   }
   function ke(e, t, s) {
-    return "Vec3" === (null == e ? void 0 : e.type) &&
-      "Vec3" === (null == t ? void 0 : t.type)
+    return "Vec3" === (null == e ? void 0 : e.type) && "Vec3" === (null == t ? void 0 : t.type)
       ? {
           type: "Vec3",
           x: e._x + (t._x - e._x) * s,
@@ -5113,20 +4780,11 @@
         : e + (t - e) * s;
   }
   function Ae(e, t) {
-    return (
-      "Vec2" === e.type
-        ? (e = new E(e._x, e._y))
-        : "Vec3" === e.type && (e = new M(e._x, e._y, e._z)),
-      e
-    );
+    return ("Vec2" === e.type ? (e = new E(e._x, e._y)) : "Vec3" === e.type && (e = new M(e._x, e._y, e._z)), e);
   }
   function De(e, t, s) {
-    (null == e ? void 0 : e.type) &&
-    ("Vec2" === (null == e ? void 0 : e.type) ||
-      "Vec3" === (null == e ? void 0 : e.type))
-      ? ((t.value.x = e.x),
-        (t.value.y = "pos" === s ? 1 - e.y : e.y),
-        "Vec3" === e.type && (t.value.z = e.z))
+    (null == e ? void 0 : e.type) && ("Vec2" === (null == e ? void 0 : e.type) || "Vec3" === (null == e ? void 0 : e.type))
+      ? ((t.value.x = e.x), (t.value.y = "pos" === s ? 1 - e.y : e.y), "Vec3" === e.type && (t.value.z = e.z))
       : (t.value = e);
   }
   function Ie(e, t, s) {
@@ -5190,8 +4848,7 @@
         0 !== this.progress &&
           (r >= 1
             ? ((this.complete = !0), (this.progress = 0), e)
-            : ((this.lastTick = s),
-              !this.complete && ke(this.value, e, this.progress)))
+            : ((this.lastTick = s), !this.complete && ke(this.value, e, this.progress)))
       );
     }
     resetState() {
@@ -5236,23 +4893,17 @@
         let a = (ce - i) / (r - i),
           n = Math.max(0, Math.min(1, a));
         return (
-          !(
-            void 0 !== this.lastTick &&
-            ((n = we(n, this.lastTick, 2 * this.momentum)),
-            Math.abs(this.lastTick - n) < xe)
-          ) && ((this.lastTick = n), ke(e, this.value, n))
+          !(void 0 !== this.lastTick && ((n = we(n, this.lastTick, 2 * this.momentum)), Math.abs(this.lastTick - n) < xe)) &&
+          ((this.lastTick = n), ke(e, this.value, n))
         );
       }
       if ("whileScrolling" === this.mode) {
         let t = me * this.delta;
         return (
           this.absScrollValue && (t = Math.abs(t)),
-          void 0 !== this.lastTick &&
-          ((t = we(t, this.lastTick, 2 * this.momentum)), Math.abs(t) < xe)
+          void 0 !== this.lastTick && ((t = we(t, this.lastTick, 2 * this.momentum)), Math.abs(t) < xe)
             ? !1
-            : ((this.lastScrollPos = ce),
-              (this.lastTick = t),
-              ke(e, this.value, t))
+            : ((this.lastScrollPos = ce), (this.lastTick = t), ke(e, this.value, t))
         );
       }
       return !1;
@@ -5285,36 +4936,25 @@
     updateEffect(e, t, s) {
       var i;
       if (void 0 === e) return !1;
-      const r =
-          null == (i = null == s ? void 0 : s.getParent) ? void 0 : i.call(s),
+      const r = null == (i = null == s ? void 0 : s.getParent) ? void 0 : i.call(s),
         a = performance.now();
-      if (
-        this.triggerOnElement &&
-        ((null == s ? void 0 : s.isElement) ||
-          (null == s ? void 0 : s.isModel) ||
-          r)
-      ) {
+      if (this.triggerOnElement && ((null == s ? void 0 : s.isElement) || (null == s ? void 0 : s.isModel) || r)) {
         let e = (r || s).isHovered();
         t = e && !this.lastEnterTime ? a : e ? this.lastEnterTime : null;
       }
       const n = null === t,
-        o =
-          (a - (n ? this.lastTick || a : t + this.transition.delay)) /
-          this.transition.duration,
+        o = (a - (n ? this.lastTick || a : t + this.transition.delay)) / this.transition.duration,
         h = Math.max(0, Math.min(1, o));
       n
         ? (this.rawProgress = Math.max(0, this.rawProgress - h))
-        : (this.lastEnterTime !== t &&
-            (this.lastProgress = this.rawProgress || 0),
+        : (this.lastEnterTime !== t && (this.lastProgress = this.rawProgress || 0),
           (this.rawProgress = Math.min(1, this.lastProgress + h)));
       const l = this.easeFunction(this.rawProgress),
         d = Math.abs(this.progress - l) > xe;
       return (
         (this.progress = l),
         !(!t && !d) &&
-          (!t &&
-            this.transition.forwardsOnly &&
-            ((this.progress = 0), (this.rawProgress = 0)),
+          (!t && this.transition.forwardsOnly && ((this.progress = 0), (this.rawProgress = 0)),
           (this.lastTick = a),
           (this.lastEnterTime = t),
           !!d && ke(e, this.value, this.progress))
@@ -5379,9 +5019,7 @@
         let o = t.x - r,
           h = t.y - n,
           l = Math.sqrt(e * e + i * i);
-        "x" === this.axisMode
-          ? ((h = 0), (l = e))
-          : "y" === this.axisMode && ((o = 0), (l = i));
+        "x" === this.axisMode ? ((h = 0), (l = e)) : "y" === this.axisMode && ((o = 0), (l = i));
         const d = Math.sqrt(o * o + h * h),
           u = 1 - Math.min(1, d / l),
           c = 1 + 4 * this.sensitivity;
@@ -5389,8 +5027,7 @@
       } else {
         (this.lastMoveTime ? i - this.lastMoveTime : 1 / 0) > this.delay
           ? (a = 0)
-          : r > 0 &&
-            (a = Math.min(1, this.progress + r * (this.sensitivity / 500)));
+          : r > 0 && (a = Math.min(1, this.progress + r * (this.sensitivity / 500)));
       }
       const n = we(a, this.progress, this.momentum);
       return Math.abs(n - this.progress) < xe && n < xe
@@ -5471,11 +5108,7 @@
     }
     getPlane() {
       var e, t, s;
-      return null ==
-        (s =
-          null == (t = null == (e = this.state()) ? void 0 : e.curtain)
-            ? void 0
-            : t.planes)
+      return null == (s = null == (t = null == (e = this.state()) ? void 0 : e.curtain) ? void 0 : t.planes)
         ? void 0
         : s.find(
             (e) =>
@@ -5485,11 +5118,7 @@
     getPlanes() {
       var e, t, s;
       return (
-        (null ==
-        (s =
-          null == (t = null == (e = this.state()) ? void 0 : e.curtain)
-            ? void 0
-            : t.planes)
+        (null == (s = null == (t = null == (e = this.state()) ? void 0 : e.curtain) ? void 0 : t.planes)
           ? void 0
           : s.filter(
               (e) =>
@@ -5498,19 +5127,14 @@
       );
     }
     getMaskedItem() {
-      return (
-        !!this.mask &&
-        this.state().layers.filter((e) => !e.parentLayer)[this.getIndex() - 1]
-      );
+      return !!this.mask && this.state().layers.filter((e) => !e.parentLayer)[this.getIndex() - 1];
     }
     getChildEffectItems() {
       if (this.effects && this.effects.length) {
         const e = this.state();
         if (!e || !e.layers) return [];
         const t = e.layers.filter((e) => this.effects.includes(e.parentLayer));
-        return this.effects
-          .map((e) => t.find((t) => t.parentLayer === e))
-          .filter((e) => void 0 !== e);
+        return this.effects.map((e) => t.find((t) => t.parentLayer === e)).filter((e) => void 0 !== e);
       }
       return [];
     }
@@ -5519,23 +5143,17 @@
         t = this.breakpoints.sort((e, t) => t.min - e.min),
         s = {};
       if (1 === t.length && "Desktop" === t[0].name) return;
-      if (t.length >= 1 && !t.find((e) => "Desktop" === e.name))
-        throw new Error("Malfored breakpoint data, missing Desktop");
+      if (t.length >= 1 && !t.find((e) => "Desktop" === e.name)) throw new Error("Malfored breakpoint data, missing Desktop");
       for (let r = t.length - 1; r >= 0; r--) {
         const i = t[r];
-        if (null === i.max || e <= i.max)
-          for (let e in i.props) s.hasOwnProperty(e) || (s[e] = i.props[e]);
+        if (null === i.max || e <= i.max) for (let e in i.props) s.hasOwnProperty(e) || (s[e] = i.props[e]);
       }
       const i = this.breakpoints.find((e) => "Desktop" === e.name);
       if (i) for (let r in i.props) s.hasOwnProperty(r) || (s[r] = i.props[r]);
       for (let r in s)
         if (this.hasOwnProperty(r)) {
           let e = s[r];
-          (null == e ? void 0 : e.type)
-            ? ((this[r].x = e._x),
-              (this[r].y = e._y),
-              void 0 !== e._z && (this[r].z = e._z))
-            : (this[r] = e);
+          (null == e ? void 0 : e.type) ? ((this[r].x = e._x), (this[r].y = e._y), void 0 !== e._z && (this[r].z = e._z)) : (this[r] = e);
         }
       this.local.bpProps = s;
     }
@@ -5590,8 +5208,7 @@
                 (e.initialized = !0),
                 t || (e.startTime = n));
             }
-            (null == a ? void 0 : a.pauseTime) &&
-              (t += Math.abs(null == a ? void 0 : a.pauseTime));
+            (null == a ? void 0 : a.pauseTime) && (t += Math.abs(null == a ? void 0 : a.pauseTime));
             const s = e.updateEffect(this[e.prop], t);
             (!1 !== s &&
               ((this.local.uniformUpdatesPool[e.prop] = s),
@@ -5605,25 +5222,14 @@
           })),
         this.states.hover.forEach((e) => {
           if (!o(e))
-            return void (
-              this.local.stateEffectProps &&
-              this.local.stateEffectProps[e.prop] &&
-              delete this.local.stateEffectProps[e.prop]
-            );
+            return void (this.local.stateEffectProps && this.local.stateEffectProps[e.prop] && delete this.local.stateEffectProps[e.prop]);
           const t = e.updateEffect(this[e.prop], a.mouse.enterTime, this);
-          !1 !== t &&
-            ((this.local.uniformUpdatesPool[e.prop] = t),
-            (this.local.hasUpdates = !0),
-            this.local.updatedProps.add(e.prop));
+          !1 !== t && ((this.local.uniformUpdatesPool[e.prop] = t), (this.local.hasUpdates = !0), this.local.updatedProps.add(e.prop));
         }),
         this.states.scroll.forEach((e) => {
           var t;
           if (!o(e))
-            return void (
-              this.local.stateEffectProps &&
-              this.local.stateEffectProps[e.prop] &&
-              delete this.local.stateEffectProps[e.prop]
-            );
+            return void (this.local.stateEffectProps && this.local.stateEffectProps[e.prop] && delete this.local.stateEffectProps[e.prop]);
           const s = a.bbox;
           if (!s) return;
           const i = e.updateEffect(this[e.prop], {
@@ -5631,23 +5237,13 @@
             height: s.height / 2,
             isFixed: a.isFixed,
           });
-          !1 !== i &&
-            ((this.local.uniformUpdatesPool[e.prop] = i),
-            (this.local.hasUpdates = !0),
-            this.local.updatedProps.add(e.prop));
+          !1 !== i && ((this.local.uniformUpdatesPool[e.prop] = i), (this.local.hasUpdates = !0), this.local.updatedProps.add(e.prop));
         }),
         this.states.mousemove.forEach((e) => {
           if (!o(e))
-            return void (
-              this.local.stateEffectProps &&
-              this.local.stateEffectProps[e.prop] &&
-              delete this.local.stateEffectProps[e.prop]
-            );
+            return void (this.local.stateEffectProps && this.local.stateEffectProps[e.prop] && delete this.local.stateEffectProps[e.prop]);
           const t = e.updateEffect(this[e.prop], a.mouse.movePos, a);
-          !1 !== t &&
-            ((this.local.uniformUpdatesPool[e.prop] = t),
-            (this.local.hasUpdates = !0),
-            this.local.updatedProps.add(e.prop));
+          !1 !== t && ((this.local.uniformUpdatesPool[e.prop] = t), (this.local.hasUpdates = !0), this.local.updatedProps.add(e.prop));
         }),
         this.local.hasUpdates &&
           (this.getPlanes().forEach((e) => {
@@ -5656,8 +5252,7 @@
               const i = this.local.uniformUpdatesPool[s];
               void 0 !== i &&
                 (null == (t = e.uniforms[s]) ? void 0 : t.lastValue) !== i &&
-                (e.uniforms[s] && De(i, e.uniforms[s], s),
-                this.updateStateEffectProperty(s, i));
+                (e.uniforms[s] && De(i, e.uniforms[s], s), this.updateStateEffectProperty(s, i));
             }
           }),
           this.isText &&
@@ -5722,8 +5317,7 @@
           this[e].type &&
           ("Vec2" === this[e].type
             ? (this[e] = new E(this[e]._x, this[e]._y))
-            : "Vec3" === this[e].type &&
-              (this[e] = new M(this[e]._x, this[e]._y, this[e]._z)));
+            : "Vec3" === this[e].type && (this[e] = new M(this[e]._x, this[e]._y, this[e]._z)));
       return this;
     }
     dispose() {
@@ -5752,14 +5346,8 @@
       const r = this.state(),
         a = r.canvasWidth,
         n = r.canvasHeight;
-      let o =
-          (null == (t = null == (e = this.local) ? void 0 : e.stateEffectProps)
-            ? void 0
-            : t.left) ?? this.left,
-        h =
-          (null == (i = null == (s = this.local) ? void 0 : s.stateEffectProps)
-            ? void 0
-            : i.top) ?? this.top,
+      let o = (null == (t = null == (e = this.local) ? void 0 : e.stateEffectProps) ? void 0 : t.left) ?? this.left,
+        h = (null == (i = null == (s = this.local) ? void 0 : s.stateEffectProps) ? void 0 : i.top) ?? this.top,
         l = "fixed" === this.leftMode ? o : o * a,
         d = "fixed" === this.topMode ? h : h * n;
       return ((l = +l.toFixed(1)), (d = +d.toFixed(1)), { left: l, top: d });
@@ -5770,29 +5358,16 @@
       let a, n;
       const o = r.canvasWidth,
         h = r.canvasHeight;
-      let l =
-          (null == (t = null == (e = this.local) ? void 0 : e.stateEffectProps)
-            ? void 0
-            : t.width) ?? this.width,
-        d =
-          (null == (i = null == (s = this.local) ? void 0 : s.stateEffectProps)
-            ? void 0
-            : i.height) ?? this.height,
+      let l = (null == (t = null == (e = this.local) ? void 0 : e.stateEffectProps) ? void 0 : t.width) ?? this.width,
+        d = (null == (i = null == (s = this.local) ? void 0 : s.stateEffectProps) ? void 0 : i.height) ?? this.height,
         u = ve.includes(this.widthMode) ? this.widthMode : ve[this.widthMode],
-        c = ve.includes(this.heightMode)
-          ? this.heightMode
-          : ve[this.heightMode];
+        c = ve.includes(this.heightMode) ? this.heightMode : ve[this.heightMode];
       return (
         "auto" !== u &&
-          ((a = "fixed" === u ? l : l * o),
-          "auto" === c &&
-            ((n = a / (this.aspectRatio || 1)),
-            (this.height = "fixed" === u ? n : n / h))),
+          ((a = "fixed" === u ? l : l * o), "auto" === c && ((n = a / (this.aspectRatio || 1)), (this.height = "fixed" === u ? n : n / h))),
         "auto" !== c &&
           ((n = "fixed" === this.heightMode ? d : d * h),
-          "auto" === u &&
-            ((a = n * (this.aspectRatio || 1)),
-            (this.width = "fixed" === u ? a : a / o))),
+          "auto" === u && ((a = n * (this.aspectRatio || 1)), (this.width = "fixed" === u ? a : a / o))),
         "text" === this.layerType && (n = this.height),
         { width: a, height: n }
       );
@@ -5805,9 +5380,7 @@
         (e -= r.x * s),
         (t -= r.y * i));
       let a = this.state().mouse.movePos;
-      return (
-        2 * a.x >= e && 2 * a.x <= e + s && 2 * a.y >= t && 2 * a.y <= t + i
-      );
+      return 2 * a.x >= e && 2 * a.x <= e + s && 2 * a.y >= t && 2 * a.y <= t + i;
     }
   };
   class We extends Ne {
@@ -5843,8 +5416,7 @@
           this[e].type &&
           ("Vec2" === this[e].type
             ? (this[e] = new E(this[e]._x, this[e]._y))
-            : "Vec3" === this[e].type &&
-              (this[e] = new M(this[e]._x, this[e]._y, this[e]._z)));
+            : "Vec3" === this[e].type && (this[e] = new M(this[e]._x, this[e]._y, this[e]._z)));
       return this;
     }
     getParent() {
@@ -5872,16 +5444,13 @@
         s(this, "isModel", !0),
         s(this, "contextType", "webgl"),
         e.moduleRef &&
-          (null == (r = null == i ? void 0 : i.modules)
-            ? void 0
-            : r[e.moduleRef]) &&
+          (null == (r = null == i ? void 0 : i.modules) ? void 0 : r[e.moduleRef]) &&
           (this.moduleUrl = i.modules[e.moduleRef].url),
         (this.trackMouse = void 0 !== e.trackMouse ? e.trackMouse : 0),
         (this.mouseMomentum = void 0 !== e.mouseMomentum ? e.mouseMomentum : 0),
         (this.trackAxes = e.trackAxes || "xy"),
         (this.lightTracking = void 0 !== e.lightTracking ? e.lightTracking : 0),
-        (this.rotationTracking =
-          void 0 !== e.rotationTracking ? e.rotationTracking : 0),
+        (this.rotationTracking = void 0 !== e.rotationTracking ? e.rotationTracking : 0),
         (this.speed = void 0 !== e.speed ? e.speed : 0.5),
         (this.pos = new M(e.pos._x, e.pos._y, e.pos._z)),
         (this.modelUrl = e.modelUrl),
@@ -5915,9 +5484,7 @@
         (this.opacity = e.opacity),
         (this.colorMapUrl = e.colorMapUrl),
         (this.colorMapScale = e.colorMapScale ?? 1),
-        (this.colorMapPosition = e.colorMapPosition
-          ? new E(e.colorMapPosition.x ?? 0.5, e.colorMapPosition.y ?? 0.5)
-          : new E(0.5, 0.5)),
+        (this.colorMapPosition = e.colorMapPosition ? new E(e.colorMapPosition.x ?? 0.5, e.colorMapPosition.y ?? 0.5) : new E(0.5, 0.5)),
         (this.colorMapIntensity = e.colorMapIntensity ?? 1),
         (this.quality = e.quality || "fast"),
         (this.environmentMapIntensity = e.environmentMapIntensity ?? 0),
@@ -5963,9 +5530,7 @@
     async loadRenderer() {
       const e = this.state();
       if (!e.curtain || !e.curtain.renderer || !e.curtain.renderer.gl) return;
-      let t =
-        this.moduleUrl ||
-        "https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.0.5/extensions/model-renderer.js";
+      let t = this.moduleUrl || "https://cdn.jsdelivr.net/gh/hiunicornstudio/unicornstudio.js@v2.0.5/extensions/model-renderer.js";
       try {
         const s = await import(t);
         ((this.local.initialize = s.initialize),
@@ -5997,22 +5562,12 @@
       var e, t;
       if (!this.local.rendererLoaded || !this.local.modelLoaded) return;
       const s = this.state();
-      if (
-        !s ||
-        s.destroyed ||
-        !s.curtain ||
-        !s.curtain.renderer ||
-        !s.curtain.renderer.gl
-      )
-        return;
+      if (!s || s.destroyed || !s.curtain || !s.curtain.renderer || !s.curtain.renderer.gl) return;
       const i = s.curtain.renderer.gl;
       if (0 === i.drawingBufferWidth || 0 === i.drawingBufferHeight) return;
       if (this.animating) {
         void 0 === this.local.time && (this.local.time = 0);
-        let t =
-          (null == (e = this.local.stateEffectProps) ? void 0 : e.speed) ??
-          this.speed ??
-          0.5;
+        let t = (null == (e = this.local.stateEffectProps) ? void 0 : e.speed) ?? this.speed ?? 0.5;
         const i = s.fps ? 60 / s.fps : 1;
         this.local.time += t * i * 60;
       }
@@ -6046,8 +5601,7 @@
             });
         }
       }
-      const r =
-        void 0 !== this.local.time ? this.local.time : performance.now();
+      const r = void 0 !== this.local.time ? this.local.time : performance.now();
       if (this.local.renderTarget)
         if (this.local.renderTarget._frameBuffer) {
           const e = this.local.renderTarget._frameBuffer,
@@ -6083,16 +5637,11 @@
           (this.local.renderTarget.remove(), (this.local.renderTarget = null)));
     }
     isAnimating() {
-      return (
-        this.visible &&
-        (this.animating || this.trackMouse > 0 || this.rotationTracking > 0)
-      );
+      return this.visible && (this.animating || this.trackMouse > 0 || this.rotationTracking > 0);
     }
     getProp(e) {
       var t;
-      return (
-        (null == (t = this.local.stateEffectProps) ? void 0 : t[e]) ?? this[e]
-      );
+      return (null == (t = this.local.stateEffectProps) ? void 0 : t[e]) ?? this[e];
     }
     isHovered() {
       if (!this.local.boundingBox) return !1;
@@ -6186,8 +5735,7 @@
     loadFont() {
       var e;
       const t = this.fontStyle.includes("italic") ? "italic" : "normal",
-        s = (e) =>
-          "normal" === e || "400" === e || 400 === e ? "normal" : e.toString(),
+        s = (e) => ("normal" === e || "400" === e || 400 === e ? "normal" : e.toString()),
         i = isNaN(parseInt(this.fontWeight)) ? "normal" : s(this.fontWeight);
       if (
         Array.from(document.fonts).some(
@@ -6222,18 +5770,9 @@
     }
     getAbsoluteFontValues(e) {
       var t, s, i, r, a, n;
-      const o =
-          (null == (s = null == (t = this.local) ? void 0 : t.stateEffectProps)
-            ? void 0
-            : s.fontSize) || this.fontSize,
-        h =
-          (null == (r = null == (i = this.local) ? void 0 : i.stateEffectProps)
-            ? void 0
-            : r.lineHeight) || this.lineHeight,
-        l =
-          (null == (n = null == (a = this.local) ? void 0 : a.stateEffectProps)
-            ? void 0
-            : n.letterSpacing) || this.letterSpacing,
+      const o = (null == (s = null == (t = this.local) ? void 0 : t.stateEffectProps) ? void 0 : s.fontSize) || this.fontSize,
+        h = (null == (r = null == (i = this.local) ? void 0 : i.stateEffectProps) ? void 0 : r.lineHeight) || this.lineHeight,
+        l = (null == (n = null == (a = this.local) ? void 0 : a.stateEffectProps) ? void 0 : n.letterSpacing) || this.letterSpacing,
         d = "fixed" === this.fontSizeMode ? o : o * e.canvasWidth;
       return {
         fontSize: d,
@@ -6247,20 +5786,13 @@
       let i = this.local.ctx,
         { left: r, top: a, width: n } = this.box();
       const o = Be(this.anchorPoint),
-        h =
-          (null == (s = null == (t = this.local) ? void 0 : t.stateEffectProps)
-            ? void 0
-            : s.rotation) || this.rotation;
+        h = (null == (s = null == (t = this.local) ? void 0 : t.stateEffectProps) ? void 0 : s.rotation) || this.rotation;
       let l = this.state(),
         d = this.height,
         u = r - o.x * n,
         c = a - o.y * d,
         p = 0,
-        {
-          fontSize: m,
-          lineHeight: g,
-          letterSpacing: f,
-        } = this.getAbsoluteFontValues(l),
+        { fontSize: m, lineHeight: g, letterSpacing: f } = this.getAbsoluteFontValues(l),
         _ = this.fontStyle.includes("italic") ? "italic" : "normal",
         x = /^\d+$/.test(this.fontStyle) ? this.fontStyle : "400";
       (i.clearRect(0, 0, l.canvasWidth, l.canvasHeight),
@@ -6325,10 +5857,7 @@
         for (let s = 0; s < t.length; s++) {
           const r = t[s],
             a = e + r;
-          if (
-            (this.isSafari && f ? R(i, a, f) : i.measureText(a).width) > n ||
-            "\n" === r
-          ) {
+          if ((this.isSafari && f ? R(i, a, f) : i.measureText(a).width) > n || "\n" === r) {
             if ("" !== e)
               ((T[E] = e.trim()),
                 s !== t.length - 1
@@ -6394,14 +5923,8 @@
   }
   function $e(e, t, s = 50) {
     const i = t || e.getBoundingClientRect(),
-      r =
-        (i.top >= -s && i.top <= de + s) ||
-        (i.bottom >= -s && i.bottom <= de + s) ||
-        (i.top <= 0 && i.bottom >= de),
-      a =
-        (i.left >= -s && i.left <= ue + s) ||
-        (i.right >= -s && i.right <= ue + s) ||
-        (i.left <= 0 && i.right >= ue);
+      r = (i.top >= -s && i.top <= de + s) || (i.bottom >= -s && i.bottom <= de + s) || (i.top <= 0 && i.bottom >= de),
+      a = (i.left >= -s && i.left <= ue + s) || (i.right >= -s && i.right <= ue + s) || (i.left <= 0 && i.right >= ue);
     return r && a;
   }
   function Ze() {
@@ -6409,8 +5932,7 @@
       let t = e.element.getBoundingClientRect();
       if (((e.scrollY = ce), e.lastBbox)) {
         0 === Math.abs(t.top - e.lastBbox.top) && me > 0
-          ? ((e.fixedCounter = (e.fixedCounter || 0) + 1),
-            e.fixedCounter > 3 && (e.isFixed = !0))
+          ? ((e.fixedCounter = (e.fixedCounter || 0) + 1), e.fixedCounter > 3 && (e.isFixed = !0))
           : (e.fixedCounter = 0);
       }
       ((e.lastBbox = e.bbox), (e.bbox = t));
@@ -6427,10 +5949,7 @@
             ? t.resize()
             : s ||
               requestAnimationFrame(() => {
-                t.element.offsetWidth > 0 &&
-                  t.element.offsetHeight > 0 &&
-                  t.curtain &&
-                  t.resize();
+                t.element.offsetWidth > 0 && t.element.offsetHeight > 0 && t.curtain && t.resize();
               }),
             !t.lazyLoad ||
               t.initialized ||
@@ -6526,9 +6045,7 @@
         (this.lastTime = 0),
         (this.rendering = !1),
         (this.bbox = {}),
-        (this.isFixed =
-          e.fixed ||
-          "fixed" === window.getComputedStyle(this.element).position),
+        (this.isFixed = e.fixed || "fixed" === window.getComputedStyle(this.element).position),
         (this.interactivity = { mouse: { disableMobile: !1, disabled: !1 } }),
         (this.mouse = {
           downPos: { x: 0.5, y: 0.5 },
@@ -6546,10 +6063,7 @@
         (this.scale = e.scale || 1),
         (this.split = !1),
         (this.versionId = ""),
-        e.width &&
-          e.height &&
-          ((this.element.style.width = e.width + "px"),
-          (this.element.style.height = e.height + "px")),
+        e.width && e.height && ((this.element.style.width = e.width + "px"), (this.element.style.height = e.height + "px")),
         (this.bbox = this.element.getBoundingClientRect()),
         (this.lastBbox = this.bbox),
         (this.currentBreakpoint = this.breakpoints.find(
@@ -6579,8 +6093,7 @@
             );
           else if ("image" === e.layerType) {
             if (!e.src || e.local.sourceTexture) return;
-            this.local.preloadedSourceImages =
-              this.local.preloadedSourceImages || {};
+            this.local.preloadedSourceImages = this.local.preloadedSourceImages || {};
             const t = e.src,
               s = { sampler: "uSourceImage", premultipliedAlpha: !0 },
               i = (e, t) => {
@@ -6590,13 +6103,9 @@
                     ? void 0
                     : s.call(e).find((e) => {
                         var t;
-                        return !(null == (t = e.userData)
-                          ? void 0
-                          : t.isComposite);
+                        return !(null == (t = e.userData) ? void 0 : t.isComposite);
                       })) || (null == (i = e.getPlane) ? void 0 : i.call(e));
-                r &&
-                  !r.textures.some((e) => "uSourceImage" === e._samplerName) &&
-                  r.addTexture(t);
+                r && !r.textures.some((e) => "uSourceImage" === e._samplerName) && r.addTexture(t);
               },
               r =
                 this.local.preloadedSourceImages[t] ||
@@ -6623,10 +6132,7 @@
               r.promise.then((a) => {
                 if (!e.local.sourceTexture)
                   return r.firstItem === e && a
-                    ? ((e.local.sourceTextureLoading = !1),
-                      (e.local.sourceTexture = a),
-                      (e.local.imageReady = !0),
-                      void i(e, a))
+                    ? ((e.local.sourceTextureLoading = !1), (e.local.sourceTexture = a), (e.local.imageReady = !0), void i(e, a))
                     : void this.textureLoader.loadImage(
                         t,
                         s,
@@ -6644,27 +6150,14 @@
           }
         } else if (
           (null == (t = null == e ? void 0 : e.texture) ? void 0 : t.src) ||
-          (null ==
-          (i = null == (s = null == e ? void 0 : e.data) ? void 0 : s.texture)
-            ? void 0
-            : i.src)
+          (null == (i = null == (s = null == e ? void 0 : e.data) ? void 0 : s.texture) ? void 0 : i.src)
         ) {
           const t =
               (null == (r = null == e ? void 0 : e.texture) ? void 0 : r.src) ||
-              (null ==
-              (n =
-                null == (a = null == e ? void 0 : e.data) ? void 0 : a.texture)
-                ? void 0
-                : n.src),
+              (null == (n = null == (a = null == e ? void 0 : e.data) ? void 0 : a.texture) ? void 0 : n.src),
             s =
-              (null == (o = null == e ? void 0 : e.texture)
-                ? void 0
-                : o.sampler) ||
-              (null ==
-              (l =
-                null == (h = null == e ? void 0 : e.data) ? void 0 : h.texture)
-                ? void 0
-                : l.sampler) ||
+              (null == (o = null == e ? void 0 : e.texture) ? void 0 : o.sampler) ||
+              (null == (l = null == (h = null == e ? void 0 : e.data) ? void 0 : h.texture) ? void 0 : l.sampler) ||
               "uTexture";
           this.local.preloadedTextures[t]
             ? this.local.preloadedTextures[t].count++
@@ -6690,8 +6183,7 @@
       (-1 !== s && st.splice(s, 1),
         this.layers.filter((e) => e.dispose).forEach((e) => e.dispose()),
         (this.layers = []),
-        (null == (e = this.curtain) ? void 0 : e.gl) &&
-          (this.curtain.dispose(), (this.curtain = null)),
+        (null == (e = this.curtain) ? void 0 : e.gl) && (this.curtain.dispose(), (this.curtain = null)),
         this.element &&
           (this.element.removeAttribute("data-us-initialized"),
           this.element.removeAttribute("data-scene-id"),
@@ -6734,8 +6226,7 @@
           (null == (t = e.states) || t.scroll.forEach((e) => e.resetState()),
             null == (s = e.states) ||
               s.appear.forEach((t) => {
-                e[t.prop] =
-                  t.endValue ?? e.local.stateEffectProps[t.prop] ?? e[t.prop];
+                e[t.prop] = t.endValue ?? e.local.stateEffectProps[t.prop] ?? e[t.prop];
               }),
             e.breakpoints.length &&
               (e.setBreakpointValues(),
@@ -6781,8 +6272,7 @@
           this.curtain.onContextRestored(() => {
             this.initialized &&
               (this.layers.forEach((e) => {
-                e.preloadedCanvasTexture &&
-                  (e.preloadedCanvasTexture.shouldUpdate = !0);
+                e.preloadedCanvasTexture && (e.preloadedCanvasTexture.shouldUpdate = !0);
               }),
               requestAnimationFrame(() => {
                 this.curtain &&
@@ -6819,8 +6309,7 @@
       let s = { mouse: { disableMobile: !1, disabled: !1 } };
       (t &&
         t.mouse &&
-        ("disableMobile" in t.mouse &&
-          (s.mouse.disableMobile = t.mouse.disableMobile),
+        ("disableMobile" in t.mouse && (s.mouse.disableMobile = t.mouse.disableMobile),
         "disabled" in t.mouse && (s.mouse.disabled = t.mouse.disabled)),
         e &&
           e.interactivity &&
@@ -6838,11 +6327,7 @@
       if (s) {
         let i = s.parentLayer ? s.getParent() : null,
           r = i && Me(i),
-          a =
-            i &&
-            i.effects &&
-            i.effects.length &&
-            i.getChildEffectItems().filter((e) => Me(e)).length;
+          a = i && i.effects && i.effects.length && i.getChildEffectItems().filter((e) => Me(e)).length;
         for (; s && !Me(s) && !r && !a; )
           (t++,
             (s = e[t]),
@@ -6877,23 +6362,15 @@
     }
     getRenderTargets() {
       var e;
-      return null == (e = this.curtain)
-        ? void 0
-        : e.renderTargets.filter((e) => e.userData.id);
+      return null == (e = this.curtain) ? void 0 : e.renderTargets.filter((e) => e.userData.id);
     }
     getPlanes() {
       var e;
-      return null == (e = this.curtain)
-        ? void 0
-        : e.planes.filter((e) => "PingPongPlane" !== e.type);
+      return null == (e = this.curtain) ? void 0 : e.planes.filter((e) => "PingPongPlane" !== e.type);
     }
     getPlaneParams(e, t) {
       var s, i, r, a, n;
-      let o =
-        (null == (s = e.data) ? void 0 : s.heightSegments) ||
-        (null == (i = e.data) ? void 0 : i.widthSegments)
-          ? 500
-          : 1;
+      let o = (null == (s = e.data) ? void 0 : s.heightSegments) || (null == (i = e.data) ? void 0 : i.widthSegments) ? 500 : 1;
       const h = {
         resolution: {
           name: "uResolution",
@@ -6918,15 +6395,8 @@
         d = e.compiledVertexShaders[t] || e.compiledVertexShaders[0];
       if (
         (e.states &&
-          [
-            ...e.states.appear,
-            ...e.states.scroll,
-            ...e.states.hover,
-            ...e.states.mousemove,
-          ].forEach((t) => {
-            h[t.prop] ||
-              (t.uniformData &&
-                ((h[t.prop] = t.uniformData), (h[t.prop].value = e[t.prop])));
+          [...e.states.appear, ...e.states.scroll, ...e.states.hover, ...e.states.mousemove].forEach((t) => {
+            h[t.prop] || (t.uniformData && ((h[t.prop] = t.uniformData), (h[t.prop].value = e[t.prop])));
           }),
         null == (r = e.data) ? void 0 : r.uniforms)
       )
@@ -6964,19 +6434,13 @@
           : this.getPlaneParams(e, t ? t.index : null)),
         (i.watchScroll = !1));
       try {
-        if (!this.curtain.container)
-          throw new Error("Can't find scene container");
+        if (!this.curtain.container) throw new Error("Can't find scene container");
         let a =
-            (null == t ? void 0 : t.downSample) ||
-            (0 === (null == t ? void 0 : t.index) &&
-              (null == (s = e.data) ? void 0 : s.downSample)),
+            (null == t ? void 0 : t.downSample) || (0 === (null == t ? void 0 : t.index) && (null == (s = e.data) ? void 0 : s.downSample)),
           n = this.renderingScale;
         if (
-          (a &&
-            ((n = "number" == typeof a ? a : 0.5), (n *= this.renderingScale)),
-          e.userDownsample &&
-            "number" == typeof e.userDownsample &&
-            (n *= e.userDownsample),
+          (a && ((n = "number" == typeof a ? a : 0.5), (n *= this.renderingScale)),
+          e.userDownsample && "number" == typeof e.userDownsample && (n *= e.userDownsample),
           (r = new se(this.curtain, this.curtain.container, i)),
           !r || !r.userData || !r.textures)
         )
@@ -7110,24 +6574,15 @@
       if (
         (null == e ? void 0 : e.uniforms) &&
         (e.uniforms.resolution &&
-          ((e.uniforms.resolution.value.x = this.curtain.canvas.width),
-          (e.uniforms.resolution.value.y = this.curtain.canvas.height)),
+          ((e.uniforms.resolution.value.x = this.curtain.canvas.width), (e.uniforms.resolution.value.y = this.curtain.canvas.height)),
         e.uniforms.opacity &&
           (e.uniforms.opacity.value =
-            (null == (i = null == (s = t.local) ? void 0 : s.stateEffectProps)
-              ? void 0
-              : i.opacity) ??
-            t.opacity ??
-            1),
+            (null == (i = null == (s = t.local) ? void 0 : s.stateEffectProps) ? void 0 : i.opacity) ?? t.opacity ?? 1),
         e.uniforms.mousePos)
       ) {
-        t.local.currentFrameMouseValues ||
-          (t.local.currentFrameMouseValues = this.calculateItemMouseValues(t));
+        t.local.currentFrameMouseValues || (t.local.currentFrameMouseValues = this.calculateItemMouseValues(t));
         const s = t.local.currentFrameMouseValues;
-        s &&
-          this.mouse.movedInView &&
-          ((e.uniforms.mousePos.value.x = s.x),
-          (e.uniforms.mousePos.value.y = s.y));
+        s && this.mouse.movedInView && ((e.uniforms.mousePos.value.x = s.x), (e.uniforms.mousePos.value.y = s.y));
       }
     }
     handleMediaTextures(e, t, s) {
@@ -7137,11 +6592,7 @@
           .filter((e) => (null == e ? void 0 : e.src))
           .forEach((i) => {
             var r;
-            if (
-              null == (r = t.compiledFragmentShaders[s.passIndex ?? 0])
-                ? void 0
-                : r.includes(i.sampler)
-            ) {
+            if (null == (r = t.compiledFragmentShaders[s.passIndex ?? 0]) ? void 0 : r.includes(i.sampler)) {
               const t = this.local.preloadedTextures[i.src];
               (null == t ? void 0 : t.texture)
                 ? (t.count > 1
@@ -7187,8 +6638,7 @@
     }
     handleEffectPlane(e, t, s) {
       var i;
-      const r =
-        "passIndex" in s ? this.getPassPlane(e, s.passIndex) : e.getPlane();
+      const r = "passIndex" in s ? this.getPassPlane(e, s.passIndex) : e.getPlane();
       if (!r) return !1;
       let a = this.getRenderTargets()[t - 1],
         n =
@@ -7200,9 +6650,7 @@
               ),
         o = e.compiledFragmentShaders[s.passIndex ?? 0];
       if (
-        (n &&
-          (null == o ? void 0 : o.includes("uPingPongTexture")) &&
-          Ie(r, "uPingPongTexture", n.getTexture()),
+        (n && (null == o ? void 0 : o.includes("uPingPongTexture")) && Ie(r, "uPingPongTexture", n.getTexture()),
         a ? Ie(r, "uTexture", a.getTexture()) : Ie(r, "uTexture"),
         null == o ? void 0 : o.includes("uBgTexture"))
       ) {
@@ -7237,8 +6685,7 @@
         n = this.curtain.canvas.height * r;
       return (
         e.local.previousFrameTargets || (e.local.previousFrameTargets = {}),
-        e.local.previousFrameInputTargets ||
-          (e.local.previousFrameInputTargets = {}),
+        e.local.previousFrameInputTargets || (e.local.previousFrameInputTargets = {}),
         e.local.previousFrameTargets[i] ||
           ((e.local.previousFrameTargets[i] = new ie(this.curtain, {
             depth: !1,
@@ -7250,8 +6697,7 @@
           (e.local.previousFrameTargets[i].userData.isPreviousFrame = !0)),
         "target" === t.needsPreviousFrame &&
           void 0 !== s &&
-          (e.local.previousFrameInputTargets[i] =
-            this.getRenderTargets()[s - (1 + t.passIndex)]),
+          (e.local.previousFrameInputTargets[i] = this.getRenderTargets()[s - (1 + t.passIndex)]),
         e.local.previousFrameTargets[i].getTexture()
       );
     }
@@ -7268,32 +6714,19 @@
         return (
           "image" === e.layerType &&
             (s.textures.some((e) => "uSourceImage" === e._samplerName) ||
-              (e.local.sourceTexture &&
-                (s.addTexture(e.local.sourceTexture),
-                (e.local.imageReady = !0)))),
-          void (
-            0 === i.length &&
-            n &&
-            (Ie(s, "uBgTexture", n.getTexture()),
-            a && e.mask && Ie(s, "uPreviousLayerTexture", a.getTexture()))
-          )
+              (e.local.sourceTexture && (s.addTexture(e.local.sourceTexture), (e.local.imageReady = !0)))),
+          void (0 === i.length && n && (Ie(s, "uBgTexture", n.getTexture()), a && e.mask && Ie(s, "uPreviousLayerTexture", a.getTexture())))
         );
       if (
         (i.length || (s.textures.length = 0),
-        n && i.length
-          ? Ie(s, "uTexture", n.getTexture())
-          : s &&
-            e.preloadedCanvasTexture &&
-            s.addTexture(e.preloadedCanvasTexture),
+        n && i.length ? Ie(s, "uTexture", n.getTexture()) : s && e.preloadedCanvasTexture && s.addTexture(e.preloadedCanvasTexture),
         n)
       ) {
         if (i.length) {
           let e = i.reduce((e, t) => e + t.getPlanes().length, 0);
           n = this.getRenderTargets()[t - (1 + e)];
         }
-        n &&
-          (Ie(s, "uBgTexture", n.getTexture()),
-          a && e.mask && Ie(s, "uPreviousLayerTexture", a.getTexture()));
+        n && (Ie(s, "uBgTexture", n.getTexture()), a && e.mask && Ie(s, "uPreviousLayerTexture", a.getTexture()));
       }
     }
     handleCompositePlane(e, t) {
@@ -7315,14 +6748,11 @@
           ),
         l = h > 0 ? h - 1 : -1,
         d = l >= 0 ? this.getRenderTargets()[l] : null;
-      d &&
-        (Ie(s, "uBgTexture", d.getTexture()),
-        r && e.mask && Ie(s, "uPreviousLayerTexture", r.getTexture()));
+      d && (Ie(s, "uBgTexture", d.getTexture()), r && e.mask && Ie(s, "uPreviousLayerTexture", r.getTexture()));
     }
     handleChildEffectPlane(e, t, s) {
       var i, r, a, n, o, h;
-      const l =
-          "passIndex" in s ? this.getPassPlane(e, s.passIndex) : e.getPlane(),
+      const l = "passIndex" in s ? this.getPassPlane(e, s.passIndex) : e.getPlane(),
         d = e.getParent();
       if (!l || !d) return;
       let u = this.getRenderTargets()[t - 1],
@@ -7335,17 +6765,14 @@
               ),
         p = e.compiledFragmentShaders[s.passIndex ?? 0],
         m = d.effects.filter((e) => {
-          if (this.layers.find((t) => t.parentLayer === e))
-            return this.layers.find((t) => t.parentLayer === e);
+          if (this.layers.find((t) => t.parentLayer === e)) return this.layers.find((t) => t.parentLayer === e);
         }),
         g = m.indexOf(e.parentLayer),
         f = m.at(-1) === m[g],
         _ = s.passIndex === s.length;
       const x = d.isGpuElement;
       if (
-        (c &&
-          (null == p ? void 0 : p.includes("uPingPongTexture")) &&
-          Ie(l, "uPingPongTexture", c.getTexture()),
+        (c && (null == p ? void 0 : p.includes("uPingPongTexture")) && Ie(l, "uPingPongTexture", c.getTexture()),
         null == p ? void 0 : p.includes("uBgTexture"))
       )
         if (g && s.length > 1) {
@@ -7379,8 +6806,7 @@
               l.addTexture(d.preloadedCanvasTexture));
       if (u && (g || s.passIndex)) {
         if (e.isMask && (!s.length || (f && _)))
-          if (!x && d.preloadedCanvasTexture)
-            l.addTexture(d.preloadedCanvasTexture);
+          if (!x && d.preloadedCanvasTexture) l.addTexture(d.preloadedCanvasTexture);
           else {
             const e = d.getPlanes().find((e) => !e.userData.isComposite);
             Ie(
@@ -7412,9 +6838,7 @@
           );
         } else
           d.preloadedCanvasTexture
-            ? (l.addTexture(d.preloadedCanvasTexture),
-              d.preloadedCanvasTexture &&
-                (d.preloadedCanvasTexture.userData.used = !0))
+            ? (l.addTexture(d.preloadedCanvasTexture), d.preloadedCanvasTexture && (d.preloadedCanvasTexture.userData.used = !0))
             : Ie(l, "uTexture", u.getTexture());
       (s.needsPreviousFrame &&
         Ie(l, "uPreviousFrameTexture", this.createPreviousFrameTarget(e, s, t)),
@@ -7440,8 +6864,7 @@
         .filter((e) => !e.parentLayer)
         .forEach((e) => {
           var s, i;
-          if (e.isBackground)
-            return void (null == (s = e.getPlane()) || s.setRenderOrder(t));
+          if (e.isBackground) return void (null == (s = e.getPlane()) || s.setRenderOrder(t));
           const r = e.getPlanes().filter((e) => !e.userData.isComposite);
           (e.isGpuElement && r.forEach((e) => e.setRenderOrder(t++)),
             (null == (i = e.effects) ? void 0 : i.length) &&
@@ -7500,8 +6923,7 @@
             });
           }),
           e.usesPingPong && this.createPingPongPlane(e, t.passes))
-        : (this.createEffectPlane(e),
-          e.usesPingPong && this.createPingPongPlane(e));
+        : (this.createEffectPlane(e), e.usesPingPong && this.createPingPongPlane(e));
     }
     createTextures() {
       const e = this.getPlanes().sort((e, t) => e.renderOrder - t.renderOrder),
@@ -7559,23 +6981,16 @@
     ensureRenderTargetInitialized(e, t, s) {
       e &&
         (t && s && this.resizeRenderTarget(e, t, s),
-        e._frameBuffer ||
-          (this.curtain.renderer.bindFrameBuffer(e, !0),
-          this.curtain.renderer.bindFrameBuffer(null)));
+        e._frameBuffer || (this.curtain.renderer.bindFrameBuffer(e, !0), this.curtain.renderer.bindFrameBuffer(null)));
     }
     blitRenderTarget(e, t) {
       var s, i;
-      const r =
-          (null == (s = e._size) ? void 0 : s.width) ||
-          this.curtain.canvas.width,
-        a =
-          (null == (i = e._size) ? void 0 : i.height) ||
-          this.curtain.canvas.height;
+      const r = (null == (s = e._size) ? void 0 : s.width) || this.curtain.canvas.width,
+        a = (null == (i = e._size) ? void 0 : i.height) || this.curtain.canvas.height;
       if (
         (this.ensureRenderTargetInitialized(e, r, a),
         this.ensureRenderTargetInitialized(t, r, a),
-        !(null == e ? void 0 : e._frameBuffer) ||
-          !(null == t ? void 0 : t._frameBuffer))
+        !(null == e ? void 0 : e._frameBuffer) || !(null == t ? void 0 : t._frameBuffer))
       )
         return;
       const n = this.curtain.gl;
@@ -7685,28 +7100,21 @@
       for (let i in e.uniforms)
         t.local.bpProps && i in t.local.bpProps
           ? (e.uniforms[i].value = t.local.bpProps[i])
-          : i in t &&
-            (e.uniforms[i].value =
-              (null == (s = t.local.stateEffectProps) ? void 0 : s[i]) ?? t[i]);
+          : i in t && (e.uniforms[i].value = (null == (s = t.local.stateEffectProps) ? void 0 : s[i]) ?? t[i]);
     }
     setElementPlaneUniforms(e, t) {
       if (
         (e.uniforms.resolution &&
-          ((e.uniforms.resolution.value.x = this.curtain.canvas.width),
-          (e.uniforms.resolution.value.y = this.curtain.canvas.height)),
+          ((e.uniforms.resolution.value.x = this.curtain.canvas.width), (e.uniforms.resolution.value.y = this.curtain.canvas.height)),
         e.uniforms.artboardResolution &&
-          ((e.uniforms.artboardResolution.value.x = this.canvasWidth),
-          (e.uniforms.artboardResolution.value.y = this.canvasHeight)),
+          ((e.uniforms.artboardResolution.value.x = this.canvasWidth), (e.uniforms.artboardResolution.value.y = this.canvasHeight)),
         e.uniforms.mousePos)
       ) {
-        t.local.currentFrameMouseValues ||
-          (t.local.currentFrameMouseValues = this.calculateItemMouseValues(t));
+        t.local.currentFrameMouseValues || (t.local.currentFrameMouseValues = this.calculateItemMouseValues(t));
         const s = t.local.currentFrameMouseValues;
         !this.mouse.movedInView ||
-          (e.uniforms.mousePos.value.x === s.x &&
-            e.uniforms.mousePos.value.y === s.y) ||
-          ((e.uniforms.mousePos.value.x = s.x),
-          (e.uniforms.mousePos.value.y = s.y));
+          (e.uniforms.mousePos.value.x === s.x && e.uniforms.mousePos.value.y === s.y) ||
+          ((e.uniforms.mousePos.value.x = s.x), (e.uniforms.mousePos.value.y = s.y));
       }
     }
     calculateItemMouseValues(e) {
@@ -7731,63 +7139,41 @@
       let l = i / t,
         d = 1 - r / s;
       if (!h) return { x: n ? l : 0.5, y: o ? d : 0.5 };
-      if (!e.local.lastMousePos)
-        return (
-          (e.local.lastMousePos = { x: n ? l : 0.5, y: o ? d : 0.5 }),
-          e.local.lastMousePos
-        );
+      if (!e.local.lastMousePos) return ((e.local.lastMousePos = { x: n ? l : 0.5, y: o ? d : 0.5 }), e.local.lastMousePos);
       const u = e.local.lastMousePos.x * t,
         c = (1 - e.local.lastMousePos.y) * s,
         p = Math.abs(i - u),
         m = Math.abs(r - c);
       return (
         (p < xe && m < xe) ||
-          (n
-            ? ((i = we(i, u, 2 * h)), (e.local.lastMousePos.x = i / t))
-            : (e.local.lastMousePos.x = 0.5),
-          o
-            ? ((r = we(r, c, 2 * h)), (e.local.lastMousePos.y = 1 - r / s))
-            : (e.local.lastMousePos.y = 0.5)),
+          (n ? ((i = we(i, u, 2 * h)), (e.local.lastMousePos.x = i / t)) : (e.local.lastMousePos.x = 0.5),
+          o ? ((r = we(r, c, 2 * h)), (e.local.lastMousePos.y = 1 - r / s)) : (e.local.lastMousePos.y = 0.5)),
         e.local.lastMousePos
       );
     }
     setEffectPlaneUniforms(e, t) {
       var s, i, r, a;
-      let n =
-        (null == (s = t.local.stateEffectProps) ? void 0 : s.speed) ??
-        t.speed ??
-        1;
+      let n = (null == (s = t.local.stateEffectProps) ? void 0 : s.speed) ?? t.speed ?? 1;
       if (
-        (t.animating &&
-          e.uniforms.time &&
-          (e.uniforms.time.value += (60 * n) / this.fps),
+        (t.animating && e.uniforms.time && (e.uniforms.time.value += (60 * n) / this.fps),
         (null == (i = t.local.stateEffectProps) ? void 0 : i.playbackRate) &&
           e.videos.at(-1) &&
-          (e.videos.at(-1).playbackRate =
-            t.local.stateEffectProps.playbackRate),
-        Re() &&
-          (null == (a = null == (r = this.interactivity) ? void 0 : r.mouse)
-            ? void 0
-            : a.disableMobile))
+          (e.videos.at(-1).playbackRate = t.local.stateEffectProps.playbackRate),
+        Re() && (null == (a = null == (r = this.interactivity) ? void 0 : r.mouse) ? void 0 : a.disableMobile))
       )
         return !1;
       if (!this.mouse.movedInView) return;
-      t.local.currentFrameMouseValues ||
-        (t.local.currentFrameMouseValues = this.calculateItemMouseValues(t));
+      t.local.currentFrameMouseValues || (t.local.currentFrameMouseValues = this.calculateItemMouseValues(t));
       const o = t.local.currentFrameMouseValues;
       o &&
         (e.uniforms.previousMousePos &&
           (this.mouse.ticks > 16
-            ? ((e.uniforms.previousMousePos.value.x =
-                e.uniforms.mousePos.value.x),
-              (e.uniforms.previousMousePos.value.y =
-                e.uniforms.mousePos.value.y))
-            : ((e.uniforms.previousMousePos.value.x = o.x),
-              (e.uniforms.previousMousePos.value.y = o.y))),
+            ? ((e.uniforms.previousMousePos.value.x = e.uniforms.mousePos.value.x),
+              (e.uniforms.previousMousePos.value.y = e.uniforms.mousePos.value.y))
+            : ((e.uniforms.previousMousePos.value.x = o.x), (e.uniforms.previousMousePos.value.y = o.y))),
         e.uniforms.mousePos &&
           !o.equals(e.uniforms.mousePos.value) &&
-          ((e.uniforms.mousePos.value.x = o.x),
-          (e.uniforms.mousePos.value.y = o.y)),
+          ((e.uniforms.mousePos.value.x = o.x), (e.uniforms.mousePos.value.y = o.y)),
         this.mouse.ticks++);
     }
     getOrderedItems() {
@@ -7808,11 +7194,7 @@
       var i;
       const r = e[t];
       let a = 1;
-      r.userData.downSample &&
-        (a =
-          "number" == typeof r.userData.downSample
-            ? r.userData.downSample
-            : 0.5);
+      r.userData.downSample && (a = "number" == typeof r.userData.downSample ? r.userData.downSample : 0.5);
       return {
         maxWidth: this.curtain.canvas.width * a,
         maxHeight: this.curtain.canvas.height * a,
@@ -7840,8 +7222,7 @@
         : (this.layers
             .filter((e) => e.preloadedCanvasTexture)
             .forEach((e) => {
-              e.preloadedCanvasTexture.shouldUpdate =
-                e.preloadedCanvasTexture.userData.hasStateEffects || !1;
+              e.preloadedCanvasTexture.shouldUpdate = e.preloadedCanvasTexture.userData.hasStateEffects || !1;
             }),
           this.renderFrame(),
           setTimeout(() => this.disablePlanes(), 16));
@@ -7901,17 +7282,11 @@
           if (e)
             try {
               let t = JSON.parse(e.innerText);
-              return (null == t ? void 0 : t.options) &&
-                ((null == t ? void 0 : t.layers) ||
-                  (null == t ? void 0 : t.history))
+              return (null == t ? void 0 : t.options) && ((null == t ? void 0 : t.layers) || (null == t ? void 0 : t.history))
                 ? Promise.resolve(t)
-                : (i(new Error(`Did not find valid JSON inside ${s}`)),
-                  Promise.reject());
+                : (i(new Error(`Did not find valid JSON inside ${s}`)), Promise.reject());
             } catch (n) {
-              return (
-                i(new Error(`Error parsing JSON from ${s}: ${n.message}`)),
-                Promise.reject()
-              );
+              return (i(new Error(`Error parsing JSON from ${s}: ${n.message}`)), Promise.reject());
             }
         } else {
           let s = "https://storage.googleapis.com/unicornstudio-production";
@@ -7927,19 +7302,14 @@
           .catch((e) => {});
       })(t, s, e.filePath, r, e.production)
         .then((s) => {
-          (s && (s.layers || s.history) && s.options) ||
-            r(new Error(`Error fetching data for project id '${e.projectId}'`));
+          (s && (s.layers || s.history) && s.options) || r(new Error(`Error fetching data for project id '${e.projectId}'`));
           const a = s.options || {},
             n =
               ((o = e.element),
               (
                 "object" == typeof HTMLElement
                   ? o instanceof HTMLElement
-                  : o &&
-                    "object" == typeof o &&
-                    null !== o &&
-                    1 === o.nodeType &&
-                    "string" == typeof o.nodeName
+                  : o && "object" == typeof o && null !== o && 1 === o.nodeType && "string" == typeof o.nodeName
               )
                 ? e.element
                 : document.getElementById(e.elementId));
