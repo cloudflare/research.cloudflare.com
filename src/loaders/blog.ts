@@ -7,8 +7,8 @@ import { blogMappings } from "../data/blog-mappings";
 const PEOPLE_DIR = "./content/people";
 
 const WORKER_BASE_URL = "https://website-worker.research.cloudflare.com";
-// Raise this to "2" when needed
-const BLOG_ENDPOINT_VERSION = "1";
+// Set this to 1 to fetch from the old Contentful blog
+const BLOG_ENDPOINT_VERSION = "2";
 const CACHE_DIR = ".astro/cache/blog";
 
 interface BlogPost {
