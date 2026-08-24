@@ -3,13 +3,11 @@ import HeaderPeople from "@/components/HeaderPeople.astro";
 import InteriorLayout from "../../layouts/interior.astro";
 import Section from "@/components/Section.astro";
 import PersonCard from "@/components/PersonCard.astro";
-import AlumniCard from "@/components/AlumniCard.astro";
 import { cn } from "@/lib/utils";
 
 const { t, getLocalizedCollection } = Astro.locals;
 
 const activePeople = await getLocalizedCollection("people", ({ data }) => data.type === "active");
-const alumni = await getLocalizedCollection("people", ({ data }) => data.type === "alumni");
 ---
 
 <InteriorLayout metaTitle={t("people.heading")} metaDescription={t("people.metaDescription")}>
@@ -20,19 +18,6 @@ const alumni = await getLocalizedCollection("people", ({ data }) => data.type ==
       {
         activePeople.map((person) => (
           <PersonCard image={person.data.avatar} name={person.data.title} role={person.data.position} slug={person.data.slug} />
-        ))
-      }
-    </div>
-  </Section>
-
-  <Section>
-    <div class="border-b-2 border-page-border">
-      <h2 class="px-8 py-4 uppercase font-mono">{t("people.alumni")}</h2>
-    </div>
-    <div class={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 person-grid", "[&>article]:p-8")}>
-      {
-        alumni.map((person) => (
-          <AlumniCard image={person.data.avatar} name={person.data.title} role={person.data.position} slug={person.data.slug} />
         ))
       }
     </div>
