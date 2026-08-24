@@ -34,6 +34,10 @@ const sanitizeBranchSegment = (name) => {
 const inCi = process.env.WORKERS_CI_BRANCH !== undefined;
 const inCli = process.env.POLYSTELLA_CLI === "1";
 const isLocalBuild = !inCi && !inCli;
+const isLocalDryRun = isLocalBuild && process.env.POLYSTELLA_TRANSLATE !== "1";
+
+const hasR2Credentials = Boolean(process.env.CF_ACCOUNT_ID && process.env.R2_ACCESS_KEY_ID && process.env.R2_SECRET_ACCESS_KEY);
+const hasProviderCredentials = Boolean(process.env.CF_ACCOUNT_ID && process.env.WORKERS_AI_API_TOKEN);
 
 const branch = process.env.WORKERS_CI_BRANCH ?? "main";
 const isProduction = branch === "main";
@@ -145,32 +149,43 @@ const config = {
   // and never copies them under the preview prefix. Cleanup of stale
   // `previews/...` objects is handled by the bucket's lifecycle rule
   // (see README §Deployment).
-  r2: {
-    accountId: process.env.CF_ACCOUNT_ID,
-    bucket: "research-i18n-cache",
-    accessKeyId: process.env.R2_ACCESS_KEY_ID,
-    secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
-    prefix: isLocalBuild || isProduction ? "i18n/" : `previews/${branchSegment}/i18n/`,
-    readFallbackPrefixes: isLocalBuild || isProduction ? [] : ["i18n/"],
-    readOnly: isLocalBuild,
-    keepLastN: isLocalBuild
-      ? false // readOnly already disables prune; setting `false` is belt + braces.
-      : isProduction
-        ? 2
-        : 3, // preview branches churn hashes faster, keep more variants.
-  },
+  // R2 and provider are optional in dry-run mode. Omit unavailable services
+  // locally, but retain their invalid config elsewhere so translation-producing
+  // commands and CI fail fast when credentials are missing.
+  ...(!isLocalDryRun || hasR2Credentials
+    ? {
+        r2: {
+          accountId: process.env.CF_ACCOUNT_ID,
+          bucket: "research-i18n-cache",
+          accessKeyId: process.env.R2_ACCESS_KEY_ID,
+          secretAccessKey: process.env.R2_SECRET_ACCESS_KEY,
+          prefix: isLocalBuild || isProduction ? "i18n/" : `previews/${branchSegment}/i18n/`,
+          readFallbackPrefixes: isLocalBuild || isProduction ? [] : ["i18n/"],
+          readOnly: isLocalBuild,
+          keepLastN: isLocalBuild
+            ? false // readOnly already disables prune; setting `false` is belt + braces.
+            : isProduction
+              ? 2
+              : 3, // preview branches churn hashes faster, keep more variants.
+        },
+      }
+    : {}),
 
-  provider: {
-    kind: "workers-ai",
-    accountId: process.env.CF_ACCOUNT_ID ?? "",
-    apiToken: process.env.WORKERS_AI_API_TOKEN ?? "",
-    // Verify all model ids against the live catalog at
-    // https://developers.cloudflare.com/workers-ai/models/ before changing them.
-    model: {
-      default: "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
-      "ja-JP": "@cf/qwen/qwen3-30b-a3b-fp8",
-    },
-  },
+  ...(!isLocalDryRun || hasProviderCredentials
+    ? {
+        provider: {
+          kind: "workers-ai",
+          accountId: process.env.CF_ACCOUNT_ID ?? "",
+          apiToken: process.env.WORKERS_AI_API_TOKEN ?? "",
+          // Verify all model ids against the live catalog at
+          // https://developers.cloudflare.com/workers-ai/models/ before changing them.
+          model: {
+            default: "@cf/meta/llama-3.3-70b-instruct-fp8-fast",
+            "ja-JP": "@cf/qwen/qwen3-30b-a3b-fp8",
+          },
+        },
+      }
+    : {}),
 
   // Per-locale terminology rules.
   glossary: {
@@ -191,7 +206,7 @@ const config = {
   // provider. Local builds default to dry-run to avoid burning
   // Workers AI quota on routine edits; opt in with
   // `POLYSTELLA_TRANSLATE=1 pnpm build` or `pnpm translate:build`.
-  dryRun: isLocalBuild && process.env.POLYSTELLA_TRANSLATE !== "1",
+  dryRun: isLocalDryRun,
 };
 
 export default config;
