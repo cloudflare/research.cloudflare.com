@@ -1,10 +1,9 @@
 ---
 title: Teresa Brooks-Mejia
 position: Research Engineer
-status: current
 avatar: teresa-brooks-mejia.jpg
 slug: teresa-brooks-mejia
-type: active
+type: alumni
 ---
 
 Teresa is a Research Engineer on the Cloudflare Research team. Professionally, she has worn many hats as software engineer, data scientist and has both academic and professional applied machine learning research experience. She enjoys building intelligent systems and data wrangling.

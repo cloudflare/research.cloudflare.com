@@ -1,11 +1,10 @@
 ---
 title: Avani Wildani
 position: Research Manager
-status: current
 avatar: avani-wildani.jpg
 twitter: peaceea
 slug: avani-wildani
-type: active
+type: alumni
 ---
 
 Avani manages North American research projects at Cloudflare Research, and also maintains an affiliation as visiting assistant professor of computer science and neuroscience at Emory University. Her past positions include being a faculty member in computer science, a postdoc in neural computing, and a professional video game player. She holds a B.S. from Harvey Mudd College, M.S. from the University of New Mexico, and Ph.D. from the University of California, Santa Cruz.
