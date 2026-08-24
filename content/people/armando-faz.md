@@ -2,10 +2,9 @@
 title: Armando Faz Hernandez
 position: Research Engineer
 author_name: Armando Faz-Hernandez
-status: current
 twitter: armfazh
 blog_author: armfazh
-type: active
+type: alumni
 avatar: armando-faz.jpg
 slug: armando-faz
 ---
