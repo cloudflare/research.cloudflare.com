@@ -73,11 +73,15 @@
   "people.heading": "Equipe",
   "people.subheading": "Conheça a equipe de pesquisa da Cloudflare",
   "people.alumni": "Ex-membros",
+  "people.interns": "Estagiários",
   "people.biography": "Biografia",
   "people.metaDescription": "Conheça os cientistas, engenheiros e pesquisadores da Cloudflare. Saiba mais sobre a equipe diversa de especialistas dedicados a avançar a segurança, privacidade e desempenho da internet por meio de pesquisa e implementação inovadoras.",
 
   "alumni.subheading": "Conheça os ex-membros da equipe de pesquisa",
   "alumni.metaDescription": "Conheça os ex-membros da Cloudflare Research, cujo trabalho ajudou a promover a segurança, a privacidade e o desempenho da internet.",
+
+  "intern.subheading": "Conheça os estagiários da Cloudflare Research",
+  "intern.metaDescription": "Conheça os estagiários da Cloudflare Research, que colaboram com nossa equipe para promover a segurança, a privacidade e o desempenho da internet por meio de pesquisas inovadoras.",
 
   "presentations.heading": "Apresentações e palestras",
   "presentations.subheading": "Compartilhamos nosso trabalho para promover a implantação generalizada de ideias úteis e ajudar a indústria a adotar novas inovações.",

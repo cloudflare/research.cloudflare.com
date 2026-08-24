@@ -123,7 +123,7 @@ export default defineConfig({
     "/projects/": "/focus",
     "/publications/": "/focus",
     "/outreach/academic-programs/": "/people",
-    "/outreach/academic-programs/interns/": "/people",
+    "/outreach/academic-programs/interns/": "/intern",
     "/outreach/academic-programs/interns/albert-gran/": "/people",
     "/outreach/academic-programs/interns/alishah-chator/": "/people",
     "/outreach/academic-programs/interns/arian-niaki/": "/people",

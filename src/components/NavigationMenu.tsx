@@ -191,6 +191,13 @@ export function NavMenu({ dict, locale, pathname }: NavMenuProps) {
                     >
                       {t("people.alumni")}
                     </a>
+                    <a
+                      href={lhref("/intern")}
+                      className="block text-base font-medium text-page-text hover:text-baby-blue-eyes transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {t("people.interns")}
+                    </a>
                   </div>
                 )}
               </div>
@@ -268,6 +275,7 @@ export function NavMenu({ dict, locale, pathname }: NavMenuProps) {
                 <ListItem title={t("nav.philosophy")} href={lhref("/philosophy")} />
                 <ListItem title={t("nav.people")} href={lhref("/people")} />
                 <ListItem title={t("people.alumni")} href={lhref("/alumni")} />
+                <ListItem title={t("people.interns")} href={lhref("/intern")} />
               </ul>
             </NavigationMenuContent>
           </NavigationMenuItem>
