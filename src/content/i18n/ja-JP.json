@@ -73,11 +73,15 @@
   "people.heading": "メンバー",
   "people.subheading": "Cloudflare Researchチームのご紹介",
   "people.alumni": "卒業生",
+  "people.interns": "インターン",
   "people.biography": "経歴",
   "people.metaDescription": "Cloudflareの科学者、エンジニア、研究者をご紹介します。革新的な研究と実世界での実装を通じて、インターネットのセキュリティ、プライバシー、パフォーマンスの向上に取り組む多様な専門家チームについてご覧ください。",
 
   "alumni.subheading": "リサーチチームの卒業生をご紹介します",
   "alumni.metaDescription": "Cloudflare Researchの卒業生をご紹介します。彼らの活動は、インターネットのセキュリティ、プライバシー、パフォーマンスの向上に貢献してきました。",
+
+  "intern.subheading": "Cloudflare Researchのインターンをご紹介します",
+  "intern.metaDescription": "Cloudflare Researchのインターンをご紹介します。インターンは研究チームと協力し、革新的な研究を通じてインターネットのセキュリティ、プライバシー、パフォーマンスの向上に取り組んでいます。",
 
   "presentations.heading": "発表・基調講演",
   "presentations.subheading": "有用なアイデアの広範な普及を促進し、業界が新たなイノベーションを採用するのを支援するため、私たちの研究成果を共有しています。",

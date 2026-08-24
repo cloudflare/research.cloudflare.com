@@ -94,7 +94,7 @@ They must follow this structure:
 title: "Person's Name"
 position: "Position"
 author_name: "Person's Name"
-status: "current" | "inactive"
+status: "current" | "active" | "inactive"
 twitter: "twitter-handle"
 bluesky: "bluesky-handle"
 blog_author: "blog-author"
@@ -104,7 +104,7 @@ type: "active" | "alumni" | "external" | "intern" | "inactive"
 ---
 ```
 
-Only `active` and `alumni` types are displayed on the team page.
+People with `type: active` are displayed on `/people`, people with `type: alumni` are displayed on `/alumni`, and people with both `type: intern` and `status: active` are displayed on `/intern`.
 
 Avatars are stored in the [`/public/images/people`](./public/images/people) directory and should be named after the person's slug.
 

@@ -1,0 +1,28 @@
+---
+import HeaderIntern from "@/components/HeaderIntern.astro";
+import InteriorLayout from "../layouts/interior.astro";
+import Section from "@/components/Section.astro";
+import PersonCard from "@/components/PersonCard.astro";
+import { cn } from "@/lib/utils";
+
+const { t, getLocalizedCollection } = Astro.locals;
+
+const interns = await getLocalizedCollection(
+  "people",
+  ({ data }) => data.type === "intern" && data.status === "active",
+);
+---
+
+<InteriorLayout metaTitle={t("people.interns")} metaDescription={t("intern.metaDescription")}>
+  <HeaderIntern />
+
+  <Section>
+    <div class={cn("grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 person-grid", "[&>article]:p-8")}>
+      {
+        interns.map((person) => (
+          <PersonCard image={person.data.avatar} name={person.data.title} role={person.data.position} slug={person.data.slug} />
+        ))
+      }
+    </div>
+  </Section>
+</InteriorLayout>
