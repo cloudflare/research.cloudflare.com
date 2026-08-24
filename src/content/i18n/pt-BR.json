@@ -76,6 +76,9 @@
   "people.biography": "Biografia",
   "people.metaDescription": "Conheça os cientistas, engenheiros e pesquisadores da Cloudflare. Saiba mais sobre a equipe diversa de especialistas dedicados a avançar a segurança, privacidade e desempenho da internet por meio de pesquisa e implementação inovadoras.",
 
+  "alumni.subheading": "Conheça os ex-membros da equipe de pesquisa",
+  "alumni.metaDescription": "Conheça os ex-membros da Cloudflare Research, cujo trabalho ajudou a promover a segurança, a privacidade e o desempenho da internet.",
+
   "presentations.heading": "Apresentações e palestras",
   "presentations.subheading": "Compartilhamos nosso trabalho para promover a implantação generalizada de ideias úteis e ajudar a indústria a adotar novas inovações.",
   "presentations.metaDescription": "Compartilhando nosso trabalho para promover a implantação de ideias úteis. Explore apresentações e palestras da Cloudflare Research sobre as inovações e padrões que moldam o futuro de uma internet global e segura.",

@@ -10,7 +10,7 @@ const { t, getLocalizedCollection } = Astro.locals;
 const alumni = await getLocalizedCollection("people", ({ data }) => data.type === "alumni");
 ---
 
-<InteriorLayout metaTitle={t("people.alumni")} metaDescription="Meet the alumni of Cloudflare Research, whose work has helped advance internet security, privacy, and performance.">
+<InteriorLayout metaTitle={t("people.alumni")} metaDescription={t("alumni.metaDescription")}>
   <HeaderAlumni />
 
   <Section>
