@@ -171,6 +171,13 @@ export function NavMenu({ dict, locale, pathname }: NavMenuProps) {
                 {aboutOpen && (
                   <div className="mt-4 space-y-4 pl-4">
                     <a
+                      href={lhref("/philosophy")}
+                      className="block text-base font-medium text-page-text hover:text-baby-blue-eyes transition-colors"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      {t("nav.philosophy")}
+                    </a>
+                    <a
                       href={lhref("/people")}
                       className="block text-base font-medium text-page-text hover:text-baby-blue-eyes transition-colors"
                       onClick={() => setMobileMenuOpen(false)}
@@ -178,11 +185,11 @@ export function NavMenu({ dict, locale, pathname }: NavMenuProps) {
                       {t("nav.people")}
                     </a>
                     <a
-                      href={lhref("/philosophy")}
+                      href={lhref("/alumni")}
                       className="block text-base font-medium text-page-text hover:text-baby-blue-eyes transition-colors"
                       onClick={() => setMobileMenuOpen(false)}
                     >
-                      {t("nav.philosophy")}
+                      {t("people.alumni")}
                     </a>
                   </div>
                 )}
@@ -258,8 +265,9 @@ export function NavMenu({ dict, locale, pathname }: NavMenuProps) {
             <NavigationMenuTrigger>{t("nav.aboutUs")}</NavigationMenuTrigger>
             <NavigationMenuContent>
               <ul className="grid gap-2 w-[200px] z-(--z-nav) relative p-2">
-                <ListItem title={t("nav.people")} href={lhref("/people")} />
                 <ListItem title={t("nav.philosophy")} href={lhref("/philosophy")} />
+                <ListItem title={t("nav.people")} href={lhref("/people")} />
+                <ListItem title={t("people.alumni")} href={lhref("/alumni")} />
               </ul>
             </NavigationMenuContent>
           </NavigationMenuItem>
