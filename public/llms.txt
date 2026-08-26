@@ -1,0 +1,27 @@
+# Cloudflare Research
+
+> Cloudflare Research explores the future of the Internet by bridging the gap between academic theory and real-world implementation. We work on cryptography, networking, security, privacy, and measurement to help build a better, more secure web.
+
+This file is an LLM-friendly site index following the llms.txt convention (https://llmstxt.org/). It lists the main sections of research.cloudflare.com so AI agents can quickly orient themselves without crawling the full HTML site.
+
+## Focus areas
+
+The team's work is organized into five areas. Each page describes the area in depth and links to related publications and blog posts.
+
+- [All Focus Areas](https://research.cloudflare.com/focus): Overview of the five research areas.
+- [More Private](https://research.cloudflare.com/focus/private): Privacy-preserving systems and protocols (Privacy Pass, anonymous credentials, DNS privacy, OHTTP).
+- [Safer](https://research.cloudflare.com/focus/safe): Production-quality security defenses against network interference and abuse, plus post-quantum cryptography.
+- [Faster](https://research.cloudflare.com/focus/fast): Distributed systems and caching technologies that minimize latency (HTTP/3, QUIC, congestion control).
+- [More Reliable](https://research.cloudflare.com/focus/reliable): Robust distributed systems and time-synchronization protocols (Roughtime, NTS) that keep the Internet stable at scale.
+- [More Measurable](https://research.cloudflare.com/focus/measurable): Open standards and tooling that make Internet infrastructure verifiable, including Certificate Transparency and large-scale measurement studies.
+
+## About
+
+- [People](https://research.cloudflare.com/people): Profiles of researchers on the team.
+- [Philosophy](https://research.cloudflare.com/philosophy): How the team approaches research and what we publish.
+- [Presentations](https://research.cloudflare.com/presentations): Talks and keynotes given by the team.
+
+## Discovery
+
+- [Sitemap](https://research.cloudflare.com/sitemap-index.xml): Full machine-readable list of every page on the site.
+- [Cloudflare careers in research](https://www.cloudflare.com/careers/jobs/?department=Technology+Research): Open roles on the team.
