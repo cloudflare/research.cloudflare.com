@@ -1,0 +1,17 @@
+---
+title: "Comprehensive Revocation Checking at Scale: the Deployment of CRLite in Mozilla Firefox"
+year: 2026
+location: ACM SIGCOMM 2026 Conference, Denver, CO, USA, August 17-21, 2026.
+authors:
+  - james-larisch
+url: https://dl.acm.org/doi/10.1145/3789240.3829108
+doi: 10.1145/3789240.3829108
+related_interests:
+  - measurement
+  - internet-security
+  - public-key-infrastructure
+pillar: safe
+metaDescription: "What it took to get comprehensive revocation (CRLite) actually deployed to Firefox."
+---
+
+This paper describes the multi-year effort undertaken by Mozilla to incorporate and deploy CRLite, a TLS certificate revocation checking system, in the Firefox browser. With the deprecation of the Online Certificate Status Protocol (OCSP) by Let’s Encrypt and others, CRLite is now the only broadly deployed mechanism capable of checking the revocation status of every TLS certificate. The successful seven-year evolution of CRLite from a research prototype to a widely used tool required improvements in the original data structures (now using partitioned Ribbon filters), changes in Certificate Authority revocation practices, and correctly synchronizing with Certificate Transparency logs to eliminate false positives. Using data from Firefox’s opt-in telemetry, we report that CRLite achieves an effective revocation coverage of 87.8% while maintaining moderate bandwidth costs, even during real revocation events like the November 2025 Microsoft incident. Through simulations, we also examine the potential impacts of shorter certificate lifetimes and hypothetical mass revocations on CRLite. CRLite demonstrates that low-latency, private, comprehensive certificate revocation checking is possible using moderate bandwidth.
