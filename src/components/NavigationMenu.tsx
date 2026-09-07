@@ -130,7 +130,7 @@ export function NavMenu({ dict, locale, pathname }: NavMenuProps) {
                   onClick={() => setFocusAreasOpen(!focusAreasOpen)}
                   className="text-lg font-medium text-page-text hover:text-baby-blue-eyes transition-colors w-full text-left flex items-center justify-between"
                 >
-                  {t("nav.focusAreas")}
+                  {t("nav.focusAreas.title")}
                   <span className="text-sm pr-3">{focusAreasOpen ? "−" : "+"}</span>
                 </button>
                 {focusAreasOpen && (
@@ -244,7 +244,7 @@ export function NavMenu({ dict, locale, pathname }: NavMenuProps) {
       <NavigationMenu viewport={isMobile} className="hidden md:flex">
         <NavigationMenuList className="flex-wrap">
           <NavigationMenuItem>
-            <NavigationMenuTrigger>{t("nav.focusAreas")}</NavigationMenuTrigger>
+            <NavigationMenuTrigger>{t("nav.focusAreas.title")}</NavigationMenuTrigger>
             <NavigationMenuContent>
               <ul className="grid gap-2 sm:w-[400px] md:w-[500px] md:grid-cols-2 lg:w-[600px] z-(--z-nav) relative">
                 {components.map((component) => (
