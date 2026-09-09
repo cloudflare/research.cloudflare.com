@@ -1,7 +1,7 @@
 ---
 title: "RFC 9577: The Privacy Pass HTTP Authentication Scheme"
 year: 2024
-location: Internet Research Task Force (IRTF). 2024.
+location: Internet Engineering Task Force (IETF). 2024.
 authors:
   - tommy-pauly
   - steven-valdez
@@ -12,7 +12,7 @@ related_interests:
   - cryptography
   - protocols
 pillar: private
-metaDescription: "IRTF specification of HTTP authentication scheme for Privacy Pass, enabling anonymous authorization using cryptographic tokens without revealing user identity or browsing patterns."
+metaDescription: "IETF specification of HTTP authentication scheme for Privacy Pass, enabling anonymous authorization using cryptographic tokens without revealing user identity or browsing patterns."
 ---
 
 This document defines an HTTP authentication scheme for Privacy Pass, a privacy-preserving authentication mechanism used for authorization.

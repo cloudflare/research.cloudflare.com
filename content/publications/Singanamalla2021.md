@@ -6,7 +6,7 @@ authors:
   - sudheesh-singanamalla
   - pop-chunhapanya
   - jonathan-hoyland
-  - marek-vavrua
+  - marek-vavrusa
   - tanya-verma
   - peter-wu
   - marwan-fayed

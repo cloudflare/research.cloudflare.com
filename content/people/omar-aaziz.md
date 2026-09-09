@@ -1,8 +1,8 @@
 ---
-title: Rahul Chattejee
+title: Omar Aaziz
 position: External Collaborator
 avatar: placeholder.png
-slug: rahul-chattejee
+slug: omar-aaziz
 type: external
 ---
 
