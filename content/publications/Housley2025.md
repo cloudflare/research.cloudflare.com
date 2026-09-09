@@ -1,7 +1,7 @@
 ---
 title: "RFC 9814: Use of the SLH-DSA Signature Algorithm in the Cryptographic Message Syntax (CMS)"
 year: 2025
-location: Internet Research Task Force (IRTF). 2025.
+location: Internet Engineering Task Force (IETF). 2025.
 authors:
   - russ-housley
   - scott-fluhrer
@@ -12,7 +12,7 @@ related_interests:
   - cryptography
   - protocols
 pillar: safe
-metaDescription: "IRTF specification for using the post-quantum SLH-DSA signature algorithm with Cryptographic Message Syntax (CMS) for secure message signing."
+metaDescription: "IETF specification for using the post-quantum SLH-DSA signature algorithm with Cryptographic Message Syntax (CMS) for secure message signing."
 ---
 
 This document specifies the conventions for using the SLH-DSA signature algorithm with the Cryptographic Message Syntax (CMS).

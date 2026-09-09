@@ -1,14 +1,14 @@
 ---
 title: "Valet: Efficient Data Placement on Modern SSDs"
 year: 2025
-location: "ACM Symposium on Cloud Computing 2025 (best paper)"
+location: "Proceedings of the 2025 ACM Symposium on Cloud Computing, pp. 543-556 (best paper)"
 authors:
   - devashish-r-purandare
   - peter-alvaro
   - avani-wildani
   - darrell-d-e-long
   - ethan-l-miller
-url: https://arxiv.org/abs/2501.00977
+url: https://doi.org/10.1145/3772052.3772256
 related_interests:
   - storage
 pillar: fast

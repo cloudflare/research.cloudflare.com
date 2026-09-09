@@ -1,8 +1,8 @@
 ---
-title: Omar Aziz
+title: Ya-Feng Wu
 position: External Collaborator
 avatar: placeholder.png
-slug: omar-aziz
+slug: ya-feng-wu
 type: external
 ---
 

@@ -8,7 +8,7 @@ authors:
   - vasilis-giotsas
   - sami-kerola
   - marek-majkowski
-  - pavel-odinstov
+  - pavel-odintsov
   - jakub-sitnicki
   - taejoong-chung
   - dave-levin

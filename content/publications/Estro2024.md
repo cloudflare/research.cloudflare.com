@@ -1,10 +1,10 @@
 ---
 title: "Accelerating multi-tier storage cache simulations using knee detection"
 year: 2024
-location: "Journal of Performance Evaluation, 164, 102410"
+location: "Performance Evaluation, 164, 102410"
 authors:
-  - mario-antunes
   - tyler-estro
+  - mario-antunes
   - pranav-bhandari
   - anshul-gandhi
   - geoff-kuenning

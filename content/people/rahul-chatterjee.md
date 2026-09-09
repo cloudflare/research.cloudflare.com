@@ -1,8 +1,8 @@
 ---
-title: Marina Sanusi
+title: Rahul Chatterjee
 position: External Collaborator
 avatar: placeholder.png
-slug: marina-sanusi
+slug: rahul-chatterjee
 type: external
 ---
 
