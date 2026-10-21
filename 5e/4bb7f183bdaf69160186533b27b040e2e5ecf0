@@ -1,0 +1,21 @@
+.github/workflows/lint.yml
+  s_db23a2cae4876b::t_bccfdb97841d80 21
+.nvmrc
+  s_db23a2cae4876b::t_78f9a326ff257e 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5e4bb7f183bdaf69160186533b27b040e2e5ecf0",
+  "prompts": {},
+  "sessions": {
+    "s_db23a2cae4876b": {
+      "agent_id": {
+        "tool": "opencode",
+        "id": "ses_e9ff46cc2ffeNl835A0ARQzolt",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "mvm <vance@cloudflare.com>"
+    }
+  }
+}
