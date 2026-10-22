@@ -1,7 +1,7 @@
 import type { Loader } from "astro/loaders";
 import fs from "node:fs";
 import path from "node:path";
-import { polystellaLoader } from "@cloudflare/polystella/content";
+import { polystellaLoader } from "@cloudflare/polystella-astro/content";
 import { blogMappings } from "../data/blog-mappings";
 
 const PEOPLE_DIR = "./content/people";

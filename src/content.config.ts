@@ -1,8 +1,8 @@
 import { defineCollection, reference } from "astro:content";
 import { glob } from "astro/loaders";
 import { z } from "astro/zod";
-import { file, polystellaCollections } from "@cloudflare/polystella/content";
-import { i18nLoader, i18nSchema } from "@cloudflare/polystella/i18n";
+import { file, polystellaCollections } from "@cloudflare/polystella-astro/content";
+import { i18nLoader, i18nSchema } from "@cloudflare/polystella-astro/i18n";
 import { blogLoader } from "./loaders/blog";
 
 const site = defineCollection({
