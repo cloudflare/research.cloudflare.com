@@ -6,9 +6,7 @@ import { blogMappings } from "../data/blog-mappings";
 
 const PEOPLE_DIR = "./content/people";
 
-const WORKER_BASE_URL = "https://website-worker.research.cloudflare.com";
-// Set this to 1 to fetch from the old Contentful blog
-const BLOG_ENDPOINT_VERSION = "2";
+const RESEARCH_FEED_URL = "https://blog.cloudflare.com/api/research-feed";
 const CACHE_DIR = ".astro/cache/blog";
 
 interface BlogPost {
@@ -24,15 +22,15 @@ interface CachedData {
   data: BlogPost[];
 }
 
-function blogEndpoint(path: string, params: Record<string, string> = {}): string {
-  const searchParams = new URLSearchParams({ ...params, v: BLOG_ENDPOINT_VERSION });
-  return `${path}?${searchParams}`;
+function feedEndpoint(params: Record<string, string> = {}): string {
+  const query = new URLSearchParams(params).toString();
+  return query ? `${RESEARCH_FEED_URL}?${query}` : RESEARCH_FEED_URL;
 }
 
 /**
- * Fetches blog posts from the Cloudflare Worker with caching
+ * Fetches blog posts from the research feed with caching
  */
-async function fetchWithCache(endpoint: string, cacheFile: string): Promise<BlogPost[]> {
+async function fetchWithCache(url: string, cacheFile: string): Promise<BlogPost[]> {
   const cachePath = path.join(CACHE_DIR, cacheFile);
 
   // Create cache directory if it doesn't exist
@@ -53,8 +51,8 @@ async function fetchWithCache(endpoint: string, cacheFile: string): Promise<Blog
   }
 
   // Fetch fresh data
-  console.log(`Fetching blog posts from ${endpoint}`);
-  const response = await fetch(`${WORKER_BASE_URL}${endpoint}`);
+  console.log(`Fetching blog posts from ${url}`);
+  const response = await fetch(url);
 
   if (!response.ok) {
     throw new Error(`Failed to fetch blog posts: ${response.status} ${response.statusText}`);
@@ -106,11 +104,11 @@ function rawBlogLoader(): Loader {
   return {
     name: "blog-loader",
     load: async ({ store, logger, parseData, generateDigest }) => {
-      logger.info("Loading blog posts from Cloudflare Worker");
+      logger.info("Loading blog posts from the research feed");
 
       try {
         // Fetch all research blog posts
-        const posts = await fetchWithCache(blogEndpoint("/blog/all"), `blogposts_v${BLOG_ENDPOINT_VERSION}_all.json`);
+        const posts = await fetchWithCache(feedEndpoint(), "blogposts_all.json");
 
         // Clear existing entries
         store.clear();
@@ -118,7 +116,7 @@ function rawBlogLoader(): Loader {
         // Track which URLs we've already added
         const seenLinks = new Set<string>();
 
-        // Process each blog post from /blog/all
+        // Process each blog post from the full feed
         for (const post of posts) {
           const id = generateDigest(post.link);
           const mapping = blogMappings[post.link];
@@ -141,19 +139,16 @@ function rawBlogLoader(): Loader {
           seenLinks.add(post.link);
         }
 
-        logger.info(`Loaded ${posts.length} blog posts from /blog/all`);
+        logger.info(`Loaded ${posts.length} blog posts from the research feed`);
 
-        // Fetch per-author posts to catch any not in /blog/all
+        // Fetch per-author posts to catch any not in the full feed
         const blogAuthorMap = getBlogAuthorMap();
         let extraCount = 0;
 
         for (const [blogAuthor, peopleSlug] of Object.entries(blogAuthorMap)) {
           let authorPosts: BlogPost[];
           try {
-            authorPosts = await fetchWithCache(
-              blogEndpoint("/blog/author", { name: blogAuthor }),
-              `blogposts_v${BLOG_ENDPOINT_VERSION}_${blogAuthor}.json`,
-            );
+            authorPosts = await fetchWithCache(feedEndpoint({ name: blogAuthor }), `blogposts_${blogAuthor}.json`);
           } catch (err) {
             logger.warn(`Failed to fetch posts for author "${blogAuthor}": ${err}`);
             continue;
@@ -202,5 +197,5 @@ function rawBlogLoader(): Loader {
  * This can be used to augment people profiles with their blog posts
  */
 export async function fetchBlogPostsByAuthor(blogAuthor: string): Promise<BlogPost[]> {
-  return fetchWithCache(blogEndpoint("/blog/author", { name: blogAuthor }), `blogposts_v${BLOG_ENDPOINT_VERSION}_${blogAuthor}.json`);
+  return fetchWithCache(feedEndpoint({ name: blogAuthor }), `blogposts_${blogAuthor}.json`);
 }
