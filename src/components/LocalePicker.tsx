@@ -10,7 +10,7 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { locales, localeName, swapLocale } from "@/lib/i18n-utils";
-import { useTranslations } from "@cloudflare/polystella/react";
+import { useTranslations } from "@cloudflare/polystella-astro/react";
 
 function GlobeIcon({ size = 16, className }: { size?: number; className?: string }) {
   return (

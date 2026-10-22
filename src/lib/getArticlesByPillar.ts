@@ -1,5 +1,5 @@
 import type { CollectionEntry } from "astro:content";
-import { getLocalizedCollection } from "@cloudflare/polystella/runtime";
+import { getLocalizedCollection } from "@cloudflare/polystella-astro/runtime";
 
 type Pillar = "private" | "safe" | "fast" | "reliable" | "measurable";
 

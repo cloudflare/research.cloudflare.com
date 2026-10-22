@@ -25,13 +25,13 @@
     "@astrojs/mdx": "^7.0.2",
     "@astrojs/react": "^6.0.1",
     "@astrojs/sitemap": "^3.7.3",
-    "@cloudflare/polystella": "link:../../polystella/catalog-format/packages/polystella",
+    "@cloudflare/polystella-astro": "0.5.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-navigation-menu": "^1.2.14",
     "@tailwindcss/vite": "^4.3.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "astro": "^7.0.6",
+    "astro": "^7.0.10",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lemon-lime-svgs": "^2.0.1",
@@ -65,9 +65,7 @@
   },
   "pnpm": {
     "overrides": {
-      "picomatch@2": "2.3.2",
-      "@cloudflare/polystella-astro": "link:../../polystella/catalog-format/packages/astro",
-      "@cloudflare/polystella-core": "link:../../polystella/catalog-format/packages/core"
+      "picomatch@2": "2.3.2"
     }
   },
   "packageManager": "pnpm@10.33.0",

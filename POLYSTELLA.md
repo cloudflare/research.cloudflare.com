@@ -1,6 +1,6 @@
 # PolyStella
 
-[PolyStella](https://github.com/cloudflare/polystella) is the `@cloudflare/polystella` Astro integration used by this site for locale-aware content and UI-string translation.
+[PolyStella](https://github.com/cloudflare/polystella) is the `@cloudflare/polystella-astro` Astro integration used by this site for locale-aware content and UI-string translation.
 
 The source of truth remains the English content in `content/` and `src/content/i18n/en-US.json`. PolyStella translates configured fields with Workers AI, caches translated output in R2, and stages localized content during Astro builds.
 

@@ -2,7 +2,7 @@
 import { CONSTANTS } from "../lib/constants";
 import Icon from "./Icon.astro";
 import { LocalePicker } from "./LocalePicker";
-import { getDictionary } from "@cloudflare/polystella/i18n";
+import { getDictionary } from "@cloudflare/polystella-astro/i18n";
 import { defaultLocale, swapLocale, type TranslationStatus } from "@/lib/i18n-utils";
 
 interface Props {
@@ -138,7 +138,13 @@ const originalHref = swapLocale(currentPath, defaultLocale);
             <span class="inline-flex items-center px-2 py-0.5 rounded border border-page-border-subtle font-mono text-xs uppercase tracking-wide">
               {t("notice.aiTranslated.badge")}
             </span>
-            <a href={originalHref} hreflang={defaultLocale} lang={defaultLocale} data-ai-original-link class="hover:text-page-text hover:underline">
+            <a
+              href={originalHref}
+              hreflang={defaultLocale}
+              lang={defaultLocale}
+              data-ai-original-link
+              class="hover:text-page-text hover:underline"
+            >
               {t("notice.aiTranslated.viewOriginal")}
             </a>
           </div>
