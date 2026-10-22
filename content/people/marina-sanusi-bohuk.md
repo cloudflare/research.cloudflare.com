@@ -1,8 +1,8 @@
 ---
-title: Yazhou Zhang
+title: Marina Sanusi Bohuk
 position: External Collaborator
 avatar: placeholder.png
-slug: yazhou-zhang
+slug: marina-sanusi-bohuk
 type: external
 ---
 

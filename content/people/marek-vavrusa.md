@@ -1,8 +1,8 @@
 ---
-title: Pratik Soni
+title: Marek Vavruša
 position: External Collaborator
 avatar: placeholder.png
-slug: pratik-soni
+slug: marek-vavrusa
 type: external
 ---
 

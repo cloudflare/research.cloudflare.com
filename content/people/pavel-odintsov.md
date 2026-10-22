@@ -1,8 +1,8 @@
 ---
-title: Pavel Odinstov
+title: Pavel Odintsov
 position: External Collaborator
 avatar: placeholder.png
-slug: pavel-odinstov
+slug: pavel-odintsov
 type: external
 ---
 

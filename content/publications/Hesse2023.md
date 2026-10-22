@@ -1,6 +1,7 @@
 ---
 title: "Password-Authenticated TLS via OPAQUE and Post-Handshake Authentication"
 year: 2023
+location: Advances in Cryptology - EUROCRYPT 2023, pp. 98-127. 2023.
 authors:
   - julia-hesse
   - stanislaw-jarecki

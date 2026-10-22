@@ -3,7 +3,7 @@ title: "Gossamer: Securely Measuring Password-based Logins"
 year: 2022
 location: "31st USENIX Security Symposium (USENIX Security 22), Boston, MA. 2022."
 authors:
-  - marina-sanusi
+  - marina-sanusi-bohuk
   - mazharul-islam
   - suleman-ahmad
   - michael-swift

@@ -1,14 +1,14 @@
 ---
 title: "Mastic: Private Weighted Heavy-Hitters and Attribute-Based Metrics"
 year: 2025
-location: "32nd ACM Conference on Computer and Communications Security (CCS 2025), Salt Lake City, UT, USA, October 2025"
+location: "Proceedings on Privacy Enhancing Technologies, 2025(1), pp. 290-319"
 authors:
   - dimitris-mouris
   - christopher-patton
   - hannah-davis
-  - pratik-soni
+  - pratik-sarkar
   - nektarios-georgios-tsoutsos
-url: https://eprint.iacr.org/2024/221
+url: https://petsymposium.org/popets/2025/popets-2025-0017.php
 related_interests:
   - cryptography
   - privacy

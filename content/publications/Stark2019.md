@@ -8,7 +8,7 @@ authors:
   - rijad-muminovic
   - devon-obrien
   - eran-messeri
-  - adriana-porter-felt
+  - adrienne-porter-felt
   - brendan-mcmillion
   - parisa-tabriz
 url: https://ieeexplore.ieee.org/abstract/document/8835212

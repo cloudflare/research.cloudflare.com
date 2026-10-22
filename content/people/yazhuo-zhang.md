@@ -1,8 +1,8 @@
 ---
-title: Ya-Yeng Wu
+title: Yazhuo Zhang
 position: External Collaborator
 avatar: placeholder.png
-slug: ya-yeng-wu
+slug: yazhuo-zhang
 type: external
 ---
 

@@ -1,7 +1,7 @@
 ---
 title: "RFC 9230: Oblivious DNS over HTTPS"
 year: 2022
-location: Internet Engineering Task Force (IETF). 2022.
+location: RFC Editor, Independent Submission stream. 2022.
 authors:
   - eric-kinnear
   - patrick-mcmanus

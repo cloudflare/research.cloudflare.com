@@ -1,7 +1,7 @@
 ---
 title: "This is not the padding you are looking for! On the ineffectiveness of QUIC PADDING against website fingerprinting"
 year: 2022
-location: IETF 113 Conference. 2022.
+location: IETF 113 Meeting. 2022.
 authors:
   - ludovic-barman
   - sandra-siby

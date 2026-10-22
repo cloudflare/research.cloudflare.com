@@ -3,7 +3,7 @@ title: "Rethinking Web Cache Design for the AI Era"
 year: 2025
 location: "ACM Symposium on Cloud Computing 2025"
 authors:
-  - yazhou-zhang
+  - yazhuo-zhang
   - jinqing-cai
   - avani-wildani
   - ana-klimovic

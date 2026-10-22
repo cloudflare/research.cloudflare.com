@@ -1,5 +1,5 @@
 ---
-title: Is the web ready for OSCP must-staple?
+title: Is the web ready for OCSP must-staple?
 year: 2018
 location: Proceedings of the Internet Measurement Conference 2018, pp. 105-118. 2018.
 authors:
