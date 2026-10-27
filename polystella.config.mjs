@@ -39,7 +39,7 @@ const branch = process.env.WORKERS_CI_BRANCH ?? "main";
 const isProduction = branch === "main";
 const branchSegment = sanitizeBranchSegment(branch);
 
-/** @type {import('@cloudflare/polystella').PolyStellaOptions} */
+/** @type {import('@cloudflare/polystella-astro').PolyStellaOptions} */
 const config = {
   // Locale set is configured in `astro.config.mjs` under `i18n` and
   // read by PolyStella at `astro:config:setup`.

@@ -197,7 +197,7 @@ The site is fully responsive with:
 
 ## 🌐 Translation (PolyStella)
 
-Locale-aware content and UI strings are translated by [PolyStella](https://github.com/cloudflare/polystella), the `@cloudflare/polystella` Astro integration. English content remains the source of truth; translated output is generated with Workers AI, cached in R2, and staged during builds.
+Locale-aware content and UI strings are translated by [PolyStella](https://github.com/cloudflare/polystella), the `@cloudflare/polystella-astro` Astro integration. English content remains the source of truth; translated output is generated with Workers AI, cached in R2, and staged during builds.
 
 See [`POLYSTELLA.md`](./POLYSTELLA.md) for repo-specific workflows, credentials, glossaries, manual overrides, and build/deploy behavior.
 

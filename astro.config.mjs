@@ -8,7 +8,7 @@ import mdx from "@astrojs/mdx";
 
 import sitemap from "@astrojs/sitemap";
 
-import polystella, { astroSitemapI18n } from "@cloudflare/polystella";
+import polystella, { astroSitemapI18n } from "@cloudflare/polystella-astro";
 import polystellaConfig from "./polystella.config.mjs";
 
 const i18n = {
